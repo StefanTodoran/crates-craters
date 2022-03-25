@@ -7,16 +7,18 @@ import door from '../assets/tiles/door.png';
 import key from '../assets/tiles/key.png';
 import crate from '../assets/tiles/crate.png';
 import crater from '../assets/tiles/crater.png';
-import crystal from '../assets/tiles/crystal.png';
+import coin from '../assets/tiles/coin.png';
+import player from '../assets/tiles/player.png';
+import flag from '../assets/tiles/flag.png';
 
 export class GameBoard extends Component {
   render() {
     const board = [];
-    const imax = 14;
-    const jmax = 8;
-    for (let i = 0; i < imax; i++) {
+    const dimensions = [ this.props.board.length, this.props.board[0].length ];
+
+    for (let i = 0; i < dimensions[0]; i++) {
       const row = [];
-      for (let j = 0; j < jmax; j++) {
+      for (let j = 0; j < dimensions[1]; j++) {
         if (this.props.board[i][j] === 1) { // a wall
           // const top = (i > 0) ? (this.props.board[i - 1][j] === 1) : true;
           // console.log(i,j,imax);
@@ -71,7 +73,11 @@ function getTileSRC(val) {
     case 5:
       return crater;
     case 6:
-      return crystal;
+      return coin;
+    case 7:
+      return player;
+    case 8:
+      return flag;
   }
-  return '';
+  return 0;
 }
