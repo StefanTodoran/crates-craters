@@ -20,19 +20,6 @@ export class GameBoard extends Component {
       const row = [];
       for (let j = 0; j < dimensions[1]; j++) {
         if (this.props.board[i][j] === 1) { // a wall
-          // const top = (i > 0) ? (this.props.board[i - 1][j] === 1) : true;
-          // console.log(i,j,imax);
-          // const bot = (i < imax) ? (this.props.board[i][j] === 1) : true;
-          // const left = (j > 0) ? (this.props.board[i][j - 1] === 1) : true;
-          // const right = (j < jmax) ? (this.props.board[i][j + 1] === 1) : true;
-          //
-          // const borderSize = 3;
-          // const border = {
-          //   "top": (top) ? 0 : borderSize,
-          //   "bottom": (bot) ? 0 : borderSize,
-          //   "left": (left) ? 0 : borderSize,
-          //   "right": (right) ? 0 : borderSize,
-          // }
           const borderColor = (isEven(i) && isEven(j)) || (!isEven(i) && !isEven(j))? '#b1d1ff' : '#a1c8ff';
           // const fillColor = (isEven(i) && isEven(j)) || (!isEven(i) && !isEven(j))? '#d0e4ff' : '#c0daff';
           const fillColor = (isEven(i) && isEven(j)) || (!isEven(i) && !isEven(j))? '#c0daff' : '#b1d1ff';
