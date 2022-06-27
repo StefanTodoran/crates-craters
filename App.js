@@ -1,6 +1,6 @@
 import { StatusBar } from 'expo-status-bar';
 import {Modal, StyleSheet, Text, View} from 'react-native';
-import {Component} from "react";
+import React, {Component} from "react";
 import {MenuItem} from "./Components/MenuItem";
 import {LevelPage} from "./Components/LevelPage";
 import {Tile} from "./Components/Tile";
@@ -149,6 +149,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    fontFamily: 'Monserrat'
   },
   modalView: {
     margin: 20,

@@ -3,7 +3,6 @@ import {StyleSheet, View} from "react-native";
 import {MenuItem} from "./MenuItem";
 import {GameBoard} from "./GameBoard";
 import {Inventory} from "./Inventory";
-import {StatusBar} from "expo-status-bar";
 
 import { Dimensions } from 'react-native';
 const { width, height } = Dimensions.get('window');

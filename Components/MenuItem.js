@@ -8,7 +8,7 @@ export class MenuItem extends Component {
 
   render() {
     return (
-      <Pressable style={this.props.style} onPress={this.doAction}>
+      <Pressable style={this.props.style} onPress={this.doAction} underlayColor={"#B1D1FF"}>
         <Text style={{color: this.props.color, textAlign: 'center'}}>{this.props.text}</Text>
       </Pressable>
     );
