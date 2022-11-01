@@ -1,16 +1,56 @@
-import { View, StyleSheet, Dimensions, Image, Text, Animated } from 'react-native';
-import React, { useState, useRef } from "react";
+import { View, StyleSheet, Dimensions, Animated } from 'react-native';
+import React, { useEffect, useRef } from "react";
 
-import key from '../assets/key.png';
-import coin from '../assets/coin.png';
 import Colors from '../Colors';
+import Graphics from '../Graphics';
 const win = Dimensions.get('window');
 
 export default function Inventory({ coins, maxCoins, keys }) {
-  const inventory = [];
-  for (let i = 0; i < keys; i++) {
-    inventory.push(<Image source={key} style={styles.icon}/>)
+  const coinsAnim = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    coinsAnim.setValue(0);
+    Animated.timing(coinsAnim, {
+      toValue: 1,
+      duration: 500,
+      useNativeDriver: true
+    }).start();
+  }, [coins]);
+
+  // =============
+  // KEY ANIMATION
+  function usePrevious(value) {
+    const ref = useRef();
+    useEffect(() => {
+      ref.current = value;
+    });
+    return ref.current;
   }
+  const prevKeys = usePrevious(keys);
+
+  const keysAnim = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    const startVal = (prevKeys < keys) ? 0 : 1;
+    const endVal = (prevKeys < keys) ? 1 : 0;
+
+    keysAnim.setValue(startVal);
+    Animated.timing(keysAnim, {
+      toValue: endVal,
+      duration: 500,
+      useNativeDriver: true
+    }).start();
+  }, [keys]);
+
+  const inventory = [];
+  const displayKeys = (prevKeys > keys) ? prevKeys : keys;
+  // We don't do Math.max(prevKeys, keys); because there is a possibility of NaN.
+  for (let i = 0; i < displayKeys; i++) {
+    // If it is the last key and # of keys changed, animate it. Otherwise set animated to
+    // one meaning not animated, since it is terminal animation value.
+    const animated = (i + 1 === displayKeys && prevKeys !== keys) ? keysAnim : 1;
+    inventory.push(<Animated.Image key={`key<${i}>`} source={Graphics.KEY} style={styles.icon(animated)}/>)
+  }
+  // END KEY ANIMATION
+  // =================
 
   return (
     <View style={styles.inventory}>
@@ -18,8 +58,9 @@ export default function Inventory({ coins, maxCoins, keys }) {
         {inventory}
       </View>
       <View style={styles.row}>
-        <Text style={styles.text}>{coins}/{maxCoins}</Text>
-        <Image style={styles.icon} source={coin}/>
+        <Animated.Text style={styles.coinsText(coinsAnim)}>{coins}</Animated.Text>
+        <Animated.Text style={styles.maxCoinsText}>/{maxCoins}</Animated.Text>
+        <Animated.Image style={styles.icon(coinsAnim)} source={Graphics.COIN}/>
       </View>
     </View>
   );
@@ -32,15 +73,24 @@ const styles = StyleSheet.create({
     width: win.width * 0.9,
     marginBottom: 10,
   },
-  text: {
-    color: Colors.MAIN_BLUE,
+  coinsText: (anim) => ({
+    color: Colors.MAIN_COLOR,
+    fontSize: 18,
+    opacity: anim,
+  }),
+  maxCoinsText: {
+    color: Colors.DARK_COLOR,
+    fontSize: 10,
   },
   row: {
     flexDirection: "row",
     alignItems: "center",
   },
-  icon: {
+  icon: (anim) => ({
     height: 32,
     width: 32,
-  }
+    transform: [{
+      scale: anim,
+    }],
+  }),
 });

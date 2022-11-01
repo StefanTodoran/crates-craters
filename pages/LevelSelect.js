@@ -3,6 +3,7 @@ import React, { useState, useRef } from "react";
 import MenuButton from '../components/MenuButton';
 
 import { levels } from '../Game';
+import Graphics from '../Graphics';
 const win = Dimensions.get('window');
 
 export default function LevelSelect({ pageCallback, levelCallback }) {
@@ -24,14 +25,15 @@ export default function LevelSelect({ pageCallback, levelCallback }) {
   for (let i = pageStart; i < pageEnd; i += 2) {
     const levelButton = (num) => {
       if (levels[num]) {
-        console.log(num);
+        console.log(`select<${num}>`)
         return <MenuButton onPress={openLevel} value={num} label={`Level ${num + 1}`}
-          icon={require('../assets/crate.png')} key={`select<${num}>`} width={win.width / 3} />;
+          icon={Graphics.CRATE} key={`select<${num}>`} width={win.width / 3} />;
       }
       // Most of the values don't matter but we still give it text and an icon 
       // so it is size the same, since we are using this invisible button as padding.
-      return <MenuButton onPress={console.log} value={num} label={"invisible"}
-        icon={require('../assets/crate.png')} key={num} width={win.width / 3} invisible/>;
+      console.log(`invisible<${num}>`)
+      return <MenuButton onPress={console.log} value={num} label={"invisible"} key={`invisible<${num}>`}
+        icon={Graphics.CRATE} width={win.width / 3} invisible/>;
     }
     level_buttons.push(
       <View style={styles.row}>
@@ -59,7 +61,7 @@ export default function LevelSelect({ pageCallback, levelCallback }) {
 
   return (
     <>
-      <Image style={styles.banner} source={require('../assets/levels_banner.png')} />
+      <Image style={styles.banner} source={Graphics.LEVEL_SELECT_BANNER} />
       <Animated.View style={{
         opacity: anim
       }}>
@@ -69,7 +71,7 @@ export default function LevelSelect({ pageCallback, levelCallback }) {
           {levels[pageEnd] && <MenuButton onPress={pageChange} value={page + 1} label="Next Page" width={win.width / 3} />}
         </View>
       </Animated.View>
-      <MenuButton onPress={pageCallback} value="home" label="Back to Menu" icon={require('../assets/door.png')} />
+      <MenuButton onPress={pageCallback} value="home" label="Back to Menu" icon={Graphics.DOOR} />
     </>
   );
 }

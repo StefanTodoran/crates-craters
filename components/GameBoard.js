@@ -1,8 +1,8 @@
 import { View, StyleSheet, Dimensions, Image, Animated } from 'react-native';
 import React, { useRef, useEffect } from "react";
 
-import { tiles, icon_src } from '../Game';
-import player_icon from '../assets/player.png';
+import { tiles, icon_src, tileAt } from '../Game';
+import Graphics from '../Graphics';
 import Colors from '../Colors';
 const win = Dimensions.get('window');
 
@@ -37,10 +37,10 @@ export default function GameBoard({ board, player, prev }) {
     tilesBoard.push(<View key={`row<${i}>`} style={{ flexDirection: 'row', margin: 0 }}>{row}</View>);
   }
 
-  const anim = useRef(new Animated.Value(0)).current;
+  const playerAnim = useRef(new Animated.Value(0)).current;
   useEffect(() => {
-    anim.setValue(0);
-    Animated.timing(anim, {
+    playerAnim.setValue(0);
+    Animated.timing(playerAnim, {
       toValue: 1,
       duration: 500,
       useNativeDriver: true
@@ -51,19 +51,51 @@ export default function GameBoard({ board, player, prev }) {
   // change in that direction, we assign zero so that the transform in that direction 
   // doesn't do anything. Otherwise, we set it based on whether the previous value was 
   // lower or higher to animate in the corrent direction.
-  const animX = (player.x !== prev.x) ? (player.x > prev.x) ? -1 : 1 : 0;
-  const animY = (player.y !== prev.y) ? (player.y > prev.y) ? -1 : 1 : 0;
+  const animX = (player.x !== prev.x && prev.x !== null) ? (player.x > prev.x) ? -1 : 1 : 0;
+  const animY = (player.y !== prev.y && prev.y !== null) ? (player.y > prev.y) ? -1 : 1 : 0;
 
-  console.log(player, prev);
+  let optionsAnim = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(optionsAnim, {
+          toValue: 1,
+          duration: 2000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(optionsAnim, {
+          toValue: 0,
+          duration: 2000,
+          useNativeDriver: true,
+        })
+      ])
+    ).start();
+  }, []);
+
+  const options = [];
+  for (let x = -1; x < 2; x++) {
+    for (let y = -1; y < 2; y++) {
+      if ((y === 0 || x === 0) && !(y === 0 && x === 0)) {
+        const xPos = player.x + x;
+        const yPos = player.y + y;
+
+        if (["empty", "spawn"].includes(tileAt(yPos, xPos, board))) {
+          const optionStyle = styles.optionTile(xPos, yPos, tileSize, optionsAnim, playerAnim);
+          options.push(<Animated.View key={`option<${x},${y}}`} style={optionStyle}></Animated.View>)
+        }
+      }
+    }
+  }
 
   return (
     <View style={styles.board}>
       {tilesBoard}
       <Animated.View style={{
-        ...styles.player(player.x, player.y, tileSize, anim, animX, animY),
+        ...styles.player(player.x, player.y, tileSize, playerAnim, animX, animY),
       }}>
-        <Image style={styles.tile("#00000000", tileSize)} source={player_icon} />
+        <Image style={styles.tile("#00000000", tileSize)} source={Graphics.PLAYER} />
       </Animated.View>
+      {options}
     </View>
   );
 }
@@ -80,7 +112,7 @@ const styles = StyleSheet.create({
   board: {
     position: "relative",
     borderWidth: 1,
-    borderColor: Colors.MAIN_BLUE,
+    borderColor: Colors.MAIN_COLOR,
     borderRadius: 5,
     overflow: "hidden",
   },
@@ -101,15 +133,41 @@ const styles = StyleSheet.create({
     position: "absolute",
     left: xPos * tileSize,
     top: yPos * tileSize,
+    transform: [
+      {
+        translateY: anim.interpolate({
+          inputRange: [0, 1],
+          outputRange: [tileSize * animY, 0],
+        })
+      },
+      {
+        translateX: anim.interpolate({
+          inputRange: [0, 1],
+          outputRange: [tileSize * animX, 0],
+        })
+      },
+    ],
+  }),
+  optionTile: (xPos, yPos, size, scaleAnim, fadeAnim) => ({
+    position: "absolute",
+    left: xPos * size,
+    top: yPos * size,
+    width: size,
+    height: size,
+    opacity: fadeAnim.interpolate({
+      inputRange: [0, 1],
+      outputRange: [0, 0.5],
+    }),
+
+    backgroundColor: Colors.MAIN_COLOR_TRANSPARENT,
+    borderColor: Colors.DARK_COLOR,
+    borderStyle: "solid",
+    borderWidth: 1,
     transform: [{
-      translateY: anim.interpolate({
+      scale: scaleAnim.interpolate({
         inputRange: [0, 1],
-        outputRange: [tileSize * animY, 0],
-      }),
-      translateX: anim.interpolate({
-        inputRange: [0, 1],
-        outputRange: [tileSize * animX, 0],
-      }),
+        outputRange: [0.35, 0.65],
+      })
     }],
   }),
 });

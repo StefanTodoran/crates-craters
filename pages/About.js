@@ -1,13 +1,16 @@
 import { Text, StyleSheet, Image, Dimensions, View } from 'react-native';
 import React from "react";
+
 import Colors from '../Colors';
+import Graphics from '../Graphics';
+
 import MenuButton from '../components/MenuButton';
 import PortfolioButton from '../components/PortfolioButton';
 
 export default function About({ pageCallback, darkMode, darkModeCallback }) {
   return (
     <>
-      <Image style={styles.banner} source={require('../assets/about_banner.png')} />
+      <Image style={styles.banner} source={Graphics.ABOUT_BANNER} />
 
       <Text style={styles.text(darkMode)}>
         Crates & Craters is a passion project entirely built and maintained by Stefan Todoran.
@@ -28,8 +31,8 @@ export default function About({ pageCallback, darkMode, darkModeCallback }) {
       </View>
 
       <PortfolioButton />
-      <MenuButton onPress={darkModeCallback} value={null} label="Toggle Dark Mode" icon={require('../assets/night_mode.png')} />
-      <MenuButton onPress={pageCallback} value="home" label="Back to Menu" icon={require('../assets/door.png')} />
+      <MenuButton onPress={darkModeCallback} value={null} label="Toggle Dark Mode" icon={Graphics.NIGHT_MODE_ICON} />
+      <MenuButton onPress={pageCallback} value="home" label="Back to Menu" icon={Graphics.DOOR} />
     </>
   );
 }
@@ -50,7 +53,7 @@ const styles = StyleSheet.create({
   text: darkMode => ({
     maxWidth: win.width * 0.8,
     marginBottom: 10,
-    color: (darkMode) ? Colors.MAIN_BLUE : Colors.DARK_BLUE,
+    color: (darkMode) ? Colors.MAIN_COLOR : Colors.DARK_COLOR,
   }),
   row: {
     flexDirection: 'row',

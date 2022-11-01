@@ -1,7 +1,10 @@
 import { StatusBar } from 'expo-status-bar';
 import { useRef, useState } from 'react';
 import { StyleSheet, View, Image, Dimensions, Animated } from 'react-native';
+
 import Colors from './Colors';
+import Graphics from './Graphics';
+
 import MenuButton from './components/MenuButton';
 import About from './pages/About';
 import HowToPlay from './pages/HowToPlay';
@@ -27,19 +30,25 @@ export default function App() {
   } 
   
   const [level, setLevelState] = useState(1);
+  const [game, setGameState] = useState(null);
+  const changeLevel = (lvl) => {
+    setLevelState(lvl);
+    setGameState(null);
+  }
+
   const content = getContentFromPage(page);
   function getContentFromPage(page_id) {
     switch (page_id) {
       case "level_select":
-        return <LevelSelect pageCallback={setPage} levelCallback={setLevelState}/>;
+        return <LevelSelect pageCallback={setPage} levelCallback={changeLevel}/>;
       case "play_level":
-        return <PlayLevel pageCallback={setPage} level={level}/>;
+        return <PlayLevel pageCallback={setPage} gameStateCallback={setGameState} level={level} game={game} darkMode={darkMode}/>;
       case "how_to_play":
         return <HowToPlay pageCallback={setPage} darkMode={darkMode}/>;
       case "about":
         return <About pageCallback={setPage} darkMode={darkMode} darkModeCallback={toggleDarkMode}/>;
       default:
-        return <MenuButton onPress={setPage} value="home" label="Back to Menu" icon={require('./assets/door.png')}/>;
+        return <MenuButton onPress={setPage} value="home" label="Back to Menu" icon={Graphics.DOOR}/>;
     }
   }
 
@@ -56,17 +65,18 @@ export default function App() {
   return (
     <View style={{
       ...styles.body,
-      backgroundColor: (darkMode) ? Colors.BLUE_BLACK : "white",
+      backgroundColor: (darkMode) ? Colors.NEAR_BLACK : "white",
     }}>
-      <Image style={styles.banner} source={require('./assets/banner.png')}/>
-      <MenuButton onPress={setPage} value="level_select" label="Level Select" icon={require('./assets/flag.png')}/>
-      <MenuButton onPress={setPage} value="how_to_play" label="How to Play" icon={require('./assets/help.png')}/>
-      <MenuButton onPress={setPage} value="about" label="About C&C" icon={require('./assets/player.png')}/>
+      <Image style={styles.banner} source={Graphics.TITLE_BANNER}/>
+      {game && <MenuButton onPress={setPage} value="play_level" label="Resume Game" icon={Graphics.KEY}/>}
+      <MenuButton onPress={setPage} value="level_select" label="Level Select" icon={Graphics.FLAG}/>
+      <MenuButton onPress={setPage} value="how_to_play" label="How to Play" icon={Graphics.HELP_ICON}/>
+      <MenuButton onPress={setPage} value="about" label="About the App" icon={Graphics.PLAYER}/>
       <StatusBar style="auto" />
       {page !== "home" && 
         <Animated.View style={{
           ...styles.modal,
-          backgroundColor: (darkMode) ? Colors.BLUE_BLACK : "white",
+          backgroundColor: (darkMode) ? Colors.NEAR_BLACK : "white",
           opacity: anim,
           transform: [{
             translateY: anim.interpolate({

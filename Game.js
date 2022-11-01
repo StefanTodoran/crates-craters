@@ -1,98 +1,92 @@
-import door from './assets/door.png';
-import key from './assets/key.png';
-import crate from './assets/crate.png';
-import crater from './assets/crater.png';
-import coin from './assets/coin.png';
-import flag from './assets/flag.png';
-
 // Contains level data for the game as well
 // as some helpful consts for dealing with that data.
 
 const level_one = [
-  [0,0,0,1,0,0,0,0],
-  [0,8,0,2,5,0,4,0],
-  [0,0,0,1,0,4,6,0],
-  [1,1,1,1,0,0,5,0],
-  [4,4,0,0,0,0,4,0],
-  [6,5,0,0,0,4,0,0],
-  [0,1,1,1,1,0,7,0],
-  [0,0,3,1,6,0,0,0],
+  [0, 0, 0, 1, 0, 0, 0, 0],
+  [0, 8, 0, 2, 5, 0, 4, 0],
+  [0, 0, 0, 1, 0, 4, 6, 0],
+  [1, 1, 1, 1, 0, 0, 5, 0],
+  [4, 4, 0, 0, 0, 0, 4, 0],
+  [6, 5, 0, 0, 0, 4, 0, 0],
+  [0, 1, 1, 1, 1, 0, 7, 0],
+  [0, 0, 3, 1, 6, 0, 0, 0],
 ];
 const level_two = [
-  [0,0,2,0,1,1,1,3],
-  [0,0,1,0,1,0,0,5],
-  [8,0,1,0,2,0,4,0],
-  [0,0,1,0,1,6,0,4],
-  [1,1,1,0,1,1,1,1],
-  [1,1,1,0,1,1,6,0],
-  [1,1,0,4,5,1,1,0],
-  [1,1,5,7,0,1,1,0],
-  [1,3,4,4,4,0,1,0],
-  [1,1,0,0,0,0,1,0],
-  [1,1,4,4,0,0,1,0],
-  [0,0,0,0,4,5,1,0],
-  [1,1,1,1,2,1,1,0],
-  [1,1,1,3,0,0,0,0],
+  [0, 0, 2, 0, 1, 1, 1, 3],
+  [0, 0, 1, 0, 1, 0, 0, 5],
+  [8, 0, 1, 0, 2, 0, 4, 0],
+  [0, 0, 1, 0, 1, 6, 0, 4],
+  [1, 1, 1, 0, 1, 1, 1, 1],
+  [1, 1, 1, 0, 1, 1, 6, 0],
+  [1, 1, 0, 4, 5, 1, 1, 0],
+  [1, 1, 5, 7, 0, 1, 1, 0],
+  [1, 3, 4, 4, 4, 0, 1, 0],
+  [1, 1, 0, 0, 0, 0, 1, 0],
+  [1, 1, 4, 4, 0, 0, 1, 0],
+  [0, 0, 0, 0, 4, 5, 1, 0],
+  [1, 1, 1, 1, 2, 1, 1, 0],
+  [1, 1, 1, 3, 0, 0, 0, 0],
 ];
 const level_three = [
-  [0,0,1,8,1,1,1,1],
-  [0,6,1,2,1,0,6,0],
-  [4,0,5,5,0,4,4,4],
-  [0,0,1,0,1,0,0,0],
-  [4,0,1,0,1,0,4,0],
-  [0,4,1,0,1,0,5,4],
-  [0,0,1,0,1,5,0,0],
-  [0,0,4,7,4,0,0,0],
-  [6,4,1,4,1,0,0,0],
-  [1,1,1,0,1,1,1,1],
-  [6,5,1,0,5,4,0,3],
-  [4,0,0,0,4,0,4,0],
-  [0,4,0,0,5,4,0,0],
-  [0,0,4,0,4,0,4,6],
+  [0, 0, 1, 8, 1, 1, 1, 1],
+  [0, 6, 1, 2, 1, 0, 6, 0],
+  [4, 0, 5, 5, 0, 4, 4, 4],
+  [0, 0, 1, 0, 1, 0, 0, 0],
+  [4, 0, 1, 0, 1, 0, 4, 0],
+  [0, 4, 1, 0, 1, 0, 5, 4],
+  [0, 0, 1, 0, 1, 5, 0, 0],
+  [0, 0, 4, 7, 4, 0, 0, 0],
+  [6, 4, 1, 4, 1, 0, 0, 0],
+  [1, 1, 1, 0, 1, 1, 1, 1],
+  [6, 5, 1, 0, 5, 4, 0, 3],
+  [4, 0, 0, 0, 4, 0, 4, 0],
+  [0, 4, 0, 0, 5, 4, 0, 0],
+  [0, 0, 4, 0, 4, 0, 4, 6],
 ];
 const level_four = [
-  [3,0,5,0,0,1,6,3],
-  [4,4,0,4,4,1,1,2],
-  [4,0,4,0,0,0,0,5],
-  [0,4,1,1,1,8,0,0],
-  [4,0,1,6,1,1,1,0],
-  [0,5,1,5,1,0,1,0],
-  [0,0,2,7,0,0,0,0],
-  [0,0,1,4,4,4,1,4],
-  [0,0,1,0,0,0,1,0],
-  [5,0,1,1,2,1,1,0],
-  [0,6,1,0,0,1,0,0],
-  [0,4,1,0,0,0,0,0],
-  [0,0,1,1,6,1,3,4],
-  [0,0,1,1,0,1,1,1],
+  [3, 0, 5, 0, 0, 1, 6, 3],
+  [4, 4, 0, 4, 4, 1, 1, 2],
+  [4, 0, 4, 0, 0, 0, 0, 5],
+  [0, 4, 1, 1, 1, 8, 0, 0],
+  [4, 0, 1, 6, 1, 1, 1, 0],
+  [0, 5, 1, 5, 1, 0, 1, 0],
+  [0, 0, 2, 7, 0, 0, 0, 0],
+  [0, 0, 1, 4, 4, 4, 1, 4],
+  [0, 0, 1, 0, 0, 0, 1, 0],
+  [5, 0, 1, 1, 2, 1, 1, 0],
+  [0, 6, 1, 0, 0, 1, 0, 0],
+  [0, 4, 1, 0, 0, 0, 0, 0],
+  [0, 0, 1, 1, 6, 1, 3, 4],
+  [0, 0, 1, 1, 0, 1, 1, 1],
 ];
 const level_five = [
-  [1,6,5,1,4,0,4,0],
-  [5,4,0,3,5,0,4,4],
-  [0,4,1,1,0,0,0,0],
-  [0,4,2,0,0,1,0,4],
-  [0,0,1,0,1,0,0,0],
-  [8,0,5,4,0,0,5,5],
-  [0,0,4,7,1,0,4,5],
-  [1,5,1,2,1,0,4,4],
-  [5,5,5,0,0,0,5,3],
-  [0,0,5,1,0,1,0,1],
-  [4,4,6,1,0,4,5,0],
-  [0,4,1,1,5,5,1,0],
-  [5,0,0,0,3,0,4,6],
+  [1, 6, 5, 1, 4, 0, 4, 0],
+  [5, 4, 0, 3, 5, 0, 4, 4],
+  [0, 4, 1, 1, 0, 0, 0, 0],
+  [0, 4, 2, 0, 0, 1, 0, 4],
+  [0, 0, 1, 0, 1, 0, 0, 0],
+  [8, 0, 5, 4, 0, 0, 5, 5],
+  [0, 0, 4, 7, 1, 0, 4, 5],
+  [1, 5, 1, 2, 1, 0, 4, 4],
+  [5, 5, 5, 0, 0, 0, 5, 3],
+  [0, 0, 5, 1, 0, 1, 0, 1],
+  [4, 4, 6, 1, 0, 4, 5, 0],
+  [0, 4, 1, 1, 5, 5, 1, 0],
+  [5, 0, 0, 0, 3, 0, 4, 6],
 ];
 const blank_level = [
-  [7,0,0,0,0,0,0,6],
-  [0,0,0,0,0,0,0,0],
-  [0,0,0,0,0,0,0,0],
-  [0,0,0,0,0,0,0,0],
-  [0,0,0,0,0,0,0,0],
-  [0,0,0,0,0,0,0,0],
-  [0,0,0,0,0,0,0,0],
+  [0, 0, 0, 2, 0, 0, 0, 0],
+  [5, 4, 0, 0, 0, 0, 0, 3],
+  [4, 0, 0, 0, 0, 0, 0, 0],
+  [0, 0, 0, 0, 0, 0, 0, 0],
+  [0, 0, 3, 0, 0, 0, 0, 0],
+  [0, 2, 0, 0, 0, 4, 0, 0],
+  [8, 6, 7, 3, 0, 0, 0, 0],
 ];
 
 // empty, key, coin, flag
-export const walkables = [0,3,6,8];
+// export const walkables = [0,3,6,7,8];
+export const walkables = [0, 7, 8];
 
 export const tiles = {
   0: "empty",
@@ -106,13 +100,37 @@ export const tiles = {
   8: "flag",
 };
 
+export const indentifier = {
+  "empty": 0,
+  "wall": 1,
+  "door": 2,
+  "key": 3,
+  "crate": 4,
+  "crater": 5,
+  "coin": 6,
+  "spawn": 7,
+  "flag": 8,
+};
+
+export function validTile(yPos, xPos, board) {
+  return (yPos >= 0 && yPos < board.length && xPos >= 0 && xPos < board[0].length);
+}
+
+export function tileAt(yPos, xPos, board) {
+  if (validTile(yPos, xPos, board)) {
+    return tiles[board[yPos][xPos]];
+  }
+  return "outside"; // outside of board
+}
+
+import Graphics from './Graphics';
 export const icon_src = {
-  "door": door,
-  "key": key,
-  "crate": crate,
-  "crater": crater,
-  "coin": coin,
-  "flag": flag,
+  "door": Graphics.DOOR,
+  "key": Graphics.KEY,
+  "crate": Graphics.CRATE,
+  "crater": Graphics.CRATER,
+  "coin": Graphics.COIN,
+  "flag": Graphics.FLAG,
 };
 
 export const levels = [
@@ -134,21 +152,16 @@ export const levels = [
  */
 function getSpawnPos(level_id) {
   const level = levels[level_id];
-  const dimensions = [ level.length, level[0].length ];
+  const dimensions = [level.length, level[0].length];
 
   for (let i = 0; i < dimensions[0]; i++) {
-      for (let j = 0; j < dimensions[1]; j++) {
-          if (tiles[level[i][j]] === "spawn") {
-              return {y: i, x: j};
-          }
+    for (let j = 0; j < dimensions[1]; j++) {
+      if (tiles[level[i][j]] === "spawn") {
+        return { y: i, x: j };
       }
+    }
   }
-  return {y: NaN, x: NaN};
-}
-
-function numberOfCoins(level_id) {
-  const level = levels[level_id];
-  return countTimesInArray(level, 6);
+  return { y: NaN, x: NaN };
 }
 
 /**
@@ -158,22 +171,124 @@ function numberOfCoins(level_id) {
  * @returns {number} The count.
  */
 function countTimesInArray(array, val) {
-  const dimensions = [ array.length, array[0].length ];
+  const dimensions = [array.length, array[0].length];
   let count = 0;
   for (let i = 0; i < dimensions[0]; i++) {
-      for (let j = 0; j < dimensions[1]; j++) {
-          if (array[i][j] === val) {
-              count++;
-          }
+    for (let j = 0; j < dimensions[1]; j++) {
+      if (array[i][j] === val) {
+        count++;
       }
+    }
   }
   return count;
 }
 
+export function doGameMove(game_obj, move) {
+  const next = cloneGameObj(game_obj); // The next game object following this game move.
+  const move_to = { y: game_obj.player.y, x: game_obj.player.x }; // Where the player is attempting to move.
+  const one_further = { y: game_obj.player.y, x: game_obj.player.x }; // One tile further that that in the same direction.
+
+  if (move === "up") {
+    move_to.y -= 1;
+    one_further.y -= 2;
+  } else if (move === "down") {
+    move_to.y += 1;
+    one_further.y += 2;
+  } else if (move === "left") {
+    move_to.x -= 1;
+    one_further.x -= 2;
+  } else if (move === "right") {
+    move_to.x += 1;
+    one_further.x += 2;
+  }
+
+  // The basic structure of how this seciton works is that if the move_to position is
+  // on some tile that could be walked on after some game logic (e.g. a coin tile or 
+  // door when keys > 0) then we do that logic and clear the tile. At the end of all the
+  // logic, we run attemptMove which only succeeds and moves the player if move_to is now
+  // empty (e.g. the coin tile was collected & cleared or the door was opened & cleared)
+
+  // If we walked onto a collectable, add it to the inventory
+  // and clear the tile on the new board object.
+  if (tileAt(move_to.y, move_to.x, next.board) === "coin") {
+    next.coins += 1;
+    next.board[move_to.y][move_to.x] = 0;
+  }
+  if (tileAt(move_to.y, move_to.x, next.board) === "key") {
+    next.keys += 1;
+    next.board[move_to.y][move_to.x] = 0;
+  }
+
+  // If we walked into a door and have the means to open it, do so.
+  if (game_obj.keys > 0 && tileAt(move_to.y, move_to.x, next.board) === "door") {
+    next.keys -= 1;
+    next.board[move_to.y][move_to.x] = 0;
+  }
+
+  // Pushing a crate onto an empty tile.
+  if (tileAt(move_to.y, move_to.x, next.board) === "crate" &&
+    ["spawn", "empty"].includes(tileAt(one_further.y, one_further.x, next.board))) {
+      next.board[move_to.y][move_to.x] = 0;
+      next.board[one_further.y][one_further.x] = indentifier["crate"];
+  }
+
+  // Pushing a crate into a crater.
+  if (tileAt(move_to.y, move_to.x, next.board) === "crate" &&
+    tileAt(one_further.y, one_further.x, next.board) === "crater") {
+      next.board[move_to.y][move_to.x] = 0;
+      next.board[one_further.y][one_further.x] = 0;
+  }
+
+  next.won = attemptMove(move_to.y, move_to.x, next);
+  return next;
+}
+
+function attemptMove(yPos, xPos, next) {
+  if (validTile(yPos, xPos, next.board) && walkables.includes(next.board[yPos][xPos])) {
+    next.player.x = xPos;
+    next.player.y = yPos;
+    return winCondition(next);
+  }
+  return false;
+}
+
+function winCondition(next) {
+  return tileAt(next.player.y, next.player.x, next.board) === "flag" && (next.coins === next.maxCoins);
+}
+
+/**
+ * Creates a new game object for the given level. Game objects
+ * contain the board, player position, and number of coins in the level.
+ * @param {number} level_id The level to be cloned for the initial board.
+ * @returns {GameObj}
+ */
 export function initializeGameObj(level_id) {
+  const level = levels[level_id];
+  const numberOfCoins = countTimesInArray(level, indentifier["coin"]);
+
   return {
-    board: levels[level_id],
+    board: level,
     player: getSpawnPos(level_id),
-    coins: numberOfCoins(level_id),
+    maxCoins: numberOfCoins,
+    coins: 0, // coins collected so far
+    keys: 0, // keys collected so far
+    won: false,
+  };
+}
+
+// Deep copy of a game object.
+function cloneGameObj(game_obj) {
+  const new_board = [];
+  for (let i = 0; i < game_obj.board.length; i++) {
+    new_board[i] = [...game_obj.board[i]];
+  }
+
+  return {
+    board: new_board,
+    player: { y: game_obj.player.y, x: game_obj.player.x },
+    maxCoins: game_obj.maxCoins,
+    coins: game_obj.coins,
+    keys: game_obj.keys,
+    won: game_obj.won,
   };
 }

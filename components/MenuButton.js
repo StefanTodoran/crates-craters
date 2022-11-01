@@ -29,7 +29,7 @@ export default function MenuButton({ onPress, value, label, icon, width, invisib
     <Pressable style={{
       ...styles.body,
       width: bodyWidth,
-      backgroundColor: (pressed) ? Colors.MAIN_BLUE_TRANSPARENT : "#00000000",
+      backgroundColor: (pressed) ? Colors.MAIN_COLOR_TRANSPARENT : "#00000000",
       opacity: (invisible) ? 0 : 1,
     }} onPress={pressedFn} onPressIn={() => { setPressedState(true) }} onPressOut={() => { setPressedState(false) }}>
       {(icon) && <Image style={styles.icon} source={icon}/>}
@@ -41,7 +41,7 @@ export default function MenuButton({ onPress, value, label, icon, width, invisib
 const styles = StyleSheet.create({
   body: {
     borderWidth: 1,
-    borderColor: Colors.MAIN_BLUE,
+    borderColor: Colors.MAIN_COLOR,
     borderRadius: 10,
     paddingVertical: 10,
     marginTop: 15,
@@ -52,7 +52,7 @@ const styles = StyleSheet.create({
   },
   label: {
     textAlign: "center",
-    color: Colors.MAIN_BLUE,
+    color: Colors.MAIN_COLOR,
     fontSize: 16,
     paddingRight: 5,
   },

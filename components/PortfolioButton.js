@@ -2,7 +2,7 @@ import { Pressable, Text, StyleSheet, Image, Dimensions, Linking } from 'react-n
 import React, { useState } from "react";
 
 const win = Dimensions.get('window');
-const LOGO_GREEN = "#4F772D";
+const LOGO_GREEN = "#90A955";
 
 /**
  * PortfolioButton is just like the basic button type MenuButton but
@@ -18,7 +18,7 @@ export default function PortfolioButton() {
   return (
     <Pressable style={{
       ...styles.body,
-      backgroundColor: (pressed) ? "#4F772D33" : "#00000000",
+      backgroundColor: (pressed) ? "#90A95533" : "#00000000",
     }} onPress={pressedFn} onPressIn={() => { setPressedState(true) }} onPressOut={() => { setPressedState(false) }}>
       <Image style={styles.icon} source={require('../assets/leaf_logo.png')}/>
       <Text style={styles.label}>Stefan Todoran</Text>

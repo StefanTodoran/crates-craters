@@ -1,20 +1,22 @@
 import { View, Text, StyleSheet, Image, Dimensions } from 'react-native';
 import React from "react";
+
 import Colors from '../Colors';
+import Graphics from '../Graphics';
 import MenuButton from '../components/MenuButton';
 
 export default function HowToPlay({ pageCallback, darkMode }) {
   return (
     <>
-      <Image style={styles.banner} source={require('../assets/how_to_banner.png')} />
+      <Image style={styles.banner} source={Graphics.HOW_TO_BANNER} />
 
       <Text style={styles.text(darkMode)}>
         The objective of the game is simple: collect all of the coins, before making your way to the
         finish flag.
       </Text>
       <View style={styles.row}>
-        <Image style={styles.icon} source={require('../assets/flag.png')} />
-        <Image style={styles.icon} source={require('../assets/coin.png')} />
+        <Image style={styles.icon} source={Graphics.FLAG} />
+        <Image style={styles.icon} source={Graphics.COIN} />
       </View>
 
       <Text style={styles.text(darkMode)}>
@@ -23,8 +25,8 @@ export default function HowToPlay({ pageCallback, darkMode }) {
         is single use.
       </Text>
       <View style={styles.row}>
-        <Image style={styles.icon} source={require('../assets/door.png')} />
-        <Image style={styles.icon} source={require('../assets/key.png')} />
+        <Image style={styles.icon} source={Graphics.DOOR} />
+        <Image style={styles.icon} source={Graphics.KEY} />
       </View>
 
       <Text style={styles.text(darkMode)}>
@@ -33,8 +35,8 @@ export default function HowToPlay({ pageCallback, darkMode }) {
         it. If you push a crate into a crater, it "fills" the crater, creating a walkable tile.
       </Text>
       <View style={styles.row}>
-        <Image style={styles.icon} source={require('../assets/crate.png')} />
-        <Image style={styles.icon} source={require('../assets/crater.png')} />
+        <Image style={styles.icon} source={Graphics.CRATE} />
+        <Image style={styles.icon} source={Graphics.CRATER} />
       </View>
 
       <Text style={styles.text(darkMode)}>
@@ -42,7 +44,7 @@ export default function HowToPlay({ pageCallback, darkMode }) {
         Good luck out there!
       </Text>
 
-      <MenuButton onPress={pageCallback} value="home" label="Back to Menu" icon={require('../assets/door.png')}/>
+      <MenuButton onPress={pageCallback} value="home" label="Back to Menu" icon={Graphics.DOOR}/>
     </>
   );
 }
@@ -68,7 +70,7 @@ const styles = StyleSheet.create({
   text: darkMode => ({
     maxWidth: win.width * 0.8,
     marginBottom: 10,
-    color: (darkMode) ? Colors.MAIN_BLUE : Colors.DARK_BLUE,
+    color: (darkMode) ? Colors.MAIN_COLOR : Colors.DARK_COLOR,
   }),
   icon: {
     height: 30,
