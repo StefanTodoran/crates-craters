@@ -1,9 +1,7 @@
 import { StyleSheet, Dimensions, Image, Animated } from 'react-native';
 import React, { useEffect, useRef } from "react";
 
-import Colors from '../Colors';
-import Graphics from '../Graphics';
-const icons = [Graphics.FLAG, Graphics.CRATE, Graphics.COIN, Graphics.COIN, Graphics.COIN, Graphics.KEY, Graphics.KEY, Graphics.KEY];
+import { colors, graphics } from '../Theme';
 const win = Dimensions.get('window');
 
 export default function WinScreen({ darkMode }) {
@@ -32,6 +30,13 @@ export default function WinScreen({ darkMode }) {
   function randomInt(max) {
     return Math.floor(Math.random() * max);
   }
+  function randomIcon() {
+    const chance = randomInt(7);
+    if (chance === 0) { return graphics.FLAG }
+    if (chance === 1) { return graphics.CRATE }
+    if (chance > 1 && chance < 5) { return graphics.COIN }
+    if (chance > 4 && chance < 8) { return graphics.KEY }
+  }
 
   const confetti = [];
   for (let i = 0; i < 20; i++) {
@@ -39,7 +44,7 @@ export default function WinScreen({ darkMode }) {
     const velX = (Math.random() - 0.5) * 3; 
     const velY = Math.random() - 0.5;
     const rotate = randomInt(10);
-    const icon = icons[randomInt(icons.length)];
+    const icon = randomIcon();
 
     confetti.push(<Animated.Image 
       key={`confetti<${i}>`} source={icon}
@@ -51,9 +56,9 @@ export default function WinScreen({ darkMode }) {
     <Animated.View style={{
       ...styles.modal,
       opacity: fadeAnim,
-      backgroundColor: (darkMode) ? Colors.NEAR_BLACK : "white",
+      backgroundColor: (darkMode) ? colors.NEAR_BLACK : "white",
     }}>
-      <Image style={styles.banner} source={Graphics.WIN_BANNER}/>
+      <Image style={styles.banner} source={graphics.WIN_BANNER}/>
       {confetti}
     </Animated.View>
   );

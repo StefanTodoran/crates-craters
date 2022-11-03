@@ -1,16 +1,13 @@
-import { Text, StyleSheet, Image, Dimensions, View } from 'react-native';
+import { Text, StyleSheet, Image, Dimensions, View, Linking } from 'react-native';
 import React from "react";
 
-import Colors from '../Colors';
-import Graphics from '../Graphics';
-
+import { colors, graphics, nextTheme } from '../Theme';
 import MenuButton from '../components/MenuButton';
-import PortfolioButton from '../components/PortfolioButton';
 
-export default function About({ pageCallback, darkMode, darkModeCallback }) {
+export default function About({ pageCallback, darkMode, darkModeCallback, setThemeCallback }) {
   return (
     <>
-      <Image style={styles.banner} source={Graphics.ABOUT_BANNER} />
+      <Image style={styles.banner} source={graphics.ABOUT_BANNER} />
 
       <Text style={styles.text(darkMode)}>
         Crates & Craters is a passion project entirely built and maintained by Stefan Todoran.
@@ -20,19 +17,25 @@ export default function About({ pageCallback, darkMode, darkModeCallback }) {
         If you're looking to check out some of my other work or get in contact, click the button below.
         Please also use that button if you encounter any bugs or have any suggestions.
       </Text>
-      
+
       <Text style={styles.text(darkMode)}>
-        It links to my portfolio website, but if you scroll to the very bottom there is a contact link. The mail icon also takes you right there.
+        It links to my portfolio website. Click the mail icon to scroll to the contact section at the bottom of the page.
       </Text>
 
-      <View style={styles.row}>
+      {/* <View style={styles.row}>
         <Image style={styles.icon} source={require('../assets/mail_1.png')} />
         <Image style={styles.icon} source={require('../assets/mail_2.png')} />
-      </View>
+      </View> */}
 
-      <PortfolioButton />
-      <MenuButton onPress={darkModeCallback} value={null} label="Toggle Dark Mode" icon={Graphics.NIGHT_MODE_ICON} />
-      <MenuButton onPress={pageCallback} value="home" label="Back to Menu" icon={Graphics.DOOR} />
+      <MenuButton onPress={(url) => { Linking.openURL(url) }} value={"https://todoran.dev/"}
+        label="Stefan Todoran" icon={graphics.LOGO} />
+      <MenuButton onPress={darkModeCallback} value={null} label="Toggle Dark Mode" icon={graphics.NIGHT_MODE_ICON} />
+      <MenuButton onPress={() => {
+        const newTheme = nextTheme();
+        console.log(newTheme);
+        setThemeCallback(newTheme);
+      }} value={null} label="Change App Theme" icon={graphics.THEME_ICON} />
+      <MenuButton onPress={pageCallback} value="home" label="Back to Menu" icon={graphics.DOOR} />
     </>
   );
 }
@@ -53,7 +56,7 @@ const styles = StyleSheet.create({
   text: darkMode => ({
     maxWidth: win.width * 0.8,
     marginBottom: 10,
-    color: (darkMode) ? Colors.MAIN_COLOR : Colors.DARK_COLOR,
+    color: (darkMode) ? colors.MAIN_COLOR : colors.DARK_COLOR,
   }),
   row: {
     flexDirection: 'row',

@@ -1,8 +1,7 @@
 import { View, StyleSheet, Dimensions, Animated } from 'react-native';
 import React, { useEffect, useRef } from "react";
 
-import Colors from '../Colors';
-import Graphics from '../Graphics';
+import { colors, graphics } from '../Theme';
 const win = Dimensions.get('window');
 
 export default function Inventory({ coins, maxCoins, keys }) {
@@ -47,7 +46,7 @@ export default function Inventory({ coins, maxCoins, keys }) {
     // If it is the last key and # of keys changed, animate it. Otherwise set animated to
     // one meaning not animated, since it is terminal animation value.
     const animated = (i + 1 === displayKeys && prevKeys !== keys) ? keysAnim : 1;
-    inventory.push(<Animated.Image key={`key<${i}>`} source={Graphics.KEY} style={styles.icon(animated)}/>)
+    inventory.push(<Animated.Image key={`key<${i}>`} source={graphics.KEY} style={styles.icon(animated)} />)
   }
   // END KEY ANIMATION
   // =================
@@ -59,8 +58,11 @@ export default function Inventory({ coins, maxCoins, keys }) {
       </View>
       <View style={styles.row}>
         <Animated.Text style={styles.coinsText(coinsAnim)}>{coins}</Animated.Text>
-        <Animated.Text style={styles.maxCoinsText}>/{maxCoins}</Animated.Text>
-        <Animated.Image style={styles.icon(coinsAnim)} source={Graphics.COIN}/>
+        <Animated.Text style={{
+          color: colors.DARK_COLOR,
+          fontSize: 10,
+        }}>/{maxCoins}</Animated.Text>
+        <Animated.Image style={styles.icon(coinsAnim)} source={graphics.COIN} />
       </View>
     </View>
   );
@@ -74,14 +76,10 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   coinsText: (anim) => ({
-    color: Colors.MAIN_COLOR,
+    color: colors.MAIN_COLOR,
     fontSize: 18,
     opacity: anim,
   }),
-  maxCoinsText: {
-    color: Colors.DARK_COLOR,
-    fontSize: 10,
-  },
   row: {
     flexDirection: "row",
     alignItems: "center",

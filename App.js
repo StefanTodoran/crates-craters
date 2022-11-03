@@ -2,9 +2,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useRef, useState } from 'react';
 import { StyleSheet, View, Image, Dimensions, Animated } from 'react-native';
 
-import Colors from './Colors';
-import Graphics from './Graphics';
-
+import { colors, graphics } from './Theme';
 import MenuButton from './components/MenuButton';
 import About from './pages/About';
 import HowToPlay from './pages/HowToPlay';
@@ -25,9 +23,10 @@ export default function App() {
   }
 
   const [darkMode, setDarkMode] = useState(false);
-  const toggleDarkMode = (null_) => { // scuffed but I think it needs to be there due to MenuButton implementation
+  const [curTheme, setCurTheme] = useState("purple");
+  const toggleDarkMode = () => {
     setDarkMode(current => !current);
-  } 
+  }
   
   const [level, setLevelState] = useState(1);
   const [game, setGameState] = useState(null);
@@ -46,9 +45,9 @@ export default function App() {
       case "how_to_play":
         return <HowToPlay pageCallback={setPage} darkMode={darkMode}/>;
       case "about":
-        return <About pageCallback={setPage} darkMode={darkMode} darkModeCallback={toggleDarkMode}/>;
+        return <About pageCallback={setPage} darkMode={darkMode} darkModeCallback={toggleDarkMode} setThemeCallback={setCurTheme}/>;
       default:
-        return <MenuButton onPress={setPage} value="home" label="Back to Menu" icon={Graphics.DOOR}/>;
+        return <MenuButton onPress={setPage} value="home" label="Back to Menu" icon={graphics.DOOR}/>;
     }
   }
 
@@ -65,18 +64,18 @@ export default function App() {
   return (
     <View style={{
       ...styles.body,
-      backgroundColor: (darkMode) ? Colors.NEAR_BLACK : "white",
+      backgroundColor: (darkMode) ? colors.NEAR_BLACK : "white",
     }}>
-      <Image style={styles.banner} source={Graphics.TITLE_BANNER}/>
-      {game && <MenuButton onPress={setPage} value="play_level" label="Resume Game" icon={Graphics.KEY}/>}
-      <MenuButton onPress={setPage} value="level_select" label="Level Select" icon={Graphics.FLAG}/>
-      <MenuButton onPress={setPage} value="how_to_play" label="How to Play" icon={Graphics.HELP_ICON}/>
-      <MenuButton onPress={setPage} value="about" label="About the App" icon={Graphics.PLAYER}/>
+      <Image style={styles.banner} source={graphics.TITLE_BANNER}/>
+      {game && !game.won && <MenuButton onPress={setPage} value="play_level" label="Resume Game" icon={graphics.KEY}/>}
+      <MenuButton onPress={setPage} value="level_select" label="Level Select" icon={graphics.FLAG}/>
+      <MenuButton onPress={setPage} value="how_to_play" label="How to Play" icon={graphics.HELP_ICON}/>
+      <MenuButton onPress={setPage} value="about" label="About the App" icon={graphics.PLAYER}/>
       <StatusBar style="auto" />
       {page !== "home" && 
         <Animated.View style={{
           ...styles.modal,
-          backgroundColor: (darkMode) ? Colors.NEAR_BLACK : "white",
+          backgroundColor: (darkMode) ? colors.NEAR_BLACK : "white",
           opacity: anim,
           transform: [{
             translateY: anim.interpolate({

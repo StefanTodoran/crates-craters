@@ -1,22 +1,21 @@
 import { View, Text, StyleSheet, Image, Dimensions } from 'react-native';
 import React from "react";
 
-import Colors from '../Colors';
-import Graphics from '../Graphics';
+import { colors, graphics } from '../Theme';
 import MenuButton from '../components/MenuButton';
 
 export default function HowToPlay({ pageCallback, darkMode }) {
   return (
     <>
-      <Image style={styles.banner} source={Graphics.HOW_TO_BANNER} />
+      <Image style={styles.banner} source={graphics.HOW_TO_BANNER} />
 
       <Text style={styles.text(darkMode)}>
         The objective of the game is simple: collect all of the coins, before making your way to the
         finish flag.
       </Text>
       <View style={styles.row}>
-        <Image style={styles.icon} source={Graphics.FLAG} />
-        <Image style={styles.icon} source={Graphics.COIN} />
+        <Image style={styles.icon} source={graphics.FLAG} />
+        <Image style={styles.icon} source={graphics.COIN} />
       </View>
 
       <Text style={styles.text(darkMode)}>
@@ -25,8 +24,8 @@ export default function HowToPlay({ pageCallback, darkMode }) {
         is single use.
       </Text>
       <View style={styles.row}>
-        <Image style={styles.icon} source={Graphics.DOOR} />
-        <Image style={styles.icon} source={Graphics.KEY} />
+        <Image style={styles.icon} source={graphics.DOOR} />
+        <Image style={styles.icon} source={graphics.KEY} />
       </View>
 
       <Text style={styles.text(darkMode)}>
@@ -35,8 +34,8 @@ export default function HowToPlay({ pageCallback, darkMode }) {
         it. If you push a crate into a crater, it "fills" the crater, creating a walkable tile.
       </Text>
       <View style={styles.row}>
-        <Image style={styles.icon} source={Graphics.CRATE} />
-        <Image style={styles.icon} source={Graphics.CRATER} />
+        <Image style={styles.icon} source={graphics.CRATE} />
+        <Image style={styles.icon} source={graphics.CRATER} />
       </View>
 
       <Text style={styles.text(darkMode)}>
@@ -44,7 +43,7 @@ export default function HowToPlay({ pageCallback, darkMode }) {
         Good luck out there!
       </Text>
 
-      <MenuButton onPress={pageCallback} value="home" label="Back to Menu" icon={Graphics.DOOR}/>
+      <MenuButton onPress={pageCallback} value="home" label="Back to Menu" icon={graphics.DOOR}/>
     </>
   );
 }
@@ -70,7 +69,7 @@ const styles = StyleSheet.create({
   text: darkMode => ({
     maxWidth: win.width * 0.8,
     marginBottom: 10,
-    color: (darkMode) ? Colors.MAIN_COLOR : Colors.DARK_COLOR,
+    color: (darkMode) ? colors.MAIN_COLOR : colors.DARK_COLOR,
   }),
   icon: {
     height: 30,

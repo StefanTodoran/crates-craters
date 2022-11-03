@@ -2,32 +2,70 @@
 // as some helpful consts for dealing with that data.
 
 const level_one = [
-  [0, 0, 0, 1, 0, 0, 0, 0],
-  [0, 8, 0, 2, 5, 0, 4, 0],
-  [0, 0, 0, 1, 0, 4, 6, 0],
-  [1, 1, 1, 1, 0, 0, 5, 0],
-  [4, 4, 0, 0, 0, 0, 4, 0],
-  [6, 5, 0, 0, 0, 4, 0, 0],
-  [0, 1, 1, 1, 1, 0, 7, 0],
-  [0, 0, 3, 1, 6, 0, 0, 0],
+  [0, 0, 0, 0, 0, 0, 0, 0],
+  [0, 8, 0, 0, 6, 0, 0, 0],
+  [1, 1, 1, 1, 1, 1, 2, 1],
+  [0, 0, 0, 5, 0, 6, 0, 0],
+  [6, 0, 0, 4, 4, 0, 3, 0],
+  [0, 0, 0, 0, 4, 4, 0, 0],
+  [1, 2, 1, 1, 1, 1, 1, 1],
+  [0, 0, 0, 4, 5, 0, 0, 0],
+  [0, 0, 0, 4, 5, 0, 3, 0],
+  [0, 0, 0, 4, 5, 0, 0, 0],
+  [1, 0, 1, 1, 1, 1, 1, 1],
+  [0, 0, 0, 0, 4, 0, 0, 0],
+  [0, 6, 0, 0, 4, 0, 7, 0],
+  [0, 0, 0, 0, 4, 0, 0, 0],
 ];
 const level_two = [
+  [0, 0, 0, 1, 0, 0, 1, 0],
+  [0, 7, 0, 0, 4, 0, 8, 0],
+  [0, 0, 0, 1, 0, 0, 1, 0],
+  [0, 0, 0, 1, 3, 0, 1, 1],
+  [0, 4, 4, 1, 5, 1, 0, 0],
+  [0, 4, 0, 1, 0, 0, 0, 0],
+  [4, 0, 0, 1, 0, 6, 0, 0],
+  [1, 0, 1, 1, 0, 0, 5, 0],
+  [0, 0, 0, 0, 0, 5, 4, 0],
+  [0, 0, 0, 6, 0, 0, 0, 0],
+  [1, 2, 1, 0, 0, 0, 0, 0],
+  [0, 0, 5, 0, 0, 1, 1, 4],
+  [0, 6, 5, 0, 0, 1, 6, 0],
+  [6, 0, 1, 0, 0, 4, 0, 0],
+];
+const level_three = [
+  [0, 0, 0, 6, 1, 0, 0, 0],
+  [0, 4, 0, 1, 0, 0, 3, 5],
+  [4, 0, 4, 1, 0, 4, 4, 0],
+  [0, 0, 0, 1, 0, 4, 5, 0],
+  [0, 6, 0, 1, 4, 4, 0, 0],
+  [0, 0, 0, 2, 0, 0, 0, 5],
+  [1, 1, 1, 1, 0, 0, 1, 0],
+  [0, 0, 6, 5, 4, 1, 0, 0],
+  [1, 1, 0, 4, 7, 4, 0, 0],
+  [0, 0, 0, 0, 4, 0, 0, 0],
+  [0, 0, 0, 1, 0, 1, 0, 0],
+  [0, 0, 0, 1, 8, 1, 5, 5],
+  [4, 4, 0, 0, 1, 0, 0, 6],
+  [6, 0, 5, 0, 0, 0, 0, 0],
+];
+const level_four = [
   [0, 0, 2, 0, 1, 1, 1, 3],
   [0, 0, 1, 0, 1, 0, 0, 5],
   [8, 0, 1, 0, 2, 0, 4, 0],
   [0, 0, 1, 0, 1, 6, 0, 4],
   [1, 1, 1, 0, 1, 1, 1, 1],
-  [1, 1, 1, 0, 1, 1, 6, 0],
+  [1, 1, 1, 0, 1, 6, 0, 0],
   [1, 1, 0, 4, 5, 1, 1, 0],
-  [1, 1, 5, 7, 0, 1, 1, 0],
+  [1, 1, 5, 7, 0, 1, 1, 5],
   [1, 3, 4, 4, 4, 0, 1, 0],
   [1, 1, 0, 0, 0, 0, 1, 0],
   [1, 1, 4, 4, 0, 0, 1, 0],
-  [0, 0, 0, 0, 4, 5, 1, 0],
+  [0, 0, 0, 0, 4, 5, 1, 4],
   [1, 1, 1, 1, 2, 1, 1, 0],
   [1, 1, 1, 3, 0, 0, 0, 0],
 ];
-const level_three = [
+const level_five = [
   [0, 0, 1, 8, 1, 1, 1, 1],
   [0, 6, 1, 2, 1, 0, 6, 0],
   [4, 0, 5, 5, 0, 4, 4, 4],
@@ -43,7 +81,7 @@ const level_three = [
   [0, 4, 0, 0, 5, 4, 0, 0],
   [0, 0, 4, 0, 4, 0, 4, 6],
 ];
-const level_four = [
+const level_six = [
   [3, 0, 5, 0, 0, 1, 6, 3],
   [4, 4, 0, 4, 4, 1, 1, 2],
   [4, 0, 4, 0, 0, 0, 0, 5],
@@ -59,7 +97,7 @@ const level_four = [
   [0, 0, 1, 1, 6, 1, 3, 4],
   [0, 0, 1, 1, 0, 1, 1, 1],
 ];
-const level_five = [
+const level_seven = [
   [1, 6, 5, 1, 4, 0, 4, 0],
   [5, 4, 0, 3, 5, 0, 4, 4],
   [0, 4, 1, 1, 0, 0, 0, 0],
@@ -75,6 +113,10 @@ const level_five = [
   [5, 0, 0, 0, 3, 0, 4, 6],
 ];
 const blank_level = [
+  [0, 0, 0, 0, 0, 0, 0, 0],
+  [0, 0, 0, 0, 0, 0, 0, 0],
+  [0, 0, 0, 0, 0, 0, 0, 0],
+  [0, 0, 0, 0, 0, 0, 0, 0],
   [0, 0, 0, 2, 0, 0, 0, 0],
   [5, 4, 0, 0, 0, 0, 0, 3],
   [4, 0, 0, 0, 0, 0, 0, 0],
@@ -82,6 +124,23 @@ const blank_level = [
   [0, 0, 3, 0, 0, 0, 0, 0],
   [0, 2, 0, 0, 0, 4, 0, 0],
   [8, 6, 7, 3, 0, 0, 0, 0],
+  [0, 0, 0, 0, 0, 0, 0, 0],
+  [0, 0, 0, 0, 0, 0, 0, 0],
+  [0, 0, 0, 0, 0, 0, 0, 0],
+];
+
+export const levels = [
+  level_one,
+  level_two,
+  level_three,
+  level_four,
+  level_five,
+  level_six,
+  level_seven,
+  blank_level,
+  blank_level,
+  blank_level,
+  blank_level,
 ];
 
 // empty, key, coin, flag
@@ -123,27 +182,17 @@ export function tileAt(yPos, xPos, board) {
   return "outside"; // outside of board
 }
 
-import Graphics from './Graphics';
-export const icon_src = {
-  "door": Graphics.DOOR,
-  "key": Graphics.KEY,
-  "crate": Graphics.CRATE,
-  "crater": Graphics.CRATER,
-  "coin": Graphics.COIN,
-  "flag": Graphics.FLAG,
-};
+import { graphics } from './Theme';
+// This can't just be a dictionary since graphics changes.
+export function icon_src(type) {
+  if (type === "door") { return graphics.DOOR; }
+  if (type === "key") { return graphics.KEY; }
+  if (type === "crate") { return graphics.CRATE; }
+  if (type === "crater") { return graphics.CRATER; }
+  if (type === "coin") { return graphics.COIN; }
+  if (type === "flag") { return graphics.FLAG; }
+}
 
-export const levels = [
-  level_one,
-  level_two,
-  level_three,
-  level_four,
-  level_five,
-  blank_level,
-  blank_level,
-  blank_level,
-  blank_level,
-];
 
 /**
  * Returns the player spawn position in the given level.
@@ -228,15 +277,15 @@ export function doGameMove(game_obj, move) {
   // Pushing a crate onto an empty tile.
   if (tileAt(move_to.y, move_to.x, next.board) === "crate" &&
     ["spawn", "empty"].includes(tileAt(one_further.y, one_further.x, next.board))) {
-      next.board[move_to.y][move_to.x] = 0;
-      next.board[one_further.y][one_further.x] = indentifier["crate"];
+    next.board[move_to.y][move_to.x] = 0;
+    next.board[one_further.y][one_further.x] = indentifier["crate"];
   }
 
   // Pushing a crate into a crater.
   if (tileAt(move_to.y, move_to.x, next.board) === "crate" &&
     tileAt(one_further.y, one_further.x, next.board) === "crater") {
-      next.board[move_to.y][move_to.x] = 0;
-      next.board[one_further.y][one_further.x] = 0;
+    next.board[move_to.y][move_to.x] = 0;
+    next.board[one_further.y][one_further.x] = 0;
   }
 
   next.won = attemptMove(move_to.y, move_to.x, next);

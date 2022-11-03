@@ -1,6 +1,6 @@
 import { Pressable, Text, StyleSheet, Image, Dimensions } from 'react-native';
 import React, { useState } from "react";
-import Colors from '../Colors';
+import { colors } from '../Theme';
 const win = Dimensions.get('window');
 
 /**
@@ -18,7 +18,7 @@ const win = Dimensions.get('window');
  */
 export default function MenuButton({ onPress, value, label, icon, width, invisible }) {
   const [pressed, setPressedState] = useState(false);
-  
+
   const pressedFn = () => {
     onPress(value);
   }
@@ -29,11 +29,14 @@ export default function MenuButton({ onPress, value, label, icon, width, invisib
     <Pressable style={{
       ...styles.body,
       width: bodyWidth,
-      backgroundColor: (pressed) ? Colors.MAIN_COLOR_TRANSPARENT : "#00000000",
+      borderColor: colors.MAIN_COLOR,
+      backgroundColor: (pressed) ? colors.MAIN_COLOR_TRANSPARENT : "#00000000",
       opacity: (invisible) ? 0 : 1,
     }} onPress={pressedFn} onPressIn={() => { setPressedState(true) }} onPressOut={() => { setPressedState(false) }}>
-      {(icon) && <Image style={styles.icon} source={icon}/>}
-      <Text style={styles.label}>{label}</Text>
+      {(icon) && <Image style={styles.icon} source={icon} />}
+      <Text style={{
+        ...styles.label, color: colors.MAIN_COLOR,
+      }}>{label}</Text>
     </Pressable>
   );
 }
@@ -41,7 +44,7 @@ export default function MenuButton({ onPress, value, label, icon, width, invisib
 const styles = StyleSheet.create({
   body: {
     borderWidth: 1,
-    borderColor: Colors.MAIN_COLOR,
+    // borderColor: colors.MAIN_COLOR, won't auto update here, we do it in the render function
     borderRadius: 10,
     paddingVertical: 10,
     marginTop: 15,
@@ -52,7 +55,7 @@ const styles = StyleSheet.create({
   },
   label: {
     textAlign: "center",
-    color: Colors.MAIN_COLOR,
+    // color: colors.MAIN_COLOR, won't auto update here, so we do it in render funciton
     fontSize: 16,
     paddingRight: 5,
   },
