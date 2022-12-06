@@ -8,6 +8,7 @@ import About from './pages/About';
 import HowToPlay from './pages/HowToPlay';
 import LevelSelect from './pages/LevelSelect';
 import PlayLevel from './pages/PlayLevel';
+import CreateLevel from './pages/CreateLevel';
 
 export default function App() {
   const [page, setPageState] = useState("home"); 
@@ -28,8 +29,9 @@ export default function App() {
     setDarkMode(current => !current);
   }
   
-  const [level, setLevelState] = useState(1);
-  const [game, setGameState] = useState(null);
+  const [level, setLevelState] = useState(1); // the parent needs to know the level from LevelSelect to share with PlayLevel
+  const [game, setGameState] = useState(null); // stores the game state so levels can be resumed
+  const [editorLevel, setEditorLevel] = useState(null); // stores the level being created so it can be recovered
   const changeLevel = (lvl) => {
     setLevelState(lvl);
     setGameState(null);
@@ -42,6 +44,8 @@ export default function App() {
         return <LevelSelect pageCallback={setPage} levelCallback={changeLevel}/>;
       case "play_level":
         return <PlayLevel pageCallback={setPage} gameStateCallback={setGameState} level={level} game={game} darkMode={darkMode}/>;
+      case "level_editor":
+        return <CreateLevel pageCallback={setPage} levelCallback={changeLevel} level={editorLevel} storeLevelCallback={setEditorLevel} darkMode={darkMode}/>;
       case "how_to_play":
         return <HowToPlay pageCallback={setPage} darkMode={darkMode}/>;
       case "about":
@@ -69,6 +73,7 @@ export default function App() {
       <Image style={styles.banner} source={graphics.TITLE_BANNER}/>
       {game && !game.won && <MenuButton onPress={setPage} value="play_level" label="Resume Game" icon={graphics.KEY}/>}
       <MenuButton onPress={setPage} value="level_select" label="Level Select" icon={graphics.FLAG}/>
+      <MenuButton onPress={setPage} value="level_editor" label="Level Editor" icon={graphics.HAMMER_ICON}/>
       <MenuButton onPress={setPage} value="how_to_play" label="How to Play" icon={graphics.HELP_ICON}/>
       <MenuButton onPress={setPage} value="about" label="About the App" icon={graphics.PLAYER}/>
       <StatusBar style="auto" />

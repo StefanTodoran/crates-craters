@@ -8,31 +8,45 @@ const win = Dimensions.get('window');
  * It has a few simple props.
  * 
  * REQUIRED:
- * @param {Function} onPress The function to be called on press event.
- * @param {any} value The value to be passed to the onPress function.
  * @param {string} label The text to be displayed in the button.
- * @param {number} width The width the button should have, defaults to 50% of the view width.
- * @param {boolean} invisible If true, the button is completely invisible (opacity of zero).
  * OPTIONAL:
+ * @param {any} value The value to be passed to the onPress function.
+ * @param {number} width The width the button should have, defaults to 50% of the view width.
+ * @param {Function} onPress The function to be called on press event.
+ * @param {Function} onLongPress The function to be called on long press event.
  * @param {ImageSourcePropType} icon The image to be displayed in the button, optional.
+ * @param {boolean} invisible If true, the button is completely invisible (opacity of zero).
+ * @param {boolean} disabled Whether or not the button can be pressed (changes appearance).
  */
-export default function MenuButton({ onPress, value, label, icon, width, invisible }) {
+export default function MenuButton({ onPress, onLongPress, value, label, icon, width, invisible, disabled }) {
   const [pressed, setPressedState] = useState(false);
 
+  // This ensures that onPress is optional.
   const pressedFn = () => {
-    onPress(value);
+    if (!!onPress) {
+      onPress(value);
+    }
+  }
+
+  // This ensures that onLongPress is optional, and gives
+  // the user visual feedback when it occurs.
+  const longPressedFn = () => {
+    setPressedState(true);
+    if (!!onLongPress) {
+      onLongPress(value);
+    }
   }
 
   const bodyWidth = (width) ? width : win.width / 2;
 
   return (
-    <Pressable style={{
+    <Pressable onPress={pressedFn} onLongPress={longPressedFn} style={{
       ...styles.body,
       width: bodyWidth,
       borderColor: colors.MAIN_COLOR,
       backgroundColor: (pressed) ? colors.MAIN_COLOR_TRANSPARENT : "#00000000",
-      opacity: (invisible) ? 0 : 1,
-    }} onPress={pressedFn} onPressIn={() => { setPressedState(true) }} onPressOut={() => { setPressedState(false) }}>
+      opacity: (invisible) ? 0 : (disabled) ? 0.5 : 1,
+    }} onPressIn={() => { setPressedState(!!onPress) }} onPressOut={() => { setPressedState(false) }} disabled={disabled}>
       {(icon) && <Image style={styles.icon} source={icon} />}
       <Text style={{
         ...styles.label, color: colors.MAIN_COLOR,

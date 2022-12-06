@@ -45,7 +45,7 @@ const level_three = [
   [1, 1, 0, 4, 7, 4, 0, 0],
   [0, 0, 0, 0, 4, 0, 0, 0],
   [0, 0, 0, 1, 0, 1, 0, 0],
-  [0, 0, 0, 1, 8, 1, 5, 5],
+  [0, 0, 0, 1, 8, 1, 5, 4],
   [4, 4, 0, 0, 1, 0, 0, 6],
   [6, 0, 5, 0, 0, 0, 0, 0],
 ];
@@ -117,35 +117,96 @@ const blank_level = [
   [0, 0, 0, 0, 0, 0, 0, 0],
   [0, 0, 0, 0, 0, 0, 0, 0],
   [0, 0, 0, 0, 0, 0, 0, 0],
-  [0, 0, 0, 2, 0, 0, 0, 0],
-  [5, 4, 0, 0, 0, 0, 0, 3],
-  [4, 0, 0, 0, 0, 0, 0, 0],
   [0, 0, 0, 0, 0, 0, 0, 0],
-  [0, 0, 3, 0, 0, 0, 0, 0],
-  [0, 2, 0, 0, 0, 4, 0, 0],
-  [8, 6, 7, 3, 0, 0, 0, 0],
+  [0, 0, 0, 0, 0, 0, 0, 0],
+  [0, 0, 0, 7, 6, 0, 0, 0],
+  [0, 0, 0, 0, 8, 0, 0, 0],
+  [0, 0, 0, 0, 0, 0, 0, 0],
+  [0, 0, 0, 0, 0, 0, 0, 0],
+  [0, 0, 0, 0, 0, 0, 0, 0],
   [0, 0, 0, 0, 0, 0, 0, 0],
   [0, 0, 0, 0, 0, 0, 0, 0],
   [0, 0, 0, 0, 0, 0, 0, 0],
 ];
 
-export const levels = [
-  level_one,
-  level_two,
-  level_three,
-  level_four,
-  level_five,
-  level_six,
-  level_seven,
-  blank_level,
-  blank_level,
-  blank_level,
-  blank_level,
+const defaults = [
+  createLevelObj("Test Level", "default", blank_level),
+  createLevelObj("Level 1", "default", level_one),
+  createLevelObj("Level 2", "default", level_two),
+  createLevelObj("Level 3", "default", level_three),
+  createLevelObj("Level 4", "default", level_four),
+  createLevelObj("Level 5", "default", level_five),
+  createLevelObj("Level 6", "default", level_six),
+  createLevelObj("Level 7", "default", level_seven),
 ];
 
-// empty, key, coin, flag
-// export const walkables = [0,3,6,7,8];
-export const walkables = [0, 7, 8];
+export let levels = [...defaults];
+
+/**
+ * Creates a level object, the type used by level select and parts of Game.js
+ * @param {string} name The desired level name.
+ * @param {string} designer The name of the individual who designed the level.
+ * @param {number[][]} board The board to be used, or null for a blank board.
+ * @returns 
+ */
+export function createLevelObj(name, designer, board) {
+  if (board === null) {
+    board = createBlankBoard(8, 14);
+  }
+  return {
+    name: name,
+    designer: designer,
+    created: getFormatedDate(),
+    board: board,
+  };
+}
+
+function getFormatedDate() {
+  const date = new Date();
+  const dd = String(date.getDate()).padStart(2, '0');
+  const mm = String(date.getMonth() + 1).padStart(2, '0'); // January is 0
+  const yyyy = date.getFullYear();
+
+  return mm + '/' + dd + '/' + yyyy;
+}
+
+function createBlankBoard(w, h) {
+  const board = new Array(h);
+  for (let i = 0; i < h; i++) {
+    board[i] = new Array(w).fill(0);
+  }
+  return board;
+}
+
+// ========================
+// LOADING LOCAL LEVEL DATA
+import AsyncStorage from '@react-native-async-storage/async-storage';
+export async function importStoredLevels() {
+  try {
+    const keys = await AsyncStorage.getAllKeys();
+    levels = [...defaults];
+
+    for (let i = 0; i < keys.length; i++) {
+      const level = await getData(keys[i]);
+      levels.push(level);
+    }
+  } catch (err) {
+    console.log("\n\n(ERROR) >>> IMPORTING ERROR:\n", err);
+  }
+}
+
+async function getData(storage_key) {
+  try {
+    const jsonValue = await AsyncStorage.getItem(storage_key);
+    return jsonValue != null ? JSON.parse(jsonValue) : null;
+  } catch (err) {
+    console.log("\n\n(ERROR) >>> READING ERROR:\n", err);
+  }
+}
+
+importStoredLevels();
+// END LOADING LOCAL DATA
+// ======================
 
 export const tiles = {
   0: "empty",
@@ -159,7 +220,7 @@ export const tiles = {
   8: "flag",
 };
 
-export const indentifier = {
+export const identifier = {
   "empty": 0,
   "wall": 1,
   "door": 2,
@@ -173,6 +234,14 @@ export const indentifier = {
 
 export function validTile(yPos, xPos, board) {
   return (yPos >= 0 && yPos < board.length && xPos >= 0 && xPos < board[0].length);
+}
+
+export function canWalk(yPos, xPos, game) {
+  if (validTile(yPos, xPos, game.board)) {
+    return (["empty", "spawn"].includes(tileAt(yPos, xPos, game.board))) ||
+      (tileAt(yPos, xPos, game.board) === "flag" && game.coins === game.maxCoins);
+  }
+  return false;
 }
 
 export function tileAt(yPos, xPos, board) {
@@ -191,21 +260,22 @@ export function icon_src(type) {
   if (type === "crater") { return graphics.CRATER; }
   if (type === "coin") { return graphics.COIN; }
   if (type === "flag") { return graphics.FLAG; }
+  // For level creation:
+  if (type === "spawn") { return graphics.PLAYER; }
 }
 
 
 /**
  * Returns the player spawn position in the given level.
- * @param {Array} level_id The level you wish to search. 
+ * @param {Array} board The board[][] you wish to search. 
  * @returns Returns of the form {y: number, x: number}
  */
-function getSpawnPos(level_id) {
-  const level = levels[level_id];
-  const dimensions = [level.length, level[0].length];
+export function getSpawnPos(board) {
+  const dimensions = [board.length, board[0].length];
 
   for (let i = 0; i < dimensions[0]; i++) {
     for (let j = 0; j < dimensions[1]; j++) {
-      if (tiles[level[i][j]] === "spawn") {
+      if (tiles[board[i][j]] === "spawn") {
         return { y: i, x: j };
       }
     }
@@ -276,9 +346,9 @@ export function doGameMove(game_obj, move) {
 
   // Pushing a crate onto an empty tile.
   if (tileAt(move_to.y, move_to.x, next.board) === "crate" &&
-    ["spawn", "empty"].includes(tileAt(one_further.y, one_further.x, next.board))) {
+    tileAt(one_further.y, one_further.x, next.board) === "empty") {
     next.board[move_to.y][move_to.x] = 0;
-    next.board[one_further.y][one_further.x] = indentifier["crate"];
+    next.board[one_further.y][one_further.x] = identifier["crate"];
   }
 
   // Pushing a crate into a crater.
@@ -293,7 +363,7 @@ export function doGameMove(game_obj, move) {
 }
 
 function attemptMove(yPos, xPos, next) {
-  if (validTile(yPos, xPos, next.board) && walkables.includes(next.board[yPos][xPos])) {
+  if (canWalk(yPos, xPos, next)) {
     next.player.x = xPos;
     next.player.y = yPos;
     return winCondition(next);
@@ -312,12 +382,14 @@ function winCondition(next) {
  * @returns {GameObj}
  */
 export function initializeGameObj(level_id) {
-  const level = levels[level_id];
-  const numberOfCoins = countTimesInArray(level, indentifier["coin"]);
+  const level = cloneBoard(levels[level_id].board);
+  const numberOfCoins = countTimesInArray(level, identifier["coin"]);
+  const startPos = getSpawnPos(level);
+  level[startPos.y][startPos.x] = 0;
 
   return {
     board: level,
-    player: getSpawnPos(level_id),
+    player: startPos,
     maxCoins: numberOfCoins,
     coins: 0, // coins collected so far
     keys: 0, // keys collected so far
@@ -327,17 +399,20 @@ export function initializeGameObj(level_id) {
 
 // Deep copy of a game object.
 function cloneGameObj(game_obj) {
-  const new_board = [];
-  for (let i = 0; i < game_obj.board.length; i++) {
-    new_board[i] = [...game_obj.board[i]];
-  }
-
   return {
-    board: new_board,
+    board: cloneBoard(game_obj.board),
     player: { y: game_obj.player.y, x: game_obj.player.x },
     maxCoins: game_obj.maxCoins,
     coins: game_obj.coins,
     keys: game_obj.keys,
     won: game_obj.won,
   };
+}
+
+export function cloneBoard(board) {
+  const newBoard = [];
+  for (let i = 0; i < board.length; i++) {
+    newBoard[i] = [...board[i]];
+  }
+  return newBoard;
 }

@@ -1,9 +1,10 @@
-import { View, StyleSheet, Dimensions, Pressable, PanResponder } from 'react-native';
+import { View, StyleSheet, Dimensions, PanResponder } from 'react-native';
 import React, { useState, useRef, useEffect } from "react";
 
 import MenuButton from '../components/MenuButton';
 import GameBoard from '../components/GameBoard';
-import Inventory from './Inventory';
+import Inventory from '../components/Inventory';
+import Player from '../components/Player';
 
 import { doGameMove, initializeGameObj } from '../Game';
 import { graphics } from '../Theme';
@@ -18,13 +19,15 @@ export default function PlayLevel({ pageCallback, gameStateCallback, level, game
 
     if (game === null) {
       gameStateCallback(initializeGameObj(level));
+    } else {
+      handleGesture();
+      panResponderEnabled.current = !game.won;
     }
-    handleGesture();
   });
-  
-  const [prevPos, setPrevPos] = useState({ y: null, x: null });
+
   const [touchMove, setTouchMove] = useState({ y: 0, x: 0 });
   const [gesture, setGesture] = useState([false, false, false, false]); // up, down, left, right
+  const panResponderEnabled = useRef(true);
 
   function handleGesture() {
     const [up, down, left, right] = gesture;
@@ -32,7 +35,7 @@ export default function PlayLevel({ pageCallback, gameStateCallback, level, game
     if (bti(up) + bti(down) + bti(left) + bti(right) !== 1) {
       return;
     }
-    
+
     let new_state;
     if (up) {
       new_state = doGameMove(game, "up");
@@ -43,31 +46,25 @@ export default function PlayLevel({ pageCallback, gameStateCallback, level, game
     } else if (right) {
       new_state = doGameMove(game, "right");
     }
-    setPrevPos({ y: game.player.y, x: game.player.x });
+
     setGesture([false, false, false, false]);
     gameStateCallback(new_state);
   }
-  
+
   function onGestureMove(evt, gestureState) {
     const sensitivity = 0.6; // TODO: Set this in the settings somewhere!!
-    let dragY = gestureState.dy * sensitivity;
-    let dragX = gestureState.dx * sensitivity;
+    let dragY = Math.abs(gestureState.dy) * sensitivity;
+    let dragX = Math.abs(gestureState.dx) * sensitivity;
 
-    const diff = Math.max(2, Math.abs(Math.abs(dragX) - Math.abs(dragY)));
-
-    if (Math.abs(dragX) > Math.abs(dragY)) { 
-      // dragY = 0;
-      dragY /= diff;
-      // dragY /= Math.abs(dragX / 10);
-    } else { 
-      // dragX = 0;
-      dragX /= diff;
-      // dragX /= Math.abs(dragY / 10);
+    if (dragX > dragY) {
+      dragY /= Math.max(2, dragX - dragY);
+    } else {
+      dragX /= Math.max(2, dragY - dragX);
     }
 
-    setTouchMove({ y: dragY, x: dragX });
+    setTouchMove({ y: Math.sign(gestureState.dy) * dragY, x: Math.sign(gestureState.dx) * dragX });
   }
-  
+
   function onEndGesture(evt, gestureState) {
     const distance = win.width / 10;
     const vertDist = gestureState.dy; const horizDist = gestureState.dx;
@@ -76,7 +73,7 @@ export default function PlayLevel({ pageCallback, gameStateCallback, level, game
     let down = (vertDist > -distance);
     let left = (horizDist < distance);
     let right = (horizDist > -distance);
-    
+
     // If they swiped perfectly vertically or horizontally, we can just
     // go ahead and skip this and call handleGesture.
     if (bti(up) + bti(down) + bti(left) + bti(right) !== 1) {
@@ -99,12 +96,12 @@ export default function PlayLevel({ pageCallback, gameStateCallback, level, game
   const panResponder = React.useRef(
     PanResponder.create({
       // Ask to be the responder:
-      onStartShouldSetPanResponder: (evt, gestureState) => true,
-      onStartShouldSetPanResponderCapture: (evt, gestureState) => true,
-      onMoveShouldSetPanResponder: (evt, gestureState) => true,
-      onMoveShouldSetPanResponderCapture: (evt, gestureState) => true,
-      onPanResponderTerminationRequest: (evt, gestureState) => true,
-      onShouldBlockNativeResponder: (evt, gestureState) => true,
+      onStartShouldSetPanResponder: (evt, gestureState) => panResponderEnabled.current,
+      onStartShouldSetPanResponderCapture: (evt, gestureState) => panResponderEnabled.current,
+      onMoveShouldSetPanResponder: (evt, gestureState) => panResponderEnabled.current,
+      onMoveShouldSetPanResponderCapture: (evt, gestureState) => panResponderEnabled.current,
+      onPanResponderTerminationRequest: (evt, gestureState) => panResponderEnabled.current,
+      onShouldBlockNativeResponder: (evt, gestureState) => panResponderEnabled.current,
 
       onPanResponderGrant: (evt, gestureState) => { // The gesture has started!
         setTouchMove({ y: 0, x: 0 });
@@ -119,7 +116,9 @@ export default function PlayLevel({ pageCallback, gameStateCallback, level, game
     <>
       {game && <View style={styles.container}>
         <View {...panResponder.panHandlers}>
-          <GameBoard board={game.board} player={game.player} prev={prevPos} keys={game.keys} touch={touchMove} darkMode={darkMode}/>
+          <GameBoard board={game.board}>
+            <Player game={game} touch={touchMove} darkMode={darkMode} />
+          </GameBoard>
           <Inventory coins={game.coins} maxCoins={game.maxCoins} keys={game.keys} />
           {game.won && <WinScreen darkMode={darkMode} />}
         </View>
@@ -136,13 +135,6 @@ export default function PlayLevel({ pageCallback, gameStateCallback, level, game
 // Boolean to integer, returns 0 or 1 for false or true respectively.
 function bti(bool) {
   return bool === true ? 1 : 0;
-}
-
-// Returns a list [height, width] of the size for an element based
-// on the image's size and the desired width percent to be occupied.
-function sizeFromWidthPercent(percent, img_height, img_width) {
-  const ratio = win.width * percent / img_width;
-  return [win.width * percent, ratio * img_height];
 }
 
 const styles = StyleSheet.create({
@@ -162,18 +154,5 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "center",
     marginBottom: 10,
-  },
-  winModal: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  banner: {
-    width: sizeFromWidthPercent(0.8, 145, 600)[0],
-    height: sizeFromWidthPercent(0.8, 145, 600)[1],
   },
 });

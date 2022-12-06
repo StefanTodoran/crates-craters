@@ -50,8 +50,8 @@ function sizeFromWidthPercent(percent, img_height, img_width) {
 
 const styles = StyleSheet.create({
   banner: {
-    width: sizeFromWidthPercent(0.6, 146, 299)[0],
-    height: sizeFromWidthPercent(0.6, 146, 299)[1],
+    width: sizeFromWidthPercent(0.5, 146, 299)[0],
+    height: sizeFromWidthPercent(0.5, 146, 299)[1],
   },
   text: darkMode => ({
     maxWidth: win.width * 0.8,

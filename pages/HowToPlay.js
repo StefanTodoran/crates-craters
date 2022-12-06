@@ -10,7 +10,7 @@ export default function HowToPlay({ pageCallback, darkMode }) {
       <Image style={styles.banner} source={graphics.HOW_TO_BANNER} />
 
       <Text style={styles.text(darkMode)}>
-        The objective of the game is simple: collect all of the coins, before making your way to the
+        The objective of the game is simple: collect all of the coins before making your way to the
         finish flag.
       </Text>
       <View style={styles.row}>
@@ -39,7 +39,7 @@ export default function HowToPlay({ pageCallback, darkMode }) {
       </View>
 
       <Text style={styles.text(darkMode)}>
-        You can undo up to 5 moves. Swipe in any direction to move one tile in that direction. You cannot move diagonally.
+        Swipe in any direction to move one tile in that direction. You cannot move diagonally.
         Good luck out there!
       </Text>
 

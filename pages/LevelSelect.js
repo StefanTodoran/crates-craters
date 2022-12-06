@@ -1,8 +1,10 @@
 import { View, StyleSheet, Dimensions, Image, Animated } from 'react-native';
 import React, { useState, useRef } from "react";
-import MenuButton from '../components/MenuButton';
 
-import { levels } from '../Game';
+import MenuButton from '../components/MenuButton';
+import LevelOption from '../components/LevelOption';
+
+import { levels, importStoredLevels } from '../Game';
 import { graphics } from '../Theme';
 const win = Dimensions.get('window');
 
@@ -22,18 +24,15 @@ export default function LevelSelect({ pageCallback, levelCallback }) {
 
   const pageStart = page * pageSize;
   const pageEnd = (page + 1) * pageSize;
+  importStoredLevels();
   for (let i = pageStart; i < pageEnd; i += 2) {
     const levelButton = (num) => {
       if (levels[num]) {
-        // console.log(`select<${num}>`)
-        return <MenuButton onPress={openLevel} value={num} label={`Level ${num + 1}`}
-          icon={graphics.CRATE} key={`select<${num}>`} width={win.width / 3} />;
+        return <LevelOption key={`select<${num}>`} onPress={openLevel} value={num} level={levels[num]}/>;
       }
       // Most of the values don't matter but we still give it text and an icon 
       // so it is size the same, since we are using this invisible button as padding.
-      // console.log(`invisible<${num}>`)
-      return <MenuButton onPress={console.log} value={num} label={"invisible"} key={`invisible<${num}>`}
-        icon={graphics.CRATE} width={win.width / 3} invisible/>;
+      return <LevelOption key={`invisible<${num}>`}/>;
     }
     level_buttons.push(
       <View style={styles.row}>
