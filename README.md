@@ -9,8 +9,8 @@ The objective of the game is to collect all of the coins and reach the flag. The
 
 Demo | Explanation
 :-------------------------:|:-------------------------:
-![](misc/level-1.jpeg)  |  <p style="text-align: left;">There are a number of obstacles in the players way. The first are walls, which cannot be walked through or interacted with in any way. The edges of the map are also walls.<br><br>The second obstacle are doors, which function the same as a wall unless opened with a key. Any key can open any door, but is used up in the process and the door cannot be re-locked to retrieve the key. Once a door tile is opened with a key, it is just like an empty floor tile.</p>
-![](misc/level-2.jpeg) | <p style="text-align: right;">Finally the last two obstacles are crates and craters. The player cannot walk on either type of tile, however, if there is an empty tile or a crater behind a crate, the player can <b>push</b> the crate by walking into it. If the tile behind is an empty tile, this simply moves the crate. Keep in mind that the player needs to be able to get behind the crate to push it! <br><br> If the tile the crate is pushed into is a crater, the crate will fall in and <b>fill in</b> the crater, creating a normal, walkable floor space. Crates cannot be pushed onto coins, keys, or into doors or the flag. <br><br> These are all of the basic rules of Crates & Craters. There is a <b>how to play</b> page in the app, or you can hop on in and try the tutorial levels to get started!</p> 
+![](misc/preview-1.png)  |  <p style="text-align: left;">There are a number of obstacles in the players way. The first are walls, which cannot be walked through or interacted with in any way. The edges of the map are also walls.<br><br>The second obstacle are doors, which function the same as a wall unless opened with a key. Any key can open any door, but is used up in the process and the door cannot be re-locked to retrieve the key. Once a door tile is opened with a key, it is just like an empty floor tile.</p>
+![](misc/preview-2.png) | <p style="text-align: right;">Finally the last two obstacles are crates and craters. The player cannot walk on either type of tile, however, if there is an empty tile or a crater behind a crate, the player can <b>push</b> the crate by walking into it. If the tile behind is an empty tile, this simply moves the crate. Keep in mind that the player needs to be able to get behind the crate to push it! <br><br> If the tile the crate is pushed into is a crater, the crate will fall in and <b>fill in</b> the crater, creating a normal, walkable floor space. Crates cannot be pushed onto coins, keys, or into doors or the flag. <br><br> These are all of the basic rules of Crates & Craters. There is a <b>how to play</b> page in the app, or you can hop on in and try the tutorial levels to get started!</p> 
 
 <!-- <div style="display: flex; flex-direction: row; align-items: center;">
   <img src="misc/level-1.jpeg" alt="Level One Preview" style="width: 45%;"/>
@@ -37,7 +37,9 @@ Demo | Explanation
 Running and testing the app locally will require that you possess a phone with Expo Go installed on it and a working internet connection. Open the root folder and type `expo start`. For some reason, tunnel is the only connection type that works, so open the dev tools and switch to that mode.
 
 ### TODO
-* Visual revampt with the title banner is in order.
-* Change tile visuals to svg if possible, or at least update the pngs with figma export
-* Add dark mode (everything is transparent so should work fine, the pngs may need to be updated)
-* Improve game UI, make the swiping feel smoother and add more undo steps
+* Add more sound variations
+* Add option to turn off sounds
+* Finish creating local saving funcitonality
+* Make more levels
+* Create a proper tutorial?
+* Look into ways to level share (perhaps QR codes until a server can be set up?)

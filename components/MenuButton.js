@@ -1,5 +1,6 @@
 import { Pressable, Text, StyleSheet, Image, Dimensions } from 'react-native';
-import React, { useState } from "react";
+import React, { useEffect, useState } from 'react';
+import { Audio } from 'expo-av';
 import { colors } from '../Theme';
 const win = Dimensions.get('window');
 
@@ -20,11 +21,22 @@ const win = Dimensions.get('window');
  */
 export default function MenuButton({ onPress, onLongPress, value, label, icon, width, invisible, disabled }) {
   const [pressed, setPressedState] = useState(false);
+  const [sound, setSound] = useState();
+  async function playSound() {
+    const { sound } = await Audio.Sound.createAsync(require('../assets/audio/button.wav'));
+    setSound(sound);
+    await sound.playAsync();
+  }
+
+  useEffect(() => {
+    return sound ? () => { sound.unloadAsync(); } : undefined;
+  }, [sound]);
 
   // This ensures that onPress is optional.
   const pressedFn = () => {
     if (!!onPress) {
       onPress(value);
+      playSound();
     }
   }
 

@@ -1,5 +1,5 @@
 import { View, StyleSheet, Dimensions, Animated } from 'react-native';
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 
 import { colors, graphics } from '../Theme';
 const win = Dimensions.get('window');

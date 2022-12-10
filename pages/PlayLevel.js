@@ -1,5 +1,5 @@
 import { View, StyleSheet, Dimensions, PanResponder } from 'react-native';
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect } from 'react';
 
 import MenuButton from '../components/MenuButton';
 import GameBoard from '../components/GameBoard';
@@ -10,6 +10,13 @@ import { doGameMove, initializeGameObj } from '../Game';
 import { graphics } from '../Theme';
 import WinScreen from './WinScreen';
 const win = Dimensions.get('window');
+
+import { Audio } from 'expo-av';
+function getRandomInt(min, max) {
+  min = Math.ceil(min);
+  max = Math.floor(max);
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
 
 export default function PlayLevel({ pageCallback, gameStateCallback, level, game, darkMode }) {
   useEffect(() => {
@@ -25,6 +32,49 @@ export default function PlayLevel({ pageCallback, gameStateCallback, level, game
     }
   });
 
+  // Set up for sounds, most of this is just copied from the very
+  // limited expo-av documentation so don't mess with it.
+  const [moveSound, setMoveSound] = useState();
+  const [errorSound, setErrorSound] = useState();
+  const [coinSound, setCoinSound] = useState();
+  const [doorSound, setDoorSound] = useState();
+
+  async function playMoveSound() {
+    const { sound } = await Audio.Sound.createAsync(require('../assets/audio/move.wav'));
+    setMoveSound(sound);
+    await sound.playAsync();
+  }
+  async function playErrorSound() {
+    const { sound } = await Audio.Sound.createAsync(require('../assets/audio/badmove.wav'));
+    setErrorSound(sound);
+    await sound.playAsync();
+  }
+  async function playCoinSound() {
+    const { sound } = await Audio.Sound.createAsync(require('../assets/audio/coin.wav'));
+    setCoinSound(sound);
+    await sound.playAsync();
+  }
+  async function playDoorSound() {
+    const doorSources = [require('../assets/audio/door_1.wav'), require('../assets/audio/door_2.wav'), require('../assets/audio/door_3.wav')]; 
+    const { sound } = await Audio.Sound.createAsync(doorSources[getRandomInt(0, doorSources.length)]);
+    setDoorSound(sound);
+    await sound.playAsync();
+  }
+
+  useEffect(() => {
+    return moveSound ? () => { moveSound.unloadAsync(); } : undefined;
+  }, [moveSound]);
+  useEffect(() => {
+    return errorSound ? () => { errorSound.unloadAsync(); } : undefined;
+  }, [errorSound]);
+  useEffect(() => {
+    return coinSound ? () => { coinSound.unloadAsync(); } : undefined;
+  }, [coinSound]);
+  useEffect(() => {
+    return doorSound ? () => { doorSound.unloadAsync(); } : undefined;
+  }, [doorSound]);
+  
+  // Other state
   const [touchMove, setTouchMove] = useState({ y: 0, x: 0 });
   const [gesture, setGesture] = useState([false, false, false, false]); // up, down, left, right
   const panResponderEnabled = useRef(true);
@@ -45,6 +95,18 @@ export default function PlayLevel({ pageCallback, gameStateCallback, level, game
       new_state = doGameMove(game, "left");
     } else if (right) {
       new_state = doGameMove(game, "right");
+    }
+
+    // Check if any sounds need to be played
+    if (new_state.player.x === game.player.x && new_state.player.y === game.player.y) {
+      playErrorSound();
+    } else {
+      playMoveSound();
+      if (new_state.coins > game.coins || new_state.keys > game.keys) {
+        playCoinSound();
+      } else if (new_state.keys < game.keys) {
+        playDoorSound();
+      }
     }
 
     setGesture([false, false, false, false]);

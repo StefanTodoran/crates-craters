@@ -11,6 +11,7 @@ export default function About({ pageCallback, darkMode, darkModeCallback, setThe
 
       <Text style={styles.text(darkMode)}>
         Crates & Craters is a passion project entirely built and maintained by Stefan Todoran.
+        Sound effects courtesy of Mike Koenig.
       </Text>
 
       <Text style={styles.text(darkMode)}>
