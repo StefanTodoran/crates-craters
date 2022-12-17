@@ -1,5 +1,5 @@
 <!-- ![Crates and Craters](misc/banner.png) -->
-<img src="misc/banner.png" alt="Crates and Craters" style="width: 100%;"/>
+<img src="misc/banner-2.png" alt="Crates and Craters" style="width: 100%;"/>
 
 ## About
 Built with JavaScript and React Native, Crates and Craters is a single player puzzle game built for iOS and Android. Don't let the simple premise and minimalist graphics decieve you thought, the game gets challenging, fast!

@@ -14,15 +14,15 @@ import { colors } from '../Theme';
  */
 export default function InputLine({ label, value, changeCallback, darkMode }) {
   const anim = useRef(new Animated.Value(0)).current;
-  function handleChange(newVal) {
-    const hasText = (newVal !== "");
-    const end = hasText ? 1 : 0;
+
+  function handleAnim(focused) {
+    const hasText = (value !== "");
+    const end = (hasText || focused) ? 1 : 0;
     Animated.timing(anim, {
       toValue: end,
       duration: 250,
       useNativeDriver: false, // otherwise fontSize not animatable
     }).start();
-    changeCallback(newVal);
   }
 
   useEffect(() => {
@@ -40,7 +40,12 @@ export default function InputLine({ label, value, changeCallback, darkMode }) {
       <Animated.View style={styles.inputContainer(anim)}>
         <TextInput
           style={styles.input(darkMode)}
-          onChangeText={handleChange}
+          onChangeText={(newVal) => {
+            handleAnim(true);
+            changeCallback(newVal);
+          }}
+          onFocus={() => { handleAnim(true); }}
+          onBlur={() => { handleAnim(false); }}
           value={value}
           cursorColor={colors.MAIN_COLOR}
           maxLength={14}
@@ -60,9 +65,11 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: "50%",
     left: 0,
+    fontFamily: "Montserrat-Regular",
+    fontWeight: "normal",
     color: anim.interpolate({
       inputRange: [0, 1],
-      outputRange: [colors.DARK_COLOR, colors.DARK_WALL],
+      outputRange: [colors.LIGHT_WALL, colors.DARK_WALL],
     }),
     transform: [{
       translateY: anim.interpolate({
@@ -86,5 +93,7 @@ const styles = StyleSheet.create({
   input: (darkMode) => ({
     color: (darkMode) ? colors.MAIN_COLOR : colors.DARK_COLOR,
     width: "100%",
+    fontFamily: "Montserrat-Regular",
+    fontWeight: "normal",
   }),
 });

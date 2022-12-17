@@ -1,6 +1,8 @@
 import { StatusBar } from 'expo-status-bar';
+import { useFonts } from 'expo-font';
+import * as NavigationBar from 'expo-navigation-bar';
 import { useRef, useState } from 'react';
-import { StyleSheet, View, Image, Dimensions, Animated } from 'react-native';
+import { StyleSheet, View, Image, Dimensions, Animated, Text } from 'react-native';
 
 import { colors, graphics } from './Theme';
 import MenuButton from './components/MenuButton';
@@ -11,6 +13,11 @@ import PlayLevel from './pages/PlayLevel';
 import CreateLevel from './pages/CreateLevel';
 
 export default function App() {
+  const [fontsLoaded] = useFonts({
+    'Montserrat-Regular': require('./assets/Montserrat-Regular.ttf'),
+    'Montserrat-Medium': require('./assets/Montserrat-Medium.ttf'),
+  });
+
   const [page, setPageState] = useState("home"); 
   // The page the app is currently on. All pages are
   // displayed in the modal except the home page.
@@ -26,6 +33,7 @@ export default function App() {
   const [darkMode, setDarkMode] = useState(false);
   const [curTheme, setCurTheme] = useState("purple");
   const toggleDarkMode = () => {
+    NavigationBar.setBackgroundColorAsync(darkMode ? "white" : "black");
     setDarkMode(current => !current);
   }
   
@@ -64,6 +72,10 @@ export default function App() {
       useNativeDriver: true
     }).start(callback);
   };
+
+  if (!fontsLoaded) {
+    return null;
+  }
 
   return (
     <View style={{

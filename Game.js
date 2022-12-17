@@ -18,7 +18,7 @@ const level_one = [
   [0, 0, 0, 0, 4, 0, 0, 0],
 ];
 const level_two = [
-  [0, 0, 0, 1, 0, 0, 1, 0],
+  [0, 0, 0, 1, 0, 1, 1, 0],
   [0, 7, 0, 0, 4, 0, 8, 0],
   [0, 0, 0, 1, 0, 0, 1, 0],
   [0, 0, 0, 1, 3, 0, 1, 1],
@@ -130,7 +130,7 @@ const blank_level = [
 ];
 
 const defaults = [
-  createLevelObj("Test Level", "default", blank_level),
+  // createLevelObj("Test Level", "default", blank_level),
   createLevelObj("Level 1", "default", level_one),
   createLevelObj("Level 2", "default", level_two),
   createLevelObj("Level 3", "default", level_three),

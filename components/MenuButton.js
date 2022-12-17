@@ -84,6 +84,8 @@ const styles = StyleSheet.create({
     // color: colors.MAIN_COLOR, won't auto update here, so we do it in render funciton
     fontSize: 16,
     paddingRight: 5,
+    fontFamily: "Montserrat-Medium",
+    fontWeight: "bold",
   },
   icon: {
     height: 30,

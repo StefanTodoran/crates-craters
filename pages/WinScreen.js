@@ -1,10 +1,23 @@
 import { StyleSheet, Dimensions, Image, Animated } from 'react-native';
 import React, { useEffect, useRef } from "react";
-
+import { Audio } from 'expo-av';
 import { colors, graphics } from '../Theme';
 const win = Dimensions.get('window');
 
 export default function WinScreen({ darkMode }) {
+  useEffect(() => {
+    async function playSound() {
+      const { sound } = await Audio.Sound.createAsync(require('../assets/audio/victory.wav'));
+      await sound.playAsync();
+    }
+    // A useEffect hook must return a function, not a promise.
+    playSound();
+
+    return function unmountCleanUp() {
+      if (sound) { sound.unloadAsync(); }
+    }
+  }, []);
+
   // Controls the modal fade in.
   const fadeAnim = useRef(new Animated.Value(0)).current;
   useEffect(() => {
@@ -14,7 +27,7 @@ export default function WinScreen({ darkMode }) {
       duration: 250,
       useNativeDriver: true
     }).start();
-  });
+  }, []);
 
   // Controls the confetti particles' motion.
   const confettiAnim = useRef(new Animated.Value(0)).current;
@@ -25,7 +38,7 @@ export default function WinScreen({ darkMode }) {
       deceleration: 0.998,
       useNativeDriver: true
     }).start();
-  });
+  }, []);
 
   function randomInt(max) {
     return Math.floor(Math.random() * max);
@@ -41,12 +54,12 @@ export default function WinScreen({ darkMode }) {
   const confetti = [];
   for (let i = 0; i < 20; i++) {
     // Distribution should be -0.5 <= vel <= 0.5
-    const velX = (Math.random() - 0.5) * 3; 
+    const velX = (Math.random() - 0.5) * 3;
     const velY = Math.random() - 0.5;
     const rotate = randomInt(10);
     const icon = randomIcon();
 
-    confetti.push(<Animated.Image 
+    confetti.push(<Animated.Image
       key={`confetti<${i}>`} source={icon}
       style={styles.confetti(confettiAnim, velX, velY, rotate)}
     />);
@@ -58,7 +71,7 @@ export default function WinScreen({ darkMode }) {
       opacity: fadeAnim,
       backgroundColor: (darkMode) ? colors.NEAR_BLACK : "white",
     }}>
-      <Image style={styles.banner} source={graphics.WIN_BANNER}/>
+      <Image style={styles.banner} source={graphics.WIN_BANNER} />
       {confetti}
     </Animated.View>
   );
@@ -92,21 +105,24 @@ const styles = StyleSheet.create({
     opacity: 0.25,
 
     transform: [
-      { 
-        translateY: anim.interpolate({ 
-        inputRange: [0, 1], 
-        outputRange: [0, velY], 
-      })},
-      { 
-        translateX: anim.interpolate({ 
-        inputRange: [0, 1], 
-        outputRange: [0, velX], 
-      })},
-      { 
-        rotate: anim.interpolate({ 
-        inputRange: [0, 1], 
-        outputRange: ["0deg", `${rotate}deg`], 
-      })},
+      {
+        translateY: anim.interpolate({
+          inputRange: [0, 1],
+          outputRange: [0, velY],
+        })
+      },
+      {
+        translateX: anim.interpolate({
+          inputRange: [0, 1],
+          outputRange: [0, velX],
+        })
+      },
+      {
+        rotate: anim.interpolate({
+          inputRange: [0, 1],
+          outputRange: ["0deg", `${rotate}deg`],
+        })
+      },
     ],
   }),
 });

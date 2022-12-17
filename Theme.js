@@ -16,6 +16,8 @@ const blue_graphics = {
   HAMMER_ICON: require('./assets/blue_theme/hammer_icon.png'),
   WALL_ICON: require('./assets/blue_theme/wall_icon.png'),
   SAVE_ICON: require('./assets/blue_theme/save_icon.png'),
+  LOAD_ICON: require('./assets/blue_theme/load_icon.png'),
+  DELETE_ICON: require('./assets/blue_theme/delete_icon.png'),
   OPTIONS_ICON: require('./assets/blue_theme/options_icon.png'),
 
   TITLE_BANNER: require('./assets/blue_theme/banner.png'),
@@ -64,6 +66,8 @@ const orange_graphics = {
   HAMMER_ICON: require('./assets/orange_theme/hammer_icon.png'),
   WALL_ICON: require('./assets/orange_theme/wall_icon.png'),
   SAVE_ICON: require('./assets/orange_theme/save_icon.png'),
+  LOAD_ICON: require('./assets/orange_theme/load_icon.png'),
+  DELETE_ICON: require('./assets/orange_theme/delete_icon.png'),
   OPTIONS_ICON: require('./assets/orange_theme/options_icon.png'),
 
   TITLE_BANNER: require('./assets/orange_theme/banner.png'),
@@ -111,6 +115,8 @@ const purple_graphics = {
   HAMMER_ICON: require('./assets/purple_theme/hammer_icon.png'),
   WALL_ICON: require('./assets/purple_theme/wall_icon.png'),
   SAVE_ICON: require('./assets/purple_theme/save_icon.png'),
+  LOAD_ICON: require('./assets/purple_theme/load_icon.png'),
+  DELETE_ICON: require('./assets/purple_theme/delete_icon.png'),
   OPTIONS_ICON: require('./assets/purple_theme/options_icon.png'),
 
   TITLE_BANNER: require('./assets/purple_theme/banner.png'),
@@ -145,9 +151,6 @@ const purple_colors = {
 export let theme = "purple";
 export let colors = purple_colors;
 export let graphics = purple_graphics;
-// export const sizes = {
-//
-// };
 
 // CHANGING THEME
 let current = 2;

@@ -1,6 +1,7 @@
 import { View, StyleSheet, Dimensions, Animated, Image, Text } from 'react-native';
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Audio } from 'expo-av';
 
 import MenuButton from '../components/MenuButton';
 import GameBoard from '../components/GameBoard';
@@ -20,6 +21,33 @@ export default function CreateLevel({ pageCallback, levelCallback, level, storeL
       storeLevelCallback(createLevelObj("", "", null))
     }
   });
+
+  // ===================
+  // SOUND RELATED SETUP
+  // ===================
+  const [successSound, setSuccessSound] = useState();
+  const [errorSound, setErrorSound] = useState();
+  
+  async function playSuccessSound() {
+    const { sound } = await Audio.Sound.createAsync(require('../assets/audio/move.wav'));
+    setSuccessSound(sound);
+    await sound.playAsync();
+  }
+  async function playErrorSound() {
+    const { sound } = await Audio.Sound.createAsync(require('../assets/audio/badmove.wav'));
+    setErrorSound(sound);
+    await sound.playAsync();
+  }
+  
+  useEffect(() => {
+    return successSound ? () => { successSound.unloadAsync(); } : undefined;
+  }, [successSound]);
+  useEffect(() => {
+    return errorSound ? () => { errorSound.unloadAsync(); } : undefined;
+  }, [errorSound]);
+  // ===============
+  // END SOUND SETUP
+  // ===============
 
   const [currentTool, selectTool] = useState("wall");
 
@@ -72,11 +100,14 @@ export default function CreateLevel({ pageCallback, levelCallback, level, storeL
       if (!(isNaN(spawnPos.y) || isNaN(spawnPos.x))) {
         newBoard[spawnPos.y][spawnPos.x] = 0;
       }
+      playSuccessSound();
     }
     if (type === "empty") {
       newBoard[y][x] = identifier[currentTool];
+      playSuccessSound();
     } else {
       newBoard[y][x] = 0; // empty
+      playErrorSound();
     }
     storeLevelCallback({
       name: level.name,
@@ -110,7 +141,21 @@ export default function CreateLevel({ pageCallback, levelCallback, level, storeL
     });
   }
 
-  // Local Data Storage
+  const [index, setIndex] = useState(-1);
+  function updateIndex() {
+    const updated = (level) ? levels.findIndex(element => element.name === level.name) : -1;
+    setIndex(updated);
+  }
+  useEffect(updateIndex, [level]);
+
+  function testLevel() {
+    levelCallback(index);
+    pageCallback("play_level");
+  }
+
+  // ==================
+  // LOCAL DATA STORAGE
+  // ==================
   async function storeData(value, storage_key) {
     try {
       const jsonValue = JSON.stringify(value);
@@ -135,16 +180,16 @@ export default function CreateLevel({ pageCallback, levelCallback, level, storeL
       return;
     }
     await storeData(level, level.name);
-    importStoredLevels();
+    await importStoredLevels(); // Causes Game.js module to register the change
+    updateIndex();
   }
 
-  const index = useRef(-1);
-  useEffect(() => {
-    index.current = (level) ? levels.findIndex(element => element.name === level.name) : -1;
-  });
-  function testLevel() {
-    levelCallback(index.current);
-    pageCallback("play_level");
+  const loadLevelFromStorage = async () => {
+
+  }
+
+  const deleteLevelFromStorage = async () => {
+
   }
 
   return (
@@ -174,6 +219,7 @@ export default function CreateLevel({ pageCallback, levelCallback, level, storeL
           <MenuButton onPress={changeTool} value="wall" label="Wall" icon={graphics.WALL_ICON} width={win.width / 3} />
           <MenuButton onPress={changeTool} value="spawn" label="Player" icon={graphics.PLAYER} width={win.width / 3} />
         </View>
+        <MenuButton onLongPress={storeLevelCallback} value={null} label="Clear Level (Long Press)" icon={graphics.HAMMER_ICON} width={2 * win.width / 3}/>
       </Animated.View>}
       {/* END TOOLS MODAL */}
 
@@ -192,10 +238,13 @@ export default function CreateLevel({ pageCallback, levelCallback, level, storeL
           </Text>
         </View>
         <View style={styles.row}>
-          <MenuButton onPress={testLevel} value={null} label="Test Level" icon={graphics.PLAYER} width={win.width / 3} disabled={index.current === -1}/>
-          <MenuButton onPress={saveLevelToStorage} value="save" label="Save Level" icon={graphics.SAVE_ICON} width={win.width / 3} disabled={level.name === ""}/>
+          <MenuButton onPress={testLevel} value={null} label="Playtest" icon={graphics.PLAYER} width={win.width / 3} disabled={index === -1} />
+          <MenuButton onPress={saveLevelToStorage} value={null} label="Save Level" icon={graphics.SAVE_ICON} width={win.width / 3} disabled={level.name === ""} />
         </View>
-        <MenuButton onLongPress={storeLevelCallback} value={null} label="Reset (Long Press)" icon={graphics.HAMMER_ICON} />
+        <View style={styles.row}>
+          <MenuButton onPress={loadLevelFromStorage} value={null} label="Load Level" icon={graphics.LOAD_ICON} width={win.width / 3} disabled={level.name === ""} />
+          <MenuButton onPress={deleteLevelFromStorage} value={null} label="Delete Level" icon={graphics.DELETE_ICON} width={win.width / 3} disabled={index === -1} />
+        </View>
         <MenuButton onPress={pageCallback} value="home" label="Back to Menu" icon={graphics.DOOR} />
       </Animated.View>}
       {/* END OPTIONS MODAL */}
@@ -249,11 +298,15 @@ const styles = StyleSheet.create({
     bottom: 0,
     alignItems: "center",
     justifyContent: "center",
+    paddingBottom: "20%",
   },
   text: () => ({
     marginTop: 5,
     marginBottom: 15,
     color: colors.DARK_WALL,
+    fontSize: 12,
+    fontFamily: "Montserrat-Regular",
+    fontWeight: "normal",
   }),
   inputContainer: () => ({
     position: "relative",

@@ -33,7 +33,6 @@ export default function About({ pageCallback, darkMode, darkModeCallback, setThe
       <MenuButton onPress={darkModeCallback} value={null} label="Toggle Dark Mode" icon={graphics.NIGHT_MODE_ICON} />
       <MenuButton onPress={() => {
         const newTheme = nextTheme();
-        console.log(newTheme);
         setThemeCallback(newTheme);
       }} value={null} label="Change App Theme" icon={graphics.THEME_ICON} />
       <MenuButton onPress={pageCallback} value="home" label="Back to Menu" icon={graphics.DOOR} />
@@ -55,9 +54,11 @@ const styles = StyleSheet.create({
     height: sizeFromWidthPercent(0.5, 146, 299)[1],
   },
   text: darkMode => ({
-    maxWidth: win.width * 0.8,
+    width: win.width * 0.8,
     marginBottom: 10,
     color: (darkMode) ? colors.MAIN_COLOR : colors.DARK_COLOR,
+    fontFamily: "Montserrat-Regular",
+    fontWeight: "normal",
   }),
   row: {
     flexDirection: 'row',

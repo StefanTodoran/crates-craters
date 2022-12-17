@@ -67,9 +67,11 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   text: darkMode => ({
-    maxWidth: win.width * 0.8,
+    width: win.width * 0.8,
     marginBottom: 10,
     color: (darkMode) ? colors.MAIN_COLOR : colors.DARK_COLOR,
+    fontFamily: "Montserrat-Regular",
+    fontWeight: "normal",
   }),
   icon: {
     height: 30,
