@@ -51,7 +51,7 @@ export default function App() {
       case "level_select":
         return <LevelSelect pageCallback={setPage} levelCallback={changeLevel}/>;
       case "play_level":
-        return <PlayLevel pageCallback={setPage} gameStateCallback={setGameState} level={level} game={game} darkMode={darkMode}/>;
+        return <PlayLevel pageCallback={setPage} levelCallback={changeLevel} gameStateCallback={setGameState} level={level} game={game} darkMode={darkMode}/>;
       case "level_editor":
         return <CreateLevel pageCallback={setPage} levelCallback={changeLevel} level={editorLevel} storeLevelCallback={setEditorLevel} darkMode={darkMode}/>;
       case "how_to_play":

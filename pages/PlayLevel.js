@@ -6,7 +6,7 @@ import GameBoard from '../components/GameBoard';
 import Inventory from '../components/Inventory';
 import Player from '../components/Player';
 
-import { doGameMove, initializeGameObj } from '../Game';
+import { doGameMove, initializeGameObj, levels } from '../Game';
 import { graphics } from '../Theme';
 import WinScreen from './WinScreen';
 const win = Dimensions.get('window');
@@ -21,6 +21,9 @@ function getRandomInt(min, max) {
 /**
  * @param {Function} pageCallback
  * Takes a string and sets the page state in the parent.
+ * 
+ * @param {Function} levelCallback
+ * Takes an integer and updates the parent's level state as well as clearing current game state.
  * 
  * @param {Function} gameStateCallback
  * Takes a game object, stores it in the parent for resumeability. Should have this format:
@@ -45,7 +48,7 @@ function getRandomInt(min, max) {
  * A true/false value representing whether the app is in dark mode. Should be used for modal backgrounds,
  * text colors, etc.
  */
-export default function PlayLevel({ pageCallback, gameStateCallback, level, game, darkMode }) {
+export default function PlayLevel({ pageCallback, levelCallback, gameStateCallback, level, game, darkMode }) {
   useEffect(() => {
     // If there is already a game object we wish to resume. We have to wrap
     // this in a useEffect so we don't update the parent state in the middle of a render.
@@ -212,9 +215,14 @@ export default function PlayLevel({ pageCallback, gameStateCallback, level, game
           {game.won && <WinScreen darkMode={darkMode} />}
         </View>
         <View style={styles.buttonsRow}>
-          {!game.won && <MenuButton onPress={gameStateCallback} value={initializeGameObj(level)} label="Restart" icon={graphics.HELP_ICON} width={win.width / 3} />}
-          <MenuButton onPress={pageCallback} value="level_select" label="Levels" icon={graphics.FLAG} width={win.width / 3} />
-          {game.won && <MenuButton onPress={pageCallback} value="home" label="Menu" icon={graphics.DOOR} width={win.width / 3} />}
+          {!game.won && <>
+            <MenuButton onPress={gameStateCallback} value={initializeGameObj(level)} label="Restart" icon={graphics.HELP_ICON} width={win.width / 3} />
+            <MenuButton onPress={pageCallback} value="level_select" label="Levels" icon={graphics.FLAG} width={win.width / 3} />
+          </>}
+          {game.won && <>
+            <MenuButton onPress={levelCallback} value={level + 1} label="Next" icon={graphics.FLAG} width={win.width / 3} disabled={level + 1 >= levels.length}/>
+            <MenuButton onPress={pageCallback} value="home" label="Menu" icon={graphics.DOOR} width={win.width / 3} />
+          </>}
         </View>
       </View>}
     </>

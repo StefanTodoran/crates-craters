@@ -1,6 +1,6 @@
 {
   "name": "crates-n-craters",
-  "version": "1.0.0",
+  "version": "0.1.1",
   "main": "node_modules/expo/AppEntry.js",
   "scripts": {
     "start": "expo start",
@@ -23,5 +23,8 @@
   "devDependencies": {
     "@babel/core": "^7.12.9"
   },
-  "private": true
+  "private": true,
+  "expo": {
+    "name": "Crates & Craters"
+  }
 }
