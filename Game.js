@@ -18,6 +18,22 @@ const level_one = [
   [0, 0, 0, 0, 4, 0, 0, 0],
 ];
 const level_two = [
+  [1, 0, 0, 0, 0, 1, 1, 1],
+  [1, 0, 4, 4, 0, 5, 5, 5],
+  [1, 0, 0, 4, 0, 5, 5, 6],
+  [1, 0, 0, 0, 0, 0, 5, 0],
+  [0, 4, 1, 0, 1, 1, 1, 1],
+  [0, 0, 4, 0, 0, 6, 0, 0],
+  [1, 5, 1, 8, 0, 1, 1, 1],
+  [0, 0, 7, 1, 1, 1, 3, 1],
+  [4, 4, 0, 0, 0, 0, 2, 6],
+  [0, 4, 0, 0, 0, 0, 0, 5],
+  [0, 0, 0, 0, 0, 5, 0, 0],
+  [0, 0, 4, 4, 0, 4, 5, 0],
+  [0, 6, 4, 1, 0, 0, 0, 0],
+  [1, 1, 1, 1, 1, 1, 1, 1],
+];
+const level_three = [
   [0, 0, 0, 1, 0, 1, 1, 0],
   [0, 7, 0, 0, 4, 0, 8, 0],
   [0, 0, 0, 1, 0, 0, 1, 0],
@@ -33,7 +49,7 @@ const level_two = [
   [0, 6, 5, 0, 0, 1, 6, 0],
   [6, 0, 1, 0, 0, 4, 0, 0],
 ];
-const level_three = [
+const level_four = [
   [0, 0, 0, 6, 1, 0, 0, 0],
   [0, 4, 0, 1, 0, 0, 3, 5],
   [4, 0, 4, 1, 0, 4, 4, 0],
@@ -49,7 +65,7 @@ const level_three = [
   [4, 4, 0, 0, 1, 0, 0, 6],
   [6, 0, 5, 0, 0, 0, 0, 0],
 ];
-const level_four = [
+const level_five = [
   [0, 0, 2, 0, 1, 1, 1, 3],
   [0, 0, 1, 0, 1, 0, 0, 5],
   [8, 0, 1, 0, 2, 0, 4, 0],
@@ -65,7 +81,7 @@ const level_four = [
   [1, 1, 1, 1, 2, 1, 1, 0],
   [1, 1, 1, 3, 0, 0, 0, 0],
 ];
-const level_five = [
+const level_six = [
   [0, 0, 1, 8, 1, 1, 1, 1],
   [0, 6, 1, 2, 1, 0, 6, 0],
   [4, 0, 5, 5, 0, 4, 4, 4],
@@ -81,7 +97,7 @@ const level_five = [
   [0, 4, 0, 0, 5, 4, 0, 0],
   [0, 0, 4, 0, 4, 0, 4, 6],
 ];
-const level_six = [
+const level_seven = [
   [3, 0, 5, 0, 0, 1, 6, 3],
   [4, 4, 0, 4, 4, 1, 1, 2],
   [4, 0, 4, 0, 0, 0, 0, 5],
@@ -97,7 +113,7 @@ const level_six = [
   [0, 0, 1, 1, 6, 1, 3, 4],
   [0, 0, 1, 1, 0, 1, 1, 1],
 ];
-const level_seven = [
+const level_eight = [
   [1, 6, 5, 1, 4, 0, 4, 0],
   [5, 4, 0, 3, 5, 0, 4, 4],
   [0, 4, 1, 1, 0, 0, 0, 0],
@@ -138,6 +154,7 @@ const defaults = [
   createLevelObj("Level 5", "default", level_five),
   createLevelObj("Level 6", "default", level_six),
   createLevelObj("Level 7", "default", level_seven),
+  createLevelObj("Level 8", "default", level_eight),
 ];
 
 export let levels = [...defaults];
@@ -267,7 +284,7 @@ export function icon_src(type) {
 
 /**
  * Returns the player spawn position in the given level.
- * @param {Array} board The board[][] you wish to search. 
+ * @param {number[][]} board The board[][] you wish to search. 
  * @returns Returns of the form {y: number, x: number}
  */
 export function getSpawnPos(board) {
@@ -376,10 +393,20 @@ function winCondition(next) {
 }
 
 /**
+ * @typedef {Object} GameObj
+ * @property {number[][]} board - The current board state with tile numbers encoding their content
+ * @property {{x: number, y: number}} player - Object contianing player position
+ * @property {number} maxCoins - The number of coins needed to complete the level
+ * @property {number} coins - The number of coins collected so far
+ * @property {number} keys - The number of keys collected and not used
+ * @property {boolean} won - Whether the level has been beaten yet
+ */
+
+/**
  * Creates a new game object for the given level. Game objects
  * contain the board, player position, and number of coins in the level.
  * @param {number} level_id The level to be cloned for the initial board.
- * @returns {GameObj}
+ * @returns {GameObj} A GameObj properly set for game start.
  */
 export function initializeGameObj(level_id) {
   const level = cloneBoard(levels[level_id].board);
@@ -391,8 +418,8 @@ export function initializeGameObj(level_id) {
     board: level,
     player: startPos,
     maxCoins: numberOfCoins,
-    coins: 0, // coins collected so far
-    keys: 0, // keys collected so far
+    coins: 0,
+    keys: 0,
     won: false,
   };
 }

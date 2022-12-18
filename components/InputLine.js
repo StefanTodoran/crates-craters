@@ -16,8 +16,7 @@ export default function InputLine({ label, value, changeCallback, darkMode }) {
   const anim = useRef(new Animated.Value(0)).current;
 
   function handleAnim(focused) {
-    const hasText = (value !== "");
-    const end = (hasText || focused) ? 1 : 0;
+    const end = (value !== "" || focused) ? 1 : 0;
     Animated.timing(anim, {
       toValue: end,
       duration: 250,
@@ -26,8 +25,13 @@ export default function InputLine({ label, value, changeCallback, darkMode }) {
   }
 
   useEffect(() => {
-    anim.setValue((value !== "") ? 1 : 0);
-  }, []); // so that on unmount the animation "state" isn't lost
+    const end = (value !== "") ? 1 : 0;
+    Animated.timing(anim, {
+      toValue: end,
+      duration: 250,
+      useNativeDriver: false, // otherwise fontSize not animatable
+    }).start();
+  }, [value]); // so that on unmount the animation "state" isn't lost
 
   return (
     <View style={{

@@ -1,5 +1,4 @@
-<!-- ![Crates and Craters](misc/banner.png) -->
-<img src="misc/banner-2.png" alt="Crates and Craters" style="width: 100%;"/>
+<img src="misc/banner-2.png" alt="Crates and Craters" style="width: 70%; margin-left: 15%;"/>
 
 ## About
 Built with JavaScript and React Native, Crates and Craters is a single player puzzle game built for iOS and Android. Don't let the simple premise and minimalist graphics decieve you thought, the game gets challenging, fast!
@@ -32,9 +31,15 @@ Demo | Explanation
   <img src="misc/level-2.jpeg" alt="Level One Preview" style="width: 45%;"/>
 </div> -->
 
-### Running Crates & Craters Locally
+### Running Locally
 
 Running and testing the app locally will require that you possess a phone with Expo Go installed on it and a working internet connection. Open the root folder and type `expo start`. For some reason, tunnel is the only connection type that works, so open the dev tools and switch to that mode.
+
+### Building to APK
+
+Make sure you are logged in to expo with `expo whoami`. If not logged in, run `expo login`.
+Then use this command to build to apk: <br>
+`eas build -p android --profile preview`
 
 ### TODO
 * Add more sound variations
@@ -43,3 +48,4 @@ Running and testing the app locally will require that you possess a phone with E
 * Make more levels
 * Create a proper tutorial?
 * Look into ways to level share (perhaps QR codes until a server can be set up?)
+* Proper settings screen (move dark mode and app theme there, then add sensitivity slider there)

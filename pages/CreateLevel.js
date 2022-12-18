@@ -11,6 +11,28 @@ import { colors, graphics } from '../Theme';
 import InputLine from '../components/InputLine';
 const win = Dimensions.get('window');
 
+/**
+ * @param {Function} pageCallback
+ * Takes a string and sets the page state in the parent.
+ * 
+ * @param {Function} levelCallback
+ * Takes an integer and sets the level in the parent. Also clears parent's game state.
+ * 
+ * @param {Object} level
+ * An object representing the current level being edited. Same format as data stored in AsyncStorage.
+ * {
+ *   "name": string,
+ *   "designer": string,
+ *   "board": number[][],
+ * }
+ * 
+ * @param {Function} storeLevelCallback
+ * Callback used to update the above level object.
+ * 
+ * @param {Boolean} darkMode
+ * A true/false value representing whether the app is in dark mode. Should be used for modal backgrounds,
+ * text colors, etc.
+ */
 export default function CreateLevel({ pageCallback, levelCallback, level, storeLevelCallback, darkMode }) {
   useEffect(() => {
     // If there is already a level object we wish to continue editing it. We have to wrap
@@ -27,7 +49,7 @@ export default function CreateLevel({ pageCallback, levelCallback, level, storeL
   // ===================
   const [successSound, setSuccessSound] = useState();
   const [errorSound, setErrorSound] = useState();
-  
+
   async function playSuccessSound() {
     const { sound } = await Audio.Sound.createAsync(require('../assets/audio/move.wav'));
     setSuccessSound(sound);
@@ -38,7 +60,7 @@ export default function CreateLevel({ pageCallback, levelCallback, level, storeL
     setErrorSound(sound);
     await sound.playAsync();
   }
-  
+
   useEffect(() => {
     return successSound ? () => { successSound.unloadAsync(); } : undefined;
   }, [successSound]);
@@ -160,8 +182,10 @@ export default function CreateLevel({ pageCallback, levelCallback, level, storeL
     try {
       const jsonValue = JSON.stringify(value);
       await AsyncStorage.setItem(storage_key, jsonValue);
+      return true;
     } catch (err) {
       console.log("\n\n(ERROR) >>> SAVING ERROR:\n", err);
+      return false;
     }
   }
 
@@ -172,6 +196,18 @@ export default function CreateLevel({ pageCallback, levelCallback, level, storeL
       return jsonValue != null ? JSON.parse(jsonValue) : null;
     } catch (err) {
       console.log("\n\n(ERROR) >>> READING ERROR:\n", err);
+      return false;
+    }
+  }
+
+  async function removeData(storage_key) {
+    try {
+      await AsyncStorage.removeItem(storage_key);
+      return true;
+    }
+    catch (err) {
+      console.log("\n\n(ERROR) >>> REMOVING ERROR:\n", err);
+      return false;
     }
   }
 
@@ -182,14 +218,31 @@ export default function CreateLevel({ pageCallback, levelCallback, level, storeL
     await storeData(level, level.name);
     await importStoredLevels(); // Causes Game.js module to register the change
     updateIndex();
+
+    const board = level.board;
+    console.log("const level = [");
+    for (let i = 0; i < board.length; i++) {
+      console.log(" ", board[i]);
+    }
+    console.log("];");
   }
 
   const loadLevelFromStorage = async () => {
-
+    const data = await getData(level.name);
+    if (data) {
+      storeLevelCallback(data);
+    }
   }
 
   const deleteLevelFromStorage = async () => {
-
+    if (level.name === "" || index === -1) {
+      return false; // Fail, level isn't saved
+    }
+    await AsyncStorage.removeItem(level.name);
+    levels.splice(index, 1);
+    levelCallback(-1); // A bit of a hack, this clears the parent's game state, so if there
+    // was a game in progress on the level being deleted, it gets cleared.
+    setIndex(-1);
   }
 
   return (
@@ -219,7 +272,7 @@ export default function CreateLevel({ pageCallback, levelCallback, level, storeL
           <MenuButton onPress={changeTool} value="wall" label="Wall" icon={graphics.WALL_ICON} width={win.width / 3} />
           <MenuButton onPress={changeTool} value="spawn" label="Player" icon={graphics.PLAYER} width={win.width / 3} />
         </View>
-        <MenuButton onLongPress={storeLevelCallback} value={null} label="Clear Level (Long Press)" icon={graphics.HAMMER_ICON} width={2 * win.width / 3}/>
+        <MenuButton onLongPress={storeLevelCallback} value={null} label="Clear Level (Long Press)" icon={graphics.HAMMER_ICON} width={2 * win.width / 3} />
       </Animated.View>}
       {/* END TOOLS MODAL */}
 
@@ -242,7 +295,7 @@ export default function CreateLevel({ pageCallback, levelCallback, level, storeL
           <MenuButton onPress={saveLevelToStorage} value={null} label="Save Level" icon={graphics.SAVE_ICON} width={win.width / 3} disabled={level.name === ""} />
         </View>
         <View style={styles.row}>
-          <MenuButton onPress={loadLevelFromStorage} value={null} label="Load Level" icon={graphics.LOAD_ICON} width={win.width / 3} disabled={level.name === ""} />
+          <MenuButton onPress={loadLevelFromStorage} value={null} label="Load Level" icon={graphics.LOAD_ICON} width={win.width / 3} disabled={index === -1} />
           <MenuButton onPress={deleteLevelFromStorage} value={null} label="Delete Level" icon={graphics.DELETE_ICON} width={win.width / 3} disabled={index === -1} />
         </View>
         <MenuButton onPress={pageCallback} value="home" label="Back to Menu" icon={graphics.DOOR} />
@@ -289,6 +342,7 @@ const styles = StyleSheet.create({
     backgroundColor: (darkMode) ? colors.NEAR_BLACK : "white",
     borderTopColor: colors.MAIN_COLOR,
     borderTopWidth: 1,
+    width: "91%", // board has 90 width, we want this to be just wider than that
   }),
   modal: {
     position: "absolute",

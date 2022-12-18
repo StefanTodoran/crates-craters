@@ -18,6 +18,33 @@ function getRandomInt(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
+/**
+ * @param {Function} pageCallback
+ * Takes a string and sets the page state in the parent.
+ * 
+ * @param {Function} gameStateCallback
+ * Takes a game object, stores it in the parent for resumeability. Should have this format:
+ * {
+ *   board: number[][],
+ *   player: {x: number, y: number},
+ *   maxCoins: number,
+ *   coins: number,
+ *   keys: number,
+ *   won: boolean,
+ * }
+ * 
+ * @param {number} level
+ * Which level number to load the level data from (since on first mount the component
+ * does not recieve anything in its game prop, see below) 
+ * 
+ * @param {Object} game
+ * Object of the form descirbed above in gameStateCallback, representing the state of the
+ * game the player is currently playing.
+ * 
+ * @param {Boolean} darkMode
+ * A true/false value representing whether the app is in dark mode. Should be used for modal backgrounds,
+ * text colors, etc.
+ */
 export default function PlayLevel({ pageCallback, gameStateCallback, level, game, darkMode }) {
   useEffect(() => {
     // If there is already a game object we wish to resume. We have to wrap
