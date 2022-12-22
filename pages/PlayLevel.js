@@ -1,5 +1,5 @@
 import { View, StyleSheet, Dimensions, PanResponder } from 'react-native';
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useContext } from 'react';
 
 import MenuButton from '../components/MenuButton';
 import GameBoard from '../components/GameBoard';
@@ -12,6 +12,7 @@ import WinScreen from './WinScreen';
 const win = Dimensions.get('window');
 
 import { Audio } from 'expo-av';
+import { GlobalContext } from '../GlobalContext';
 function getRandomInt(min, max) {
   min = Math.ceil(min);
   max = Math.floor(max);
@@ -44,11 +45,10 @@ function getRandomInt(min, max) {
  * Object of the form descirbed above in gameStateCallback, representing the state of the
  * game the player is currently playing.
  * 
- * @param {Boolean} darkMode
- * A true/false value representing whether the app is in dark mode. Should be used for modal backgrounds,
- * text colors, etc.
  */
-export default function PlayLevel({ pageCallback, levelCallback, gameStateCallback, level, game, darkMode }) {
+export default function PlayLevel({ pageCallback, levelCallback, gameStateCallback, level, game }) {
+  const { darkMode, dragSensitivity } = useContext(GlobalContext);
+
   useEffect(() => {
     // If there is already a game object we wish to resume. We have to wrap
     // this in a useEffect so we don't update the parent state in the middle of a render.
@@ -144,7 +144,7 @@ export default function PlayLevel({ pageCallback, levelCallback, gameStateCallba
   }
 
   function onGestureMove(evt, gestureState) {
-    const sensitivity = 0.6; // TODO: Set this in the settings somewhere!!
+    const sensitivity = dragSensitivity / 100; // dragSens is given as a number representing a percent e.g. 60
     let dragY = Math.abs(gestureState.dy) * sensitivity;
     let dragX = Math.abs(gestureState.dx) * sensitivity;
 

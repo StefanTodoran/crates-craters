@@ -11,6 +11,8 @@ import HowToPlay from './pages/HowToPlay';
 import LevelSelect from './pages/LevelSelect';
 import PlayLevel from './pages/PlayLevel';
 import CreateLevel from './pages/CreateLevel';
+import Settings from './pages/Settings';
+import { GlobalContext } from './GlobalContext';
 
 export default function App() {
   const [fontsLoaded] = useFonts({
@@ -18,25 +20,32 @@ export default function App() {
     'Montserrat-Medium': require('./assets/Montserrat-Medium.ttf'),
   });
 
-  const [page, setPageState] = useState("home"); 
-  // The page the app is currently on. All pages are
-  // displayed in the modal except the home page.
-  const setPage = (value) => {
+  const [page, setPageState] = useState("home");
+  // The page the app is currently on. All pages are displayed in the modal 
+  // except the home page. The full transistion means playing the modal close and open
+  // animation instead of direclty switching page to page.
+  const setPage = (value, useFullTransition) => {
     if (value === "home") {
       setAnimTo(0, () => { setPageState(value) });
+    } else if (useFullTransition && page !== "home" && value !== "home") {
+      setAnimTo(0, () => {
+        setPageState(value);
+        setAnimTo(1);
+      });
     } else {
       setAnimTo(1);
       setPageState(value);
     }
   }
 
+  const [dragSensitivity, setSensitivity] = useState(60);
   const [darkMode, setDarkMode] = useState(false);
   const [curTheme, setCurTheme] = useState("purple");
   const toggleDarkMode = () => {
     NavigationBar.setBackgroundColorAsync(darkMode ? "white" : "black");
     setDarkMode(current => !current);
   }
-  
+
   const [level, setLevelState] = useState(1); // the parent needs to know the level from LevelSelect to share with PlayLevel
   const [game, setGameState] = useState(null); // stores the game state so levels can be resumed
   const [editorLevel, setEditorLevel] = useState(null); // stores the level being created so it can be recovered
@@ -49,17 +58,19 @@ export default function App() {
   function getContentFromPage(page_id) {
     switch (page_id) {
       case "level_select":
-        return <LevelSelect pageCallback={setPage} levelCallback={changeLevel}/>;
+        return <LevelSelect pageCallback={setPage} levelCallback={changeLevel} />;
       case "play_level":
-        return <PlayLevel pageCallback={setPage} levelCallback={changeLevel} gameStateCallback={setGameState} level={level} game={game} darkMode={darkMode}/>;
+        return <PlayLevel pageCallback={setPage} levelCallback={changeLevel} gameStateCallback={setGameState} level={level} game={game} />;
       case "level_editor":
-        return <CreateLevel pageCallback={setPage} levelCallback={changeLevel} level={editorLevel} storeLevelCallback={setEditorLevel} darkMode={darkMode}/>;
+        return <CreateLevel pageCallback={setPage} levelCallback={changeLevel} level={editorLevel} storeLevelCallback={setEditorLevel} />;
       case "how_to_play":
-        return <HowToPlay pageCallback={setPage} darkMode={darkMode}/>;
+        return <HowToPlay pageCallback={setPage} />;
       case "about":
-        return <About pageCallback={setPage} darkMode={darkMode} darkModeCallback={toggleDarkMode} setThemeCallback={setCurTheme}/>;
+        return <About pageCallback={(page) => setPage(page, true)}/>;
+      case "settings":
+        return <Settings pageCallback={(page) => setPage(page, true)} darkModeCallback={toggleDarkMode} setThemeCallback={setCurTheme} setSensitivityCallback={setSensitivity}/>;
       default:
-        return <MenuButton onPress={setPage} value="home" label="Back to Menu" icon={graphics.DOOR}/>;
+        return <MenuButton onPress={setPage} value="home" label="Back to Menu" icon={graphics.DOOR} />;
     }
   }
 
@@ -68,7 +79,7 @@ export default function App() {
     // MAKE SURE 0 <= anim_state <= 1
     Animated.timing(anim, {
       toValue: anim_state,
-      duration: 500,
+      duration: 300,
       useNativeDriver: true
     }).start(callback);
   };
@@ -78,33 +89,35 @@ export default function App() {
   }
 
   return (
-    <View style={{
-      ...styles.body,
-      backgroundColor: (darkMode) ? colors.NEAR_BLACK : "white",
-    }}>
-      <Image style={styles.banner} source={graphics.TITLE_BANNER}/>
-      {game && !game.won && <MenuButton onPress={setPage} value="play_level" label="Resume Game" icon={graphics.KEY}/>}
-      <MenuButton onPress={setPage} value="level_select" label="Level Select" icon={graphics.FLAG}/>
-      <MenuButton onPress={setPage} value="level_editor" label="Level Editor" icon={graphics.HAMMER_ICON}/>
-      <MenuButton onPress={setPage} value="how_to_play" label="How to Play" icon={graphics.HELP_ICON}/>
-      <MenuButton onPress={setPage} value="about" label="About the App" icon={graphics.PLAYER}/>
-      <StatusBar style="auto" />
-      {page !== "home" && 
-        <Animated.View style={{
-          ...styles.modal,
-          backgroundColor: (darkMode) ? colors.NEAR_BLACK : "white",
-          opacity: anim,
-          transform: [{
-            translateY: anim.interpolate({
-              inputRange: [0, 1],
-              outputRange: [100, 0],
-            }),
-          }],
-        }}>
-          {content}
-        </Animated.View>
-      }
-    </View>
+    <GlobalContext.Provider value={{ darkMode, dragSensitivity }}>
+      <View style={{
+        ...styles.body,
+        backgroundColor: (darkMode) ? colors.NEAR_BLACK : "white",
+      }}>
+        <Image style={styles.banner} source={graphics.TITLE_BANNER} />
+        {game && !game.won && <MenuButton onPress={setPage} value="play_level" label="Resume Game" icon={graphics.KEY} />}
+        <MenuButton onPress={setPage} value="level_select" label="Level Select" icon={graphics.FLAG} />
+        <MenuButton onPress={setPage} value="level_editor" label="Level Editor" icon={graphics.HAMMER_ICON} />
+        <MenuButton onPress={setPage} value="how_to_play" label="How to Play" icon={graphics.HELP_ICON} />
+        <MenuButton onPress={setPage} value="settings" label="App Settings" icon={graphics.OPTIONS_ICON} />
+        <StatusBar style="auto" />
+        {page !== "home" &&
+          <Animated.View style={{
+            ...styles.modal,
+            backgroundColor: (darkMode) ? colors.NEAR_BLACK : "white",
+            opacity: anim,
+            transform: [{
+              translateY: anim.interpolate({
+                inputRange: [0, 1],
+                outputRange: [100, 0],
+              }),
+            }],
+          }}>
+            {content}
+          </Animated.View>
+        }
+      </View>
+    </GlobalContext.Provider>
   );
 }
 

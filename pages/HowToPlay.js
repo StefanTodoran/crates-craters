@@ -1,10 +1,13 @@
 import { View, Text, StyleSheet, Image, Dimensions } from 'react-native';
-import React from "react";
+import React, { useContext } from "react";
 
 import { colors, graphics } from '../Theme';
 import MenuButton from '../components/MenuButton';
+import { GlobalContext } from '../GlobalContext';
 
-export default function HowToPlay({ pageCallback, darkMode }) {
+export default function HowToPlay({ pageCallback }) {
+  const { darkMode, dragSensitivity } = useContext(GlobalContext);
+  
   return (
     <>
       <Image style={styles.banner} source={graphics.HOW_TO_BANNER} />

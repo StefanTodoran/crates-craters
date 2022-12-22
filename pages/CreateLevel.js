@@ -1,5 +1,5 @@
 import { View, StyleSheet, Dimensions, Animated, Image, Text } from 'react-native';
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useContext } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Audio } from 'expo-av';
 
@@ -9,6 +9,7 @@ import GameBoard from '../components/GameBoard';
 import { cloneBoard, getSpawnPos, createLevelObj, identifier, levels, importStoredLevels } from '../Game';
 import { colors, graphics } from '../Theme';
 import InputLine from '../components/InputLine';
+import { GlobalContext } from '../GlobalContext';
 const win = Dimensions.get('window');
 
 /**
@@ -28,12 +29,10 @@ const win = Dimensions.get('window');
  * 
  * @param {Function} storeLevelCallback
  * Callback used to update the above level object.
- * 
- * @param {Boolean} darkMode
- * A true/false value representing whether the app is in dark mode. Should be used for modal backgrounds,
- * text colors, etc.
  */
-export default function CreateLevel({ pageCallback, levelCallback, level, storeLevelCallback, darkMode }) {
+export default function CreateLevel({ pageCallback, levelCallback, level, storeLevelCallback }) {
+  const { darkMode, dragSensitivity } = useContext(GlobalContext);
+
   useEffect(() => {
     // If there is already a level object we wish to continue editing it. We have to wrap
     // this in a useEffect so we don't update the parent state in the middle of a render.

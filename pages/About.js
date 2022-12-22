@@ -1,10 +1,13 @@
-import { Text, StyleSheet, Image, Dimensions, View, Linking } from 'react-native';
-import React from "react";
+import { Text, StyleSheet, Image, Dimensions, Linking } from 'react-native';
+import React, { useContext } from "react";
 
-import { colors, graphics, nextTheme } from '../Theme';
+import { colors, graphics } from '../Theme';
 import MenuButton from '../components/MenuButton';
+import { GlobalContext } from '../GlobalContext';
 
-export default function About({ pageCallback, darkMode, darkModeCallback, setThemeCallback }) {
+export default function About({ pageCallback }) {
+  const { darkMode, dragSensitivity } = useContext(GlobalContext);
+
   return (
     <>
       <Image style={styles.banner} source={graphics.ABOUT_BANNER} />
@@ -23,18 +26,9 @@ export default function About({ pageCallback, darkMode, darkModeCallback, setThe
         It links to my portfolio website. Click the mail icon to scroll to the contact section at the bottom of the page.
       </Text>
 
-      {/* <View style={styles.row}>
-        <Image style={styles.icon} source={require('../assets/mail_1.png')} />
-        <Image style={styles.icon} source={require('../assets/mail_2.png')} />
-      </View> */}
-
       <MenuButton onPress={(url) => { Linking.openURL(url) }} value={"https://todoran.dev/"}
         label="Stefan Todoran" icon={graphics.LOGO} />
-      <MenuButton onPress={darkModeCallback} value={null} label="Toggle Dark Mode" icon={graphics.NIGHT_MODE_ICON} />
-      <MenuButton onPress={() => {
-        const newTheme = nextTheme();
-        setThemeCallback(newTheme);
-      }} value={null} label="Change App Theme" icon={graphics.THEME_ICON} />
+      <MenuButton onPress={pageCallback} value="settings" label="Back to Settings" icon={graphics.OPTIONS_ICON} />
       <MenuButton onPress={pageCallback} value="home" label="Back to Menu" icon={graphics.DOOR} />
     </>
   );
@@ -65,10 +59,5 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginTop: 10,
     marginBottom: 5,
-  },
-  icon: {
-    height: 40,
-    width: 40,
-    marginHorizontal: 10,
   }
 });
