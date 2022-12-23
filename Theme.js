@@ -35,18 +35,18 @@ const blue_graphics = {
 const blue_colors = {
   OFF_WHITE: "#FCFDFF",
   LIGHT_COLOR: "#EFF6FF",
-  MAIN_COLOR: "#ADCFFE",
-  MIDDLE_COLOR: "#97C2FE",
-  DARK_COLOR: "#81B5FE",
+  MAIN_COLOR: "#97C2FE",
+  MIDDLE_COLOR: "#81B5FE",
+  DARK_COLOR: "#6AA7FD",
   NEAR_BLACK: "#101219",
 
-  MAIN_COLOR_TRANSPARENT: "rgba(173, 207, 254, 0.2)",
-  LIGHT_TILE: "rgba(173, 207, 254, 0.03)",
-  DARK_TILE: "rgba(173, 207, 254, 0.14)",
+  MAIN_COLOR_TRANSPARENT: "rgba(129, 181, 254, 0.2)",
+  LIGHT_TILE: "rgba(129, 181, 254, 0.03)",
+  DARK_TILE: "rgba(129, 181, 254, 0.14)",
 
-  LIGHT_WALL: "rgba(173, 207, 254, 0.5)",
-  MEDIUM_WALL: "rgba(173, 207, 254, 0.65)",
-  DARK_WALL: "rgba(173, 207, 254, 0.8)",
+  LIGHT_WALL: "rgba(129, 181, 254, 0.5)",
+  MEDIUM_WALL: "rgba(129, 181, 254, 0.65)",
+  DARK_WALL: "rgba(129, 181, 254, 0.8)",
 };
 
 // ORANGE THEME 🟠
@@ -190,7 +190,7 @@ const green_colors = {
   MAIN_COLOR: "#b8e5b9",
   MIDDLE_COLOR: "#9BD99D",
   DARK_COLOR: "#8AD092",
-  NEAR_BLACK: "#101910",
+  NEAR_BLACK: "#0E160E",
 
   MAIN_COLOR_TRANSPARENT: "rgba(169, 223, 171, 0.2)",
   LIGHT_TILE: "rgba(169, 223, 171, 0.03)",

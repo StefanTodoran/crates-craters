@@ -114,6 +114,38 @@ const level_seven = [
   [0, 0, 1, 1, 0, 1, 1, 1],
 ];
 const level_eight = [
+  [0, 0, 2, 0, 0, 4, 8, 5],
+  [1, 7, 4, 5, 6, 4, 0, 1],
+  [0, 4, 0, 5, 1, 0, 0, 4],
+  [0, 5, 0, 0, 0, 0, 0, 0],
+  [0, 0, 0, 0, 0, 6, 1, 0],
+  [4, 4, 5, 0, 0, 5, 0, 0],
+  [4, 1, 3, 1, 0, 0, 0, 0],
+  [0, 0, 1, 0, 0, 5, 0, 4],
+  [5, 0, 0, 0, 5, 4, 0, 4],
+  [2, 1, 1, 0, 0, 0, 0, 0],
+  [0, 5, 5, 0, 0, 0, 5, 5],
+  [0, 1, 5, 4, 0, 1, 4, 4],
+  [6, 4, 1, 6, 4, 5, 3, 0],
+  [0, 1, 4, 0, 4, 5, 5, 4],
+];
+const level_nine = [
+  [0, 4, 0, 1, 0, 4, 0, 6],
+  [4, 4, 0, 0, 0, 0, 5, 1],
+  [0, 0, 0, 5, 0, 1, 0, 0],
+  [0, 0, 0, 5, 1, 0, 0, 0],
+  [1, 0, 0, 0, 0, 0, 4, 0],
+  [4, 0, 6, 0, 0, 0, 4, 4],
+  [4, 5, 0, 5, 0, 0, 5, 3],
+  [0, 2, 1, 4, 1, 0, 5, 4],
+  [0, 0, 4, 7, 4, 5, 5, 6],
+  [4, 0, 8, 4, 1, 0, 5, 1],
+  [0, 0, 5, 0, 5, 0, 0, 0],
+  [2, 1, 0, 5, 0, 0, 0, 1],
+  [5, 5, 0, 4, 0, 0, 5, 3],
+  [6, 1, 0, 0, 4, 0, 5, 4],
+];
+const level_ten = [
   [1, 6, 5, 1, 4, 0, 4, 0],
   [5, 4, 0, 3, 5, 0, 4, 4],
   [0, 4, 1, 1, 0, 0, 0, 0],
@@ -128,25 +160,8 @@ const level_eight = [
   [0, 4, 1, 1, 5, 5, 1, 0],
   [5, 0, 0, 0, 3, 0, 4, 6],
 ];
-const blank_level = [
-  [0, 0, 0, 0, 0, 0, 0, 0],
-  [0, 0, 0, 0, 0, 0, 0, 0],
-  [0, 0, 0, 0, 0, 0, 0, 0],
-  [0, 0, 0, 0, 0, 0, 0, 0],
-  [0, 0, 0, 0, 0, 0, 0, 0],
-  [0, 0, 0, 0, 0, 0, 0, 0],
-  [0, 0, 0, 7, 6, 0, 0, 0],
-  [0, 0, 0, 0, 8, 0, 0, 0],
-  [0, 0, 0, 0, 0, 0, 0, 0],
-  [0, 0, 0, 0, 0, 0, 0, 0],
-  [0, 0, 0, 0, 0, 0, 0, 0],
-  [0, 0, 0, 0, 0, 0, 0, 0],
-  [0, 0, 0, 0, 0, 0, 0, 0],
-  [0, 0, 0, 0, 0, 0, 0, 0],
-];
 
 const defaults = [
-  // createLevelObj("Test Level", "default", blank_level),
   createLevelObj("Level 1", "default", level_one),
   createLevelObj("Level 2", "default", level_two),
   createLevelObj("Level 3", "default", level_three),
@@ -155,6 +170,8 @@ const defaults = [
   createLevelObj("Level 6", "default", level_six),
   createLevelObj("Level 7", "default", level_seven),
   createLevelObj("Level 8", "default", level_eight),
+  createLevelObj("Level 9", "default", level_nine),
+  createLevelObj("Level 9", "default", level_ten),
 ];
 
 export let levels = [...defaults];
@@ -400,6 +417,7 @@ function winCondition(next) {
  * @property {number} coins - The number of coins collected so far
  * @property {number} keys - The number of keys collected and not used
  * @property {boolean} won - Whether the level has been beaten yet
+ * @property {boolean} playtest - Whether this is an actual playthrough or a playtest
  */
 
 /**
@@ -408,7 +426,7 @@ function winCondition(next) {
  * @param {number} level_id The level to be cloned for the initial board.
  * @returns {GameObj} A GameObj properly set for game start.
  */
-export function initializeGameObj(level_id) {
+export function initializeGameObj(level_id, is_test) {
   const level = cloneBoard(levels[level_id].board);
   const numberOfCoins = countTimesInArray(level, identifier["coin"]);
   const startPos = getSpawnPos(level);
@@ -421,6 +439,7 @@ export function initializeGameObj(level_id) {
     coins: 0,
     keys: 0,
     won: false,
+    playtest: is_test,
   };
 }
 
@@ -433,6 +452,7 @@ function cloneGameObj(game_obj) {
     coins: game_obj.coins,
     keys: game_obj.keys,
     won: game_obj.won,
+    playtest: game_obj.playtest,
   };
 }
 

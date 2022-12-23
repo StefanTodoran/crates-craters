@@ -171,7 +171,7 @@ export default function CreateLevel({ pageCallback, levelCallback, level, storeL
 
   function testLevel() {
     levelCallback(index);
-    pageCallback("play_level");
+    pageCallback("test_level", true);
   }
 
   // ==================
@@ -221,7 +221,12 @@ export default function CreateLevel({ pageCallback, levelCallback, level, storeL
     const board = level.board;
     console.log("const level = [");
     for (let i = 0; i < board.length; i++) {
-      console.log(" ", board[i]);
+      let line = "  ["
+      for (let j = 0; j < board[0].length; j++) {
+        line += board[i][j] + ", "
+      }
+      line += "],"
+      console.log(line);
     }
     console.log("];");
   }
@@ -271,7 +276,7 @@ export default function CreateLevel({ pageCallback, levelCallback, level, storeL
           <MenuButton onPress={changeTool} value="wall" label="Wall" icon={graphics.WALL_ICON} width={win.width / 3} />
           <MenuButton onPress={changeTool} value="spawn" label="Player" icon={graphics.PLAYER} width={win.width / 3} />
         </View>
-        <MenuButton onLongPress={storeLevelCallback} value={null} label="Clear Level (Long Press)" icon={graphics.HAMMER_ICON} width={2 * win.width / 3} />
+        <MenuButton onLongPress={storeLevelCallback} label="Clear Level (Long Press)" icon={graphics.HAMMER_ICON} width={2 * win.width / 3} />
       </Animated.View>}
       {/* END TOOLS MODAL */}
 
@@ -290,20 +295,20 @@ export default function CreateLevel({ pageCallback, levelCallback, level, storeL
           </Text>
         </View>
         <View style={styles.row}>
-          <MenuButton onPress={testLevel} value={null} label="Playtest" icon={graphics.PLAYER} width={win.width / 3} disabled={index === -1} />
-          <MenuButton onPress={saveLevelToStorage} value={null} label="Save Level" icon={graphics.SAVE_ICON} width={win.width / 3} disabled={level.name === ""} />
+          <MenuButton onPress={testLevel} label="Playtest" icon={graphics.PLAYER} width={win.width / 3} disabled={index === -1} />
+          <MenuButton onPress={saveLevelToStorage} label="Save Level" icon={graphics.SAVE_ICON} width={win.width / 3} disabled={level.name === ""} />
         </View>
         <View style={styles.row}>
-          <MenuButton onPress={loadLevelFromStorage} value={null} label="Load Level" icon={graphics.LOAD_ICON} width={win.width / 3} disabled={index === -1} />
-          <MenuButton onPress={deleteLevelFromStorage} value={null} label="Delete Level" icon={graphics.DELETE_ICON} width={win.width / 3} disabled={index === -1} />
+          <MenuButton onPress={loadLevelFromStorage} label="Load Level" icon={graphics.LOAD_ICON} width={win.width / 3} disabled={index === -1} />
+          <MenuButton onPress={deleteLevelFromStorage} label="Delete Level" icon={graphics.DELETE_ICON} width={win.width / 3} disabled={index === -1} />
         </View>
         <MenuButton onPress={pageCallback} value="home" label="Back to Menu" icon={graphics.DOOR} />
       </Animated.View>}
       {/* END OPTIONS MODAL */}
 
       <View style={styles.buttonsRow(darkMode)}>
-        <MenuButton onPress={toggleToolsModal} value={null} label="Tools" icon={graphics.HAMMER_ICON} width={win.width / 3} disabled={optionsModalOpen} />
-        <MenuButton onPress={toggleOptionsModal} value={null} label="Options" icon={graphics.OPTIONS_ICON} width={win.width / 3} disabled={toolsModalOpen} />
+        <MenuButton onPress={toggleToolsModal} label="Tools" icon={graphics.HAMMER_ICON} width={win.width / 3} disabled={optionsModalOpen} />
+        <MenuButton onPress={toggleOptionsModal} label="Options" icon={graphics.OPTIONS_ICON} width={win.width / 3} disabled={toolsModalOpen} />
       </View>
     </View>
   );

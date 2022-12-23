@@ -60,15 +60,16 @@ export default function App() {
       case "level_select":
         return <LevelSelect pageCallback={setPage} levelCallback={changeLevel} />;
       case "play_level":
-        return <PlayLevel pageCallback={setPage} levelCallback={changeLevel} gameStateCallback={setGameState} level={level} game={game} />;
+      case "test_level":
+        return <PlayLevel pageCallback={setPage} levelCallback={changeLevel} gameStateCallback={setGameState} level={level} game={game} test={page_id === "test_level"} />;
       case "level_editor":
         return <CreateLevel pageCallback={setPage} levelCallback={changeLevel} level={editorLevel} storeLevelCallback={setEditorLevel} />;
       case "how_to_play":
         return <HowToPlay pageCallback={setPage} />;
       case "about":
-        return <About pageCallback={(page) => setPage(page, true)}/>;
+        return <About pageCallback={(page) => setPage(page, true)} />;
       case "settings":
-        return <Settings pageCallback={(page) => setPage(page, true)} darkModeCallback={toggleDarkMode} setThemeCallback={setCurTheme} setSensitivityCallback={setSensitivity}/>;
+        return <Settings pageCallback={(page) => setPage(page, true)} darkModeCallback={toggleDarkMode} setThemeCallback={setCurTheme} setSensitivityCallback={setSensitivity} />;
       default:
         return <MenuButton onPress={setPage} value="home" label="Back to Menu" icon={graphics.DOOR} />;
     }
@@ -95,11 +96,14 @@ export default function App() {
         backgroundColor: (darkMode) ? colors.NEAR_BLACK : "white",
       }}>
         <Image style={styles.banner} source={graphics.TITLE_BANNER} />
-        {game && !game.won && <MenuButton onPress={setPage} value="play_level" label="Resume Game" icon={graphics.KEY} />}
+        {game && !game.won && !game.playtest &&
+          <MenuButton onPress={setPage} value="play_level" label="Resume Game" icon={graphics.KEY} />}
+        
         <MenuButton onPress={setPage} value="level_select" label="Level Select" icon={graphics.FLAG} />
         <MenuButton onPress={setPage} value="level_editor" label="Level Editor" icon={graphics.HAMMER_ICON} />
         <MenuButton onPress={setPage} value="how_to_play" label="How to Play" icon={graphics.HELP_ICON} />
         <MenuButton onPress={setPage} value="settings" label="App Settings" icon={graphics.OPTIONS_ICON} />
+        
         <StatusBar style="auto" />
         {page !== "home" &&
           <Animated.View style={{

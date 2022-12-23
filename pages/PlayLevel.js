@@ -45,8 +45,11 @@ function getRandomInt(min, max) {
  * Object of the form descirbed above in gameStateCallback, representing the state of the
  * game the player is currently playing.
  * 
+ * @param {boolean} test
+ * Whether or not the play screen has been opened from the level creation menu. If it has, this
+ * is a playtest run and the navigation buttons should show return to level creation, not levels.
  */
-export default function PlayLevel({ pageCallback, levelCallback, gameStateCallback, level, game }) {
+export default function PlayLevel({ pageCallback, levelCallback, gameStateCallback, level, game, test }) {
   const { darkMode, dragSensitivity } = useContext(GlobalContext);
 
   useEffect(() => {
@@ -55,7 +58,7 @@ export default function PlayLevel({ pageCallback, levelCallback, gameStateCallba
     // We don't just have parent init the gameObj since we want to abstract that away from App.js
 
     if (game === null) {
-      gameStateCallback(initializeGameObj(level));
+      gameStateCallback(initializeGameObj(level, test));
     } else {
       handleGesture();
       panResponderEnabled.current = !game.won;
@@ -216,8 +219,9 @@ export default function PlayLevel({ pageCallback, levelCallback, gameStateCallba
         </View>
         <View style={styles.buttonsRow}>
           {!game.won && <>
-            <MenuButton onPress={gameStateCallback} value={initializeGameObj(level)} label="Restart" icon={graphics.HELP_ICON} width={win.width / 3} />
-            <MenuButton onPress={pageCallback} value="level_select" label="Levels" icon={graphics.FLAG} width={win.width / 3} />
+            <MenuButton onPress={gameStateCallback} value={initializeGameObj(level, test)} label="Restart" icon={graphics.HELP_ICON} width={win.width / 3} />
+            {!game.playtest && <MenuButton onPress={pageCallback} value="level_select" label="Levels" icon={graphics.FLAG} width={win.width / 3} />}
+            {game.playtest && <MenuButton onPress={() => {pageCallback("level_editor", true)}} label="Editor" icon={graphics.OPTIONS_ICON} width={win.width / 3} />}
           </>}
           {game.won && <>
             <MenuButton onPress={levelCallback} value={level + 1} label="Next" icon={graphics.FLAG} width={win.width / 3} disabled={level + 1 >= levels.length}/>
