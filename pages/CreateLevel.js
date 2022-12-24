@@ -38,10 +38,11 @@ export default function CreateLevel({ pageCallback, levelCallback, level, storeL
     // this in a useEffect so we don't update the parent state in the middle of a render.
     // We don't just have parent create the blank level since we want to abstract that away from App.js
 
-    if (level === null) {
-      storeLevelCallback(createLevelObj("", "", null))
+    if (!level) {
+      console.log("no level");
+      storeLevelCallback(createLevelObj("", "", null));
     }
-  });
+  }, [level]);
 
   // ===================
   // SOUND RELATED SETUP

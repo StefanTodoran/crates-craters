@@ -43,6 +43,7 @@ export default function HowToPlay({ pageCallback }) {
 
       <Text style={styles.text(darkMode)}>
         Swipe in any direction to move one tile in that direction. You cannot move diagonally.
+        Double tap on a far away tile you can reach to automatically jump to that position. 
         Good luck out there!
       </Text>
 

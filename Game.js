@@ -242,6 +242,25 @@ importStoredLevels();
 // END LOADING LOCAL DATA
 // ======================
 
+import { graphics } from './Theme';
+// This can't just be a dictionary since graphics changes.
+export function icon_src(type) {
+  if (type === "door") { return graphics.DOOR; }
+  if (type === "key") { return graphics.KEY; }
+  if (type === "crate") { return graphics.CRATE; }
+  if (type === "crater") { return graphics.CRATER; }
+  if (type === "coin") { return graphics.COIN; }
+  if (type === "flag") { return graphics.FLAG; }
+  // For level creation:
+  if (type === "spawn") { return graphics.PLAYER; }
+}
+
+export function calcTileSize(boardWidth, boardHeight, window) {
+  const maxWidth = (window.width * 0.9) / boardWidth;
+  const maxHeight = (window.height * 0.8) / boardHeight;
+  return Math.min(maxWidth, maxHeight);
+}
+
 export const tiles = {
   0: "empty",
   1: "wall",
@@ -252,7 +271,7 @@ export const tiles = {
   6: "coin",
   7: "spawn",
   8: "flag",
-};
+}
 
 export const identifier = {
   "empty": 0,
@@ -264,7 +283,7 @@ export const identifier = {
   "coin": 6,
   "spawn": 7,
   "flag": 8,
-};
+}
 
 export function validTile(yPos, xPos, board) {
   return (yPos >= 0 && yPos < board.length && xPos >= 0 && xPos < board[0].length);
@@ -284,20 +303,6 @@ export function tileAt(yPos, xPos, board) {
   }
   return "outside"; // outside of board
 }
-
-import { graphics } from './Theme';
-// This can't just be a dictionary since graphics changes.
-export function icon_src(type) {
-  if (type === "door") { return graphics.DOOR; }
-  if (type === "key") { return graphics.KEY; }
-  if (type === "crate") { return graphics.CRATE; }
-  if (type === "crater") { return graphics.CRATER; }
-  if (type === "coin") { return graphics.COIN; }
-  if (type === "flag") { return graphics.FLAG; }
-  // For level creation:
-  if (type === "spawn") { return graphics.PLAYER; }
-}
-
 
 /**
  * Returns the player spawn position in the given level.
@@ -334,6 +339,45 @@ function countTimesInArray(array, val) {
     }
   }
   return count;
+}
+
+/**
+ * Checks if the destination position can be reached from the current position
+ * walking only on empty spaces or the flag if enough coins have been collected. 
+ * If there is no such path, returns false. If there is, returns a list of string
+ * instructions for reaching the destination.
+ * 
+ * @param {GameObj} game_obj The current game state object, used for player position and board state
+ * @param {number} tileX The X index of the destination tile 
+ * @param {number} tileY The Y index of the destination tile
+ * @returns {(boolean|Array)} Either false or a list of strings
+ */
+export function canMoveTo(game_obj, tileX, tileY) {
+  return canMoveHelper(game_obj, tileX, tileY, game_obj.player.x + 1, game_obj.player.y, [], ["right"]) ||
+         canMoveHelper(game_obj, tileX, tileY, game_obj.player.x - 1, game_obj.player.y, [], ["left"]) ||
+         canMoveHelper(game_obj, tileX, tileY, game_obj.player.x, game_obj.player.y + 1, [], ["down"]) ||
+         canMoveHelper(game_obj, tileX, tileY, game_obj.player.x, game_obj.player.y - 1, [], ["up"]);
+}
+
+function canMoveHelper(game_obj, destX, destY, curX, curY, visited, path) {
+  if (!canWalk(curY, curX, game_obj)) {
+    return false;
+  }
+  if (visited.includes(`[${curY},${curX}`)) {
+    return false;
+  }
+  if (path.length > 25) {
+    return false;
+  }
+  if (destX === curX && destY === curY) {
+    return path;
+  } else {
+    const newVisited = [...visited, `[${curY},${curX}`];
+    return canMoveHelper(game_obj, destX, destY, curX + 1, curY, newVisited, path.concat("right")) ||
+           canMoveHelper(game_obj, destX, destY, curX - 1, curY, newVisited, path.concat("left")) ||
+           canMoveHelper(game_obj, destX, destY, curX, curY + 1, newVisited, path.concat("down")) ||
+           canMoveHelper(game_obj, destX, destY, curX, curY - 1, newVisited, path.concat("up"));
+  }
 }
 
 export function doGameMove(game_obj, move) {

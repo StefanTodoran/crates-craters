@@ -1,14 +1,14 @@
 import { View, StyleSheet, Dimensions, Image, Pressable } from 'react-native';
 import React from "react";
 
-import { tiles, icon_src } from '../Game';
+import { tiles, icon_src, calcTileSize } from '../Game';
 import { colors, graphics } from '../Theme';
 const win = Dimensions.get('window');
 
 export default function GameBoard({ children, board, tileCallback }) {
   const tilesBoard = [];
   const boardHeight = board.length; const boardWidth = board[0].length;
-  const tileSize = calcTileSize(boardWidth, boardHeight);
+  const tileSize = calcTileSize(boardWidth, boardHeight, win);
 
   for (let i = 0; i < boardHeight; i++) {
     const row = [];
@@ -56,14 +56,6 @@ export default function GameBoard({ children, board, tileCallback }) {
 }
 
 function isEven(num) { return num % 2 === 0; }
-
-// Same function exists in Player.js, if you change it here,
-// change it there too!
-function calcTileSize(boardWidth, boardHeight) {
-  const maxWidth = (win.width * 0.9) / boardWidth;
-  const maxHeight = (win.height * 0.8) / boardHeight;
-  return Math.min(maxWidth, maxHeight);
-}
 
 const styles = StyleSheet.create({
   board: (theme) => ({

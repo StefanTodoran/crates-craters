@@ -1,13 +1,13 @@
-import { View, StyleSheet, Dimensions, PanResponder } from 'react-native';
-import React, { useState, useRef, useEffect, useContext } from 'react';
+import { View, StyleSheet, Dimensions, PanResponder, Animated } from 'react-native';
+import React, { useState, useRef, useEffect, useContext, useMemo } from 'react';
 
 import MenuButton from '../components/MenuButton';
 import GameBoard from '../components/GameBoard';
 import Inventory from '../components/Inventory';
 import Player from '../components/Player';
 
-import { doGameMove, initializeGameObj, levels } from '../Game';
-import { graphics } from '../Theme';
+import { doGameMove, initializeGameObj, calcTileSize, canMoveTo, levels } from '../Game';
+import { colors, graphics } from '../Theme';
 import WinScreen from './WinScreen';
 const win = Dimensions.get('window');
 
@@ -20,6 +20,19 @@ function getRandomInt(min, max) {
 }
 
 /**
+ * This component handles a wide variety of tasks related to level playing. It
+ * controls the PanResponder that handles input gestures, including both swipe
+ * movement gestures and long press gestures. It relays such data to the GameBoard,
+ * Player, and Inventory components. This component also contains the navigation
+ * buttons for this page.
+ * 
+ * The level to be played and current game state are passed to this component from
+ * the parent. If the game state is empty, a new game is initialized based on the
+ * provided level number. If there is already a game state, play is resumed from
+ * that state.
+ * 
+ * Game sounds are also handled in this component.
+ * 
  * @param {Function} pageCallback
  * Takes a string and sets the page state in the parent.
  * 
@@ -50,7 +63,7 @@ function getRandomInt(min, max) {
  * is a playtest run and the navigation buttons should show return to level creation, not levels.
  */
 export default function PlayLevel({ pageCallback, levelCallback, gameStateCallback, level, game, test }) {
-  const { darkMode, dragSensitivity } = useContext(GlobalContext);
+  const { darkMode, dragSensitivity, doubleTapDelay } = useContext(GlobalContext);
 
   useEffect(() => {
     // If there is already a game object we wish to resume. We have to wrap
@@ -88,7 +101,7 @@ export default function PlayLevel({ pageCallback, levelCallback, gameStateCallba
     await sound.playAsync();
   }
   async function playDoorSound() {
-    const doorSources = [require('../assets/audio/door_1.wav'), require('../assets/audio/door_2.wav'), require('../assets/audio/door_3.wav')]; 
+    const doorSources = [require('../assets/audio/door_1.wav'), require('../assets/audio/door_2.wav'), require('../assets/audio/door_3.wav')];
     const { sound } = await Audio.Sound.createAsync(doorSources[getRandomInt(0, doorSources.length)]);
     setDoorSound(sound);
     await sound.playAsync();
@@ -106,10 +119,20 @@ export default function PlayLevel({ pageCallback, levelCallback, gameStateCallba
   useEffect(() => {
     return doorSound ? () => { doorSound.unloadAsync(); } : undefined;
   }, [doorSound]);
-  
-  // Other state
+
+  // Player input related state. The touchMove state is used for the <Player/> component 
+  // preview of moves, gesture is used for actually completing those moves on release.
   const [touchMove, setTouchMove] = useState({ y: 0, x: 0 });
   const [gesture, setGesture] = useState([false, false, false, false]); // up, down, left, right
+
+  // More player input state, we use these to keep track of double taps. We need to know
+  // the previous tap time so we can determine if the two taps happened fast enough, and
+  // we keep track of position show it is only a double tap if its the same square twice.
+  const [prevTouchTime, setPrevTouchTime] = useState(null);
+  const [prevTouchPos, setPrevTouchPos] = useState(null);
+  const [touchPos, setTouchPos] = useState({ y: -1, x: -1 });
+  const pressAnim = useRef(new Animated.Value(0)).current;
+
   const panResponderEnabled = useRef(true);
 
   function handleGesture() {
@@ -188,8 +211,9 @@ export default function PlayLevel({ pageCallback, levelCallback, gameStateCallba
     setGesture([up, down, left, right]);
   }
 
-  const panResponder = React.useRef(
-    PanResponder.create({
+  const tileSize = game ? calcTileSize(game.board[0].length, game.board.length, win) : 1;
+  const panResponder = useMemo(
+    () => PanResponder.create({
       // Ask to be the responder:
       onStartShouldSetPanResponder: (evt, gestureState) => panResponderEnabled.current,
       onStartShouldSetPanResponderCapture: (evt, gestureState) => panResponderEnabled.current,
@@ -198,21 +222,61 @@ export default function PlayLevel({ pageCallback, levelCallback, gameStateCallba
       onPanResponderTerminationRequest: (evt, gestureState) => panResponderEnabled.current,
       onShouldBlockNativeResponder: (evt, gestureState) => panResponderEnabled.current,
 
-      onPanResponderGrant: (evt, gestureState) => { // The gesture has started!
+      onPanResponderGrant: function (evt, gestureState) { // The gesture has started!
         setTouchMove({ y: 0, x: 0 });
+
+        const pressX = pressToIndex(gestureState.x0, tileSize);
+        const pressY = pressToIndex(gestureState.y0, tileSize) - 1;
+
+        if (Date.now() - prevTouchTime < doubleTapDelay && prevTouchPos &&
+          prevTouchPos.x === pressX && prevTouchPos.y === pressY) {
+
+          setTouchPos({ x: pressX, y: pressY });
+          setPrevTouchPos(null);
+
+          Animated.timing(pressAnim, {
+            toValue: 1,
+            duration: 250,
+            useNativeDriver: true,
+          }).start();
+          setTimeout(() => {
+            Animated.timing(pressAnim, {
+              toValue: 0,
+              duration: 250,
+              useNativeDriver: true,
+            }).start();
+            
+            const path = canMoveTo(game, pressX, pressY);
+            if (path) {
+              let current = game;
+              for (let i = 0; i < path.length; i++) {
+                current = doGameMove(current, path[i]);
+              }
+              gameStateCallback(current);
+            }
+          }, 750);
+        }
+        setPrevTouchPos({
+          y: pressToIndex(gestureState.y0, tileSize) - 1,
+          x: pressToIndex(gestureState.x0, tileSize)
+        });
+        const touchTime = Date.now();
+        setPrevTouchTime(touchTime);
       },
       onPanResponderMove: onGestureMove,
       onPanResponderRelease: onEndGesture,
       onPanResponderTerminate: onEndGesture,
-    })
-  ).current;
+    }),
+    [prevTouchPos, tileSize, prevTouchTime]
+  );
 
   return (
     <>
       {game && <View style={styles.container}>
         <View {...panResponder.panHandlers}>
-          <GameBoard board={game.board}>
-            <Player game={game} touch={touchMove} darkMode={darkMode} />
+          <GameBoard board={game.board} tileSize={tileSize}>
+            <Player game={game} touch={touchMove} darkMode={darkMode} tileSize={tileSize} />
+            {touchPos && <Animated.View style={styles.indicator(touchPos.x, touchPos.y, tileSize, pressAnim)} />}
           </GameBoard>
           <Inventory coins={game.coins} maxCoins={game.maxCoins} keys={game.keys} />
           {game.won && <WinScreen darkMode={darkMode} />}
@@ -221,10 +285,10 @@ export default function PlayLevel({ pageCallback, levelCallback, gameStateCallba
           {!game.won && <>
             <MenuButton onPress={gameStateCallback} value={initializeGameObj(level, test)} label="Restart" icon={graphics.HELP_ICON} width={win.width / 3} />
             {!game.playtest && <MenuButton onPress={pageCallback} value="level_select" label="Levels" icon={graphics.FLAG} width={win.width / 3} />}
-            {game.playtest && <MenuButton onPress={() => {pageCallback("level_editor", true)}} label="Editor" icon={graphics.OPTIONS_ICON} width={win.width / 3} />}
+            {game.playtest && <MenuButton onPress={() => { pageCallback("level_editor", true) }} label="Editor" icon={graphics.OPTIONS_ICON} width={win.width / 3} />}
           </>}
           {game.won && <>
-            <MenuButton onPress={levelCallback} value={level + 1} label="Next" icon={graphics.FLAG} width={win.width / 3} disabled={level + 1 >= levels.length}/>
+            <MenuButton onPress={levelCallback} value={level + 1} label="Next" icon={graphics.FLAG} width={win.width / 3} disabled={level + 1 >= levels.length} />
             <MenuButton onPress={pageCallback} value="home" label="Menu" icon={graphics.DOOR} width={win.width / 3} />
           </>}
         </View>
@@ -236,6 +300,15 @@ export default function PlayLevel({ pageCallback, levelCallback, gameStateCallba
 // Boolean to integer, returns 0 or 1 for false or true respectively.
 function bti(bool) {
   return bool === true ? 1 : 0;
+}
+
+function pressToIndex(touchPos, tileSize) {
+  const correction = -10;
+  return Math.floor((touchPos + correction) / tileSize);
+}
+
+function deviates(numA, numB, tolerance) {
+  return Math.abs(numA - numB) > tolerance;
 }
 
 const styles = StyleSheet.create({
@@ -256,4 +329,23 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     marginBottom: 10,
   },
+  indicator: (xPos, yPos, size, anim) => ({
+    position: "absolute",
+    left: xPos * size,
+    top: yPos * size,
+    width: size,
+    height: size,
+    backgroundColor: colors.MAIN_COLOR_TRANSPARENT,
+    borderColor: colors.DARK_COLOR,
+    borderStyle: "solid",
+    borderWidth: 1,
+    borderRadius: 2,
+    opacity: anim,
+    transform: [{
+      scale: anim.interpolate({
+        inputRange: [0, 0.925, 1],
+        outputRange: [0.9, 1.65, 1.45],
+      }),
+    }],
+  }),
 });

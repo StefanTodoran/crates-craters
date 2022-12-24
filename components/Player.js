@@ -3,9 +3,8 @@ import React, { useRef, useEffect } from "react";
 
 import { tileAt } from '../Game';
 import { colors, graphics } from '../Theme';
-const win = Dimensions.get('window');
 
-export default function Player({ game, touch, darkMode }) {
+export default function Player({ game, touch, darkMode, tileSize }) {
   const optionsAnim = useRef(new Animated.Value(0)).current;
   useEffect(() => {
     Animated.loop(
@@ -23,8 +22,6 @@ export default function Player({ game, touch, darkMode }) {
       ])
     ).start();
   }, []);
-
-  const tileSize = calcTileSize(game.board[0].length, game.board.length);
 
   // We only add selectors on adjacent tiles where the player could actually move.
   const options = [];
@@ -60,14 +57,6 @@ export default function Player({ game, touch, darkMode }) {
       </Animated.View>
     </>
   );
-}
-
-// Same function as in GameBoard.js, if you change it here,
-// change it there too!
-function calcTileSize(boardWidth, boardHeight) {
-  const maxWidth = (win.width * 0.9) / boardWidth;
-  const maxHeight = (win.height * 0.8) / boardHeight;
-  return Math.min(maxWidth, maxHeight);
 }
 
 const styles = StyleSheet.create({

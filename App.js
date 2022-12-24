@@ -2,7 +2,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useFonts } from 'expo-font';
 import * as NavigationBar from 'expo-navigation-bar';
 import { useRef, useState } from 'react';
-import { StyleSheet, View, Image, Dimensions, Animated, Text } from 'react-native';
+import { StyleSheet, View, Image, Dimensions, Animated } from 'react-native';
 
 import { colors, graphics } from './Theme';
 import MenuButton from './components/MenuButton';
@@ -38,8 +38,9 @@ export default function App() {
     }
   }
 
-  const [dragSensitivity, setSensitivity] = useState(60);
   const [darkMode, setDarkMode] = useState(false);
+  const [dragSensitivity, setSensitivity] = useState(60);
+  const [doubleTapDelay, setTapDelay] = useState(250);
   const [curTheme, setCurTheme] = useState("purple");
   const toggleDarkMode = () => {
     NavigationBar.setBackgroundColorAsync(darkMode ? "white" : "black");
@@ -59,17 +60,26 @@ export default function App() {
     switch (page_id) {
       case "level_select":
         return <LevelSelect pageCallback={setPage} levelCallback={changeLevel} />;
+
       case "play_level":
       case "test_level":
-        return <PlayLevel pageCallback={setPage} levelCallback={changeLevel} gameStateCallback={setGameState} level={level} game={game} test={page_id === "test_level"} />;
+        return <PlayLevel pageCallback={setPage} levelCallback={changeLevel}
+          gameStateCallback={setGameState} level={level} game={game} test={page_id === "test_level"} />;
+
       case "level_editor":
-        return <CreateLevel pageCallback={setPage} levelCallback={changeLevel} level={editorLevel} storeLevelCallback={setEditorLevel} />;
+        return <CreateLevel pageCallback={setPage} levelCallback={changeLevel}
+          level={editorLevel} storeLevelCallback={setEditorLevel} />;
+
       case "how_to_play":
         return <HowToPlay pageCallback={setPage} />;
+
       case "about":
         return <About pageCallback={(page) => setPage(page, true)} />;
+
       case "settings":
-        return <Settings pageCallback={(page) => setPage(page, true)} darkModeCallback={toggleDarkMode} setThemeCallback={setCurTheme} setSensitivityCallback={setSensitivity} />;
+        return <Settings pageCallback={(page) => setPage(page, true)} darkModeCallback={toggleDarkMode}
+          setThemeCallback={setCurTheme} setSensitivityCallback={setSensitivity} setTapDelayCallback={setTapDelay} />;
+
       default:
         return <MenuButton onPress={setPage} value="home" label="Back to Menu" icon={graphics.DOOR} />;
     }
@@ -90,7 +100,7 @@ export default function App() {
   }
 
   return (
-    <GlobalContext.Provider value={{ darkMode, dragSensitivity }}>
+    <GlobalContext.Provider value={{ darkMode, dragSensitivity, doubleTapDelay }}>
       <View style={{
         ...styles.body,
         backgroundColor: (darkMode) ? colors.NEAR_BLACK : "white",
@@ -98,12 +108,12 @@ export default function App() {
         <Image style={styles.banner} source={graphics.TITLE_BANNER} />
         {game && !game.won && !game.playtest &&
           <MenuButton onPress={setPage} value="play_level" label="Resume Game" icon={graphics.KEY} />}
-        
+
         <MenuButton onPress={setPage} value="level_select" label="Level Select" icon={graphics.FLAG} />
         <MenuButton onPress={setPage} value="level_editor" label="Level Editor" icon={graphics.HAMMER_ICON} />
         <MenuButton onPress={setPage} value="how_to_play" label="How to Play" icon={graphics.HELP_ICON} />
         <MenuButton onPress={setPage} value="settings" label="App Settings" icon={graphics.OPTIONS_ICON} />
-        
+
         <StatusBar style="auto" />
         {page !== "home" &&
           <Animated.View style={{
