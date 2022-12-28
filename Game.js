@@ -27,8 +27,8 @@ const level_two = [
   [4, 4, 5, 4, 1, 0, 0, 5],
   [0, 4, 4, 0, 0, 0, 4, 6],
   [0, 0, 0, 0, 1, 1, 1, 2],
-  [0, 0, 5, 0, 4, 0, 0, 0],
-  [0, 6, 0, 0, 1, 0, 8, 0],
+  [0, 0, 5, 0, 4, 0, 8, 0],
+  [0, 6, 0, 0, 1, 1, 1, 4],
   [4, 0, 0, 4, 1, 0, 0, 0],
   [1, 0, 0, 0, 1, 0, 7, 0],
   [1, 4, 0, 0, 4, 0, 0, 0],
@@ -36,17 +36,17 @@ const level_two = [
 const level_three = [
   [0, 0, 2, 0, 1, 1, 1, 3],
   [0, 0, 1, 0, 1, 0, 0, 5],
-  [8, 0, 1, 0, 2, 0, 4, 0],
-  [0, 0, 1, 0, 1, 6, 0, 4],
-  [1, 1, 1, 0, 1, 1, 1, 1],
-  [1, 1, 1, 0, 1, 6, 0, 0],
-  [1, 1, 0, 4, 5, 1, 1, 0],
+  [4, 4, 1, 0, 2, 0, 4, 0],
+  [5, 5, 1, 0, 1, 6, 0, 4],
+  [4, 0, 1, 0, 1, 1, 1, 1],
+  [0, 0, 1, 0, 1, 4, 4, 0],
+  [8, 1, 0, 4, 5, 1, 1, 0],
   [1, 1, 5, 7, 0, 1, 1, 5],
-  [1, 3, 4, 4, 4, 0, 1, 0],
-  [1, 1, 0, 0, 0, 0, 1, 0],
-  [1, 1, 4, 4, 0, 0, 1, 0],
-  [0, 0, 0, 0, 4, 5, 1, 4],
-  [1, 1, 1, 1, 2, 1, 1, 0],
+  [1, 3, 4, 4, 4, 0, 1, 1],
+  [1, 1, 0, 0, 0, 0, 1, 1],
+  [1, 1, 4, 4, 0, 0, 1, 6],
+  [0, 0, 0, 0, 4, 5, 1, 5],
+  [1, 1, 1, 1, 2, 1, 1, 4],
   [1, 1, 1, 3, 0, 0, 0, 0],
 ];
 const level_four = [
@@ -132,9 +132,9 @@ const level_eight = [
 const level_nine = [
   [0, 4, 0, 1, 0, 4, 0, 6],
   [4, 4, 0, 0, 0, 0, 5, 1],
-  [0, 0, 0, 5, 0, 1, 0, 0],
+  [0, 0, 0, 4, 0, 5, 0, 0],
   [0, 0, 0, 5, 1, 0, 0, 0],
-  [1, 0, 0, 0, 0, 0, 4, 0],
+  [1, 0, 5, 5, 6, 0, 4, 5],
   [4, 0, 6, 0, 0, 0, 4, 4],
   [4, 5, 0, 5, 0, 0, 5, 3],
   [0, 2, 1, 4, 1, 0, 5, 4],
@@ -171,7 +171,7 @@ const defaults = [
   createLevelObj("Level 7", "default", level_seven),
   createLevelObj("Level 8", "default", level_eight),
   createLevelObj("Level 9", "default", level_nine),
-  createLevelObj("Level 9", "default", level_ten),
+  createLevelObj("Level 10", "default", level_ten),
 ];
 
 export let levels = [...defaults];
@@ -289,9 +289,19 @@ export function validTile(yPos, xPos, board) {
   return (yPos >= 0 && yPos < board.length && xPos >= 0 && xPos < board[0].length);
 }
 
-export function canWalk(yPos, xPos, game) {
+// Player can move to this tile without changing anything about 
+// the game state (other than player position).
+function canWalkNoDisturb(yPos, xPos, game) {
   if (validTile(yPos, xPos, game.board)) {
     return (["empty", "spawn"].includes(tileAt(yPos, xPos, game.board))) ||
+      (tileAt(yPos, xPos, game.board) === "flag" && game.coins === game.maxCoins);
+  }
+  return false;
+}
+
+export function canWalk(yPos, xPos, game) {
+  if (validTile(yPos, xPos, game.board)) {
+    return (["empty", "spawn", "coin", "key"].includes(tileAt(yPos, xPos, game.board))) ||
       (tileAt(yPos, xPos, game.board) === "flag" && game.coins === game.maxCoins);
   }
   return false;
@@ -353,9 +363,12 @@ function countTimesInArray(array, val) {
  * @returns {(boolean|Array)} Either false or a list of strings
  */
 export function canMoveTo(game_obj, tileX, tileY) {
+  if (!canWalk(tileY, tileX, game_obj)) {
+    return false;
+  }
   return canMoveHelper(game_obj, tileX, tileY, game_obj.player.x + 1, game_obj.player.y, [], ["right"]) ||
-         canMoveHelper(game_obj, tileX, tileY, game_obj.player.x - 1, game_obj.player.y, [], ["left"]) ||
          canMoveHelper(game_obj, tileX, tileY, game_obj.player.x, game_obj.player.y + 1, [], ["down"]) ||
+         canMoveHelper(game_obj, tileX, tileY, game_obj.player.x - 1, game_obj.player.y, [], ["left"]) ||
          canMoveHelper(game_obj, tileX, tileY, game_obj.player.x, game_obj.player.y - 1, [], ["up"]);
 }
 
@@ -363,19 +376,19 @@ function canMoveHelper(game_obj, destX, destY, curX, curY, visited, path) {
   if (!canWalk(curY, curX, game_obj)) {
     return false;
   }
-  if (visited.includes(`[${curY},${curX}`)) {
+  if (visited.includes(`${curY},${curX}`)) {
     return false;
   }
-  if (path.length > 25) {
+  if (path.length > 20) {
     return false;
   }
   if (destX === curX && destY === curY) {
     return path;
   } else {
-    const newVisited = [...visited, `[${curY},${curX}`];
+    const newVisited = [...visited, `${curY},${curX}`];
     return canMoveHelper(game_obj, destX, destY, curX + 1, curY, newVisited, path.concat("right")) ||
-           canMoveHelper(game_obj, destX, destY, curX - 1, curY, newVisited, path.concat("left")) ||
            canMoveHelper(game_obj, destX, destY, curX, curY + 1, newVisited, path.concat("down")) ||
+           canMoveHelper(game_obj, destX, destY, curX - 1, curY, newVisited, path.concat("left")) ||
            canMoveHelper(game_obj, destX, destY, curX, curY - 1, newVisited, path.concat("up"));
   }
 }
@@ -441,7 +454,7 @@ export function doGameMove(game_obj, move) {
 }
 
 function attemptMove(yPos, xPos, next) {
-  if (canWalk(yPos, xPos, next)) {
+  if (canWalkNoDisturb(yPos, xPos, next)) {
     next.player.x = xPos;
     next.player.y = yPos;
     return winCondition(next);

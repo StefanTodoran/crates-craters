@@ -1,4 +1,4 @@
-import { StyleSheet, Image, Dimensions } from 'react-native';
+import { StyleSheet, Image, Dimensions, View } from 'react-native';
 import React, { useContext } from "react";
 
 import { graphics, nextTheme } from '../Theme';
@@ -19,6 +19,7 @@ export default function Settings({ pageCallback, darkModeCallback, setThemeCallb
         setThemeCallback(newTheme);
       }} value={null} label="Change App Theme" icon={graphics.THEME_ICON} />
 
+      <View style={{height: 15}}/>
       <SliderBar label="Drag Sensitivity" value={dragSensitivity} units={"%"}
         minValue={10} maxValue={200} changeCallback={setSensitivityCallback} darkMode={darkMode} />
       <SliderBar label="Double Tap Delay" value={doubleTapDelay} units={"ms"}

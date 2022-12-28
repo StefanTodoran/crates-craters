@@ -1,8 +1,8 @@
 import { StatusBar } from 'expo-status-bar';
 import { useFonts } from 'expo-font';
 import * as NavigationBar from 'expo-navigation-bar';
-import { useRef, useState } from 'react';
-import { StyleSheet, View, Image, Dimensions, Animated } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { StyleSheet, View, Image, Dimensions, Animated, BackHandler } from 'react-native';
 
 import { colors, graphics } from './Theme';
 import MenuButton from './components/MenuButton';
@@ -85,6 +85,23 @@ export default function App() {
     }
   }
 
+  useEffect(() => {
+    const backAction = () => {
+      if (page === "play_level" || page === "test_level") {
+        return true;
+      }
+      if (page !== "home") {
+        setPage("home");
+        return true;
+      }
+      return false;
+    }
+    BackHandler.addEventListener("hardwareBackPress", backAction);
+
+    return () =>
+      BackHandler.removeEventListener("hardwareBackPress", backAction);
+  }, [page]);
+
   const anim = useRef(new Animated.Value(0)).current;
   const setAnimTo = (anim_state, callback) => {
     // MAKE SURE 0 <= anim_state <= 1
@@ -93,7 +110,7 @@ export default function App() {
       duration: 300,
       useNativeDriver: true
     }).start(callback);
-  };
+  }
 
   if (!fontsLoaded) {
     return null;

@@ -73,7 +73,7 @@ const styles = StyleSheet.create({
   container: {
     position: "relative",
     width: barWidth,
-    paddingTop: 25,
+    paddingTop: 5,
     paddingBottom: 15,
   },
   bar: darkMode => ({
