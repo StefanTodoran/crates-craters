@@ -19,6 +19,7 @@ const blue_graphics = {
   LOAD_ICON: require('./assets/blue_theme/load_icon.png'),
   DELETE_ICON: require('./assets/blue_theme/delete_icon.png'),
   OPTIONS_ICON: require('./assets/blue_theme/options_icon.png'),
+  SHARE_ICON: require('./assets/blue_theme/share_icon.png'),
 
   TITLE_BANNER: require('./assets/blue_theme/banner.png'),
   ABOUT_BANNER: require('./assets/blue_theme/about_banner.png'),
@@ -70,6 +71,7 @@ const orange_graphics = {
   LOAD_ICON: require('./assets/orange_theme/load_icon.png'),
   DELETE_ICON: require('./assets/orange_theme/delete_icon.png'),
   OPTIONS_ICON: require('./assets/orange_theme/options_icon.png'),
+  SHARE_ICON: require('./assets/orange_theme/share_icon.png'),
 
   TITLE_BANNER: require('./assets/orange_theme/banner.png'),
   ABOUT_BANNER: require('./assets/orange_theme/about_banner.png'),
@@ -120,6 +122,7 @@ const purple_graphics = {
   LOAD_ICON: require('./assets/purple_theme/load_icon.png'),
   DELETE_ICON: require('./assets/purple_theme/delete_icon.png'),
   OPTIONS_ICON: require('./assets/purple_theme/options_icon.png'),
+  SHARE_ICON: require('./assets/purple_theme/share_icon.png'),
 
   TITLE_BANNER: require('./assets/purple_theme/banner.png'),
   ABOUT_BANNER: require('./assets/purple_theme/about_banner.png'),
@@ -129,6 +132,7 @@ const purple_graphics = {
   TOOLS_BANNER: require('./assets/purple_theme/tools_banner.png'),
   OPTIONS_BANNER: require('./assets/purple_theme/options_banner.png'),
   SETTINGS_BANNER: require('./assets/purple_theme/settings_banner.png'),
+  SHARE_BANNER: require('./assets/purple_theme/share_banner.png'),
 
   LOGO: require('./assets/purple_theme/logo.png'),
 };
@@ -171,6 +175,7 @@ const green_graphics = {
   LOAD_ICON: require('./assets/green_theme/load_icon.png'),
   DELETE_ICON: require('./assets/green_theme/delete_icon.png'),
   OPTIONS_ICON: require('./assets/green_theme/options_icon.png'),
+  SHARE_ICON: require('./assets/green_theme/share_icon.png'),
 
   TITLE_BANNER: require('./assets/green_theme/banner.png'),
   ABOUT_BANNER: require('./assets/green_theme/about_banner.png'),

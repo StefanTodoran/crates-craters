@@ -28,7 +28,7 @@ export default function About({ pageCallback }) {
 
       <MenuButton onPress={(url) => { Linking.openURL(url) }} value={"https://todoran.dev/"}
         label="Stefan Todoran" icon={graphics.LOGO} />
-      <MenuButton onPress={pageCallback} value="settings" label="Back to Settings" icon={graphics.OPTIONS_ICON} />
+      {/* <MenuButton onPress={pageCallback} value="settings" label="Back to Settings" icon={graphics.OPTIONS_ICON} /> */}
       <MenuButton onPress={pageCallback} value="home" label="Back to Menu" icon={graphics.DOOR} />
     </>
   );

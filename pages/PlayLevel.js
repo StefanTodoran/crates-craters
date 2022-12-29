@@ -205,15 +205,9 @@ export default function PlayLevel({ pageCallback, levelCallback, gameStateCallba
       }
     }
 
-    console.log("\n", up, down, left, right);
-    console.log(`up:    ${vertDist} < ${distance}`, up);
-    console.log(`down:  ${vertDist} > ${-distance}`, down);
-    console.log(`left:  ${horizDist} < ${distance}`, left);
-    console.log(`right: ${horizDist} > ${-distance}`, right);
     // We don't want fast succesive swipe gestures to trigger the
     // double tap jump to position input.
     if (up || down || left || right) {
-      console.log("RESET PREV POS");
       setPrevTouchPos(null);
     }
 
@@ -259,7 +253,6 @@ export default function PlayLevel({ pageCallback, levelCallback, gameStateCallba
             }).start();
 
             const path = canMoveTo(game, pressX, pressY);
-            console.log(pressX, pressY, !!path);
             if (path) {
               let current = game;
               for (let i = 0; i < path.length; i++) {

@@ -13,6 +13,8 @@ import PlayLevel from './pages/PlayLevel';
 import CreateLevel from './pages/CreateLevel';
 import Settings from './pages/Settings';
 import { GlobalContext } from './GlobalContext';
+import SubMenu from './pages/SubMenu';
+import ShareLevels from './pages/ShareLevels';
 
 export default function App() {
   const [fontsLoaded] = useFonts({
@@ -25,6 +27,7 @@ export default function App() {
   // except the home page. The full transistion means playing the modal close and open
   // animation instead of direclty switching page to page.
   const setPage = (value, useFullTransition) => {
+    useFullTransition = true;
     if (value === "home") {
       setAnimTo(0, () => { setPageState(value) });
     } else if (useFullTransition && page !== "home" && value !== "home") {
@@ -58,6 +61,9 @@ export default function App() {
   const content = getContentFromPage(page);
   function getContentFromPage(page_id) {
     switch (page_id) {
+      case "play_submenu":
+        return <SubMenu pageCallback={setPage} game={game} />
+
       case "level_select":
         return <LevelSelect pageCallback={setPage} levelCallback={changeLevel} />;
 
@@ -70,14 +76,17 @@ export default function App() {
         return <CreateLevel pageCallback={setPage} levelCallback={changeLevel}
           level={editorLevel} storeLevelCallback={setEditorLevel} />;
 
+      case "share_levels":
+        return <ShareLevels pageCallback={setPage} />;
+
       case "how_to_play":
         return <HowToPlay pageCallback={setPage} />;
 
       case "about":
-        return <About pageCallback={(page) => setPage(page, true)} />;
+        return <About pageCallback={setPage} />;
 
       case "settings":
-        return <Settings pageCallback={(page) => setPage(page, true)} darkModeCallback={toggleDarkMode}
+        return <Settings pageCallback={setPage} darkModeCallback={toggleDarkMode}
           setThemeCallback={setCurTheme} setSensitivityCallback={setSensitivity} setTapDelayCallback={setTapDelay} />;
 
       default:
@@ -123,13 +132,11 @@ export default function App() {
         backgroundColor: (darkMode) ? colors.NEAR_BLACK : "white",
       }}>
         <Image style={styles.banner} source={graphics.TITLE_BANNER} />
-        {game && !game.won && !game.playtest &&
-          <MenuButton onPress={setPage} value="play_level" label="Resume Game" icon={graphics.KEY} />}
 
-        <MenuButton onPress={setPage} value="level_select" label="Level Select" icon={graphics.FLAG} />
-        <MenuButton onPress={setPage} value="level_editor" label="Level Editor" icon={graphics.HAMMER_ICON} />
+        <MenuButton onPress={setPage} value="play_submenu" label="Play Game" icon={graphics.FLAG} />
         <MenuButton onPress={setPage} value="how_to_play" label="How to Play" icon={graphics.HELP_ICON} />
         <MenuButton onPress={setPage} value="settings" label="App Settings" icon={graphics.OPTIONS_ICON} />
+        <MenuButton onPress={setPage} value="about" label="About the App" icon={graphics.PLAYER} />
 
         <StatusBar style="auto" />
         {page !== "home" &&

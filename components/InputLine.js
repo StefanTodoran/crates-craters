@@ -1,5 +1,5 @@
 import { View, Animated, Text, StyleSheet, TextInput } from 'react-native';
-import React, { useRef, useEffect } from "react";
+import React, { useRef, useEffect, useState } from "react";
 import { colors } from '../Theme';
 
 /**
@@ -13,25 +13,17 @@ import { colors } from '../Theme';
  * @param {boolean} darkMode Whether or not darkMode is enabled.
  */
 export default function InputLine({ label, value, changeCallback, darkMode }) {
+  const [focused, setFocus] = useState(false);
   const anim = useRef(new Animated.Value(0)).current;
 
-  function handleAnim(focused) {
+  useEffect(() => {
     const end = (value !== "" || focused) ? 1 : 0;
     Animated.timing(anim, {
       toValue: end,
       duration: 250,
       useNativeDriver: false, // otherwise fontSize not animatable
     }).start();
-  }
-
-  useEffect(() => {
-    const end = (value !== "") ? 1 : 0;
-    Animated.timing(anim, {
-      toValue: end,
-      duration: 250,
-      useNativeDriver: false, // otherwise fontSize not animatable
-    }).start();
-  }, [value]); // so that on unmount the animation "state" isn't lost
+  }, [value, focused]); // so that on unmount the animation "state" isn't lost
 
   return (
     <View style={{
@@ -45,11 +37,13 @@ export default function InputLine({ label, value, changeCallback, darkMode }) {
         <TextInput
           style={styles.input(darkMode)}
           onChangeText={(newVal) => {
-            handleAnim(true);
-            changeCallback(newVal);
+            setFocus(true);
+            // Matches and removes any non-alphanumeric characters (except space)
+            const filtered = newVal.replace(/[^a-z0-9 ]/gi, '');
+            changeCallback(filtered);
           }}
-          onFocus={() => { handleAnim(true); }}
-          onBlur={() => { handleAnim(false); }}
+          onFocus={() => { setFocus(true); }}
+          onBlur={() => { setFocus(false); }}
           value={value}
           cursorColor={colors.MAIN_COLOR}
           maxLength={14}

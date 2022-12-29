@@ -25,7 +25,7 @@ export default function Settings({ pageCallback, darkModeCallback, setThemeCallb
       <SliderBar label="Double Tap Delay" value={doubleTapDelay} units={"ms"}
         minValue={100} maxValue={500} changeCallback={setTapDelayCallback} darkMode={darkMode} />
 
-      <MenuButton onPress={pageCallback} value={"about"} label="About the App" icon={graphics.PLAYER} />
+      {/* <MenuButton onPress={pageCallback} value={"about"} label="About the App" icon={graphics.PLAYER} /> */}
       <MenuButton onPress={pageCallback} value={"home"} label="Back to Menu" icon={graphics.DOOR} />
     </>
   );
