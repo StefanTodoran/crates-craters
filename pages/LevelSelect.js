@@ -70,7 +70,7 @@ export default function LevelSelect({ pageCallback, levelCallback }) {
           {levels[pageEnd] && <MenuButton onPress={pageChange} value={page + 1} label="Next Page" width={win.width / 3} />}
         </View>
       </Animated.View>
-      <MenuButton onPress={pageCallback} value="home" label="Back to Menu" icon={graphics.DOOR} />
+      <MenuButton onPress={pageCallback} value="play_submenu" label="Back to Menu" icon={graphics.DOOR} />
     </>
   );
 }

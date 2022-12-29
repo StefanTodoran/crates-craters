@@ -14,7 +14,7 @@ import CreateLevel from './pages/CreateLevel';
 import Settings from './pages/Settings';
 import { GlobalContext } from './GlobalContext';
 import SubMenu from './pages/SubMenu';
-import ShareLevels from './pages/ShareLevels';
+import ShareLevel from './pages/ShareLevel';
 
 export default function App() {
   const [fontsLoaded] = useFonts({
@@ -76,14 +76,14 @@ export default function App() {
         return <CreateLevel pageCallback={setPage} levelCallback={changeLevel}
           level={editorLevel} storeLevelCallback={setEditorLevel} />;
 
-      case "share_levels":
-        return <ShareLevels pageCallback={setPage} />;
+      case "share_level":
+        return <ShareLevel pageCallback={setPage} level={level}/>;
 
       case "how_to_play":
         return <HowToPlay pageCallback={setPage} />;
 
       case "about":
-        return <About pageCallback={setPage} />;
+        return <About pageCallback={setPage}/>;
 
       case "settings":
         return <Settings pageCallback={setPage} darkModeCallback={toggleDarkMode}

@@ -39,7 +39,6 @@ export default function CreateLevel({ pageCallback, levelCallback, level, storeL
     // We don't just have parent create the blank level since we want to abstract that away from App.js
 
     if (!level) {
-      console.log("no level");
       storeLevelCallback(createLevelObj("", "", null));
     }
   }, [level]);
@@ -175,6 +174,11 @@ export default function CreateLevel({ pageCallback, levelCallback, level, storeL
     pageCallback("test_level", true);
   }
 
+  function shareLevel() {
+    levelCallback(index);
+    pageCallback("share_level", true);
+  }
+
   // ==================
   // LOCAL DATA STORAGE
   // ==================
@@ -303,7 +307,10 @@ export default function CreateLevel({ pageCallback, levelCallback, level, storeL
           <MenuButton onPress={loadLevelFromStorage} label="Load Level" icon={graphics.LOAD_ICON} width={win.width / 3} disabled={index === -1} />
           <MenuButton onPress={deleteLevelFromStorage} label="Delete Level" icon={graphics.DELETE_ICON} width={win.width / 3} disabled={index === -1} />
         </View>
-        <MenuButton onPress={pageCallback} value="home" label="Back to Menu" icon={graphics.DOOR} />
+        <View style={styles.row}>
+          <MenuButton onPress={shareLevel} label="Share Level" icon={graphics.SHARE_ICON} disabled={index === -1} width={win.width / 3}/>
+          <MenuButton onPress={pageCallback} value="play_submenu" label="Main Menu" icon={graphics.DOOR} width={win.width / 3}/>
+        </View>
       </Animated.View>}
       {/* END OPTIONS MODAL */}
 
