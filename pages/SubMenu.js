@@ -16,7 +16,7 @@ export default function SubMenu({ pageCallback, game }) {
       <MenuButton onPress={pageCallback} value="level_editor" label="Level Editor" icon={graphics.HAMMER_ICON} />
       <MenuButton onPress={pageCallback} value="share_level" label="Share Levels" icon={graphics.SHARE_ICON} />
 
-      <MenuButton onPress={pageCallback} value="home" label="Back to Menu" icon={graphics.DOOR} />
+      <MenuButton onPress={pageCallback} value="home" label="Main Menu" icon={graphics.DOOR} />
     </>
   );
 }

@@ -10,8 +10,17 @@ import { GlobalContext } from '../GlobalContext';
 import { levels } from '../Game';
 import Selector from '../components/Selector';
 
-export default function ShareLevel({ pageCallback, level }) {
+export default function ShareLevel({ pageCallback }) {
   const { darkMode, _ } = useContext(GlobalContext);
+  const [level, selectLevel] = useState(0);
+
+  function nextLevel() {
+    selectLevel(level === levels.length - 1 ? 0 : level + 1);
+  }
+  function prevLevel() {
+    selectLevel(level === 0 ? levels.length - 1 : level - 1);
+  }
+
   const levelObj = levels[level];
   const encoding = levelToEncodingString(levelObj);
 
@@ -89,10 +98,11 @@ export default function ShareLevel({ pageCallback, level }) {
         or click the button below to load a level from a QR code.
       </Text>
 
-      <Selector onNext={() => {}} onPrev={() => {}} label={`Sharing "${levelObj.name}"`}/>
+      <Selector onNext={nextLevel} onPrev={prevLevel} label={`Sharing "${levelObj.name}"`}/>
       <View style={{height: 25}}/>
 
-      {scanned && <SvgQRCode value={encoding} enableLinearGradient={true} linearGradient={[colors.MAIN_COLOR, colors.DARK_COLOR]} />}
+      {scanned && 
+      <SvgQRCode value={encoding} enableLinearGradient={true} linearGradient={[colors.MAIN_COLOR, colors.DARK_COLOR]} backgroundColor={"transparent"}/>}
       {!scanned && <BarCodeScanner onBarCodeScanned={handleBarCodeScanned} style={{height: "50%", width: "100%"}}/>}
       {info && <Text style={{...styles.bold(darkMode), paddingTop: 10}}>{info}</Text>}
 

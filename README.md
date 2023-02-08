@@ -47,5 +47,6 @@ Then use this command to build to apk: <br>
 * Finish creating local saving funcitonality
 * Make more levels
 * Create a proper tutorial?
-* Look into ways to level share (perhaps QR codes until a server can be set up?)
-* Proper settings screen (move dark mode and app theme there, then add sensitivity slider there)
+* Look into ways to have level sharing server
+* Complete UI overhaul
+* Make theme be saved on app close

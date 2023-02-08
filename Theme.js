@@ -20,6 +20,8 @@ const blue_graphics = {
   DELETE_ICON: require('./assets/blue_theme/delete_icon.png'),
   OPTIONS_ICON: require('./assets/blue_theme/options_icon.png'),
   SHARE_ICON: require('./assets/blue_theme/share_icon.png'),
+  LEFT_ICON: require('./assets/blue_theme/left_icon.png'),
+  RIGHT_ICON: require('./assets/blue_theme/right_icon.png'),
 
   TITLE_BANNER: require('./assets/blue_theme/banner.png'),
   ABOUT_BANNER: require('./assets/blue_theme/about_banner.png'),
@@ -29,6 +31,7 @@ const blue_graphics = {
   TOOLS_BANNER: require('./assets/blue_theme/tools_banner.png'),
   OPTIONS_BANNER: require('./assets/blue_theme/options_banner.png'),
   SETTINGS_BANNER: require('./assets/blue_theme/settings_banner.png'),
+  SHARE_BANNER: require('./assets/blue_theme/share_banner.png'),
 
   LOGO: require('./assets/blue_theme/logo.png'),
 };
@@ -72,6 +75,8 @@ const orange_graphics = {
   DELETE_ICON: require('./assets/orange_theme/delete_icon.png'),
   OPTIONS_ICON: require('./assets/orange_theme/options_icon.png'),
   SHARE_ICON: require('./assets/orange_theme/share_icon.png'),
+  LEFT_ICON: require('./assets/orange_theme/left_icon.png'),
+  RIGHT_ICON: require('./assets/orange_theme/right_icon.png'),
 
   TITLE_BANNER: require('./assets/orange_theme/banner.png'),
   ABOUT_BANNER: require('./assets/orange_theme/about_banner.png'),
@@ -81,6 +86,7 @@ const orange_graphics = {
   TOOLS_BANNER: require('./assets/orange_theme/tools_banner.png'),
   OPTIONS_BANNER: require('./assets/orange_theme/options_banner.png'),
   SETTINGS_BANNER: require('./assets/orange_theme/settings_banner.png'),
+  SHARE_BANNER: require('./assets/orange_theme/share_banner.png'),
 
   LOGO: require('./assets/orange_theme/logo.png'),
 };
@@ -178,6 +184,8 @@ const green_graphics = {
   DELETE_ICON: require('./assets/green_theme/delete_icon.png'),
   OPTIONS_ICON: require('./assets/green_theme/options_icon.png'),
   SHARE_ICON: require('./assets/green_theme/share_icon.png'),
+  LEFT_ICON: require('./assets/green_theme/left_icon.png'),
+  RIGHT_ICON: require('./assets/green_theme/right_icon.png'),
 
   TITLE_BANNER: require('./assets/green_theme/banner.png'),
   ABOUT_BANNER: require('./assets/green_theme/about_banner.png'),
@@ -187,6 +195,7 @@ const green_graphics = {
   TOOLS_BANNER: require('./assets/green_theme/tools_banner.png'),
   OPTIONS_BANNER: require('./assets/green_theme/options_banner.png'),
   SETTINGS_BANNER: require('./assets/green_theme/settings_banner.png'),
+  SHARE_BANNER: require('./assets/green_theme/share_banner.png'),
 
   LOGO: require('./assets/green_theme/logo.png'),
 };

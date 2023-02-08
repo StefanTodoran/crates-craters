@@ -308,8 +308,8 @@ export default function CreateLevel({ pageCallback, levelCallback, level, storeL
           <MenuButton onPress={deleteLevelFromStorage} label="Delete Level" icon={graphics.DELETE_ICON} width={win.width / 3} disabled={index === -1} />
         </View>
         <View style={styles.row}>
-          <MenuButton onPress={shareLevel} label="Share Level" icon={graphics.SHARE_ICON} disabled={index === -1} width={win.width / 3}/>
-          <MenuButton onPress={pageCallback} value="play_submenu" label="Go Back" icon={graphics.DOOR} width={win.width / 3}/>
+          {/* <MenuButton onPress={shareLevel} label="Share Level" icon={graphics.SHARE_ICON} disabled={index === -1} width={win.width / 3}/> */}
+          <MenuButton onPress={pageCallback} value="play_submenu" label="Back to Menu" icon={graphics.DOOR}/>
         </View>
       </Animated.View>}
       {/* END OPTIONS MODAL */}
