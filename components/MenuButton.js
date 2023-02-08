@@ -58,6 +58,9 @@ export default function MenuButton({ onPress, onLongPress, value, label, icon, w
       borderColor: colors.MAIN_COLOR,
       backgroundColor: (pressed) ? colors.MAIN_COLOR_TRANSPARENT : "#00000000",
       opacity: (invisible) ? 0 : (disabled) ? 0.5 : 1,
+      transform: [{
+        scale: pressed ? 0.98 : 1,
+      }],
     }} onPressIn={() => { setPressedState(!!onPress) }} onPressOut={() => { setPressedState(false) }}
       disabled={disabled} touchSoundDisabled={true}>
       {(icon) && <Image style={styles.icon} source={icon} />}

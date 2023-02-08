@@ -309,7 +309,7 @@ export default function CreateLevel({ pageCallback, levelCallback, level, storeL
         </View>
         <View style={styles.row}>
           <MenuButton onPress={shareLevel} label="Share Level" icon={graphics.SHARE_ICON} disabled={index === -1} width={win.width / 3}/>
-          <MenuButton onPress={pageCallback} value="play_submenu" label="Main Menu" icon={graphics.DOOR} width={win.width / 3}/>
+          <MenuButton onPress={pageCallback} value="play_submenu" label="Go Back" icon={graphics.DOOR} width={win.width / 3}/>
         </View>
       </Animated.View>}
       {/* END OPTIONS MODAL */}

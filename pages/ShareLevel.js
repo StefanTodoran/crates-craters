@@ -1,4 +1,4 @@
-import { Text, StyleSheet, Image, Dimensions } from 'react-native';
+import { Text, StyleSheet, Image, Dimensions, View } from 'react-native';
 import React, { useContext, useEffect, useState } from "react";
 import SvgQRCode from 'react-native-qrcode-svg';
 import { BarCodeScanner } from 'expo-barcode-scanner';
@@ -8,6 +8,7 @@ import { colors, graphics } from '../Theme';
 import MenuButton from '../components/MenuButton';
 import { GlobalContext } from '../GlobalContext';
 import { levels } from '../Game';
+import Selector from '../components/Selector';
 
 export default function ShareLevel({ pageCallback, level }) {
   const { darkMode, _ } = useContext(GlobalContext);
@@ -87,6 +88,9 @@ export default function ShareLevel({ pageCallback, level }) {
         by "<Text style={styles.bold(darkMode)}>{levelObj.designer}</Text>",
         or click the button below to load a level from a QR code.
       </Text>
+
+      <Selector onNext={() => {}} onPrev={() => {}} label={`Sharing "${levelObj.name}"`}/>
+      <View style={{height: 25}}/>
 
       {scanned && <SvgQRCode value={encoding} enableLinearGradient={true} linearGradient={[colors.MAIN_COLOR, colors.DARK_COLOR]} />}
       {!scanned && <BarCodeScanner onBarCodeScanned={handleBarCodeScanned} style={{height: "50%", width: "100%"}}/>}

@@ -123,6 +123,8 @@ const purple_graphics = {
   DELETE_ICON: require('./assets/purple_theme/delete_icon.png'),
   OPTIONS_ICON: require('./assets/purple_theme/options_icon.png'),
   SHARE_ICON: require('./assets/purple_theme/share_icon.png'),
+  LEFT_ICON: require('./assets/purple_theme/left_icon.png'),
+  RIGHT_ICON: require('./assets/purple_theme/right_icon.png'),
 
   TITLE_BANNER: require('./assets/purple_theme/banner.png'),
   ABOUT_BANNER: require('./assets/purple_theme/about_banner.png'),
