@@ -7,7 +7,7 @@ import { GlobalContext } from '../GlobalContext';
 
 export default function HowToPlay({ pageCallback }) {
   const { darkMode, dragSensitivity } = useContext(GlobalContext);
-  
+
   return (
     <>
       <Image style={styles.banner} source={graphics.HOW_TO_BANNER} />
@@ -43,11 +43,13 @@ export default function HowToPlay({ pageCallback }) {
 
       <Text style={styles.text(darkMode)}>
         Swipe in any direction to move one tile in that direction. You cannot move diagonally.
-        Double tap on a far away tile you can reach to automatically jump to that position. 
+        Double tap on a far away tile you can reach to automatically jump to that position.
         Good luck out there!
       </Text>
 
-      <MenuButton onPress={pageCallback} value="home" label="Back to Menu" icon={graphics.DOOR}/>
+      <View style={styles.buttonsContainer}>
+        <MenuButton onPress={pageCallback} value="home" label="Back to Menu" icon={graphics.DOOR} />
+      </View>
     </>
   );
 }
@@ -61,6 +63,11 @@ function sizeFromWidthPercent(percent, img_height, img_width) {
 }
 
 const styles = StyleSheet.create({
+  buttonsContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: win.width * 0.55,
+  },
   banner: {
     width: sizeFromWidthPercent(0.6, 141, 450)[0],
     height: sizeFromWidthPercent(0.6, 141, 450)[1],

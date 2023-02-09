@@ -289,6 +289,7 @@ export default function PlayLevel({ pageCallback, levelCallback, gameStateCallba
         </View>
         <View style={styles.buttonsRow}>
           {!game.won && <>
+            
             <MenuButton onPress={gameStateCallback} value={initializeGameObj(level, test)} label="Restart" icon={graphics.HELP_ICON} width={win.width / 3} />
             {!game.playtest && <MenuButton onPress={pageCallback} value="level_select" label="Levels" icon={graphics.FLAG} width={win.width / 3} />}
             {game.playtest && <MenuButton onPress={() => { pageCallback("level_editor", true) }} label="Editor" icon={graphics.OPTIONS_ICON} width={win.width / 3} />}
@@ -329,12 +330,18 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   buttonsRow: {
-    position: "absolute",
-    bottom: 10,
-    flexDirection: "row",
-    justifyContent: "center",
-    marginBottom: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: win.width * 0.45,
   },
+  // buttonsRow: {
+  //   position: "absolute",
+  //   bottom: 10,
+  //   flexDirection: "row",
+  //   justifyContent: "center",
+  //   marginBottom: 10,
+  // },
   indicator: (xPos, yPos, size, anim) => ({
     position: "absolute",
     left: xPos * size,

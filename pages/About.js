@@ -1,4 +1,4 @@
-import { Text, StyleSheet, Image, Dimensions, Linking } from 'react-native';
+import { Text, StyleSheet, Image, Dimensions, Linking, View } from 'react-native';
 import React, { useContext } from "react";
 
 import { colors, graphics } from '../Theme';
@@ -26,10 +26,11 @@ export default function About({ pageCallback }) {
         It links to my portfolio website. Click the mail icon to scroll to the contact section at the bottom of the page.
       </Text>
 
-      <MenuButton onPress={(url) => { Linking.openURL(url) }} value={"https://todoran.dev/"}
-        label="Stefan Todoran" icon={graphics.LOGO} />
-      {/* <MenuButton onPress={pageCallback} value="settings" label="Back to Settings" icon={graphics.OPTIONS_ICON} /> */}
-      <MenuButton onPress={pageCallback} value="home" label="Back to Menu" icon={graphics.DOOR} />
+      <View style={styles.buttonsContainer}>
+        <MenuButton onPress={(url) => { Linking.openURL(url) }} value={"https://todoran.dev/"}
+          label="Stefan Todoran" icon={graphics.LOGO} />
+        <MenuButton onPress={pageCallback} value="home" label="Back to Menu" icon={graphics.DOOR} />
+      </View>
     </>
   );
 }
@@ -43,6 +44,11 @@ function sizeFromWidthPercent(percent, img_height, img_width) {
 }
 
 const styles = StyleSheet.create({
+  buttonsContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: win.width * 0.55,
+  },
   banner: {
     width: sizeFromWidthPercent(0.5, 146, 299)[0],
     height: sizeFromWidthPercent(0.5, 146, 299)[1],

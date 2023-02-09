@@ -129,7 +129,7 @@ export default function App() {
     <GlobalContext.Provider value={{ darkMode, dragSensitivity, doubleTapDelay }}>
       <View style={{
         ...styles.body,
-        backgroundColor: (darkMode) ? colors.NEAR_BLACK : "white",
+        // backgroundColor: (darkMode) ? colors.NEAR_BLACK : "white",
       }}>
         <Image style={styles.banner} source={graphics.TITLE_BANNER} />
 
@@ -176,6 +176,7 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    paddingHorizontal: win.width * 0.225,
   },
   modal: {
     position: "absolute",

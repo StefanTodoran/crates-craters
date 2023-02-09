@@ -18,15 +18,12 @@ const win = Dimensions.get('window');
 export default function LevelOption({ onPress, value, level }) {
   if (level) {
     return (
-      <View style={styles.container}>
-        {/* <Text style={styles.label}>{level.name}</Text> */}
-        <MenuButton onPress={onPress} value={value} label={normalize(level.name)}
-          icon={level.designer === "default" ? graphics.CRATE : graphics.CRATER} width={win.width * 0.4} />
-      </View>
+      <MenuButton onPress={onPress} value={value} label={normalize(level.name)}
+        icon={level.designer === "default" ? graphics.CRATE : graphics.CRATER} />
     );
   } else {
     return ( // We still give it an icon so it is the right size
-      <MenuButton label={""} icon={graphics.CRATE} width={win.width * 0.4} invisible/>
+      <MenuButton icon={graphics.CRATE} invisible />
     );
   }
 }
@@ -34,14 +31,3 @@ export default function LevelOption({ onPress, value, level }) {
 function normalize(str) {
   return str.substring(0, 14).padStart(14);
 }
-
-const styles = StyleSheet.create({
-  container: {
-    position: "relative",
-  },
-  label: {
-    position: "absolute",
-    left: "15%",
-    color: colors.MAIN_COLOR,
-  },
-});

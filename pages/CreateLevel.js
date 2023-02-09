@@ -266,22 +266,25 @@ export default function CreateLevel({ pageCallback, levelCallback, level, storeL
       }}>
         <Image style={styles.toolsBanner} source={graphics.TOOLS_BANNER} />
         <View style={styles.row}>
-          <MenuButton onPress={changeTool} value="crate" label="Crate" icon={graphics.CRATE} width={win.width / 3} />
-          <MenuButton onPress={changeTool} value="crater" label="Crater" icon={graphics.CRATER} width={win.width / 3} />
+          <MenuButton onPress={changeTool} value="crate" label="Crate" icon={graphics.CRATE} />
+          <MenuButton onPress={changeTool} value="crater" label="Crater" icon={graphics.CRATER} />
         </View>
         <View style={styles.row}>
-          <MenuButton onPress={changeTool} value="door" label="Door" icon={graphics.DOOR} width={win.width / 3} />
-          <MenuButton onPress={changeTool} value="key" label="Key" icon={graphics.KEY} width={win.width / 3} />
+          <MenuButton onPress={changeTool} value="door" label="Door" icon={graphics.DOOR} />
+          <MenuButton onPress={changeTool} value="key" label="Key" icon={graphics.KEY} />
         </View>
         <View style={styles.row}>
-          <MenuButton onPress={changeTool} value="flag" label="Flag" icon={graphics.FLAG} width={win.width / 3} />
-          <MenuButton onPress={changeTool} value="coin" label="Coin" icon={graphics.COIN} width={win.width / 3} />
+          <MenuButton onPress={changeTool} value="flag" label="Flag" icon={graphics.FLAG} />
+          <MenuButton onPress={changeTool} value="coin" label="Coin" icon={graphics.COIN} />
         </View>
         <View style={styles.row}>
-          <MenuButton onPress={changeTool} value="wall" label="Wall" icon={graphics.WALL_ICON} width={win.width / 3} />
-          <MenuButton onPress={changeTool} value="spawn" label="Player" icon={graphics.PLAYER} width={win.width / 3} />
+          <MenuButton onPress={changeTool} value="wall" label="Wall" icon={graphics.WALL_ICON} />
+          <MenuButton onPress={changeTool} value="spawn" label="Player" icon={graphics.PLAYER} />
         </View>
-        <MenuButton onLongPress={storeLevelCallback} label="Clear Level (Long Press)" icon={graphics.HAMMER_ICON} width={2 * win.width / 3} />
+        <View style={styles.row}>
+          <MenuButton invisible />
+          <MenuButton onLongPress={storeLevelCallback} label="Clear Level      (Long Press)" icon={graphics.HAMMER_ICON} />
+        </View>
       </Animated.View>}
       {/* END TOOLS MODAL */}
 
@@ -300,23 +303,24 @@ export default function CreateLevel({ pageCallback, levelCallback, level, storeL
           </Text>
         </View>
         <View style={styles.row}>
-          <MenuButton onPress={testLevel} label="Playtest" icon={graphics.PLAYER} width={win.width / 3} disabled={index === -1} />
-          <MenuButton onPress={saveLevelToStorage} label="Save Level" icon={graphics.SAVE_ICON} width={win.width / 3} disabled={level.name === ""} />
+          <MenuButton onPress={testLevel} label="Playtest" icon={graphics.PLAYER} disabled={index === -1} />
+          <MenuButton onPress={saveLevelToStorage} label="Save Level" icon={graphics.SAVE_ICON} disabled={level.name === ""} />
         </View>
         <View style={styles.row}>
-          <MenuButton onPress={loadLevelFromStorage} label="Load Level" icon={graphics.LOAD_ICON} width={win.width / 3} disabled={index === -1} />
-          <MenuButton onPress={deleteLevelFromStorage} label="Delete Level" icon={graphics.DELETE_ICON} width={win.width / 3} disabled={index === -1} />
+          <MenuButton onPress={loadLevelFromStorage} label="Load Level" icon={graphics.LOAD_ICON} disabled={index === -1} />
+          <MenuButton onPress={deleteLevelFromStorage} label="Delete Level" icon={graphics.DELETE_ICON} disabled={index === -1} />
         </View>
+        <View style={{height: 35}}/>
         <View style={styles.row}>
-          {/* <MenuButton onPress={shareLevel} label="Share Level" icon={graphics.SHARE_ICON} disabled={index === -1} width={win.width / 3}/> */}
-          <MenuButton onPress={pageCallback} value="play_submenu" label="Back to Menu" icon={graphics.DOOR}/>
+          {/* <MenuButton onPress={shareLevel} label="Share Level" icon={graphics.SHARE_ICON} disabled={index === -1}/> */}
+          <MenuButton onPress={pageCallback} value="play_submenu" label="Go Back" icon={graphics.DOOR} />
         </View>
       </Animated.View>}
       {/* END OPTIONS MODAL */}
 
       <View style={styles.buttonsRow(darkMode)}>
-        <MenuButton onPress={toggleToolsModal} label="Tools" icon={graphics.HAMMER_ICON} width={win.width / 3} disabled={optionsModalOpen} />
-        <MenuButton onPress={toggleOptionsModal} label="Options" icon={graphics.OPTIONS_ICON} width={win.width / 3} disabled={toolsModalOpen} />
+        <MenuButton onPress={toggleToolsModal} label="Tools" icon={graphics.HAMMER_ICON} disabled={optionsModalOpen} />
+        <MenuButton onPress={toggleOptionsModal} label="Options" icon={graphics.OPTIONS_ICON} disabled={toolsModalOpen} />
       </View>
     </View>
   );
@@ -343,18 +347,19 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: "row",
     justifyContent: "center",
-    marginBottom: 10,
+    width: win.width * 0.45,
   },
   buttonsRow: (darkMode) => ({
     position: "absolute",
     bottom: 0,
-    paddingBottom: 20,
+    paddingBottom: 30,
     flexDirection: "row",
+    alignItems: "center",
     justifyContent: "center",
     backgroundColor: (darkMode) ? colors.NEAR_BLACK : "white",
     borderTopColor: colors.MAIN_COLOR,
     borderTopWidth: 1,
-    width: "91%", // board has 90 width, we want this to be just wider than that
+    width: win.width * 0.45,
   }),
   modal: {
     position: "absolute",

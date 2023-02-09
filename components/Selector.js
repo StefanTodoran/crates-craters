@@ -16,7 +16,7 @@ const win = Dimensions.get('window');
  * @param {ImageSourcePropType} icon The image to be displayed in the button, optional.
  * @param {boolean} disabled Whether or not the button can be pressed (changes appearance).
  */
-export default function Selector({ label, onNext, onPrev, disabled }) {
+export default function Selector({ label, onNext, onPrev, nextDisabled, prevDisabled }) {
   const [nextPressed, setNextPressed] = useState(false);
   const [prevPressed, setPrevPressed] = useState(false);
   const [sound, setSound] = useState();
@@ -32,23 +32,23 @@ export default function Selector({ label, onNext, onPrev, disabled }) {
 
   return (
     <View style={styles.outerContainer}>
-      <Pressable disabled={disabled} touchSoundDisabled={true} onPress={() => {
+      <Pressable disabled={prevDisabled} touchSoundDisabled={true} onPress={() => {
         playSound();
         onPrev();
       }}
       onPressIn={() => {setPrevPressed(true)}} onPressOut={() => {setPrevPressed(false)}}>
-        <Image style={styles.icon(prevPressed)} source={graphics.LEFT_ICON} />
+        <Image style={styles.icon(prevPressed, prevDisabled)} source={graphics.LEFT_ICON} />
       </Pressable>
       <Text style={{
         width: win.width / 2,
         ...styles.label, color: colors.MAIN_COLOR,
       }}>{label}</Text>
-      <Pressable disabled={disabled} touchSoundDisabled={true} onPress={() => {
+      <Pressable disabled={nextDisabled} touchSoundDisabled={true} onPress={() => {
         playSound();
         onNext();
       }}
       onPressIn={() => {setNextPressed(true)}} onPressOut={() => {setNextPressed(false)}}>
-        <Image style={styles.icon(nextPressed)} source={graphics.RIGHT_ICON} />
+        <Image style={styles.icon(nextPressed, nextDisabled)} source={graphics.RIGHT_ICON} />
       </Pressable>
     </View>
   );
@@ -68,10 +68,10 @@ const styles = StyleSheet.create({
     fontFamily: "Montserrat-Medium",
     fontWeight: "bold",
   },
-  icon: (pressed) => ({
+  icon: (pressed, disabled) => ({
     height: 17.5,
     width: 30,
-    opacity: pressed ? 0.8 : 1,
+    opacity: disabled ? 0.45 : pressed ? 0.8 : 1,
     transform: [{
       scale: pressed ? 1.25 : 1,
     }],

@@ -1,4 +1,4 @@
-import { View, StyleSheet, Dimensions, Image, Animated } from 'react-native';
+import { View, StyleSheet, Dimensions, Image, Animated, Pressable } from 'react-native';
 import React, { useState, useRef } from "react";
 
 import MenuButton from '../components/MenuButton';
@@ -6,6 +6,7 @@ import LevelOption from '../components/LevelOption';
 
 import { levels, importStoredLevels } from '../Game';
 import { graphics } from '../Theme';
+import Selector from '../components/Selector';
 const win = Dimensions.get('window');
 
 export default function LevelSelect({ pageCallback, levelCallback }) {
@@ -28,14 +29,14 @@ export default function LevelSelect({ pageCallback, levelCallback }) {
   for (let i = pageStart; i < pageEnd; i += 2) {
     const levelButton = (num) => {
       if (levels[num]) {
-        return <LevelOption key={`select<${num}>`} onPress={openLevel} value={num} level={levels[num]}/>;
+        return <LevelOption key={`select<${num}>`} onPress={openLevel} value={num} level={levels[num]} />;
       }
       // Most of the values don't matter but we still give it text and an icon 
       // so it is size the same, since we are using this invisible button as padding.
-      return <LevelOption key={`invisible<${num}>`}/>;
+      return <LevelOption key={`invisible<${num}>`} />;
     }
     level_buttons.push(
-      <View style={styles.row}>
+      <View style={styles.buttonsRow}>
         {levelButton(i)}
         {levelButton(i + 1)}
       </View>
@@ -65,12 +66,20 @@ export default function LevelSelect({ pageCallback, levelCallback }) {
         opacity: anim
       }}>
         {level_buttons}
-        <View style={styles.row}>
-          {page > 0 && <MenuButton onPress={pageChange} value={page - 1} label="Prev Page" width={win.width / 3} />}
+        {/* <View style={[styles.buttonsRow, { marginBottom: 20 }]}>
+          {page > 0 && <MenuButton onPress={pageChange} value={page - 1} label="Prev Page" width={win.width / 3} icon={graphics.LEFT_ICON} />}
           {levels[pageEnd] && <MenuButton onPress={pageChange} value={page + 1} label="Next Page" width={win.width / 3} />}
-        </View>
+        </View> */}
       </Animated.View>
-      <MenuButton onPress={pageCallback} value="play_submenu" label="Back to Menu" icon={graphics.DOOR} />
+      <View style={{ marginTop: 35, marginBottom: 15 }}>
+        <Selector
+          onNext={() => { pageChange(page + 1) }} nextDisabled={!levels[pageEnd]}
+          onPrev={() => { pageChange(page - 1) }} prevDisabled={page === 0}
+          label={`Page #${page + 1}`} />
+      </View>
+      <View style={styles.buttonsRow}>
+        <MenuButton onPress={pageCallback} value="play_submenu" label="Go Back" icon={graphics.DOOR} />
+      </View>
     </>
   );
 }
@@ -87,13 +96,10 @@ const styles = StyleSheet.create({
     width: sizeFromWidthPercent(0.8, 145, 600)[0],
     height: sizeFromWidthPercent(0.8, 145, 600)[1],
   },
-  row: {
+  buttonsRow: {
     flexDirection: "row",
+    alignItems: "center",
     justifyContent: "center",
-    marginBottom: 10,
-  },
-  icon: {
-    height: 30,
-    width: 30,
+    width: win.width * 0.45,
   }
 });

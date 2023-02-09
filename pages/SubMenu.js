@@ -1,4 +1,4 @@
-import { StyleSheet, Image, Dimensions } from 'react-native';
+import { StyleSheet, Image, Dimensions, View } from 'react-native';
 import React from "react";
 
 import { colors, graphics } from '../Theme';
@@ -9,14 +9,21 @@ export default function SubMenu({ pageCallback, game }) {
     <>
       <Image style={styles.banner} source={graphics.TITLE_BANNER} />
 
-      <MenuButton onPress={pageCallback} value="play_level"
-        label="Resume Game" icon={graphics.KEY} disabled={!game || game.won || game.playtest}/>
+      <View style={styles.buttonsRow}>
+        <MenuButton onPress={pageCallback} value="play_level"
+          label="Resume LVL" icon={graphics.KEY} disabled={!game || game.won || game.playtest} />
+        <MenuButton onPress={pageCallback} value="level_select" label="Level Select" icon={graphics.FLAG} />
+      </View>
 
-      <MenuButton onPress={pageCallback} value="level_select" label="Level Select" icon={graphics.FLAG} />
-      <MenuButton onPress={pageCallback} value="level_editor" label="Level Editor" icon={graphics.HAMMER_ICON} />
-      <MenuButton onPress={pageCallback} value="share_level" label="Share Levels" icon={graphics.SHARE_ICON} />
+      <View style={styles.buttonsRow}>
+        <MenuButton onPress={pageCallback} value="level_editor" label="Level Editor" icon={graphics.HAMMER_ICON} />
+        <MenuButton onPress={pageCallback} value="share_level" label="Share Levels" icon={graphics.SHARE_ICON} />
+      </View>
 
-      <MenuButton onPress={pageCallback} value="home" label="Main Menu" icon={graphics.DOOR} />
+      <View style={{height: 35}}/>
+      <View style={styles.buttonsRow}>
+        <MenuButton onPress={pageCallback} value="home" label="Main Menu" icon={graphics.DOOR} />
+      </View>
     </>
   );
 }
@@ -30,6 +37,12 @@ function sizeFromWidthPercent(percent, img_height, img_width) {
 }
 
 const styles = StyleSheet.create({
+  buttonsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: win.width * 0.45,
+  },
   banner: {
     width: sizeFromWidthPercent(0.9, 141, 681)[0],
     height: sizeFromWidthPercent(0.9, 141, 681)[1],

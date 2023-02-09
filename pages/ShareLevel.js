@@ -98,16 +98,18 @@ export default function ShareLevel({ pageCallback }) {
         or click the button below to load a level from a QR code.
       </Text>
 
-      <Selector onNext={nextLevel} onPrev={prevLevel} label={`Sharing "${levelObj.name}"`}/>
-      <View style={{height: 25}}/>
+      {scanned &&
+        <SvgQRCode value={encoding} enableLinearGradient={true} linearGradient={[colors.MAIN_COLOR, colors.DARK_COLOR]} backgroundColor={"transparent"} />}
+      {!scanned && <BarCodeScanner onBarCodeScanned={handleBarCodeScanned} style={{ height: "50%", width: "100%" }} />}
+      {info && <Text style={{ ...styles.bold(darkMode), paddingTop: 10 }}>{info}</Text>}
+      <View style={{ height: 35 }} />
+      <Selector onNext={nextLevel} onPrev={prevLevel} label={`Share "${levelObj.name}" QR`} />
 
-      {scanned && 
-      <SvgQRCode value={encoding} enableLinearGradient={true} linearGradient={[colors.MAIN_COLOR, colors.DARK_COLOR]} backgroundColor={"transparent"}/>}
-      {!scanned && <BarCodeScanner onBarCodeScanned={handleBarCodeScanned} style={{height: "50%", width: "100%"}}/>}
-      {info && <Text style={{...styles.bold(darkMode), paddingTop: 10}}>{info}</Text>}
-
-      <MenuButton onPress={setScanned} value={!scanned} label="Scan Level QR" icon={graphics.LOAD_ICON} />
-      <MenuButton onPress={pageCallback} value="play_submenu" label="Back to Menu" icon={graphics.DOOR} />
+      <View style={{ height: 15 }} />
+      <View style={styles.buttonsContainer}>
+        <MenuButton onPress={setScanned} value={!scanned} label="Scan Level QR" icon={graphics.LOAD_ICON} />
+        <MenuButton onPress={pageCallback} value="play_submenu" label="Back to Menu" icon={graphics.DOOR} />
+      </View>
     </>
   );
 }
@@ -127,7 +129,7 @@ function encodingStringToLevel(encondedStr) {
   try {
     const data = encondedStr.split(",");
     const rawBoard = data[3].split(";");
-    
+
     const board = [];
     for (let i = 0; i < rawBoard.length; i++) {
       const row = [];
@@ -173,5 +175,10 @@ const styles = StyleSheet.create({
     color: (darkMode) ? colors.MAIN_COLOR : colors.DARK_COLOR,
     fontFamily: "Montserrat-Medium",
     fontWeight: "bold",
-  })
+  }),
+  buttonsContainer: {
+    alignItems: "center",
+    justifyContent: "center",
+    width: win.width * 0.45,
+  }
 });
