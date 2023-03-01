@@ -4,7 +4,7 @@ import * as NavigationBar from 'expo-navigation-bar';
 import { useEffect, useRef, useState } from 'react';
 import { StyleSheet, View, Image, Dimensions, Animated, BackHandler } from 'react-native';
 
-import { colors, graphics } from './Theme';
+import { colors, graphics, nextTheme } from './Theme';
 import MenuButton from './components/MenuButton';
 import About from './pages/About';
 import HowToPlay from './pages/HowToPlay';
@@ -15,6 +15,7 @@ import Settings from './pages/Settings';
 import { GlobalContext } from './GlobalContext';
 import SubMenu from './pages/SubMenu';
 import ShareLevel from './pages/ShareLevel';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function App() {
   const [fontsLoaded] = useFonts({
@@ -27,6 +28,11 @@ export default function App() {
   // except the home page. The full transistion means playing the modal close and open
   // animation instead of direclty switching page to page.
   const setPage = (value, useFullTransition) => {
+    if (page === "settings") {
+      // If we just left the settings page, store our settings changes.
+      writeSettingsToStorage();
+    }
+
     useFullTransition = true;
     if (value === "home") {
       setAnimTo(0, () => { setPageState(value) });
@@ -41,14 +47,84 @@ export default function App() {
     }
   }
 
+  async function storeData(value, storageKey) {
+    try {
+      const jsonValue = JSON.stringify(value);
+      await AsyncStorage.setItem(storageKey, jsonValue);
+      return true;
+    } catch (err) {
+      console.log("\n\n(ERROR) >>> SAVING ERROR:\n", err);
+      return false;
+    }
+  }
+
+  async function getData(storageKey, expectedType, defaultValue) {
+    try {
+      const jsonValue = await AsyncStorage.getItem(storageKey);
+      const value = jsonValue != null ? JSON.parse(jsonValue) : null;
+      
+      if (typeof value === expectedType) {
+        return value;
+      } else {
+        return defaultValue;
+      }
+    } catch (err) {
+      console.log("\n\n(ERROR) >>> READING ERROR:\n", err);
+      return false;
+    }
+  }
+
+  // We can't just await data from storage to set the default app state values,
+  // so we will have to just put some default dummy values below and run the
+  // update function to replace those values as soon as possible.
+
   const [darkMode, setDarkMode] = useState(false);
   const [dragSensitivity, setSensitivity] = useState(60);
   const [doubleTapDelay, setTapDelay] = useState(250);
   const [curTheme, setCurTheme] = useState("purple");
+
+  // These functions are used by children (probably only the settings page)
+  // to modify App's state, and we use them to abstract that away from those
+  // components and because we have the state and AyncStorage here.
+
   const toggleDarkMode = () => {
     NavigationBar.setBackgroundColorAsync(darkMode ? "white" : "black");
     setDarkMode(current => !current);
   }
+
+  async function readSettingsFromStorage() {
+    console.log("\nREADING SETTINGS FROM STORAGE");
+
+    const storedDarkMode = await getData("isAppDarkMode", "boolean", false);
+    setDarkMode(storedDarkMode);
+    NavigationBar.setBackgroundColorAsync(storedDarkMode ? "black" : "white");
+    console.log(storedDarkMode);
+
+    setSensitivity(await getData("appDragSensitivity", "number", 60));
+    setTapDelay(await getData("appDoubleTapDelay", "number", 250));
+
+    let theme = "purple"; // by default, Theme.js exports purple theme
+    const targetTheme = await getData("appTheme", "string", "purple");
+    while (theme !== targetTheme) {
+      theme = nextTheme();
+    }
+    setCurTheme(theme);
+  }
+
+  async function writeSettingsToStorage() {
+    console.log("\nWRITING SETTINGS TO STORAGE");
+
+    storeData(darkMode, "isAppDarkMode");
+    storeData(dragSensitivity, "appDragSensitivity");
+    storeData(doubleTapDelay, "appDoubleTapDelay");
+    storeData(curTheme, "appTheme");
+
+    console.log(darkMode, dragSensitivity, doubleTapDelay, curTheme);
+  }
+
+  useEffect(() => {
+    readSettingsFromStorage();
+  }, []);
 
   const [level, setLevelState] = useState(1); // the parent needs to know the level from LevelSelect to share with PlayLevel
   const [game, setGameState] = useState(null); // stores the game state so levels can be resumed
@@ -98,8 +174,10 @@ export default function App() {
     const backAction = () => {
       if (page === "play_level" || page === "test_level") {
         return true;
-      }
-      if (page !== "home") {
+      } else if (page === "level_editor" || page === "level_select" || page === "share_level") {
+        setPage("play_submenu");
+        return true;
+      } else if (page !== "home") {
         setPage("home");
         return true;
       }
@@ -129,7 +207,7 @@ export default function App() {
     <GlobalContext.Provider value={{ darkMode, dragSensitivity, doubleTapDelay }}>
       <View style={{
         ...styles.body,
-        // backgroundColor: (darkMode) ? colors.NEAR_BLACK : "white",
+        backgroundColor: (darkMode) ? colors.NEAR_BLACK : "white",
       }}>
         <Image style={styles.banner} source={graphics.TITLE_BANNER} />
 

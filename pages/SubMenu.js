@@ -11,13 +11,13 @@ export default function SubMenu({ pageCallback, game }) {
 
       <View style={styles.buttonsRow}>
         <MenuButton onPress={pageCallback} value="play_level"
-          label="Resume LVL" icon={graphics.KEY} disabled={!game || game.won || game.playtest} />
+          label="Resume" icon={graphics.KEY} disabled={!game || game.won || game.playtest} />
         <MenuButton onPress={pageCallback} value="level_select" label="Level Select" icon={graphics.FLAG} />
       </View>
 
       <View style={styles.buttonsRow}>
         <MenuButton onPress={pageCallback} value="level_editor" label="Level Editor" icon={graphics.HAMMER_ICON} />
-        <MenuButton onPress={pageCallback} value="share_level" label="Share Levels" icon={graphics.SHARE_ICON} />
+        <MenuButton onPress={pageCallback} value="share_level" label="Share" icon={graphics.SHARE_ICON} />
       </View>
 
       <View style={{height: 35}}/>

@@ -1,4 +1,4 @@
-import { View, StyleSheet, Dimensions, Animated, Image, Text } from 'react-native';
+import { View, StyleSheet, Dimensions, Animated, Image, Text, Keyboard, Platform } from 'react-native';
 import React, { useState, useRef, useEffect, useContext } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Audio } from 'expo-av';
@@ -32,6 +32,7 @@ const win = Dimensions.get('window');
  */
 export default function CreateLevel({ pageCallback, levelCallback, level, storeLevelCallback }) {
   const { darkMode, dragSensitivity } = useContext(GlobalContext);
+  const [shown, setShown] = useState(true);
 
   useEffect(() => {
     // If there is already a level object we wish to continue editing it. We have to wrap
@@ -254,6 +255,28 @@ export default function CreateLevel({ pageCallback, levelCallback, level, storeL
     setIndex(-1);
   }
 
+  // We want to hide the modal's toolbar if the user is inputing text into
+  // the level name or designer text inputs, so we need to some event listeners.
+  useEffect(() => {
+    const showEvent = Platform.OS === 'ios' ? "keyboardWillShow" : "keyboardDidShow";
+    const showListener = Keyboard.addListener(showEvent, () => {
+    // const showListener = Keyboard.addListener("keyboardWillShow", () => {
+      setShown(false);
+      console.log(false);
+    });
+    const hideEvent = Platform.OS === 'ios' ? "keyboardWillHide" : "keyboardDidHide";
+    const hideListener = Keyboard.addListener(hideEvent, () => {
+    // const hideListener = Keyboard.addListener("keyboardWillHide", () => {
+      setShown(true);
+      console.log(true);
+    });
+
+    return function cleanup() {
+      showListener.remove();
+      hideListener.remove();
+    }
+  }, []);
+
   return (
     <View style={styles.container}>
       {level && <GameBoard board={level.board} tileCallback={changeTile}></GameBoard>}
@@ -310,18 +333,21 @@ export default function CreateLevel({ pageCallback, levelCallback, level, storeL
           <MenuButton onPress={loadLevelFromStorage} label="Load Level" icon={graphics.LOAD_ICON} disabled={index === -1} />
           <MenuButton onPress={deleteLevelFromStorage} label="Delete Level" icon={graphics.DELETE_ICON} disabled={index === -1} />
         </View>
-        <View style={{height: 35}}/>
-        <View style={styles.row}>
-          {/* <MenuButton onPress={shareLevel} label="Share Level" icon={graphics.SHARE_ICON} disabled={index === -1}/> */}
-          <MenuButton onPress={pageCallback} value="play_submenu" label="Go Back" icon={graphics.DOOR} />
-        </View>
+        {shown && <>
+          <View style={{height: 35}}/>
+          <View style={styles.row}>
+            {/* <MenuButton onPress={shareLevel} label="Share Level" icon={graphics.SHARE_ICON} disabled={index === -1}/> */}
+            <MenuButton onPress={pageCallback} value="play_submenu" label="Go Back" icon={graphics.DOOR} />
+          </View>
+        </>}
       </Animated.View>}
       {/* END OPTIONS MODAL */}
 
+      {shown &&
       <View style={styles.buttonsRow(darkMode)}>
         <MenuButton onPress={toggleToolsModal} label="Tools" icon={graphics.HAMMER_ICON} disabled={optionsModalOpen} />
         <MenuButton onPress={toggleOptionsModal} label="Options" icon={graphics.OPTIONS_ICON} disabled={toolsModalOpen} />
-      </View>
+      </View>}
     </View>
   );
 }
