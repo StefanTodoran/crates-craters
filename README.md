@@ -126,7 +126,9 @@ Built with JavaScript and React Native, Crates and Craters is a single player pu
       <p>
         Make sure you are logged in to expo with `expo whoami`. If not logged in, run <b>expo login</b>.
         Then use this command to build to apk for android: <br>
-        <b>eas build -p android --profile preview</b>
+        <b>eas build -p android --profile preview</b><br>
+        Or for both platforms: <br>
+        <b>eas build -p all</b>
       </p>
     </td>
     <td>

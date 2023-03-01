@@ -1,5 +1,5 @@
-import { Text, StyleSheet, Image, Dimensions, View } from 'react-native';
-import React, { useContext, useEffect, useState } from "react";
+import { Text, StyleSheet, Image, Dimensions, View, Animated } from 'react-native';
+import React, { useContext, useEffect, useRef, useState } from "react";
 import SvgQRCode from 'react-native-qrcode-svg';
 import { BarCodeScanner } from 'expo-barcode-scanner';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -27,6 +27,16 @@ export default function ShareLevel({ pageCallback }) {
   const [hasPermission, setHasPermission] = useState(null);
   const [scanned, setScanned] = useState(true);
   const [info, setInfo] = useState("Requesting camera permissions.");
+
+  const anim = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    const end = (info === "") ? 0 : 1;
+    Animated.timing(anim, {
+      toValue: end,
+      duration: 500,
+      useNativeDriver: true,
+    }).start();
+  }, [info]);
 
   useEffect(() => {
     const getBarCodeScannerPermissions = async () => {
@@ -59,7 +69,7 @@ export default function ShareLevel({ pageCallback }) {
 
     setTimeout(() => {
       setInfo("");
-    }, 5000);
+    }, 4500);
   };
 
   // ==================
@@ -91,19 +101,22 @@ export default function ShareLevel({ pageCallback }) {
     <>
       <Image style={styles.banner} source={graphics.SHARE_BANNER} />
 
-      <Text style={styles.text(darkMode)}>
+      <Text style={{ ...styles.text(darkMode), zIndex: 1 }}>
         Scan this QR code to download level
         "<Text style={styles.bold(darkMode)}>{levelObj.name}</Text>"
         by "<Text style={styles.bold(darkMode)}>{levelObj.designer}</Text>",
         or click the button below to load a level from a QR code.
       </Text>
 
+      <View style={{ height: 15 }} />
       {scanned &&
         <SvgQRCode value={encoding} enableLinearGradient={true} linearGradient={[colors.MAIN_COLOR, colors.DARK_COLOR]} backgroundColor={"transparent"} />}
       {!scanned && <BarCodeScanner onBarCodeScanned={handleBarCodeScanned} style={{ height: "50%", width: "100%" }} />}
-      {info && <Text style={{ ...styles.bold(darkMode), paddingTop: 10 }}>{info}</Text>}
-      <View style={{ height: 35 }} />
-      <Selector onNext={nextLevel} onPrev={prevLevel} label={`Share "${levelObj.name}" QR`} />
+      <Animated.Text style={{ ...styles.bold(darkMode), ...styles.info(darkMode, anim) }}>{info}</Animated.Text>
+      {scanned && <>
+        <View style={{ height: 35 }} />
+        <Selector onNext={nextLevel} onPrev={prevLevel} label={`Share "${levelObj.name}" QR`} />
+      </>}
 
       <View style={{ height: 15 }} />
       <View style={styles.buttonsContainer}>
@@ -163,6 +176,7 @@ const styles = StyleSheet.create({
   banner: {
     width: sizeFromWidthPercent(0.8, 146, 600)[0],
     height: sizeFromWidthPercent(0.8, 146, 600)[1],
+    zIndex: 1,
   },
   text: darkMode => ({
     width: win.width * 0.8,
@@ -180,5 +194,18 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     width: win.width * 0.45,
-  }
+  },
+  info: (darkMode, anim) => ({
+    backgroundColor: (darkMode) ? colors.NEAR_BLACK : "white",
+    opacity: anim.interpolate({
+      inputRange: [0, 1],
+      outputRange: [0, 0.9],
+    }),
+    position: "absolute",
+    paddingTop: win.height / 2 - 25,
+    paddingBottom: win.height / 2 + 25,
+    width: "100%",
+    textAlign: "center",
+    zIndex: 0,
+  }),
 });
