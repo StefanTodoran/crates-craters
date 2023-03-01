@@ -220,9 +220,20 @@ export async function importStoredLevels() {
     const keys = await AsyncStorage.getAllKeys();
     levels = [...defaults];
 
+    const settings = [
+      "isAppDarkMode",
+      "appDragSensitivity",
+      "appDoubleTapDelay",
+      "appTheme"
+    ];
+
     for (let i = 0; i < keys.length; i++) {
-      const level = await getData(keys[i]);
-      levels.push(level);
+      if (settings.includes(keys[i])) {
+        continue;
+      } else {
+        const level = await getData(keys[i]);
+        levels.push(level);
+      }
     }
   } catch (err) {
     console.log("\n\n(ERROR) >>> IMPORTING ERROR:\n", err);

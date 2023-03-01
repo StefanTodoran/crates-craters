@@ -93,8 +93,6 @@ export default function App() {
   }
 
   async function readSettingsFromStorage() {
-    console.log("\nREADING SETTINGS FROM STORAGE");
-
     const storedDarkMode = await getData("isAppDarkMode", "boolean", false);
     setDarkMode(storedDarkMode);
     NavigationBar.setBackgroundColorAsync(storedDarkMode ? "black" : "white");
@@ -112,8 +110,6 @@ export default function App() {
   }
 
   async function writeSettingsToStorage() {
-    console.log("\nWRITING SETTINGS TO STORAGE");
-
     storeData(darkMode, "isAppDarkMode");
     storeData(dragSensitivity, "appDragSensitivity");
     storeData(doubleTapDelay, "appDoubleTapDelay");
