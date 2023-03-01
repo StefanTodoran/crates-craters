@@ -1,4 +1,4 @@
-import { View, StyleSheet, Dimensions, PanResponder, Animated } from 'react-native';
+import { View, StyleSheet, Dimensions, PanResponder, Animated, SafeAreaView, StatusBar } from 'react-native';
 import React, { useState, useRef, useEffect, useContext, useMemo } from 'react';
 
 import MenuButton from '../components/MenuButton';
@@ -278,7 +278,7 @@ export default function PlayLevel({ pageCallback, levelCallback, gameStateCallba
 
   return (
     <>
-      {game && <View style={styles.container}>
+      {game && <SafeAreaView style={styles.container}>
         <View {...panResponder.panHandlers}>
           <GameBoard board={game.board} tileSize={tileSize}>
             <Player game={game} touch={touchMove} darkMode={darkMode} tileSize={tileSize} />
@@ -299,7 +299,7 @@ export default function PlayLevel({ pageCallback, levelCallback, gameStateCallba
             <MenuButton onPress={pageCallback} value="home" label="Menu" icon={graphics.DOOR} width={win.width / 3} />
           </>}
         </View>
-      </View>}
+      </SafeAreaView>}
     </>
   );
 }
@@ -326,8 +326,10 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     flex: 1,
-    paddingTop: win.height * 0.05,
+    paddingTop: StatusBar.currentHeight + 15,
+    paddingBottom: win.height * 0.05,
     alignItems: "center",
+    justifyContent: "space-around",
   },
   buttonsRow: {
     flexDirection: 'row',
@@ -335,13 +337,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     width: win.width * 0.45,
   },
-  // buttonsRow: {
-  //   position: "absolute",
-  //   bottom: 10,
-  //   flexDirection: "row",
-  //   justifyContent: "center",
-  //   marginBottom: 10,
-  // },
   indicator: (xPos, yPos, size, anim) => ({
     position: "absolute",
     left: xPos * size,

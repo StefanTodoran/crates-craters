@@ -159,3 +159,4 @@ Built with JavaScript and React Native, Crates and Craters is a single player pu
 * Create a proper tutorial?
 * Look into ways to have level sharing server
 * Complete UI overhaul
+* Improve level sharing page

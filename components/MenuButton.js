@@ -2,6 +2,7 @@ import { Pressable, Text, StyleSheet, Image, Dimensions } from 'react-native';
 import React, { useEffect, useState } from 'react';
 import { Audio } from 'expo-av';
 import { colors } from '../Theme';
+const width = Dimensions.get('window').width;
 
 /**
  * MenuButton is the basic button type used throughout the project.
@@ -83,13 +84,16 @@ const styles = StyleSheet.create({
   label: {
     textAlign: "center",
     // color: colors.MAIN_COLOR, won't auto update here, so we do it in render funciton
-    fontSize: 16,
+    // fontSize: 16,
+    fontSize: width * 0.04,
     paddingRight: 5,
     fontFamily: "Montserrat-Medium",
     fontWeight: "bold",
   },
   icon: {
-    height: 30,
-    width: 30,
+    // height: 30,
+    // width: 30,
+    height: width * 0.07,
+    width: width * 0.07,
   }
 });

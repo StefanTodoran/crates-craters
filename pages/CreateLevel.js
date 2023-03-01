@@ -1,4 +1,4 @@
-import { View, StyleSheet, Dimensions, Animated, Image, Text, Keyboard, Platform } from 'react-native';
+import { View, StyleSheet, Dimensions, Animated, Image, Text, Keyboard, Platform, StatusBar, SafeAreaView } from 'react-native';
 import React, { useState, useRef, useEffect, useContext } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Audio } from 'expo-av';
@@ -278,7 +278,7 @@ export default function CreateLevel({ pageCallback, levelCallback, level, storeL
   }, []);
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       {level && <GameBoard board={level.board} tileCallback={changeTile}></GameBoard>}
 
       {/* TOOLS MODAL */}
@@ -333,7 +333,7 @@ export default function CreateLevel({ pageCallback, levelCallback, level, storeL
           <MenuButton onPress={loadLevelFromStorage} label="Load Level" icon={graphics.LOAD_ICON} disabled={index === -1} />
           <MenuButton onPress={deleteLevelFromStorage} label="Delete Level" icon={graphics.DELETE_ICON} disabled={index === -1} />
         </View>
-        {shown && <>
+        {(shown || Platform.OS === "ios") && <>
           <View style={{height: 35}}/>
           <View style={styles.row}>
             {/* <MenuButton onPress={shareLevel} label="Share Level" icon={graphics.SHARE_ICON} disabled={index === -1}/> */}
@@ -343,12 +343,12 @@ export default function CreateLevel({ pageCallback, levelCallback, level, storeL
       </Animated.View>}
       {/* END OPTIONS MODAL */}
 
-      {shown &&
+      {(shown || Platform.OS === "ios") &&
       <View style={styles.buttonsRow(darkMode)}>
         <MenuButton onPress={toggleToolsModal} label="Tools" icon={graphics.HAMMER_ICON} disabled={optionsModalOpen} />
         <MenuButton onPress={toggleOptionsModal} label="Options" icon={graphics.OPTIONS_ICON} disabled={toolsModalOpen} />
       </View>}
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -367,8 +367,9 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     flex: 1,
-    paddingTop: win.height * 0.05,
+    paddingTop: StatusBar.currentHeight + 15,
     alignItems: "center",
+    justifyContent: "space-between",
   },
   row: {
     flexDirection: "row",
@@ -376,8 +377,6 @@ const styles = StyleSheet.create({
     width: win.width * 0.45,
   },
   buttonsRow: (darkMode) => ({
-    position: "absolute",
-    bottom: 0,
     paddingBottom: 30,
     flexDirection: "row",
     alignItems: "center",

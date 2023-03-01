@@ -45,6 +45,7 @@ export default function InputLine({ label, value, changeCallback, darkMode }) {
           onFocus={() => { setFocus(true); }}
           onBlur={() => { setFocus(false); }}
           value={value}
+          selectionColor={colors.MAIN_COLOR}
           cursorColor={colors.MAIN_COLOR}
           maxLength={14}
         />
