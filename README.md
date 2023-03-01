@@ -18,13 +18,26 @@ Built with JavaScript and React Native, Crates and Craters is a single player pu
 * Several color themes
 * Minimalist game design and graphics
 * Small app size
+* Light and dark modes
 * And lots more to come!
 
 <br>
 
 <table>
   <tr>
-    <td><img src="misc/demo-1.jpg" alt="Level One Preview"/></td>
+    <td>
+      <picture>
+        <source 
+          srcset="misc/demo-1-dark.jpg"
+          media="(prefers-color-scheme: dark)"
+        />
+        <source
+          srcset="misc/demo-1.jpg"
+          media="(prefers-color-scheme: light), (prefers-color-scheme: no-preference)"
+        />
+        <img src="misc/demo-1.jpg"/>
+      </picture>
+    </td>
     <td style="padding-left: 10%;">
       <h2 style="display: flex; align-items: center;">
         How To Play
@@ -50,13 +63,37 @@ Built with JavaScript and React Native, Crates and Craters is a single player pu
         If the tile the crate is pushed into is a crater, the crate will fall in and <b>fill in</b> the crater, creating a normal, walkable floor space. Crates cannot be pushed onto coins, keys, or into doors or the flag.
       </p>
     </td>
-    <td><img src="misc/demo-2.jpg" alt="Level Two Preview"/></td>
+    <td>
+      <picture>
+        <source 
+          srcset="misc/demo-2-dark.jpg"
+          media="(prefers-color-scheme: dark)"
+        />
+        <source
+          srcset="misc/demo-2.jpg"
+          media="(prefers-color-scheme: light), (prefers-color-scheme: no-preference)"
+        />
+        <img src="misc/demo-2.jpg"/>
+      </picture>
+    </td>
   </tr>
 </table>
 
 <table>
   <tr>
-    <td><img src="misc/demo-3.jpg" alt="Level Three Preview"/></td>
+    <td>
+      <picture>
+        <source 
+          srcset="misc/demo-3-dark.jpg"
+          media="(prefers-color-scheme: dark)"
+        />
+        <source
+          srcset="misc/demo-3.jpg"
+          media="(prefers-color-scheme: light), (prefers-color-scheme: no-preference)"
+        />
+        <img src="misc/demo-3.jpg"/>
+      </picture>
+    </td>
     <td style="padding-left: 10%;">
       <p>
         In order to successfully complete a level, the player must be able to reach the flag and stand on that tile after having collected all the coins.
@@ -92,7 +129,19 @@ Built with JavaScript and React Native, Crates and Craters is a single player pu
         <b>eas build -p android --profile preview</b>
       </p>
     </td>
-    <td><img src="misc/demo-4.jpg" alt="Level Four Preview"/></td>
+    <td>
+      <picture>
+        <source 
+          srcset="misc/demo-4-dark.jpg"
+          media="(prefers-color-scheme: dark)"
+        />
+        <source
+          srcset="misc/demo-4.jpg"
+          media="(prefers-color-scheme: light), (prefers-color-scheme: no-preference)"
+        />
+        <img src="misc/demo-4.jpg"/>
+      </picture>
+    </td>
   </tr>
 </table>
 
