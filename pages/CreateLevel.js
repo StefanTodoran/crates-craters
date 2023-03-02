@@ -306,7 +306,7 @@ export default function CreateLevel({ pageCallback, levelCallback, level, storeL
         </View>
         <View style={styles.row}>
           <MenuButton invisible />
-          <MenuButton onLongPress={storeLevelCallback} label="Clear Level      (Long Press)" icon={graphics.HAMMER_ICON} />
+          <MenuButton onLongPress={storeLevelCallback} label="Clear Level      (Long Press)" icon={graphics.HAMMER_ICON} allowOverflow/>
         </View>
       </Animated.View>}
       {/* END TOOLS MODAL */}
@@ -414,11 +414,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
   }),
   toolsBanner: {
-    width: sizeFromWidthPercent(0.45, 141, 288)[0],
-    height: sizeFromWidthPercent(0.45, 141, 288)[1],
+    width: sizeFromWidthPercent(0.45, 141, 300)[0],
+    height: sizeFromWidthPercent(0.45, 141, 300)[1],
   },
   optionsBanner: {
-    width: sizeFromWidthPercent(0.65, 145, 365)[0],
-    height: sizeFromWidthPercent(0.65, 145, 365)[1],
+    width: sizeFromWidthPercent(0.55, 145, 365)[0],
+    height: sizeFromWidthPercent(0.55, 145, 365)[1],
   },
 });

@@ -18,7 +18,7 @@ const win = Dimensions.get('window');
 export default function LevelOption({ onPress, value, level }) {
   if (level) {
     return (
-      <MenuButton onPress={onPress} value={value} label={normalize(level.name)}
+      <MenuButton onPress={onPress} value={value} label={level.name}
         icon={level.designer === "default" ? graphics.CRATE : graphics.CRATER} />
     );
   } else {
@@ -26,8 +26,4 @@ export default function LevelOption({ onPress, value, level }) {
       <MenuButton icon={graphics.CRATE} invisible />
     );
   }
-}
-
-function normalize(str) {
-  return str.substring(0, 14).padStart(14);
 }

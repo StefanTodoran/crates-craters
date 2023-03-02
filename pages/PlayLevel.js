@@ -295,8 +295,9 @@ export default function PlayLevel({ pageCallback, levelCallback, gameStateCallba
             {game.playtest && <MenuButton onPress={() => { pageCallback("level_editor", true) }} label="Editor" icon={graphics.OPTIONS_ICON} width={win.width / 3} />}
           </>}
           {game.won && <>
-            <MenuButton onPress={levelCallback} value={level + 1} label="Next" icon={graphics.FLAG} width={win.width / 3} disabled={level + 1 >= levels.length} />
-            <MenuButton onPress={pageCallback} value="home" label="Menu" icon={graphics.DOOR} width={win.width / 3} />
+            {!game.playtest && <MenuButton onPress={levelCallback} value={level + 1} label="Next" icon={graphics.FLAG} width={win.width / 3} disabled={level + 1 >= levels.length} />}
+            <MenuButton onPress={pageCallback} value="play_submenu" label="Menu" icon={graphics.DOOR} width={win.width / 3} />
+            {game.playtest && <MenuButton onPress={() => { pageCallback("level_editor", true) }} label="Editor" icon={graphics.OPTIONS_ICON} width={win.width / 3} />}
           </>}
         </View>
       </SafeAreaView>}

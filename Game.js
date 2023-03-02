@@ -160,18 +160,34 @@ const level_ten = [
   [0, 4, 1, 1, 5, 5, 1, 0],
   [5, 0, 0, 0, 3, 0, 4, 6],
 ];
+const bomb_test = [
+  [1, 6, 5, 1, 4, 0, 4, 0],
+  [5, 4, 0, 3, 5, 0, 4, 4],
+  [0, 4, 1, 1, 0, 0, 0, 0],
+  [0, 4, 2, 0, 0, 9, 0, 4],
+  [0, 0, 1, 0, 0, 0, 0, 0],
+  [8, 0, 5, 4, 0, 0, 5, 5],
+  [0, 0, 4, 7, 1, 0, 4, 5],
+  [1, 5, 1, 2, 1, 0, 4, 4],
+  [5, 5, 5, 0, 0, 0, 5, 3],
+  [0, 0, 5, 1, 0, 1, 0, 1],
+  [4, 4, 6, 1, 0, 4, 5, 0],
+  [0, 4, 1, 1, 5, 5, 1, 0],
+  [5, 0, 0, 0, 3, 0, 4, 6],
+];
 
 const defaults = [
-  createLevelObj("Level 1", "default", level_one),
-  createLevelObj("Level 2", "default", level_two),
-  createLevelObj("Level 3", "default", level_three),
-  createLevelObj("Level 4", "default", level_four),
-  createLevelObj("Level 5", "default", level_five),
-  createLevelObj("Level 6", "default", level_six),
-  createLevelObj("Level 7", "default", level_seven),
-  createLevelObj("Level 8", "default", level_eight),
-  createLevelObj("Level 9", "default", level_nine),
-  createLevelObj("Level 10", "default", level_ten),
+  createLevelObj("Bomb", "default", bomb_test),
+  createLevelObj("Tutorial", "default", level_one),
+  createLevelObj("Easy Peasy", "default", level_two),
+  createLevelObj("Rooms", "default", level_three),
+  createLevelObj("Choices", "default", level_four),
+  createLevelObj("Running Laps", "default", level_five),
+  createLevelObj("The Hallway", "default", level_six),
+  createLevelObj("Trickster", "default", level_seven),
+  createLevelObj("Bust the Wall?", "default", level_eight),
+  createLevelObj("Deja Vu", "default", level_nine),
+  createLevelObj("Pain", "default", level_ten),
 ];
 
 export let levels = [...defaults];
@@ -186,6 +202,7 @@ export let levels = [...defaults];
 export function createLevelObj(name, designer, board) {
   if (board === null) {
     board = createBlankBoard(8, 14);
+    // board = createBlankBoard(12, 21);
   }
   return {
     name: name,
@@ -262,6 +279,7 @@ export function icon_src(type) {
   if (type === "crater") { return graphics.CRATER; }
   if (type === "coin") { return graphics.COIN; }
   if (type === "flag") { return graphics.FLAG; }
+  if (type === "bomb") { return graphics.BOMB; }
   // For level creation:
   if (type === "spawn") { return graphics.PLAYER; }
 }
@@ -282,6 +300,7 @@ export const tiles = {
   6: "coin",
   7: "spawn",
   8: "flag",
+  9: "bomb",
 }
 
 export const identifier = {
@@ -294,6 +313,7 @@ export const identifier = {
   "coin": 6,
   "spawn": 7,
   "flag": 8,
+  "bomb": 9,
 }
 
 export function validTile(yPos, xPos, board) {

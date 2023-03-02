@@ -6,6 +6,7 @@ const blue_graphics = {
   CRATER: require('./assets/blue_theme/crater.png'),
   COIN: require('./assets/blue_theme/coin.png'),
   FLAG: require('./assets/blue_theme/flag.png'),
+  BOMB: require('./assets/blue_theme/bomb.png'),
   PLAYER: require('./assets/blue_theme/player.png'),
   PLAYER_OUTLINED: require('./assets/blue_theme/player_outlined.png'),
   PLAYER_OUTLINED_DARK: require('./assets/blue_theme/player_outlined_dark.png'),
@@ -22,6 +23,7 @@ const blue_graphics = {
   SHARE_ICON: require('./assets/blue_theme/share_icon.png'),
   LEFT_ICON: require('./assets/blue_theme/left_icon.png'),
   RIGHT_ICON: require('./assets/blue_theme/right_icon.png'),
+  SUPPORT_ICON: require('./assets/blue_theme/support_icon.png'),
 
   TITLE_BANNER: require('./assets/blue_theme/banner.png'),
   ABOUT_BANNER: require('./assets/blue_theme/about_banner.png'),
@@ -61,6 +63,7 @@ const orange_graphics = {
   CRATER: require('./assets/orange_theme/crater.png'),
   COIN: require('./assets/orange_theme/coin.png'),
   FLAG: require('./assets/orange_theme/flag.png'),
+  BOMB: require('./assets/orange_theme/bomb.png'),
   PLAYER: require('./assets/orange_theme/player.png'),
   PLAYER_OUTLINED: require('./assets/orange_theme/player_outlined.png'),
   PLAYER_OUTLINED_DARK: require('./assets/orange_theme/player_outlined_dark.png'),
@@ -77,6 +80,7 @@ const orange_graphics = {
   SHARE_ICON: require('./assets/orange_theme/share_icon.png'),
   LEFT_ICON: require('./assets/orange_theme/left_icon.png'),
   RIGHT_ICON: require('./assets/orange_theme/right_icon.png'),
+  SUPPORT_ICON: require('./assets/orange_theme/support_icon.png'),
 
   TITLE_BANNER: require('./assets/orange_theme/banner.png'),
   ABOUT_BANNER: require('./assets/orange_theme/about_banner.png'),
@@ -115,6 +119,7 @@ const purple_graphics = {
   CRATER: require('./assets/purple_theme/crater.png'),
   COIN: require('./assets/purple_theme/coin.png'),
   FLAG: require('./assets/purple_theme/flag.png'),
+  BOMB: require('./assets/purple_theme/bomb.png'),
   PLAYER: require('./assets/purple_theme/player.png'),
   PLAYER_OUTLINED: require('./assets/purple_theme/player_outlined.png'),
   PLAYER_OUTLINED_DARK: require('./assets/purple_theme/player_outlined_dark.png'),
@@ -131,6 +136,7 @@ const purple_graphics = {
   SHARE_ICON: require('./assets/purple_theme/share_icon.png'),
   LEFT_ICON: require('./assets/purple_theme/left_icon.png'),
   RIGHT_ICON: require('./assets/purple_theme/right_icon.png'),
+  SUPPORT_ICON: require('./assets/purple_theme/support_icon.png'),
 
   TITLE_BANNER: require('./assets/purple_theme/banner.png'),
   ABOUT_BANNER: require('./assets/purple_theme/about_banner.png'),
@@ -170,6 +176,7 @@ const green_graphics = {
   CRATER: require('./assets/green_theme/crater.png'),
   COIN: require('./assets/green_theme/coin.png'),
   FLAG: require('./assets/green_theme/flag.png'),
+  BOMB: require('./assets/green_theme/bomb.png'),
   PLAYER: require('./assets/green_theme/player.png'),
   PLAYER_OUTLINED: require('./assets/green_theme/player_outlined.png'),
   PLAYER_OUTLINED_DARK: require('./assets/green_theme/player_outlined_dark.png'),
@@ -186,6 +193,7 @@ const green_graphics = {
   SHARE_ICON: require('./assets/green_theme/share_icon.png'),
   LEFT_ICON: require('./assets/green_theme/left_icon.png'),
   RIGHT_ICON: require('./assets/green_theme/right_icon.png'),
+  SUPPORT_ICON: require('./assets/green_theme/support_icon.png'),
 
   TITLE_BANNER: require('./assets/green_theme/banner.png'),
   ABOUT_BANNER: require('./assets/green_theme/about_banner.png'),

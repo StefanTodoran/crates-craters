@@ -17,8 +17,9 @@ const width = Dimensions.get('window').width;
  * @param {ImageSourcePropType} icon The image to be displayed in the button, optional.
  * @param {boolean} invisible If true, the button is completely invisible (opacity of zero).
  * @param {boolean} disabled Whether or not the button can be pressed (changes appearance).
+ * @param {boolean} allowOverflow Whether number of lines for the button text should cap at 1.
  */
-export default function MenuButton({ onPress, onLongPress, value, label, icon, invisible, disabled }) {
+export default function MenuButton({ onPress, onLongPress, value, label, icon, invisible, disabled, allowOverflow }) {
   const [pressed, setPressedState] = useState(false);
   const [sound, setSound] = useState();
   async function playSound() {
@@ -60,7 +61,7 @@ export default function MenuButton({ onPress, onLongPress, value, label, icon, i
     }} onPressIn={() => { setPressedState(!!onPress) }} onPressOut={() => { setPressedState(false) }}
       disabled={disabled} touchSoundDisabled={true}>
       {(icon) && <Image style={styles.icon} source={icon} />}
-      <Text style={{
+      <Text numberOfLines={allowOverflow ? 0 : 1} style={{
         ...styles.label, color: colors.MAIN_COLOR,
       }}>{label}</Text>
     </Pressable>
@@ -73,7 +74,8 @@ const styles = StyleSheet.create({
     width: "100%",
     // borderColor: colors.MAIN_COLOR, won't auto update here, we do it in the render function
     borderRadius: 10,
-    paddingHorizontal: 20,
+    paddingLeft: 15,
+    paddingRight: 17.5,
     paddingVertical: 10,
     marginTop: 15,
     marginHorizontal: 5,
@@ -83,10 +85,9 @@ const styles = StyleSheet.create({
   },
   label: {
     textAlign: "center",
-    // color: colors.MAIN_COLOR, won't auto update here, so we do it in render funciton
     // fontSize: 16,
     fontSize: width * 0.04,
-    paddingRight: 5,
+    marginLeft: 15,
     fontFamily: "Montserrat-Medium",
     fontWeight: "bold",
   },
