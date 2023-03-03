@@ -88,14 +88,16 @@ export default function App() {
   // components and because we have the state and AyncStorage here.
 
   const toggleDarkMode = () => {
-    NavigationBar.setBackgroundColorAsync(darkMode ? "white" : colors.NEAR_BLACK);
     setDarkMode(current => !current);
   }
+
+  useEffect(() => {
+    NavigationBar.setBackgroundColorAsync(!darkMode ? "white" : colors.NEAR_BLACK);
+  }, [darkMode, curTheme]);
 
   async function readSettingsFromStorage() {
     const storedDarkMode = await getData("isAppDarkMode", "boolean", false);
     setDarkMode(storedDarkMode);
-    NavigationBar.setBackgroundColorAsync(storedDarkMode ? colors.NEAR_BLACK : "white");
 
     setSensitivity(await getData("appDragSensitivity", "number", 60));
     setTapDelay(await getData("appDoubleTapDelay", "number", 250));

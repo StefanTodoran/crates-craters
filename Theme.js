@@ -214,7 +214,7 @@ const green_graphics = {
 
 const green_colors = {
   OFF_WHITE: "#fafffa",
-  LIGHT_COLOR: "#AADFAB",
+  LIGHT_COLOR: "#eefcee",
   MAIN_COLOR: "#b8e5b9",
   MIDDLE_COLOR: "#9BD99D",
   DARK_COLOR: "#8AD092",

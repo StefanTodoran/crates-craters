@@ -1,6 +1,10 @@
 // Contains level data for the game as well
 // as some helpful consts for dealing with that data.
 
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { graphics } from './Theme';
+import Queue from './components/Queue';
+
 const level_one = [
   [1, 1, 1, 1, 1, 1, 1, 1],
   [1, 0, 0, 0, 1, 4, 0, 1],
@@ -146,26 +150,27 @@ const level_nine = [
   [6, 1, 0, 0, 4, 0, 5, 4],
 ];
 const level_ten = [
+  [0, 4, 0, 4, 6, 0, 5, 3],
+  [4, 4, 0, 0, 0, 1, 0, 5],
+  [0, 0, 0, 1, 0, 0, 0, 0],
+  [0, 0, 0, 0, 5, "b:35", 0, 4],
+  [4, 5, 0, 0, 1, 5, 0, 0],
+  [6, 0, 1, 0, 0, 0, 0, 0],
+  [4, 1, 0, 0, 0, 0, 0, 0],
+  [4, 0, 2, 1, 0, 4, 0, 5],
+  [6, 0, 4, 4, 0, 0, 5, 4],
+  [1, 5, 1, 1, 0, 1, 6, 5],
+  [0, 0, 0, 0, 4, 0, 1, 5],
+  [0, 0, 7, 0, 1, 4, 0, 8],
+  [4, 4, 0, 0, 0, 0, 5, 4],
+  [0, 4, 0, 4, 0, 0, 0, 5],
+];
+const level_twenty = [
   [1, 6, 5, 1, 4, 0, 4, 0],
   [5, 4, 0, 3, 5, 0, 4, 4],
   [0, 4, 1, 1, 0, 0, 0, 0],
   [0, 4, 2, 0, 0, 1, 0, 4],
   [0, 0, 1, 0, 1, 0, 0, 0],
-  [8, 0, 5, 4, 0, 0, 5, 5],
-  [0, 0, 4, 7, 1, 0, 4, 5],
-  [1, 5, 1, 2, 1, 0, 4, 4],
-  [5, 5, 5, 0, 0, 0, 5, 3],
-  [0, 0, 5, 1, 0, 1, 0, 1],
-  [4, 4, 6, 1, 0, 4, 5, 0],
-  [0, 4, 1, 1, 5, 5, 1, 0],
-  [5, 0, 0, 0, 3, 0, 4, 6],
-];
-const bomb_test = [
-  [1, 6, 5, 1, 4, 0, 4, 0],
-  [5, 4, 0, 3, 5, 0, 4, 4],
-  [0, 4, 1, 1, 0, 0, 0, 0],
-  [0, 4, 2, 0, 0, "b:10", 0, 4],
-  [0, 0, 1, 0, 0, 0, 0, 0],
   [8, 0, 5, 4, 0, 0, 5, 5],
   [0, 0, 4, 7, 1, 0, 4, 5],
   [1, 5, 1, 2, 1, 0, 4, 4],
@@ -187,7 +192,8 @@ const defaults = [
   createLevelObj("Trickster", "default", level_seven),
   createLevelObj("Bust the Wall?", "default", level_eight),
   createLevelObj("Deja Vu", "default", level_nine),
-  createLevelObj("Pain", "default", level_ten),
+  createLevelObj("Race the Clock", "default", level_ten),
+  createLevelObj("Pain", "default", level_twenty),
 ];
 
 export let levels = [...defaults];
@@ -231,7 +237,7 @@ function createBlankBoard(w, h) {
 
 // ========================
 // LOADING LOCAL LEVEL DATA
-import AsyncStorage from '@react-native-async-storage/async-storage';
+
 export async function importStoredLevels() {
   try {
     const keys = await AsyncStorage.getAllKeys();
@@ -267,10 +273,10 @@ async function getData(storage_key) {
 }
 
 importStoredLevels();
+
 // END LOADING LOCAL DATA
 // ======================
 
-import { graphics } from './Theme';
 // This can't just be a dictionary since graphics changes.
 export function icon_src(type) {
   if (type === "door") { return graphics.DOOR; }
@@ -303,7 +309,7 @@ export function getTileEntityData(tile) {
   // Ignore regular tiles, only process tile entities.
   if (typeof tile === "string") {
     const data = tile.split(":");
-    
+
     // BOMB
     if (data[0] === "b") {
       return {
@@ -418,6 +424,48 @@ function countTimesInArray(array, val) {
   return count;
 }
 
+// /**
+//  * Checks if the destination position can be reached from the current position
+//  * walking only on empty spaces or the flag if enough coins have been collected. 
+//  * If there is no such path, returns false. If there is, returns a list of string
+//  * instructions for reaching the destination.
+//  * 
+//  * @param {GameObj} game_obj The current game state object, used for player position and board state
+//  * @param {number} tileX The X index of the destination tile 
+//  * @param {number} tileY The Y index of the destination tile
+//  * @returns {(boolean|Array)} Either false or a list of strings
+//  */
+// export function canMoveTo(game_obj, tileX, tileY) {
+//   if (!canWalk(tileY, tileX, game_obj)) {
+//     return false;
+//   }
+//   return canMoveHelper(game_obj, tileX, tileY, game_obj.player.x + 1, game_obj.player.y, [], ["right"]) ||
+//          canMoveHelper(game_obj, tileX, tileY, game_obj.player.x, game_obj.player.y + 1, [], ["down"]) ||
+//          canMoveHelper(game_obj, tileX, tileY, game_obj.player.x - 1, game_obj.player.y, [], ["left"]) ||
+//          canMoveHelper(game_obj, tileX, tileY, game_obj.player.x, game_obj.player.y - 1, [], ["up"]);
+// }
+
+// function canMoveHelper(game_obj, destX, destY, curX, curY, visited, path) {
+//   if (!canWalk(curY, curX, game_obj)) {
+//     return false;
+//   }
+//   if (visited.includes(`${curY},${curX}`)) {
+//     return false;
+//   }
+//   if (path.length > 20) {
+//     return false;
+//   }
+//   if (destX === curX && destY === curY) {
+//     return path;
+//   } else {
+//     const newVisited = [...visited, `${curY},${curX}`];
+//     return canMoveHelper(game_obj, destX, destY, curX + 1, curY, newVisited, path.concat("right")) ||
+//            canMoveHelper(game_obj, destX, destY, curX, curY + 1, newVisited, path.concat("down")) ||
+//            canMoveHelper(game_obj, destX, destY, curX - 1, curY, newVisited, path.concat("left")) ||
+//            canMoveHelper(game_obj, destX, destY, curX, curY - 1, newVisited, path.concat("up"));
+//   }
+// }
+
 /**
  * Checks if the destination position can be reached from the current position
  * walking only on empty spaces or the flag if enough coins have been collected. 
@@ -433,38 +481,41 @@ export function canMoveTo(game_obj, tileX, tileY) {
   if (!canWalk(tileY, tileX, game_obj)) {
     return false;
   }
-  return canMoveHelper(game_obj, tileX, tileY, game_obj.player.x + 1, game_obj.player.y, [], ["right"]) ||
-         canMoveHelper(game_obj, tileX, tileY, game_obj.player.x, game_obj.player.y + 1, [], ["down"]) ||
-         canMoveHelper(game_obj, tileX, tileY, game_obj.player.x - 1, game_obj.player.y, [], ["left"]) ||
-         canMoveHelper(game_obj, tileX, tileY, game_obj.player.x, game_obj.player.y - 1, [], ["up"]);
-}
 
-function canMoveHelper(game_obj, destX, destY, curX, curY, visited, path) {
-  if (!canWalk(curY, curX, game_obj)) {
-    return false;
+  const visited = [];
+  const queue = new Queue();
+  queue.enqueue({ x: game_obj.player.x, y: game_obj.player.y, path: [] });
+
+  while (!queue.isEmpty) {
+    const current = queue.dequeue();
+
+    if (!canWalk(current.y, current.x, game_obj)) {
+      continue;
+    }
+    if (visited.includes(`${current.y},${current.x}`)) {
+      continue;
+    }
+    
+    visited.push(`${current.y},${current.x}`);
+    if (tileX === current.x && tileY === current.y) {
+      return current.path;
+    } else {
+      queue.enqueue({ x: current.x + 1, y: current.y, path: current.path.concat("right") });
+      queue.enqueue({ x: current.x - 1, y: current.y, path: current.path.concat("left") });
+      queue.enqueue({ x: current.x, y: current.y + 1, path: current.path.concat("down") });
+      queue.enqueue({ x: current.x, y: current.y - 1, path: current.path.concat("up") });
+    }
+
   }
-  if (visited.includes(`${curY},${curX}`)) {
-    return false;
-  }
-  if (path.length > 20) {
-    return false;
-  }
-  if (destX === curX && destY === curY) {
-    return path;
-  } else {
-    const newVisited = [...visited, `${curY},${curX}`];
-    return canMoveHelper(game_obj, destX, destY, curX + 1, curY, newVisited, path.concat("right")) ||
-           canMoveHelper(game_obj, destX, destY, curX, curY + 1, newVisited, path.concat("down")) ||
-           canMoveHelper(game_obj, destX, destY, curX - 1, curY, newVisited, path.concat("left")) ||
-           canMoveHelper(game_obj, destX, destY, curX, curY - 1, newVisited, path.concat("up"));
-  }
+
+  return false;
 }
 
 export function doGameMove(game_obj, move) {
   const next = cloneGameObj(game_obj); // The next game object following this game move.
   const move_to = { y: game_obj.player.y, x: game_obj.player.x }; // Where the player is attempting to move.
   const one_further = { y: game_obj.player.y, x: game_obj.player.x }; // One tile further that that in the same direction.
-  
+
   if (move === "up") {
     move_to.y -= 1;
     one_further.y -= 2;
@@ -539,7 +590,7 @@ export function doGameMove(game_obj, move) {
   for (let i = 0; i < dimensions[0]; i++) {
     for (let j = 0; j < dimensions[1]; j++) {
       const data = getTileEntityData(next.board[i][j]);
-      
+
       if (data.type === "bomb") {
         data.fuse--;
 
@@ -547,10 +598,10 @@ export function doGameMove(game_obj, move) {
           const updated = formatTileEntityData(data);
           next.board[i][j] = updated;
         } else {
-          if (tileAt(i-1, j, next.board) === "crate") { next.board[i-1][j] = 0; }
-          if (tileAt(i+1, j, next.board) === "crate") { next.board[i+1][j] = 0; }
-          if (tileAt(i, j-1, next.board) === "crate") { next.board[i][j-1] = 0; }
-          if (tileAt(i, j+1, next.board) === "crate") { next.board[i][j+1] = 0; }
+          if (tileAt(i - 1, j, next.board) === "crate") { next.board[i - 1][j] = 0; }
+          if (tileAt(i + 1, j, next.board) === "crate") { next.board[i + 1][j] = 0; }
+          if (tileAt(i, j - 1, next.board) === "crate") { next.board[i][j - 1] = 0; }
+          if (tileAt(i, j + 1, next.board) === "crate") { next.board[i][j + 1] = 0; }
           next.board[i][j] = 9;
         }
       }
