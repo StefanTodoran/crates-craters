@@ -46,14 +46,14 @@ export default function Inventory({ coins, maxCoins, keys }) {
     // If it is the last key and # of keys changed, animate it. Otherwise set animated to
     // one meaning not animated, since it is terminal animation value.
     const animated = (i + 1 === displayKeys && prevKeys !== keys) ? keysAnim : 1;
-    inventory.push(<Animated.Image key={`key<${i}>`} source={graphics.KEY} style={styles.icon(animated)} />)
+    inventory.push(<Animated.Image key={`key<${i}>`} source={graphics.KEY} style={[styles.icon(animated), {marginRight: -5}]} />)
   }
   // END KEY ANIMATION
   // =================
 
   return (
     <View style={styles.inventory}>
-      <View style={styles.row}>
+      <View style={[styles.row, {marginLeft: 5}]}>
         {inventory}
       </View>
       <View style={styles.row}>

@@ -6,10 +6,11 @@ import { Audio } from 'expo-av';
 import MenuButton from '../components/MenuButton';
 import GameBoard from '../components/GameBoard';
 
-import { cloneBoard, getSpawnPos, createLevelObj, identifier, levels, importStoredLevels } from '../Game';
+import { cloneBoard, getSpawnPos, createLevelObj, identifier, levels, importStoredLevels, formatTileEntityData } from '../Game';
 import { colors, graphics } from '../Theme';
 import InputLine from '../components/InputLine';
 import { GlobalContext } from '../GlobalContext';
+import SliderBar from '../components/SliderBar';
 const win = Dimensions.get('window');
 
 /**
@@ -32,7 +33,8 @@ const win = Dimensions.get('window');
  */
 export default function CreateLevel({ pageCallback, levelCallback, level, storeLevelCallback }) {
   const { darkMode, dragSensitivity } = useContext(GlobalContext);
-  const [shown, setShown] = useState(true);
+  const [keyboardShown, setKeyboardShown] = useState(true);
+  const [fuseTimer, setFuseTimer] = useState(15);
 
   useEffect(() => {
     // If there is already a level object we wish to continue editing it. We have to wrap
@@ -117,20 +119,33 @@ export default function CreateLevel({ pageCallback, levelCallback, level, storeL
 
   function changeTile(y, x, type) {
     const newBoard = cloneBoard(level.board);
+
+    // Clear current spawn position, if it exists. We
+    // cannot allow multiple spawn locations!
     if (currentTool === "spawn") {
       const spawnPos = getSpawnPos(level.board);
       if (!(isNaN(spawnPos.y) || isNaN(spawnPos.x))) {
         newBoard[spawnPos.y][spawnPos.x] = 0;
       }
-      playSuccessSound();
     }
+
     if (type === "empty") {
-      newBoard[y][x] = identifier[currentTool];
+      if (currentTool === "bomb") {
+        // We need special handling for tile entities.
+        newBoard[y][x] = formatTileEntityData({
+          type: "bomb",
+          fuse: fuseTimer,
+        });
+      } else {
+        // Normal non-entity tile logic.
+        newBoard[y][x] = identifier[currentTool];
+      }
       playSuccessSound();
     } else {
       newBoard[y][x] = 0; // empty
       playErrorSound();
     }
+
     storeLevelCallback({
       name: level.name,
       designer: level.designer,
@@ -260,15 +275,13 @@ export default function CreateLevel({ pageCallback, levelCallback, level, storeL
   useEffect(() => {
     const showEvent = Platform.OS === 'ios' ? "keyboardWillShow" : "keyboardDidShow";
     const showListener = Keyboard.addListener(showEvent, () => {
-    // const showListener = Keyboard.addListener("keyboardWillShow", () => {
-      setShown(false);
-      console.log(false);
+      // const showListener = Keyboard.addListener("keyboardWillShow", () => {
+      setKeyboardShown(false);
     });
     const hideEvent = Platform.OS === 'ios' ? "keyboardWillHide" : "keyboardDidHide";
     const hideListener = Keyboard.addListener(hideEvent, () => {
-    // const hideListener = Keyboard.addListener("keyboardWillHide", () => {
-      setShown(true);
-      console.log(true);
+      // const hideListener = Keyboard.addListener("keyboardWillHide", () => {
+      setKeyboardShown(true);
     });
 
     return function cleanup() {
@@ -304,9 +317,13 @@ export default function CreateLevel({ pageCallback, levelCallback, level, storeL
           <MenuButton onPress={changeTool} value="wall" label="Wall" icon={graphics.WALL_ICON} />
           <MenuButton onPress={changeTool} value="spawn" label="Player" icon={graphics.PLAYER} />
         </View>
+        <View style={{ height: 15 }} />
         <View style={styles.row}>
-          <MenuButton invisible />
-          <MenuButton onLongPress={storeLevelCallback} label="Clear Level      (Long Press)" icon={graphics.HAMMER_ICON} allowOverflow/>
+          <SliderBar label="Fuse Timer" value={fuseTimer} units={" turns"}
+            minValue={1} maxValue={100} changeCallback={setFuseTimer} darkMode={darkMode} />
+        </View>
+        <View style={styles.row}>
+          <MenuButton onPress={changeTool} value="bomb" label="Bomb" icon={graphics.BOMB} />
         </View>
       </Animated.View>}
       {/* END TOOLS MODAL */}
@@ -330,24 +347,27 @@ export default function CreateLevel({ pageCallback, levelCallback, level, storeL
           <MenuButton onPress={saveLevelToStorage} label="Save Level" icon={graphics.SAVE_ICON} disabled={level.name === ""} />
         </View>
         <View style={styles.row}>
+          <MenuButton onPress={shareLevel} label="Share Level" icon={graphics.SHARE_ICON} disabled={index === -1} />
           <MenuButton onPress={loadLevelFromStorage} label="Load Level" icon={graphics.LOAD_ICON} disabled={index === -1} />
-          <MenuButton onPress={deleteLevelFromStorage} label="Delete Level" icon={graphics.DELETE_ICON} disabled={index === -1} />
         </View>
-        {(shown || Platform.OS === "ios") && <>
-          <View style={{height: 35}}/>
+        <View style={styles.row}>
+          <MenuButton onLongPress={deleteLevelFromStorage} label="Delete Level     (Long Press)" icon={graphics.DELETE_ICON} allowOverflow disabled={index === -1} />
+          <MenuButton onLongPress={() => { storeLevelCallback(createLevelObj("", "", null)); }} label="Clear Level      (Long Press)" icon={graphics.HAMMER_ICON} allowOverflow />
+        </View>
+        {(keyboardShown || Platform.OS === "ios") && /* on ios they areb't pushed up by the keyboard, no need to hide */ <>
+          <View style={{ height: 35 }} />
           <View style={styles.row}>
-            {/* <MenuButton onPress={shareLevel} label="Share Level" icon={graphics.SHARE_ICON} disabled={index === -1}/> */}
             <MenuButton onPress={pageCallback} value="play_submenu" label="Go Back" icon={graphics.DOOR} />
           </View>
         </>}
       </Animated.View>}
       {/* END OPTIONS MODAL */}
 
-      {(shown || Platform.OS === "ios") &&
-      <View style={styles.buttonsRow(darkMode)}>
-        <MenuButton onPress={toggleToolsModal} label="Tools" icon={graphics.HAMMER_ICON} disabled={optionsModalOpen} />
-        <MenuButton onPress={toggleOptionsModal} label="Options" icon={graphics.OPTIONS_ICON} disabled={toolsModalOpen} />
-      </View>}
+      {(keyboardShown || Platform.OS === "ios") &&
+        <View style={styles.buttonsRow(darkMode)}>
+          <MenuButton onPress={toggleToolsModal} label="Tools" icon={graphics.HAMMER_ICON} disabled={optionsModalOpen} />
+          <MenuButton onPress={toggleOptionsModal} label="Options" icon={graphics.OPTIONS_ICON} disabled={toolsModalOpen} />
+        </View>}
     </SafeAreaView>
   );
 }

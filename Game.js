@@ -164,7 +164,7 @@ const bomb_test = [
   [1, 6, 5, 1, 4, 0, 4, 0],
   [5, 4, 0, 3, 5, 0, 4, 4],
   [0, 4, 1, 1, 0, 0, 0, 0],
-  [0, 4, 2, 0, 0, 9, 0, 4],
+  [0, 4, 2, 0, 0, "b:10", 0, 4],
   [0, 0, 1, 0, 0, 0, 0, 0],
   [8, 0, 5, 4, 0, 0, 5, 5],
   [0, 0, 4, 7, 1, 0, 4, 5],
@@ -177,7 +177,7 @@ const bomb_test = [
 ];
 
 const defaults = [
-  createLevelObj("Bomb", "default", bomb_test),
+  // createLevelObj("Bomb", "default", bomb_test),
   createLevelObj("Tutorial", "default", level_one),
   createLevelObj("Easy Peasy", "default", level_two),
   createLevelObj("Rooms", "default", level_three),
@@ -280,6 +280,7 @@ export function icon_src(type) {
   if (type === "coin") { return graphics.COIN; }
   if (type === "flag") { return graphics.FLAG; }
   if (type === "bomb") { return graphics.BOMB; }
+  if (type === "explosion") { return graphics.EXPLOSION; }
   // For level creation:
   if (type === "spawn") { return graphics.PLAYER; }
 }
@@ -288,6 +289,40 @@ export function calcTileSize(boardWidth, boardHeight, window) {
   const maxWidth = (window.width * 0.9) / boardWidth;
   const maxHeight = (window.height * 0.8) / boardHeight;
   return Math.min(maxWidth, maxHeight);
+}
+
+export function getTileType(tile) {
+  if (typeof tile === "string") {
+    return "bomb";
+  } else {
+    return tiles[tile];
+  }
+}
+
+export function getTileEntityData(tile) {
+  // Ignore regular tiles, only process tile entities.
+  if (typeof tile === "string") {
+    const data = tile.split(":");
+    
+    // BOMB
+    if (data[0] === "b") {
+      return {
+        type: "bomb",
+        fuse: tile.split(":")[1]
+      };
+    }
+
+    // Future tile entities can go here!
+  }
+  return {
+    type: null,
+  };
+}
+
+export function formatTileEntityData(data) {
+  if (data.type = "bomb") {
+    return `b:${data.fuse}`;
+  }
 }
 
 export const tiles = {
@@ -300,7 +335,7 @@ export const tiles = {
   6: "coin",
   7: "spawn",
   8: "flag",
-  9: "bomb",
+  9: "explosion",
 }
 
 export const identifier = {
@@ -313,7 +348,8 @@ export const identifier = {
   "coin": 6,
   "spawn": 7,
   "flag": 8,
-  "bomb": 9,
+  "explosion": 9,
+  // "bomb": null, // bomb doesn't use number id
 }
 
 export function validTile(yPos, xPos, board) {
@@ -340,7 +376,7 @@ export function canWalk(yPos, xPos, game) {
 
 export function tileAt(yPos, xPos, board) {
   if (validTile(yPos, xPos, board)) {
-    return tiles[board[yPos][xPos]];
+    return getTileType(board[yPos][xPos]);
   }
   return "outside"; // outside of board
 }
@@ -428,7 +464,7 @@ export function doGameMove(game_obj, move) {
   const next = cloneGameObj(game_obj); // The next game object following this game move.
   const move_to = { y: game_obj.player.y, x: game_obj.player.x }; // Where the player is attempting to move.
   const one_further = { y: game_obj.player.y, x: game_obj.player.x }; // One tile further that that in the same direction.
-
+  
   if (move === "up") {
     move_to.y -= 1;
     one_further.y -= 2;
@@ -441,6 +477,16 @@ export function doGameMove(game_obj, move) {
   } else if (move === "right") {
     move_to.x += 1;
     one_further.x += 2;
+  }
+
+  // Clear explosion tiles.
+  const dimensions = [next.board.length, next.board[0].length];
+  for (let i = 0; i < dimensions[0]; i++) {
+    for (let j = 0; j < dimensions[1]; j++) {
+      if (tileAt(i, j, next.board) === "explosion") {
+        next.board[i][j] = 0;
+      }
+    }
   }
 
   // The basic structure of how this seciton works is that if the move_to position is
@@ -478,6 +524,37 @@ export function doGameMove(game_obj, move) {
     tileAt(one_further.y, one_further.x, next.board) === "crater") {
     next.board[move_to.y][move_to.x] = 0;
     next.board[one_further.y][one_further.x] = 0;
+  }
+
+  // Pushing a bomb onto an empty tile.
+  if (tileAt(move_to.y, move_to.x, next.board) === "bomb" &&
+    tileAt(one_further.y, one_further.x, next.board) === "empty") {
+    next.board[move_to.y][move_to.x] = 0;
+    // We don't just set using indentifier["bomb"] since bomb is a string
+    // so that it can contain fuse time. We need to persist this data.
+    next.board[one_further.y][one_further.x] = game_obj.board[move_to.y][move_to.x];
+  }
+
+  // Tile entity logic handling.
+  for (let i = 0; i < dimensions[0]; i++) {
+    for (let j = 0; j < dimensions[1]; j++) {
+      const data = getTileEntityData(next.board[i][j]);
+      
+      if (data.type === "bomb") {
+        data.fuse--;
+
+        if (data.fuse > 0) {
+          const updated = formatTileEntityData(data);
+          next.board[i][j] = updated;
+        } else {
+          if (tileAt(i-1, j, next.board) === "crate") { next.board[i-1][j] = 0; }
+          if (tileAt(i+1, j, next.board) === "crate") { next.board[i+1][j] = 0; }
+          if (tileAt(i, j-1, next.board) === "crate") { next.board[i][j-1] = 0; }
+          if (tileAt(i, j+1, next.board) === "crate") { next.board[i][j+1] = 0; }
+          next.board[i][j] = 9;
+        }
+      }
+    }
   }
 
   next.won = attemptMove(move_to.y, move_to.x, next);
