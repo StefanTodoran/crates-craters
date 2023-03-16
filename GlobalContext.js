@@ -15,4 +15,7 @@ export const GlobalContext = createContext({});
  * A number representing how many miliseconds delay of tolerance are allowed between two taps for it to
  * count as a double tap.
  * 
+ * @param {number} playAudio
+ * A boolean representing whether the app should play sound effects or not.
+ * 
  */

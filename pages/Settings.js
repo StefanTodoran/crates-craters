@@ -6,8 +6,8 @@ import MenuButton from '../components/MenuButton';
 import SliderBar from '../components/SliderBar';
 import { GlobalContext } from '../GlobalContext';
 
-export default function Settings({ pageCallback, darkModeCallback, setThemeCallback, setSensitivityCallback, setTapDelayCallback }) {
-  const { darkMode, dragSensitivity, doubleTapDelay } = useContext(GlobalContext);
+export default function Settings({ pageCallback, darkModeCallback, audioModeCallback, setThemeCallback, setSensitivityCallback, setTapDelayCallback }) {
+  const { darkMode, dragSensitivity, doubleTapDelay, playAudio } = useContext(GlobalContext);
 
   return (
     <View style={styles.buttonsContainer}>
@@ -25,7 +25,7 @@ export default function Settings({ pageCallback, darkModeCallback, setThemeCallb
       <SliderBar label="Double Tap Delay" value={doubleTapDelay} units={"ms"}
         minValue={100} maxValue={500} changeCallback={setTapDelayCallback} darkMode={darkMode} />
 
-      {/* <MenuButton onPress={pageCallback} value={"about"} label="About the App" icon={graphics.PLAYER} /> */}
+      <MenuButton onPress={audioModeCallback} value={null} label="Toggle Sounds" icon={playAudio ? graphics.AUDIO_ON_ICON : graphics.AUDIO_OFF_ICON} />
       <MenuButton onPress={pageCallback} value={false} label="Back to Menu" icon={graphics.DOOR} />
     </View>
   );

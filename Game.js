@@ -165,7 +165,22 @@ const level_ten = [
   [4, 4, 0, 0, 0, 0, 5, 4],
   [0, 4, 0, 4, 0, 0, 0, 5],
 ];
-const level_eleven = [];
+const level_eleven = [
+  [4, 4, 5, 0, 0, 6, 1, 4],
+  [5, 0, 5, 4, 0, 5, 0, 0],
+  [0, 5, 0, 5, 1, 0, 0, 0],
+  [0, 4, 0, 5, 0, 1, 0, 8],
+  [1, 0, 1, 4, 6, 1, 4, 1],
+  [0, 4, 0, 1, 1, 0, 4, 1],
+  [0, 1, 4, 0, 0, 0, 0, 0],
+  [0, 0, 0, 1, 1, 1, 0, 0],
+  [4, 5, 4, 0, 7, 4, 5, 0],
+  [0, 1, 1, 1, 1, 1, 0, 0],
+  [0, 1, 4, 6, 0, 1, 0, 4],
+  [5, 4, 5, 0, 5, 0, 0, 4],
+  [4, 0, 3, 4, 0, 0, "b:41", 1],
+  [4, 0, 5, 5, 4, 0, 2, 6],
+];
 const level_twenty = [
   [1, 6, 5, 1, 4, 0, 4, 0],
   [5, 4, 0, 3, 5, 0, 4, 4],
@@ -249,7 +264,8 @@ export async function importStoredLevels() {
       "isAppDarkMode",
       "appDragSensitivity",
       "appDoubleTapDelay",
-      "appTheme"
+      "appTheme",
+      "appAudioMode"
     ];
 
     for (let i = 0; i < keys.length; i++) {

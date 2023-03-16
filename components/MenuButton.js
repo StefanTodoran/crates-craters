@@ -1,7 +1,8 @@
 import { Pressable, Text, StyleSheet, Image, Dimensions } from 'react-native';
-import React, { useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { Audio } from 'expo-av';
 import { colors } from '../Theme';
+import { GlobalContext } from '../GlobalContext';
 const width = Dimensions.get('window').width;
 
 /**
@@ -20,6 +21,8 @@ const width = Dimensions.get('window').width;
  * @param {boolean} allowOverflow Whether number of lines for the button text should cap at 1.
  */
 export default function MenuButton({ onPress, onLongPress, value, label, icon, invisible, disabled, allowOverflow }) {
+  const { darkMode, dragSensitivity, doubleTapDelay, playAudio } = useContext(GlobalContext);
+
   const [pressed, setPressedState] = useState(false);
   const [sound, setSound] = useState();
   async function playSound() {
@@ -36,7 +39,9 @@ export default function MenuButton({ onPress, onLongPress, value, label, icon, i
   const pressedFn = () => {
     if (!!onPress) {
       onPress(value);
-      playSound();
+      if (playAudio) {
+        playSound();
+      }
     }
   }
 

@@ -1,7 +1,8 @@
 import { Pressable, View, Text, StyleSheet, Image, Dimensions } from 'react-native';
-import React, { useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { Audio } from 'expo-av';
 import { colors, graphics } from '../Theme';
+import { GlobalContext } from '../GlobalContext';
 const win = Dimensions.get('window');
 
 /**
@@ -17,6 +18,8 @@ const win = Dimensions.get('window');
  * @param {boolean} disabled Whether or not the button can be pressed (changes appearance).
  */
 export default function Selector({ label, onNext, onPrev, nextDisabled, prevDisabled }) {
+  const { darkMode, dragSensitivity, doubleTapDelay, playAudio } = useContext(GlobalContext);
+
   const [nextPressed, setNextPressed] = useState(false);
   const [prevPressed, setPrevPressed] = useState(false);
   const [sound, setSound] = useState();
@@ -33,9 +36,9 @@ export default function Selector({ label, onNext, onPrev, nextDisabled, prevDisa
   return (
     <View style={styles.outerContainer}>
       <Pressable disabled={prevDisabled} touchSoundDisabled={true} onPress={() => {
-        playSound();
+        if (playAudio) { playSound(); }
         onPrev();
-      }}
+      }} hitSlop={15}
       onPressIn={() => {setPrevPressed(true)}} onPressOut={() => {setPrevPressed(false)}}>
         <Image style={styles.icon(prevPressed, prevDisabled)} source={graphics.LEFT_ICON} />
       </Pressable>
@@ -44,9 +47,9 @@ export default function Selector({ label, onNext, onPrev, nextDisabled, prevDisa
         ...styles.label, color: colors.MAIN_COLOR,
       }}>{label}</Text>
       <Pressable disabled={nextDisabled} touchSoundDisabled={true} onPress={() => {
-        playSound();
+        if (playAudio) { playSound(); }
         onNext();
-      }}
+      }} hitSlop={15}
       onPressIn={() => {setNextPressed(true)}} onPressOut={() => {setNextPressed(false)}}>
         <Image style={styles.icon(nextPressed, nextDisabled)} source={graphics.RIGHT_ICON} />
       </Pressable>

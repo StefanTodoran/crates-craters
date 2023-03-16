@@ -25,6 +25,8 @@ const blue_graphics = {
   LEFT_ICON: require('./assets/blue_theme/left_icon.png'),
   RIGHT_ICON: require('./assets/blue_theme/right_icon.png'),
   SUPPORT_ICON: require('./assets/blue_theme/support_icon.png'),
+  AUDIO_ON_ICON: require('./assets/blue_theme/audio_on_icon.png'),
+  AUDIO_OFF_ICON: require('./assets/blue_theme/audio_off_icon.png'),
 
   HOME_OUTLINED_ICON: require('./assets/blue_theme/home_outlined_icon.png'),
   HOME_FILLED_ICON: require('./assets/blue_theme/home_filled_icon.png'),
@@ -90,6 +92,8 @@ const orange_graphics = {
   LEFT_ICON: require('./assets/orange_theme/left_icon.png'),
   RIGHT_ICON: require('./assets/orange_theme/right_icon.png'),
   SUPPORT_ICON: require('./assets/orange_theme/support_icon.png'),
+  AUDIO_ON_ICON: require('./assets/orange_theme/audio_on_icon.png'),
+  AUDIO_OFF_ICON: require('./assets/orange_theme/audio_off_icon.png'),
 
   HOME_OUTLINED_ICON: require('./assets/orange_theme/home_outlined_icon.png'),
   HOME_FILLED_ICON: require('./assets/orange_theme/home_filled_icon.png'),
@@ -154,6 +158,8 @@ const purple_graphics = {
   LEFT_ICON: require('./assets/purple_theme/left_icon.png'),
   RIGHT_ICON: require('./assets/purple_theme/right_icon.png'),
   SUPPORT_ICON: require('./assets/purple_theme/support_icon.png'),
+  AUDIO_ON_ICON: require('./assets/purple_theme/audio_on_icon.png'),
+  AUDIO_OFF_ICON: require('./assets/purple_theme/audio_off_icon.png'),
 
   HOME_OUTLINED_ICON: require('./assets/purple_theme/home_outlined_icon.png'),
   HOME_FILLED_ICON: require('./assets/purple_theme/home_filled_icon.png'),
@@ -219,6 +225,8 @@ const green_graphics = {
   LEFT_ICON: require('./assets/green_theme/left_icon.png'),
   RIGHT_ICON: require('./assets/green_theme/right_icon.png'),
   SUPPORT_ICON: require('./assets/green_theme/support_icon.png'),
+  AUDIO_ON_ICON: require('./assets/green_theme/audio_on_icon.png'),
+  AUDIO_OFF_ICON: require('./assets/green_theme/audio_off_icon.png'),
 
   HOME_OUTLINED_ICON: require('./assets/green_theme/home_outlined_icon.png'),
   HOME_FILLED_ICON: require('./assets/green_theme/home_filled_icon.png'),

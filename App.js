@@ -5,7 +5,6 @@ import { useEffect, useRef, useState } from 'react';
 import { StyleSheet, View, Image, Dimensions, Animated, BackHandler, ScrollView, SafeAreaView, Pressable } from 'react-native';
 
 import { colors, graphics, nextTheme } from './Theme';
-import MenuButton from './components/MenuButton';
 import { GlobalContext } from './GlobalContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import PlayPage from './pages/PlayPage';
@@ -54,6 +53,11 @@ export default function App() {
     try {
       const jsonValue = JSON.stringify(value);
       await AsyncStorage.setItem(storageKey, jsonValue);
+
+      // let checkValue = await AsyncStorage.getItem(storageKey);
+      // checkValue = checkValue != null ? JSON.parse(checkValue) : null;
+      // return value == checkValue;
+
       return true;
     } catch (err) {
       console.log("\n\n(ERROR) >>> SAVING ERROR:\n", err);
@@ -85,6 +89,7 @@ export default function App() {
   const [dragSensitivity, setSensitivity] = useState(60);
   const [doubleTapDelay, setTapDelay] = useState(250);
   const [curTheme, setCurTheme] = useState("purple");
+  const [playAudio, setAudioMode] = useState(true);
 
   // These functions are used by children (probably only the settings page)
   // to modify App's state, and we use them to abstract that away from those
@@ -93,15 +98,25 @@ export default function App() {
   const toggleDarkMode = () => {
     setDarkMode(current => !current);
   }
+  const toggleAudioMode = () => {
+    setAudioMode(current => !current);
+  }
 
   useEffect(() => {
     NavigationBar.setBackgroundColorAsync(!darkMode ? "white" : colors.NEAR_BLACK);
   }, [darkMode, curTheme]);
 
+  // We use this to avoid rewriting the settings on app start (since
+  // the setting writing useEffect will trigger on first render).
+  const didReadSettings = useRef(false);
+
   async function readSettingsFromStorage() {
     const storedDarkMode = await getData("isAppDarkMode", "boolean", false);
     setDarkMode(storedDarkMode);
-
+    
+    const storedAudioMode = await getData("appAudioMode", "boolean", true);
+    setAudioMode(storedAudioMode);
+    
     setSensitivity(await getData("appDragSensitivity", "number", 60));
     setTapDelay(await getData("appDoubleTapDelay", "number", 250));
 
@@ -111,14 +126,18 @@ export default function App() {
       theme = nextTheme();
     }
     setCurTheme(theme);
+    didReadSettings.current = true;
   }
 
-  async function writeSettingsToStorage() {
-    storeData(darkMode, "isAppDarkMode");
-    storeData(dragSensitivity, "appDragSensitivity");
-    storeData(doubleTapDelay, "appDoubleTapDelay");
-    storeData(curTheme, "appTheme");
-  }
+  useEffect(() => {
+    if (didReadSettings.current) {
+      storeData(darkMode, "isAppDarkMode");
+      storeData(playAudio, "appAudioMode");
+      storeData(dragSensitivity, "appDragSensitivity");
+      storeData(doubleTapDelay, "appDoubleTapDelay");
+      storeData(curTheme, "appTheme");
+    }
+  }, [darkMode, playAudio, dragSensitivity, doubleTapDelay, curTheme]);
 
   useEffect(() => {
     readSettingsFromStorage();
@@ -134,30 +153,27 @@ export default function App() {
 
   useEffect(() => {
     const backAction = () => {
-      if (true) { // TODO: change this to be only when in game
-        return true;
-      }
-      return false;
+      return scrollEnabled;
     }
     BackHandler.addEventListener("hardwareBackPress", backAction);
 
     return () =>
       BackHandler.removeEventListener("hardwareBackPress", backAction);
-  }, [page]); // TODO: update this
+  }, [scrollEnabled]); // TODO: update this
 
   if (!fontsLoaded) {
     return null;
   }
 
   return (
-    <GlobalContext.Provider value={{ darkMode, dragSensitivity, doubleTapDelay }}>
+    <GlobalContext.Provider value={{ darkMode, dragSensitivity, doubleTapDelay, playAudio }}>
       <SafeAreaView style={{ flex: 1, backgroundColor: (darkMode) ? colors.NEAR_BLACK : "white" }}>
         {/* PAGE CONTENT */}
         <ScrollView horizontal pagingEnabled showsHorizontalScrollIndicator={false} onScroll={(evt) => {
           setPageState(Math.round(evt.nativeEvent.contentOffset.x / win.width));
         }} scrollEnabled={scrollEnabled} ref={scrollRef}>
           <View style={styles.page}>
-            <HomePage darkModeCallback={toggleDarkMode} setThemeCallback={setCurTheme}
+            <HomePage darkModeCallback={toggleDarkMode} setThemeCallback={setCurTheme} audioModeCallback={toggleAudioMode}
               setSensitivityCallback={setSensitivity} setTapDelayCallback={setTapDelay}></HomePage>
           </View>
           <View style={styles.page}>

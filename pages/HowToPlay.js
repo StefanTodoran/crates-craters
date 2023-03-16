@@ -22,9 +22,8 @@ export default function HowToPlay({ pageCallback }) {
       </View>
 
       <Text style={styles.text(darkMode)}>
-        There are, however, a number of obstacles in your way. The first one are doors. All doors
-        start off locked, and must be unlocked with a key. Any key can unlock any door, but each key
-        is single use.
+        The first one are doors. Any key can unlock any door, but each key
+        is single use. There are, however, a number of obstacles in your way.
       </Text>
       <View style={styles.row}>
         <Image style={styles.icon} source={graphics.DOOR} />

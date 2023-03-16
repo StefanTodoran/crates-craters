@@ -9,7 +9,7 @@ import HowToPlay from '../pages/HowToPlay';
 import MenuButton from '../components/MenuButton';
 const win = Dimensions.get('window');
 
-export default function HomePage({ darkModeCallback, setThemeCallback, setSensitivityCallback, setTapDelayCallback }) {
+export default function HomePage({ darkModeCallback, setThemeCallback, audioModeCallback, setSensitivityCallback, setTapDelayCallback }) {
   const { darkMode } = useContext(GlobalContext);
 
   const anim = useRef(new Animated.Value(0)).current;
@@ -40,7 +40,7 @@ export default function HomePage({ darkModeCallback, setThemeCallback, setSensit
   } else if (modalOpen === "how") {
     content = <HowToPlay pageCallback={setModalOpen} />;
   } else if (modalOpen === "settings") {
-    content = <Settings pageCallback={setModalOpen} darkModeCallback={darkModeCallback}
+    content = <Settings pageCallback={setModalOpen} darkModeCallback={darkModeCallback} audioModeCallback={audioModeCallback}
     setThemeCallback={setThemeCallback} setSensitivityCallback={setSensitivityCallback} setTapDelayCallback={setTapDelayCallback} />;
   }
 

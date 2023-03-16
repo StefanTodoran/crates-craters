@@ -63,20 +63,7 @@ function getRandomInt(min, max) {
  * is a playtest run and the navigation buttons should show return to level creation, not levels.
  */
 export default function PlayLevel({ pageCallback, levelCallback, gameStateCallback, editorCallback, level, game, test }) {
-  const { darkMode, dragSensitivity, doubleTapDelay } = useContext(GlobalContext);
-
-  useEffect(() => {
-    // If there is already a game object we wish to resume. We have to wrap
-    // this in a useEffect so we don't update the parent state in the middle of a render.
-    // We don't just have parent init the gameObj since we want to abstract that away from App.js
-
-    if (game === null) {
-      gameStateCallback(initializeGameObj(level));
-    } else {
-      handleGesture();
-      panResponderEnabled.current = !game.won;
-    }
-  });
+  const { darkMode, dragSensitivity, doubleTapDelay, playAudio } = useContext(GlobalContext);
 
   // Set up for sounds, most of this is just copied from the very
   // limited expo-av documentation so don't mess with it.
@@ -125,6 +112,19 @@ export default function PlayLevel({ pageCallback, levelCallback, gameStateCallba
   const [touchMove, setTouchMove] = useState({ y: 0, x: 0 });
   const [gesture, setGesture] = useState([false, false, false, false]); // up, down, left, right
 
+  useEffect(() => {
+    // If there is already a game object we wish to resume. We have to wrap
+    // this in a useEffect so we don't update the parent state in the middle of a render.
+    // We don't just have parent init the gameObj since we want to abstract that away from App.js
+
+    if (game === null) {
+      gameStateCallback(initializeGameObj(level));
+    } else {
+      handleGesture();
+      panResponderEnabled.current = !game.won;
+    }
+  }, [gesture, game]);
+
   // More player input state, we use these to keep track of double taps. We need to know
   // the previous tap time so we can determine if the two taps happened fast enough, and
   // we keep track of position show it is only a double tap if its the same square twice.
@@ -153,15 +153,17 @@ export default function PlayLevel({ pageCallback, levelCallback, gameStateCallba
       new_state = doGameMove(game, "right");
     }
 
-    // Check if any sounds need to be played
-    if (new_state.player.x === game.player.x && new_state.player.y === game.player.y) {
-      playErrorSound();
-    } else {
-      playMoveSound();
-      if (new_state.coins > game.coins || new_state.keys > game.keys) {
-        playCoinSound();
-      } else if (new_state.keys < game.keys) {
-        playDoorSound();
+    // Check which if any sounds need to be played
+    if (playAudio) {
+      if (new_state.player.x === game.player.x && new_state.player.y === game.player.y) {
+        playErrorSound();
+      } else {
+        playMoveSound();
+        if (new_state.coins > game.coins || new_state.keys > game.keys) {
+          playCoinSound();
+        } else if (new_state.keys < game.keys) {
+          playDoorSound();
+        }
       }
     }
 

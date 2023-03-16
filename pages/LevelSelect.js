@@ -70,11 +70,10 @@ export default function LevelSelect({ pageCallback, levelCallback }) {
       <View style={{ marginTop: 35, marginBottom: 15 }}>
         <Selector
           onNext={() => { pageChange(page + 1) }} nextDisabled={!levels[pageEnd]}
-          onPrev={() => { pageChange(page - 1) }} prevDisabled={page === 0}
+          onPrev={() => { pageChange(Math.max(0, page - 1)) }} prevDisabled={page === 0}
+          // For some reason fast clicks in succession can move page below zero before 
+          // disabling kicks in, unless we add this min and max force.
           label={`Page #${page + 1}`} />
-      </View>
-      <View style={styles.buttonsRow}>
-        <MenuButton onPress={pageCallback} value={false} label="Go Back" icon={graphics.DOOR} />
       </View>
     </>
   );

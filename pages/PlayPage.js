@@ -1,4 +1,4 @@
-import { StyleSheet, Image, Dimensions, View, Animated } from 'react-native';
+import { StyleSheet, Dimensions, Animated } from 'react-native';
 import React, { useContext, useEffect, useRef, useState } from "react";
 
 import { colors, graphics } from '../Theme';
@@ -33,21 +33,13 @@ export default function PlayPage({ levelCallback, gameStateCallback, scrollCallb
     }
 
     if (!suppressScrollCallback) {
-      scrollCallback(modalState !== "play");
+      scrollCallback(!modalState);
     }
-  }
-
-  let content = <></>;
-  if (modalOpen === "play") {
-    content = <PlayLevel pageCallback={setModalOpen} levelCallback={levelCallback} editorCallback={editorCallback}
-      gameStateCallback={gameStateCallback} level={level} game={game} test={playTest} />;
-  } else if (modalOpen === "select") {
-    content = <LevelSelect pageCallback={setModalOpen} levelCallback={levelCallback} />;
   }
 
   useEffect(() => {
     if (playTest) {
-      setModalOpen("play");
+      setModalOpen(true);
     } else {
       setModalOpen(false, true);
     }
@@ -55,37 +47,21 @@ export default function PlayPage({ levelCallback, gameStateCallback, scrollCallb
 
   return (
     <>
-      <MenuButton onPress={setModalOpen} value="play" label="Resume" icon={graphics.KEY} disabled={!game || game.won || game.playtest} />
-      <MenuButton onPress={setModalOpen} value="select" label="Level Select" icon={graphics.FLAG} />
-
       {modalOpen &&
         <Animated.View style={styles.modal(darkMode, anim)}>
-          {content}
+          <PlayLevel pageCallback={setModalOpen} levelCallback={levelCallback} editorCallback={editorCallback}
+            gameStateCallback={gameStateCallback} level={level} game={game} test={playTest} />
         </Animated.View>
       }
+      {!modalOpen && <>
+        <LevelSelect pageCallback={setModalOpen} levelCallback={levelCallback} />
+        <MenuButton onPress={setModalOpen} value="play" label="Resume" icon={graphics.KEY} disabled={!game || game.won || game.playtest} />
+      </>}
     </>
   );
 }
 
-// Returns a list [height, width] of the size for an element based
-// on the image's size and the desired width percent to be occupied.
-function sizeFromWidthPercent(percent, img_height, img_width) {
-  const ratio = win.width * percent / img_width;
-  return [win.width * percent, ratio * img_height];
-}
-
 const styles = StyleSheet.create({
-  banner: {
-    width: sizeFromWidthPercent(0.9, 141, 681)[0],
-    height: sizeFromWidthPercent(0.9, 141, 681)[1],
-  },
-  text: darkMode => ({
-    width: win.width * 0.8,
-    marginBottom: 10,
-    color: (darkMode) ? colors.MAIN_COLOR : colors.DARK_COLOR,
-    fontFamily: "Montserrat-Regular",
-    fontWeight: "normal",
-  }),
   modal: (dark, anim) => ({
     position: "absolute",
     top: 0,
@@ -96,7 +72,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: win.width * 0.225,
-    
+
     backgroundColor: (dark) ? colors.NEAR_BLACK : "white",
     opacity: anim,
     transform: [{

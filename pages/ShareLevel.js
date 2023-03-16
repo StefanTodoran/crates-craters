@@ -109,16 +109,20 @@ export default function ShareLevel({ pageCallback }) {
         by "<Text style={styles.bold(darkMode)}>{levelObj.designer}</Text>",
         or click the button below to load a level from a QR code.
       </Text>
-
       <View style={{ height: 15 }} />
-      {scanned &&
-        <SvgQRCode value={encoding} enableLinearGradient={true} linearGradient={[colors.MAIN_COLOR, colors.DARK_COLOR]} backgroundColor={"transparent"} />}
-      {!scanned && <BarCodeScanner onBarCodeScanned={handleBarCodeScanned} style={{ height: "50%", width: "100%" }} />}
-      <Animated.Text style={{ ...styles.bold(darkMode), ...styles.info(darkMode, anim) }}>{info}</Animated.Text>
-      {scanned && <>
+
+      {scanned && <View style={styles.container}>
+        <View style={styles.container}>
+          <SvgQRCode value={encoding} enableLinearGradient={true} linearGradient={[colors.MAIN_COLOR, colors.DARK_COLOR]} backgroundColor={"transparent"} />
+          <Animated.View style={styles.info(darkMode, anim)}>
+            <Text style={styles.bold(darkMode)}>{info}</Text>
+          </Animated.View>
+        </View>
+
         <View style={{ height: 35 }} />
         <Selector onNext={nextLevel} onPrev={prevLevel} label={`Share "${levelObj.name}" QR`} />
-      </>}
+      </View>}
+      {!scanned && <BarCodeScanner onBarCodeScanned={handleBarCodeScanned} style={{ height: "50%", width: "100%" }} />}
 
       <View style={{ height: 15 }} />
       <View style={styles.buttonsContainer}>
@@ -165,7 +169,7 @@ function encodingStringToLevel(encondedStr) {
           // We have the start of a tile entity.
           let entity = "";
           j++;
-          
+
           while (rawBoard[i][j] !== ")") {
             console.log(rawBoard[i][j]);
             entity += rawBoard[i][j];
@@ -202,7 +206,12 @@ function printLevel(levelObj) {
   for (let i = 0; i < levelObj.board.length; i++) {
     let line = "[";
     for (let j = 0; j < levelObj.board[0].length; j++) {
-      line += levelObj.board[i][j] + ", ";
+      const value = levelObj.board[i][j];
+      if (typeof value === "string") {
+        line += '"' + levelObj.board[i][j] + '", ';
+      } else {
+        line += levelObj.board[i][j] + ", ";
+      }
     }
     console.log(line + "];");
   }
@@ -239,6 +248,10 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     width: win.width * 0.45,
   },
+  container: {
+    alignItems: "center",
+    width: "100%",
+  },
   info: (darkMode, anim) => ({
     backgroundColor: (darkMode) ? colors.NEAR_BLACK : "white",
     opacity: anim.interpolate({
@@ -246,10 +259,11 @@ const styles = StyleSheet.create({
       outputRange: [0, 0.9],
     }),
     position: "absolute",
-    paddingTop: win.height / 2 - 25,
-    paddingBottom: win.height / 2 + 25,
-    width: "100%",
-    textAlign: "center",
-    zIndex: 0,
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: "center",
+    alignItems: "center",
   }),
 });
