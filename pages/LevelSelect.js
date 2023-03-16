@@ -17,7 +17,7 @@ export default function LevelSelect({ pageCallback, levelCallback }) {
 
   const openLevel = (level) => {
     levelCallback(level);
-    pageCallback("play_level");
+    pageCallback("play");
   }
 
   const level_buttons = [];
@@ -61,15 +61,11 @@ export default function LevelSelect({ pageCallback, levelCallback }) {
 
   return (
     <>
-      <Image style={styles.banner} source={graphics.LEVEL_SELECT_BANNER} />
+      {/* <Image style={styles.banner} source={graphics.LEVEL_SELECT_BANNER} /> */}
       <Animated.View style={{
         opacity: anim
       }}>
         {level_buttons}
-        {/* <View style={[styles.buttonsRow, { marginBottom: 20 }]}>
-          {page > 0 && <MenuButton onPress={pageChange} value={page - 1} label="Prev Page" width={win.width / 3} icon={graphics.LEFT_ICON} />}
-          {levels[pageEnd] && <MenuButton onPress={pageChange} value={page + 1} label="Next Page" width={win.width / 3} />}
-        </View> */}
       </Animated.View>
       <View style={{ marginTop: 35, marginBottom: 15 }}>
         <Selector
@@ -78,7 +74,7 @@ export default function LevelSelect({ pageCallback, levelCallback }) {
           label={`Page #${page + 1}`} />
       </View>
       <View style={styles.buttonsRow}>
-        <MenuButton onPress={pageCallback} value="play_submenu" label="Go Back" icon={graphics.DOOR} />
+        <MenuButton onPress={pageCallback} value={false} label="Go Back" icon={graphics.DOOR} />
       </View>
     </>
   );

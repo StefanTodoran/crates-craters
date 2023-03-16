@@ -11,7 +11,7 @@ export default function Settings({ pageCallback, darkModeCallback, setThemeCallb
 
   return (
     <View style={styles.buttonsContainer}>
-      <Image style={styles.banner} source={graphics.SETTINGS_BANNER} />
+      {/* <Image style={styles.banner} source={graphics.SETTINGS_BANNER} /> */}
 
       <MenuButton onPress={darkModeCallback} value={null} label="Toggle Dark Mode" icon={graphics.NIGHT_MODE_ICON} />
       <MenuButton onPress={() => {
@@ -26,7 +26,7 @@ export default function Settings({ pageCallback, darkModeCallback, setThemeCallb
         minValue={100} maxValue={500} changeCallback={setTapDelayCallback} darkMode={darkMode} />
 
       {/* <MenuButton onPress={pageCallback} value={"about"} label="About the App" icon={graphics.PLAYER} /> */}
-      <MenuButton onPress={pageCallback} value={"home"} label="Back to Menu" icon={graphics.DOOR} />
+      <MenuButton onPress={pageCallback} value={false} label="Back to Menu" icon={graphics.DOOR} />
     </View>
   );
 }

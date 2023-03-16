@@ -62,7 +62,7 @@ function getRandomInt(min, max) {
  * Whether or not the play screen has been opened from the level creation menu. If it has, this
  * is a playtest run and the navigation buttons should show return to level creation, not levels.
  */
-export default function PlayLevel({ pageCallback, levelCallback, gameStateCallback, level, game, test }) {
+export default function PlayLevel({ pageCallback, levelCallback, gameStateCallback, editorCallback, level, game, test }) {
   const { darkMode, dragSensitivity, doubleTapDelay } = useContext(GlobalContext);
 
   useEffect(() => {
@@ -71,7 +71,7 @@ export default function PlayLevel({ pageCallback, levelCallback, gameStateCallba
     // We don't just have parent init the gameObj since we want to abstract that away from App.js
 
     if (game === null) {
-      gameStateCallback(initializeGameObj(level, test));
+      gameStateCallback(initializeGameObj(level));
     } else {
       handleGesture();
       panResponderEnabled.current = !game.won;
@@ -288,17 +288,12 @@ export default function PlayLevel({ pageCallback, levelCallback, gameStateCallba
           {game.won && <WinScreen darkMode={darkMode} />}
         </View>
         <View style={styles.buttonsRow}>
-          {!game.won && <>
-            
-            <MenuButton onPress={gameStateCallback} value={initializeGameObj(level, test)} label="Restart" icon={graphics.HELP_ICON} width={win.width / 3} />
-            {!game.playtest && <MenuButton onPress={pageCallback} value="level_select" label="Levels" icon={graphics.FLAG} width={win.width / 3} />}
-            {game.playtest && <MenuButton onPress={() => { pageCallback("level_editor", true) }} label="Editor" icon={graphics.OPTIONS_ICON} width={win.width / 3} />}
-          </>}
-          {game.won && <>
-            {!game.playtest && <MenuButton onPress={levelCallback} value={level + 1} label="Next" icon={graphics.FLAG} width={win.width / 3} disabled={level + 1 >= levels.length} />}
-            <MenuButton onPress={pageCallback} value="level_select" label="Go Back" icon={graphics.DOOR} width={win.width / 3} />
-            {game.playtest && <MenuButton onPress={() => { pageCallback("level_editor", true) }} label="Editor" icon={graphics.OPTIONS_ICON} width={win.width / 3} />}
-          </>}
+          {!game.won && <MenuButton onPress={gameStateCallback} value={initializeGameObj(level)} label="Restart"
+            icon={graphics.HELP_ICON} width={win.width / 3} />}
+          {game.won && <MenuButton onPress={levelCallback} value={level + 1} label="Next" icon={graphics.FLAG}
+            width={win.width / 3} disabled={level + 1 >= levels.length || test} />}
+          {!test && <MenuButton onPress={pageCallback} value={false} label="Go Back" icon={graphics.DOOR} width={win.width / 3} />}
+          {test && <MenuButton onPress={editorCallback} label="Go Back" icon={graphics.HAMMER_ICON} width={win.width / 3} />}
         </View>
       </SafeAreaView>}
     </>

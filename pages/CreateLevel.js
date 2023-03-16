@@ -31,7 +31,7 @@ const win = Dimensions.get('window');
  * @param {Function} storeLevelCallback
  * Callback used to update the above level object.
  */
-export default function CreateLevel({ pageCallback, levelCallback, level, storeLevelCallback }) {
+export default function CreateLevel({ pageCallback, levelCallback, level, storeLevelCallback, playTestCallback }) {
   const { darkMode, dragSensitivity } = useContext(GlobalContext);
   const [keyboardShown, setKeyboardShown] = useState(true);
   const [fuseTimer, setFuseTimer] = useState(15);
@@ -187,12 +187,12 @@ export default function CreateLevel({ pageCallback, levelCallback, level, storeL
 
   function testLevel() {
     levelCallback(index);
-    pageCallback("test_level", true);
+    playTestCallback();
   }
 
   function shareLevel() {
     levelCallback(index);
-    pageCallback("share_level", true);
+    pageCallback("share");
   }
 
   // ==================
@@ -347,23 +347,18 @@ export default function CreateLevel({ pageCallback, levelCallback, level, storeL
           <MenuButton onPress={saveLevelToStorage} label="Save Level" icon={graphics.SAVE_ICON} disabled={level.name === ""} />
         </View>
         <View style={styles.row}>
-          <MenuButton onPress={shareLevel} label="Share Level" icon={graphics.SHARE_ICON} disabled={index === -1} />
-          <MenuButton onPress={loadLevelFromStorage} label="Load Level" icon={graphics.LOAD_ICON} disabled={index === -1} />
-        </View>
-        <View style={styles.row}>
           <MenuButton onLongPress={deleteLevelFromStorage} label="Delete Level     (Long Press)" icon={graphics.DELETE_ICON} allowOverflow disabled={index === -1} />
           <MenuButton onLongPress={() => { storeLevelCallback(createLevelObj("", "", null)); }} label="Clear Level      (Long Press)" icon={graphics.HAMMER_ICON} allowOverflow />
         </View>
-        {(keyboardShown || Platform.OS === "ios") && /* on ios they areb't pushed up by the keyboard, no need to hide */ <>
-          <View style={{ height: 35 }} />
-          <View style={styles.row}>
-            <MenuButton onPress={pageCallback} value="play_submenu" label="Go Back" icon={graphics.DOOR} />
-          </View>
-        </>}
+        <View style={styles.row}>
+          {/* <MenuButton onPress={shareLevel} label="Share Level" icon={graphics.SHARE_ICON} disabled={index === -1} /> */}
+          <MenuButton onPress={loadLevelFromStorage} label="Load Level" icon={graphics.LOAD_ICON} disabled={index === -1} />
+          <MenuButton onPress={pageCallback} value={false} label="To Menu" icon={graphics.DOOR} />
+        </View>
       </Animated.View>}
       {/* END OPTIONS MODAL */}
 
-      {(keyboardShown || Platform.OS === "ios") &&
+      {(keyboardShown || Platform.OS === "ios") && /* on ios they aren't pushed up by the keyboard, no need to hide */
         <View style={styles.buttonsRow(darkMode)}>
           <MenuButton onPress={toggleToolsModal} label="Tools" icon={graphics.HAMMER_ICON} disabled={optionsModalOpen} />
           <MenuButton onPress={toggleOptionsModal} label="Options" icon={graphics.OPTIONS_ICON} disabled={toolsModalOpen} />

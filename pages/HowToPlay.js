@@ -10,7 +10,7 @@ export default function HowToPlay({ pageCallback }) {
 
   return (
     <>
-      <Image style={styles.banner} source={graphics.HOW_TO_BANNER} />
+      {/* <Image style={styles.banner} source={graphics.HOW_TO_BANNER} /> */}
 
       <Text style={styles.text(darkMode)}>
         The objective of the game is simple: collect all of the coins before making your way to the
@@ -48,7 +48,7 @@ export default function HowToPlay({ pageCallback }) {
       </Text>
 
       <View style={styles.buttonsContainer}>
-        <MenuButton onPress={pageCallback} value="home" label="Back to Menu" icon={graphics.DOOR} />
+        <MenuButton onPress={pageCallback} value={false} label="Back to Menu" icon={graphics.DOOR} />
       </View>
     </>
   );

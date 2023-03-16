@@ -2,20 +2,17 @@ import { StatusBar } from 'expo-status-bar';
 import { useFonts } from 'expo-font';
 import * as NavigationBar from 'expo-navigation-bar';
 import { useEffect, useRef, useState } from 'react';
-import { StyleSheet, View, Image, Dimensions, Animated, BackHandler } from 'react-native';
+import { StyleSheet, View, Image, Dimensions, Animated, BackHandler, ScrollView, SafeAreaView, Pressable } from 'react-native';
 
 import { colors, graphics, nextTheme } from './Theme';
 import MenuButton from './components/MenuButton';
-import About from './pages/About';
-import HowToPlay from './pages/HowToPlay';
-import LevelSelect from './pages/LevelSelect';
-import PlayLevel from './pages/PlayLevel';
-import CreateLevel from './pages/CreateLevel';
-import Settings from './pages/Settings';
 import { GlobalContext } from './GlobalContext';
-import SubMenu from './pages/SubMenu';
-import ShareLevel from './pages/ShareLevel';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import PlayPage from './pages/PlayPage';
+import SharePage from './pages/SharePage';
+import HomePage from './pages/HomePage';
+
+const win = Dimensions.get('window');
 
 export default function App() {
   const [fontsLoaded] = useFonts({
@@ -23,28 +20,34 @@ export default function App() {
     'Montserrat-Medium': require('./assets/Montserrat-Medium.ttf'),
   });
 
-  const [page, setPageState] = useState("home");
-  // The page the app is currently on. All pages are displayed in the modal 
-  // except the home page. The full transistion means playing the modal close and open
-  // animation instead of direclty switching page to page.
-  const setPage = (value, useFullTransition) => {
-    if (page === "settings") {
-      // If we just left the settings page, store our settings changes.
-      writeSettingsToStorage();
-    }
+  // Page state is used so that the navbar icons can reflect
+  // the horizontal scrollview position, and for jumping to page.
+  const [page, setPageState] = useState(0);
+  const scrollRef = useRef();
+  const [scrollEnabled, setScrollEnabled] = useState(true);
 
-    useFullTransition = true;
-    if (value === "home") {
-      setAnimTo(0, () => { setPageState(value) });
-    } else if (useFullTransition && page !== "home" && value !== "home") {
-      setAnimTo(0, () => {
-        setPageState(value);
-        setAnimTo(1);
-      });
-    } else {
-      setAnimTo(1);
-      setPageState(value);
-    }
+  const anim = useRef(new Animated.Value(0)).current;
+  const setAnimTo = (animState, callback) => {
+    // MAKE SURE 0 <= animState <= 1
+    Animated.timing(anim, {
+      toValue: animState,
+      duration: 300,
+      useNativeDriver: true
+    }).start(callback);
+  }
+
+  useEffect(() => {
+    setAnimTo(scrollEnabled ? 1 : 0);
+  }, [scrollEnabled]);
+
+  const [doPlayTest, setPlayTest] = useState(false);
+  function openPlayTest() {
+    setPlayTest(true);
+    scrollRef.current?.scrollTo({ x: win.width, animated: true });
+  }
+  function backToEditor() {
+    setPlayTest(false);
+    scrollRef.current?.scrollTo({ x: win.width * 2, animated: true });
   }
 
   async function storeData(value, storageKey) {
@@ -62,7 +65,7 @@ export default function App() {
     try {
       const jsonValue = await AsyncStorage.getItem(storageKey);
       const value = jsonValue != null ? JSON.parse(jsonValue) : null;
-      
+
       if (typeof value === expectedType) {
         return value;
       } else {
@@ -129,51 +132,9 @@ export default function App() {
     setGameState(null);
   }
 
-  const content = getContentFromPage(page);
-  function getContentFromPage(page_id) {
-    switch (page_id) {
-      case "play_submenu":
-        return <SubMenu pageCallback={setPage} game={game} />
-
-      case "level_select":
-        return <LevelSelect pageCallback={setPage} levelCallback={changeLevel} />;
-
-      case "play_level":
-      case "test_level":
-        return <PlayLevel pageCallback={setPage} levelCallback={changeLevel}
-          gameStateCallback={setGameState} level={level} game={game} test={page_id === "test_level"} />;
-
-      case "level_editor":
-        return <CreateLevel pageCallback={setPage} levelCallback={changeLevel}
-          level={editorLevel} storeLevelCallback={setEditorLevel} />;
-
-      case "share_level":
-        return <ShareLevel pageCallback={setPage} level={level}/>;
-
-      case "how_to_play":
-        return <HowToPlay pageCallback={setPage} />;
-
-      case "about":
-        return <About pageCallback={setPage}/>;
-
-      case "settings":
-        return <Settings pageCallback={setPage} darkModeCallback={toggleDarkMode}
-          setThemeCallback={setCurTheme} setSensitivityCallback={setSensitivity} setTapDelayCallback={setTapDelay} />;
-
-      default:
-        return <MenuButton onPress={setPage} value="home" label="Back to Menu" icon={graphics.DOOR} />;
-    }
-  }
-
   useEffect(() => {
     const backAction = () => {
-      if (page === "play_level" || page === "test_level") {
-        return true;
-      } else if (page === "level_editor" || page === "level_select" || page === "share_level") {
-        setPage("play_submenu");
-        return true;
-      } else if (page !== "home") {
-        setPage("home");
+      if (true) { // TODO: change this to be only when in game
         return true;
       }
       return false;
@@ -182,17 +143,7 @@ export default function App() {
 
     return () =>
       BackHandler.removeEventListener("hardwareBackPress", backAction);
-  }, [page]);
-
-  const anim = useRef(new Animated.Value(0)).current;
-  const setAnimTo = (anim_state, callback) => {
-    // MAKE SURE 0 <= anim_state <= 1
-    Animated.timing(anim, {
-      toValue: anim_state,
-      duration: 300,
-      useNativeDriver: true
-    }).start(callback);
-  }
+  }, [page]); // TODO: update this
 
   if (!fontsLoaded) {
     return null;
@@ -200,41 +151,51 @@ export default function App() {
 
   return (
     <GlobalContext.Provider value={{ darkMode, dragSensitivity, doubleTapDelay }}>
-      <View style={{
-        ...styles.body,
-        backgroundColor: (darkMode) ? colors.NEAR_BLACK : "white",
-      }}>
-        <Image style={styles.banner} source={graphics.TITLE_BANNER} />
+      <SafeAreaView style={{ flex: 1, backgroundColor: (darkMode) ? colors.NEAR_BLACK : "white" }}>
+        {/* PAGE CONTENT */}
+        <ScrollView horizontal pagingEnabled showsHorizontalScrollIndicator={false} onScroll={(evt) => {
+          setPageState(Math.round(evt.nativeEvent.contentOffset.x / win.width));
+        }} scrollEnabled={scrollEnabled} ref={scrollRef}>
+          <View style={styles.page}>
+            <HomePage darkModeCallback={toggleDarkMode} setThemeCallback={setCurTheme}
+              setSensitivityCallback={setSensitivity} setTapDelayCallback={setTapDelay}></HomePage>
+          </View>
+          <View style={styles.page}>
+            <PlayPage levelCallback={changeLevel} gameStateCallback={setGameState} scrollCallback={setScrollEnabled}
+              editorCallback={backToEditor} level={level} game={game} playTest={doPlayTest}></PlayPage>
+          </View>
+          <View style={styles.page}>
+            <SharePage levelCallback={changeLevel} storeLevelCallback={setEditorLevel} scrollCallback={setScrollEnabled}
+              playTestCallback={openPlayTest} level={level} editorLevel={editorLevel}></SharePage>
+          </View>
+        </ScrollView>
 
-        <MenuButton onPress={setPage} value="play_submenu" label="Play Game" icon={graphics.FLAG} />
-        <MenuButton onPress={setPage} value="how_to_play" label="How to Play" icon={graphics.HELP_ICON} />
-        <MenuButton onPress={setPage} value="settings" label="App Settings" icon={graphics.OPTIONS_ICON} />
-        <MenuButton onPress={setPage} value="about" label="About the App" icon={graphics.PLAYER} />
+        {/* HEADER BANNER */}
+        <Animated.View style={styles.header(anim)}>
+          <Image style={styles.banner} source={graphics.TITLE_BANNER} />
+        </Animated.View>
 
-        <StatusBar style="auto" />
-        {page !== "home" &&
-          <Animated.View style={{
-            ...styles.modal,
-            backgroundColor: (darkMode) ? colors.NEAR_BLACK : "white",
-            opacity: anim,
-            transform: [{
-              translateY: anim.interpolate({
-                inputRange: [0, 1],
-                outputRange: [100, 0],
-              }),
-            }],
-          }}>
-            {content}
-          </Animated.View>
-        }
-      </View>
+        {/* BOTTOM NAVIGATION */}
+        <Animated.View style={styles.navbar(anim)}>
+          <Pressable onPress={() => { scrollRef.current?.scrollTo({ x: 0, animated: true }); }}>
+            <Image style={styles.icon} source={page === 0 ? graphics.HOME_FILLED_ICON : graphics.HOME_OUTLINED_ICON} />
+          </Pressable>
+          <Pressable onPress={() => { scrollRef.current?.scrollTo({ x: win.width, animated: true }); }}>
+            <Image style={styles.icon} source={page === 1 ? graphics.PLAY_FILLED_ICON : graphics.PLAY_OUTLINED_ICON} />
+          </Pressable>
+          <Pressable onPress={() => { scrollRef.current?.scrollTo({ x: win.width * 2, animated: true }); }}>
+            <Image style={styles.icon} source={page === 2 ? graphics.SHARE_FILLED_ICON : graphics.SHARE_OUTLINED_ICON} />
+          </Pressable>
+        </Animated.View>
+      </SafeAreaView>
+
+      <StatusBar style="auto" />
     </GlobalContext.Provider>
   );
 }
 
 // Returns a list [height, width] of the size for an element based
 // on the image's size and the desired width percent to be occupied.
-const win = Dimensions.get('window');
 function sizeFromWidthPercent(percent, img_height, img_width) {
   const ratio = win.width * percent / img_width;
   return [win.width * percent, ratio * img_height];
@@ -245,20 +206,43 @@ const styles = StyleSheet.create({
     width: sizeFromWidthPercent(0.9, 141, 681)[0],
     height: sizeFromWidthPercent(0.9, 141, 681)[1],
   },
-  body: {
+  page: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    width: win.width,
+    height: win.height,
     paddingHorizontal: win.width * 0.225,
   },
-  modal: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    flex: 1,
-    alignItems: 'center',
+  header: (anim) => ({
+    position: 'absolute',
+    flexDirection: 'row',
     justifyContent: 'center',
-  }
+    width: win.width,
+    top: '3%',
+    transform: [{
+      translateY: anim.interpolate({
+        inputRange: [0, 1],
+        outputRange: [-100, 0],
+      }),
+    }],
+  }),
+  navbar: (anim) => ({
+    flexDirection: 'row',
+    justifyContent: 'space-evenly',
+    position: 'absolute',
+    bottom: 0,
+    width: '100%',
+    paddingVertical: '2%',
+    transform: [{
+      translateY: anim.interpolate({
+        inputRange: [0, 1],
+        outputRange: [100, 0],
+      }),
+    }],
+  }),
+  icon: {
+    width: sizeFromWidthPercent(0.1, 100, 100)[0],
+    height: sizeFromWidthPercent(0.1, 100, 100)[1],
+  },
 });

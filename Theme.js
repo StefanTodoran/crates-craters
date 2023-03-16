@@ -26,6 +26,13 @@ const blue_graphics = {
   RIGHT_ICON: require('./assets/blue_theme/right_icon.png'),
   SUPPORT_ICON: require('./assets/blue_theme/support_icon.png'),
 
+  HOME_OUTLINED_ICON: require('./assets/blue_theme/home_outlined_icon.png'),
+  HOME_FILLED_ICON: require('./assets/blue_theme/home_filled_icon.png'),
+  PLAY_OUTLINED_ICON: require('./assets/blue_theme/play_outlined_icon.png'),
+  PLAY_FILLED_ICON: require('./assets/blue_theme/play_filled_icon.png'),
+  SHARE_OUTLINED_ICON: require('./assets/blue_theme/share_outlined_icon.png'),
+  SHARE_FILLED_ICON: require('./assets/blue_theme/share_filled_icon.png'),
+
   TITLE_BANNER: require('./assets/blue_theme/banner.png'),
   ABOUT_BANNER: require('./assets/blue_theme/about_banner.png'),
   HOW_TO_BANNER: require('./assets/blue_theme/how_to_banner.png'),
@@ -84,6 +91,13 @@ const orange_graphics = {
   RIGHT_ICON: require('./assets/orange_theme/right_icon.png'),
   SUPPORT_ICON: require('./assets/orange_theme/support_icon.png'),
 
+  HOME_OUTLINED_ICON: require('./assets/orange_theme/home_outlined_icon.png'),
+  HOME_FILLED_ICON: require('./assets/orange_theme/home_filled_icon.png'),
+  PLAY_OUTLINED_ICON: require('./assets/orange_theme/play_outlined_icon.png'),
+  PLAY_FILLED_ICON: require('./assets/orange_theme/play_filled_icon.png'),
+  SHARE_OUTLINED_ICON: require('./assets/orange_theme/share_outlined_icon.png'),
+  SHARE_FILLED_ICON: require('./assets/orange_theme/share_filled_icon.png'),
+
   TITLE_BANNER: require('./assets/orange_theme/banner.png'),
   ABOUT_BANNER: require('./assets/orange_theme/about_banner.png'),
   HOW_TO_BANNER: require('./assets/orange_theme/how_to_banner.png'),
@@ -140,6 +154,13 @@ const purple_graphics = {
   LEFT_ICON: require('./assets/purple_theme/left_icon.png'),
   RIGHT_ICON: require('./assets/purple_theme/right_icon.png'),
   SUPPORT_ICON: require('./assets/purple_theme/support_icon.png'),
+
+  HOME_OUTLINED_ICON: require('./assets/purple_theme/home_outlined_icon.png'),
+  HOME_FILLED_ICON: require('./assets/purple_theme/home_filled_icon.png'),
+  PLAY_OUTLINED_ICON: require('./assets/purple_theme/play_outlined_icon.png'),
+  PLAY_FILLED_ICON: require('./assets/purple_theme/play_filled_icon.png'),
+  SHARE_OUTLINED_ICON: require('./assets/purple_theme/share_outlined_icon.png'),
+  SHARE_FILLED_ICON: require('./assets/purple_theme/share_filled_icon.png'),
 
   TITLE_BANNER: require('./assets/purple_theme/banner.png'),
   ABOUT_BANNER: require('./assets/purple_theme/about_banner.png'),
@@ -198,6 +219,13 @@ const green_graphics = {
   LEFT_ICON: require('./assets/green_theme/left_icon.png'),
   RIGHT_ICON: require('./assets/green_theme/right_icon.png'),
   SUPPORT_ICON: require('./assets/green_theme/support_icon.png'),
+
+  HOME_OUTLINED_ICON: require('./assets/green_theme/home_outlined_icon.png'),
+  HOME_FILLED_ICON: require('./assets/green_theme/home_filled_icon.png'),
+  PLAY_OUTLINED_ICON: require('./assets/green_theme/play_outlined_icon.png'),
+  PLAY_FILLED_ICON: require('./assets/green_theme/play_filled_icon.png'),
+  SHARE_OUTLINED_ICON: require('./assets/green_theme/share_outlined_icon.png'),
+  SHARE_FILLED_ICON: require('./assets/green_theme/share_filled_icon.png'),
 
   TITLE_BANNER: require('./assets/green_theme/banner.png'),
   ABOUT_BANNER: require('./assets/green_theme/about_banner.png'),

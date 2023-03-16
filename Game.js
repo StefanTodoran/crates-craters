@@ -165,6 +165,7 @@ const level_ten = [
   [4, 4, 0, 0, 0, 0, 5, 4],
   [0, 4, 0, 4, 0, 0, 0, 5],
 ];
+const level_eleven = [];
 const level_twenty = [
   [1, 6, 5, 1, 4, 0, 4, 0],
   [5, 4, 0, 3, 5, 0, 4, 4],
@@ -193,6 +194,7 @@ const defaults = [
   createLevelObj("Bust the Wall?", "default", level_eight),
   createLevelObj("Deja Vu", "default", level_nine),
   createLevelObj("Race the Clock", "default", level_ten),
+  createLevelObj("Stupid Door", "default", level_eleven),
   createLevelObj("Pain", "default", level_twenty),
 ];
 
@@ -424,48 +426,6 @@ function countTimesInArray(array, val) {
   return count;
 }
 
-// /**
-//  * Checks if the destination position can be reached from the current position
-//  * walking only on empty spaces or the flag if enough coins have been collected. 
-//  * If there is no such path, returns false. If there is, returns a list of string
-//  * instructions for reaching the destination.
-//  * 
-//  * @param {GameObj} game_obj The current game state object, used for player position and board state
-//  * @param {number} tileX The X index of the destination tile 
-//  * @param {number} tileY The Y index of the destination tile
-//  * @returns {(boolean|Array)} Either false or a list of strings
-//  */
-// export function canMoveTo(game_obj, tileX, tileY) {
-//   if (!canWalk(tileY, tileX, game_obj)) {
-//     return false;
-//   }
-//   return canMoveHelper(game_obj, tileX, tileY, game_obj.player.x + 1, game_obj.player.y, [], ["right"]) ||
-//          canMoveHelper(game_obj, tileX, tileY, game_obj.player.x, game_obj.player.y + 1, [], ["down"]) ||
-//          canMoveHelper(game_obj, tileX, tileY, game_obj.player.x - 1, game_obj.player.y, [], ["left"]) ||
-//          canMoveHelper(game_obj, tileX, tileY, game_obj.player.x, game_obj.player.y - 1, [], ["up"]);
-// }
-
-// function canMoveHelper(game_obj, destX, destY, curX, curY, visited, path) {
-//   if (!canWalk(curY, curX, game_obj)) {
-//     return false;
-//   }
-//   if (visited.includes(`${curY},${curX}`)) {
-//     return false;
-//   }
-//   if (path.length > 20) {
-//     return false;
-//   }
-//   if (destX === curX && destY === curY) {
-//     return path;
-//   } else {
-//     const newVisited = [...visited, `${curY},${curX}`];
-//     return canMoveHelper(game_obj, destX, destY, curX + 1, curY, newVisited, path.concat("right")) ||
-//            canMoveHelper(game_obj, destX, destY, curX, curY + 1, newVisited, path.concat("down")) ||
-//            canMoveHelper(game_obj, destX, destY, curX - 1, curY, newVisited, path.concat("left")) ||
-//            canMoveHelper(game_obj, destX, destY, curX, curY - 1, newVisited, path.concat("up"));
-//   }
-// }
-
 /**
  * Checks if the destination position can be reached from the current position
  * walking only on empty spaces or the flag if enough coins have been collected. 
@@ -633,7 +593,6 @@ function winCondition(next) {
  * @property {number} coins - The number of coins collected so far
  * @property {number} keys - The number of keys collected and not used
  * @property {boolean} won - Whether the level has been beaten yet
- * @property {boolean} playtest - Whether this is an actual playthrough or a playtest
  */
 
 /**
@@ -642,7 +601,7 @@ function winCondition(next) {
  * @param {number} level_id The level to be cloned for the initial board.
  * @returns {GameObj} A GameObj properly set for game start.
  */
-export function initializeGameObj(level_id, is_test) {
+export function initializeGameObj(level_id) {
   const level = cloneBoard(levels[level_id].board);
   const numberOfCoins = countTimesInArray(level, identifier["coin"]);
   const startPos = getSpawnPos(level);
@@ -655,7 +614,6 @@ export function initializeGameObj(level_id, is_test) {
     coins: 0,
     keys: 0,
     won: false,
-    playtest: is_test,
   };
 }
 
@@ -668,7 +626,6 @@ function cloneGameObj(game_obj) {
     coins: game_obj.coins,
     keys: game_obj.keys,
     won: game_obj.won,
-    playtest: game_obj.playtest,
   };
 }
 

@@ -7,7 +7,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { colors, graphics } from '../Theme';
 import MenuButton from '../components/MenuButton';
 import { GlobalContext } from '../GlobalContext';
-import { levels } from '../Game';
+import { getTileEntityData, levels } from '../Game';
 import Selector from '../components/Selector';
 
 export default function ShareLevel({ pageCallback }) {
@@ -56,6 +56,8 @@ export default function ShareLevel({ pageCallback }) {
     setScanned(true);
     const levelObj = encodingStringToLevel(data);
     const existsLevel = await checkData(levelObj.name);
+
+    printLevel(levelObj);
     if (!existsLevel) {
       const success = await storeData(levelObj, levelObj.name);
       if (success) {
@@ -99,7 +101,7 @@ export default function ShareLevel({ pageCallback }) {
 
   return (
     <>
-      <Image style={styles.banner} source={graphics.SHARE_BANNER} />
+      {/* <Image style={styles.banner} source={graphics.SHARE_BANNER} /> */}
 
       <Text style={{ ...styles.text(darkMode), zIndex: 1 }}>
         Scan this QR code to download level
@@ -121,7 +123,7 @@ export default function ShareLevel({ pageCallback }) {
       <View style={{ height: 15 }} />
       <View style={styles.buttonsContainer}>
         <MenuButton onPress={setScanned} value={!scanned} label="Scan Level QR" icon={graphics.LOAD_ICON} />
-        <MenuButton onPress={pageCallback} value="play_submenu" label="Back to Menu" icon={graphics.DOOR} />
+        <MenuButton onPress={pageCallback} value={false} label="Go Back" icon={graphics.DOOR} />
       </View>
     </>
   );
@@ -131,7 +133,13 @@ function levelToEncodingString(levelObj) {
   let encodedStr = `${levelObj.name},${levelObj.designer},${levelObj.created},`;
   for (let i = 0; i < levelObj.board.length; i++) {
     for (let j = 0; j < levelObj.board[0].length; j++) {
-      encodedStr += levelObj.board[i][j];
+      const tile = levelObj.board[i][j];
+
+      if (getTileEntityData(tile).type === null) {
+        encodedStr += levelObj.board[i][j];
+      } else {
+        encodedStr += "(" + levelObj.board[i][j] + ")";
+      }
     }
     encodedStr += ";"
   }
@@ -143,12 +151,34 @@ function encodingStringToLevel(encondedStr) {
     const data = encondedStr.split(",");
     const rawBoard = data[3].split(";");
 
+    console.log(rawBoard);
+
     const board = [];
     for (let i = 0; i < rawBoard.length; i++) {
       const row = [];
-      for (let j = 0; j < rawBoard[0].length; j++) {
-        row.push(parseInt(rawBoard[i][j]));
+
+      let j = 0;
+      while (j < rawBoard[i].length) {
+        const char = rawBoard[i][j];
+
+        if (char === "(") {
+          // We have the start of a tile entity.
+          let entity = "";
+          j++;
+          
+          while (rawBoard[i][j] !== ")") {
+            console.log(rawBoard[i][j]);
+            entity += rawBoard[i][j];
+            j++;
+          }
+          row.push(entity);
+          j++;
+        } else {
+          row.push(parseInt(rawBoard[i][j]));
+          j++;
+        }
       }
+
       board.push(row);
     }
 
@@ -161,6 +191,20 @@ function encodingStringToLevel(encondedStr) {
   } catch (err) {
     console.log("\n\n(ERROR) >>> QR READING ERROR:\n", err);
     return null;
+  }
+}
+
+function printLevel(levelObj) {
+  console.log(levelObj.name);
+  console.log(levelObj.designer);
+  console.log(levelObj.created);
+
+  for (let i = 0; i < levelObj.board.length; i++) {
+    let line = "[";
+    for (let j = 0; j < levelObj.board[0].length; j++) {
+      line += levelObj.board[i][j] + ", ";
+    }
+    console.log(line + "];");
   }
 }
 
