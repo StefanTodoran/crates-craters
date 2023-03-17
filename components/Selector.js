@@ -36,7 +36,7 @@ export default function Selector({ label, onNext, onPrev, nextDisabled, prevDisa
   return (
     <View style={styles.outerContainer}>
       <Pressable disabled={prevDisabled} touchSoundDisabled={true} onPress={() => {
-        if (playAudio) { playSound(); }
+        // if (playAudio) { playSound(); }
         onPrev();
       }} hitSlop={15}
       onPressIn={() => {setPrevPressed(true)}} onPressOut={() => {setPrevPressed(false)}}>
@@ -47,7 +47,7 @@ export default function Selector({ label, onNext, onPrev, nextDisabled, prevDisa
         ...styles.label, color: colors.MAIN_COLOR,
       }}>{label}</Text>
       <Pressable disabled={nextDisabled} touchSoundDisabled={true} onPress={() => {
-        if (playAudio) { playSound(); }
+        // if (playAudio) { playSound(); }
         onNext();
       }} hitSlop={15}
       onPressIn={() => {setNextPressed(true)}} onPressOut={() => {setNextPressed(false)}}>

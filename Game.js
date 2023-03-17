@@ -305,6 +305,7 @@ export function icon_src(type) {
   if (type === "flag") { return graphics.FLAG; }
   if (type === "bomb") { return graphics.BOMB; }
   if (type === "explosion") { return graphics.EXPLOSION; }
+  if (type === "little_explosion") { return graphics.LITTLE_EXPLOSION; }
   // For level creation:
   if (type === "spawn") { return graphics.PLAYER; }
 }
@@ -360,6 +361,7 @@ export const tiles = {
   7: "spawn",
   8: "flag",
   9: "explosion",
+  10: "little_explosion",
 }
 
 export const identifier = {
@@ -373,6 +375,7 @@ export const identifier = {
   "spawn": 7,
   "flag": 8,
   "explosion": 9,
+  "little_explosion": 10,
   // "bomb": null, // bomb doesn't use number id
 }
 
@@ -471,7 +474,7 @@ export function canMoveTo(game_obj, tileX, tileY) {
     if (visited.includes(`${current.y},${current.x}`)) {
       continue;
     }
-    
+
     visited.push(`${current.y},${current.x}`);
     if (tileX === current.x && tileY === current.y) {
       return current.path;
@@ -510,7 +513,8 @@ export function doGameMove(game_obj, move) {
   const dimensions = [next.board.length, next.board[0].length];
   for (let i = 0; i < dimensions[0]; i++) {
     for (let j = 0; j < dimensions[1]; j++) {
-      if (tileAt(i, j, next.board) === "explosion") {
+      if (tileAt(i, j, next.board) === "explosion" ||
+        tileAt(i, j, next.board) === "little_explosion") {
         next.board[i][j] = 0;
       }
     }
@@ -574,10 +578,10 @@ export function doGameMove(game_obj, move) {
           const updated = formatTileEntityData(data);
           next.board[i][j] = updated;
         } else {
-          if (tileAt(i - 1, j, next.board) === "crate") { next.board[i - 1][j] = 0; }
-          if (tileAt(i + 1, j, next.board) === "crate") { next.board[i + 1][j] = 0; }
-          if (tileAt(i, j - 1, next.board) === "crate") { next.board[i][j - 1] = 0; }
-          if (tileAt(i, j + 1, next.board) === "crate") { next.board[i][j + 1] = 0; }
+          if (tileAt(i - 1, j, next.board) === "crate") { next.board[i - 1][j] = 10; }
+          if (tileAt(i + 1, j, next.board) === "crate") { next.board[i + 1][j] = 10; }
+          if (tileAt(i, j - 1, next.board) === "crate") { next.board[i][j - 1] = 10; }
+          if (tileAt(i, j + 1, next.board) === "crate") { next.board[i][j + 1] = 10; }
           next.board[i][j] = 9;
         }
       }

@@ -10,6 +10,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import PlayPage from './pages/PlayPage';
 import SharePage from './pages/SharePage';
 import HomePage from './pages/HomePage';
+import IconButton from './components/IconButton';
 
 const win = Dimensions.get('window');
 
@@ -113,10 +114,10 @@ export default function App() {
   async function readSettingsFromStorage() {
     const storedDarkMode = await getData("isAppDarkMode", "boolean", false);
     setDarkMode(storedDarkMode);
-    
+
     const storedAudioMode = await getData("appAudioMode", "boolean", true);
     setAudioMode(storedAudioMode);
-    
+
     setSensitivity(await getData("appDragSensitivity", "number", 60));
     setTapDelay(await getData("appDoubleTapDelay", "number", 250));
 
@@ -191,8 +192,7 @@ export default function App() {
           <Image style={styles.banner} source={graphics.TITLE_BANNER} />
         </Animated.View>
 
-        {/* BOTTOM NAVIGATION */}
-        <Animated.View style={styles.navbar(anim)}>
+        {/* <Animated.View style={styles.navbar(anim)}>
           <Pressable onPress={() => { scrollRef.current?.scrollTo({ x: 0, animated: true }); }}>
             <Image style={styles.icon} source={page === 0 ? graphics.HOME_FILLED_ICON : graphics.HOME_OUTLINED_ICON} />
           </Pressable>
@@ -202,6 +202,16 @@ export default function App() {
           <Pressable onPress={() => { scrollRef.current?.scrollTo({ x: win.width * 2, animated: true }); }}>
             <Image style={styles.icon} source={page === 2 ? graphics.SHARE_FILLED_ICON : graphics.SHARE_OUTLINED_ICON} />
           </Pressable>
+        </Animated.View> */}
+
+        {/* BOTTOM NAVIGATION */}
+        <Animated.View style={styles.navbar(anim)}>
+          <IconButton onPress={() => { scrollRef.current?.scrollTo({ x: 0, animated: true }); }}
+            source={page === 0 ? graphics.HOME_FILLED_ICON : graphics.HOME_OUTLINED_ICON} />
+          <IconButton onPress={() => { scrollRef.current?.scrollTo({ x: win.width, animated: true }); }}
+            source={page === 1 ? graphics.PLAY_FILLED_ICON : graphics.PLAY_OUTLINED_ICON} />
+          <IconButton onPress={() => { scrollRef.current?.scrollTo({ x: win.width * 2, animated: true }); }}
+            source={page === 2 ? graphics.SHARE_FILLED_ICON : graphics.SHARE_OUTLINED_ICON} />
         </Animated.View>
       </SafeAreaView>
 

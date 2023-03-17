@@ -39,9 +39,7 @@ export default function MenuButton({ onPress, onLongPress, value, label, icon, i
   const pressedFn = () => {
     if (!!onPress) {
       onPress(value);
-      if (playAudio) {
-        playSound();
-      }
+      // if (playAudio) { playSound(); }
     }
   }
 
@@ -51,6 +49,7 @@ export default function MenuButton({ onPress, onLongPress, value, label, icon, i
     setPressedState(true);
     if (!!onLongPress) {
       onLongPress(value);
+      // if (playAudio) { playSound(); }
     }
   }
 
