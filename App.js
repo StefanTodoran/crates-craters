@@ -192,18 +192,6 @@ export default function App() {
           <Image style={styles.banner} source={graphics.TITLE_BANNER} />
         </Animated.View>
 
-        {/* <Animated.View style={styles.navbar(anim)}>
-          <Pressable onPress={() => { scrollRef.current?.scrollTo({ x: 0, animated: true }); }}>
-            <Image style={styles.icon} source={page === 0 ? graphics.HOME_FILLED_ICON : graphics.HOME_OUTLINED_ICON} />
-          </Pressable>
-          <Pressable onPress={() => { scrollRef.current?.scrollTo({ x: win.width, animated: true }); }}>
-            <Image style={styles.icon} source={page === 1 ? graphics.PLAY_FILLED_ICON : graphics.PLAY_OUTLINED_ICON} />
-          </Pressable>
-          <Pressable onPress={() => { scrollRef.current?.scrollTo({ x: win.width * 2, animated: true }); }}>
-            <Image style={styles.icon} source={page === 2 ? graphics.SHARE_FILLED_ICON : graphics.SHARE_OUTLINED_ICON} />
-          </Pressable>
-        </Animated.View> */}
-
         {/* BOTTOM NAVIGATION */}
         <Animated.View style={styles.navbar(anim)}>
           <IconButton onPress={() => { scrollRef.current?.scrollTo({ x: 0, animated: true }); }}

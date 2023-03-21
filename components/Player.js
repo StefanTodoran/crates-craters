@@ -44,8 +44,9 @@ export default function Player({ game, touch, darkMode, tileSize }) {
     }
   }
 
-  const still = (touch.x === 0 && touch.y === 0);
-  const player_src = (still) ? graphics.PLAYER : (darkMode) ? graphics.PLAYER_OUTLINED_DARK : graphics.PLAYER_OUTLINED;
+  // const still = (touch.x === 0 && touch.y === 0);
+  // const player_src = (still) ? graphics.PLAYER : (darkMode) ? graphics.PLAYER_OUTLINED_DARK : graphics.PLAYER_OUTLINED;
+  const player_src = (darkMode) ? graphics.PLAYER_OUTLINED_DARK : graphics.PLAYER_OUTLINED;
 
   return (
     <>

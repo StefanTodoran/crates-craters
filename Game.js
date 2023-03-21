@@ -150,7 +150,7 @@ const level_nine = [
   [6, 1, 0, 0, 4, 0, 5, 4],
 ];
 const level_ten = [
-  [0, 4, 0, 4, 6, 0, 5, 3],
+  [0, 4, 0, 1, 6, 0, 5, 3],
   [4, 4, 0, 0, 0, 1, 0, 5],
   [0, 0, 0, 1, 0, 0, 0, 0],
   [0, 0, 0, 0, 5, "b:35", 0, 4],
@@ -196,9 +196,25 @@ const level_twenty = [
   [0, 4, 1, 1, 5, 5, 1, 0],
   [5, 0, 0, 0, 3, 0, 4, 6],
 ];
+const test = [
+  [1, 1, 1, 1, 1, 1, 1, 1],
+  [1, 0, 0, 0, 1, 4, 0, 1],
+  [1, 0, 7, 0, 1, 0, 4, 1],
+  [1, 0, 0, 0, 1, 5, 0, 1],
+  [1, 4, 4, 4, 1, 1, 1, 1],
+  [1, 0, 0, 0, 12, 6, 0, 1],
+  [1, 0, 0, 0, 1, 0, 0, 1],
+  [1, 13, 14, 1, 1, 4, 4, 1],
+  [1, 0, 0, 0, 1, 5, 5, 1],
+  [1, 0, 6, 0, 2, 0, 0, 1],
+  [1, 0, 11, 0, 1, 0, 0, 1],
+  [1, 0, 8, 0, 1, 0, 0, 1],
+  [1, 0, 0, 0, 1, 0, 3, 1],
+  [1, 1, 1, 1, 1, 1, 1, 1],
+];
 
 const defaults = [
-  // createLevelObj("Bomb", "default", bomb_test),
+  createLevelObj("Test", "default", test),
   createLevelObj("Tutorial", "default", level_one),
   createLevelObj("Easy Peasy", "default", level_two),
   createLevelObj("Rooms", "default", level_three),
@@ -304,6 +320,10 @@ export function icon_src(type) {
   if (type === "coin") { return graphics.COIN; }
   if (type === "flag") { return graphics.FLAG; }
   if (type === "bomb") { return graphics.BOMB; }
+  if (type === "one_way_left") { return graphics.ONE_WAY_LEFT; }
+  if (type === "one_way_right") { return graphics.ONE_WAY_RIGHT; }
+  if (type === "one_way_up") { return graphics.ONE_WAY_UP; }
+  if (type === "one_way_down") { return graphics.ONE_WAY_DOWN; }
   if (type === "explosion") { return graphics.EXPLOSION; }
   if (type === "little_explosion") { return graphics.LITTLE_EXPLOSION; }
   // For level creation:
@@ -362,6 +382,10 @@ export const tiles = {
   8: "flag",
   9: "explosion",
   10: "little_explosion",
+  11: "one_way_left",
+  12: "one_way_right",
+  13: "one_way_up",
+  14: "one_way_down",
 }
 
 export const identifier = {
@@ -376,6 +400,10 @@ export const identifier = {
   "flag": 8,
   "explosion": 9,
   "little_explosion": 10,
+  "one_way_left": 11,
+  "one_way_right": 12,
+  "one_way_up": 13,
+  "one_way_down": 14,
   // "bomb": null, // bomb doesn't use number id
 }
 
@@ -383,11 +411,12 @@ export function validTile(yPos, xPos, board) {
   return (yPos >= 0 && yPos < board.length && xPos >= 0 && xPos < board[0].length);
 }
 
-// Player can move to this tile without changing anything about 
-// the game state (other than player position).
-function canWalkNoDisturb(yPos, xPos, game) {
+// Player can move to this tile without changing anything about the game 
+// state (other than player position). Optional param extra adds walkable tiles.
+function canWalkNoDisturb(yPos, xPos, game, extra) {
   if (validTile(yPos, xPos, game.board)) {
-    return (["empty", "spawn"].includes(tileAt(yPos, xPos, game.board))) ||
+    const walkable = extra ? ["empty", "spawn"].concat(extra) : ["empty", "spawn"];
+    return (walkable.includes(tileAt(yPos, xPos, game.board))) ||
       (tileAt(yPos, xPos, game.board) === "flag" && game.coins === game.maxCoins);
   }
   return false;
@@ -495,18 +524,24 @@ export function doGameMove(game_obj, move) {
   const move_to = { y: game_obj.player.y, x: game_obj.player.x }; // Where the player is attempting to move.
   const one_further = { y: game_obj.player.y, x: game_obj.player.x }; // One tile further that that in the same direction.
 
+  let walkable = []; // To handle one way tiles, we set this based on the direction of movement.
+
   if (move === "up") {
     move_to.y -= 1;
     one_further.y -= 2;
+    walkable = ["one_way_left", "one_way_right", "one_way_up"];
   } else if (move === "down") {
     move_to.y += 1;
     one_further.y += 2;
+    walkable = ["one_way_left", "one_way_right", "one_way_down"];
   } else if (move === "left") {
     move_to.x -= 1;
     one_further.x -= 2;
+    walkable = ["one_way_left", "one_way_up", "one_way_down"];
   } else if (move === "right") {
     move_to.x += 1;
     one_further.x += 2;
+    walkable = ["one_way_right", "one_way_up", "one_way_down"];
   }
 
   // Clear explosion tiles.
@@ -520,7 +555,7 @@ export function doGameMove(game_obj, move) {
     }
   }
 
-  // The basic structure of how this seciton works is that if the move_to position is
+  // The basic structure of how this section works is that if the move_to position is
   // on some tile that could be walked on after some game logic (e.g. a coin tile or 
   // door when keys > 0) then we do that logic and clear the tile. At the end of all the
   // logic, we run attemptMove which only succeeds and moves the player if move_to is now
@@ -588,12 +623,12 @@ export function doGameMove(game_obj, move) {
     }
   }
 
-  next.won = attemptMove(move_to.y, move_to.x, next);
+  next.won = attemptMove(move_to.y, move_to.x, next, walkable);
   return next;
 }
 
-function attemptMove(yPos, xPos, next) {
-  if (canWalkNoDisturb(yPos, xPos, next)) {
+function attemptMove(yPos, xPos, next, walkable) {
+  if (canWalkNoDisturb(yPos, xPos, next, walkable)) {
     next.player.x = xPos;
     next.player.y = yPos;
     return winCondition(next);

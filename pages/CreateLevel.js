@@ -11,6 +11,8 @@ import { colors, graphics } from '../Theme';
 import InputLine from '../components/InputLine';
 import { GlobalContext } from '../GlobalContext';
 import SliderBar from '../components/SliderBar';
+import Selector from '../components/Selector';
+import { ScrollView } from 'react-native';
 const win = Dimensions.get('window');
 
 /**
@@ -275,12 +277,10 @@ export default function CreateLevel({ pageCallback, levelCallback, level, storeL
   useEffect(() => {
     const showEvent = Platform.OS === 'ios' ? "keyboardWillShow" : "keyboardDidShow";
     const showListener = Keyboard.addListener(showEvent, () => {
-      // const showListener = Keyboard.addListener("keyboardWillShow", () => {
       setKeyboardShown(false);
     });
     const hideEvent = Platform.OS === 'ios' ? "keyboardWillHide" : "keyboardDidHide";
     const hideListener = Keyboard.addListener(hideEvent, () => {
-      // const hideListener = Keyboard.addListener("keyboardWillHide", () => {
       setKeyboardShown(true);
     });
 
@@ -294,73 +294,89 @@ export default function CreateLevel({ pageCallback, levelCallback, level, storeL
     <SafeAreaView style={styles.container}>
       {level && <GameBoard board={level.board} tileCallback={changeTile}></GameBoard>}
 
-      {/* TOOLS MODAL */}
+      {/* START MODAL */}
       {toolsModalOpen && <Animated.View style={{
         ...styles.modal,
         opacity: fadeToolsAnim,
         backgroundColor: (darkMode) ? colors.NEAR_BLACK : "white",
       }}>
-        <Image style={styles.toolsBanner} source={graphics.TOOLS_BANNER} />
-        <View style={styles.row}>
-          <MenuButton onPress={changeTool} value="crate" label="Crate" icon={graphics.CRATE} />
-          <MenuButton onPress={changeTool} value="crater" label="Crater" icon={graphics.CRATER} />
-        </View>
-        <View style={styles.row}>
-          <MenuButton onPress={changeTool} value="door" label="Door" icon={graphics.DOOR} />
-          <MenuButton onPress={changeTool} value="key" label="Key" icon={graphics.KEY} />
-        </View>
-        <View style={styles.row}>
-          <MenuButton onPress={changeTool} value="flag" label="Flag" icon={graphics.FLAG} />
-          <MenuButton onPress={changeTool} value="coin" label="Coin" icon={graphics.COIN} />
-        </View>
-        <View style={styles.row}>
-          <MenuButton onPress={changeTool} value="wall" label="Wall" icon={graphics.WALL_ICON} />
-          <MenuButton onPress={changeTool} value="spawn" label="Player" icon={graphics.PLAYER} />
-        </View>
-        <View style={{ height: 15 }} />
-        <View style={styles.row}>
-          <SliderBar label="Fuse Timer" value={fuseTimer} units={" turns"}
-            minValue={1} maxValue={100} changeCallback={setFuseTimer} darkMode={darkMode} />
-        </View>
-        <View style={styles.row}>
-          <MenuButton onPress={changeTool} value="bomb" label="Bomb" icon={graphics.BOMB} />
-        </View>
-      </Animated.View>}
-      {/* END TOOLS MODAL */}
+        <ScrollView horizontal decelerationRate={0.9} snapToInterval={win.width}
+          snapToAlignment={"center"} contentOffset={{ x: win.width, y: 0 }}>
 
-      {/* OPTIONS MODAL */}
-      {optionsModalOpen && <Animated.View style={{
-        ...styles.modal,
-        opacity: fadeOptionsAnim,
-        backgroundColor: (darkMode) ? colors.NEAR_BLACK : "white",
-      }}>
-        <Image style={styles.optionsBanner} source={graphics.OPTIONS_BANNER} />
-        <View style={styles.inputContainer()}>
-          <InputLine label={"Level Name"} value={level.name} changeCallback={changeName} darkMode={darkMode} />
-          <InputLine label={"Designer"} value={level.designer} changeCallback={changeDesigner} darkMode={darkMode} />
-          <Text style={styles.text()}>
-            Created {level.created}
-          </Text>
-        </View>
-        <View style={styles.row}>
-          <MenuButton onPress={saveLevelToStorage} label="Save Level" icon={graphics.SAVE_ICON} disabled={level.name === ""} />
-          <MenuButton onPress={loadLevelFromStorage} label="Load Level" icon={graphics.LOAD_ICON} disabled={index === -1} />
-        </View>
-        <View style={styles.row}>
-          <MenuButton onLongPress={deleteLevelFromStorage} label="Delete Level     (Long Press)" icon={graphics.DELETE_ICON} allowOverflow disabled={index === -1} />
-          <MenuButton onLongPress={() => { storeLevelCallback(createLevelObj("", "", null)); }} label="Clear Level      (Long Press)" icon={graphics.HAMMER_ICON} allowOverflow />
-        </View>
-        <View style={styles.row}>
-          <MenuButton onPress={testLevel} label="Playtest" icon={graphics.PLAYER} disabled={index === -1} />
-          <MenuButton onPress={pageCallback} value={false} label="To Menu" icon={graphics.DOOR} />
-        </View>
+          {/* PAGE ONE */}
+          <View style={styles.page}>
+            <Image style={styles.toolsBanner} source={graphics.TOOLS_BANNER} />
+            <View style={styles.row}>
+              <MenuButton onPress={changeTool} value="one_way_left" label="Left" icon={graphics.ONE_WAY_LEFT} />
+              <MenuButton onPress={changeTool} value="one_way_right" label="Right" icon={graphics.ONE_WAY_RIGHT} />
+            </View>
+            <View style={styles.row}>
+              <MenuButton onPress={changeTool} value="one_way_up" label="Up" icon={graphics.ONE_WAY_UP} />
+              <MenuButton onPress={changeTool} value="one_way_down" label="Down" icon={graphics.ONE_WAY_DOWN} />
+            </View>
+            <View style={{ height: 15 }} />
+            <View style={styles.row}>
+              <SliderBar label="Fuse Timer" value={fuseTimer} units={" turns"}
+                minValue={1} maxValue={100} changeCallback={setFuseTimer} darkMode={darkMode} />
+            </View>
+            <View style={styles.row}>
+              <MenuButton onPress={changeTool} value="bomb" label="Bomb" icon={graphics.BOMB} />
+            </View>
+          </View>
+
+          {/* PAGE TWO */}
+          <View style={styles.page}>
+            <Image style={styles.toolsBanner} source={graphics.TOOLS_BANNER} />
+            <View style={styles.row}>
+              <MenuButton onPress={changeTool} value="crate" label="Crate" icon={graphics.CRATE} />
+              <MenuButton onPress={changeTool} value="crater" label="Crater" icon={graphics.CRATER} />
+            </View>
+            <View style={styles.row}>
+              <MenuButton onPress={changeTool} value="door" label="Door" icon={graphics.DOOR} />
+              <MenuButton onPress={changeTool} value="key" label="Key" icon={graphics.KEY} />
+            </View>
+            <View style={styles.row}>
+              <MenuButton onPress={changeTool} value="flag" label="Flag" icon={graphics.FLAG} />
+              <MenuButton onPress={changeTool} value="coin" label="Coin" icon={graphics.COIN} />
+            </View>
+            <View style={styles.row}>
+              <MenuButton onPress={changeTool} value="wall" label="Wall" icon={graphics.WALL_ICON} />
+              <MenuButton onPress={changeTool} value="spawn" label="Player" icon={graphics.PLAYER} />
+            </View>
+          </View>
+
+          {/* PAGE THREE */}
+          <View style={styles.page}>
+            <Image style={styles.optionsBanner} source={graphics.OPTIONS_BANNER} />
+            <View style={styles.inputContainer()}>
+              <InputLine label={"Level Name"} value={level.name} changeCallback={changeName} darkMode={darkMode} />
+              <InputLine label={"Designer"} value={level.designer} changeCallback={changeDesigner} darkMode={darkMode} />
+              <Text style={styles.text()}>
+                Created {level.created}
+              </Text>
+            </View>
+            <View style={styles.row}>
+              <MenuButton onPress={saveLevelToStorage} label="Save Level" icon={graphics.SAVE_ICON} disabled={level.name === ""} />
+              <MenuButton onPress={loadLevelFromStorage} label="Load Level" icon={graphics.LOAD_ICON} disabled={index === -1} />
+            </View>
+            <View style={styles.row}>
+              <MenuButton onLongPress={deleteLevelFromStorage} label="Delete Level     (Long Press)" icon={graphics.DELETE_ICON} allowOverflow disabled={index === -1} />
+              <MenuButton onLongPress={() => { storeLevelCallback(createLevelObj("", "", null)); }} label="Clear Level      (Long Press)" icon={graphics.HAMMER_ICON} allowOverflow />
+            </View>
+            <View style={styles.row}>
+              <MenuButton onPress={testLevel} label="Playtest" icon={graphics.PLAYER} disabled={index === -1} />
+              <MenuButton onPress={pageCallback} value="share" label="Share" icon={graphics.SHARE_ICON} disabled={index === -1} />
+            </View>
+          </View>
+
+        </ScrollView>
       </Animated.View>}
-      {/* END OPTIONS MODAL */}
+      {/* END MODAL */}
 
       {(keyboardShown || Platform.OS === "ios") && /* on ios they aren't pushed up by the keyboard, no need to hide */
         <View style={styles.buttonsRow(darkMode)}>
-          <MenuButton onPress={toggleToolsModal} label="Tools" icon={graphics.HAMMER_ICON} disabled={optionsModalOpen} />
-          <MenuButton onPress={toggleOptionsModal} label="Options" icon={graphics.OPTIONS_ICON} disabled={toolsModalOpen} />
+          <MenuButton onPress={toggleToolsModal} label="Tools & Options" icon={graphics.HAMMER_ICON} />
+          <MenuButton onPress={pageCallback} value={false} label="Go Back" icon={graphics.DOOR} />
         </View>}
     </SafeAreaView>
   );
@@ -384,6 +400,12 @@ const styles = StyleSheet.create({
     paddingTop: StatusBar.currentHeight + 15,
     alignItems: "center",
     justifyContent: "space-between",
+  },
+  page: {
+    flexDirection: "column",
+    justifyContent: "center",
+    alignItems: "center",
+    width: win.width,
   },
   row: {
     flexDirection: "row",
@@ -420,7 +442,7 @@ const styles = StyleSheet.create({
   }),
   inputContainer: () => ({
     position: "relative",
-    width: 2 * win.width / 3,
+    width: 4 * win.width / 5,
     marginBottom: 10,
     borderColor: colors.MAIN_COLOR,
     borderWidth: 1,
