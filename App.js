@@ -172,7 +172,7 @@ export default function App() {
         {/* PAGE CONTENT */}
         <ScrollView horizontal pagingEnabled showsHorizontalScrollIndicator={false} onScroll={(evt) => {
           setPageState(Math.round(evt.nativeEvent.contentOffset.x / win.width));
-        }} scrollEnabled={scrollEnabled} ref={scrollRef}>
+        }} scrollEnabled={scrollEnabled} ref={scrollRef} overScrollMode="never">
           <View style={styles.page}>
             <HomePage darkModeCallback={toggleDarkMode} setThemeCallback={setCurTheme} audioModeCallback={toggleAudioMode}
               setSensitivityCallback={setSensitivity} setTapDelayCallback={setTapDelay}></HomePage>

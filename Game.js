@@ -411,20 +411,12 @@ export function validTile(yPos, xPos, board) {
   return (yPos >= 0 && yPos < board.length && xPos >= 0 && xPos < board[0].length);
 }
 
-// Player can move to this tile without changing anything about the game 
-// state (other than player position). Optional param extra adds walkable tiles.
-function canWalkNoDisturb(yPos, xPos, game, extra) {
+// Can the player walk on the given tile. By default this includes empty
+// tiles and the flag if win conditions are met. Extra adds to walkable tiles.
+export function canWalk(yPos, xPos, game, extra) {
   if (validTile(yPos, xPos, game.board)) {
     const walkable = extra ? ["empty", "spawn"].concat(extra) : ["empty", "spawn"];
     return (walkable.includes(tileAt(yPos, xPos, game.board))) ||
-      (tileAt(yPos, xPos, game.board) === "flag" && game.coins === game.maxCoins);
-  }
-  return false;
-}
-
-export function canWalk(yPos, xPos, game) {
-  if (validTile(yPos, xPos, game.board)) {
-    return (["empty", "spawn", "coin", "key"].includes(tileAt(yPos, xPos, game.board))) ||
       (tileAt(yPos, xPos, game.board) === "flag" && game.coins === game.maxCoins);
   }
   return false;
@@ -486,18 +478,20 @@ function countTimesInArray(array, val) {
  * @returns {(boolean|Array)} Either false or a list of strings
  */
 export function canMoveTo(game_obj, tileX, tileY) {
-  if (!canWalk(tileY, tileX, game_obj)) {
+  const walkable = ["coin", "key"];
+  if (!canWalk(tileY, tileX, game_obj, walkable)) {
     return false;
   }
 
   const visited = [];
   const queue = new Queue();
-  queue.enqueue({ x: game_obj.player.x, y: game_obj.player.y, path: [] });
+  queue.enqueue({ x: game_obj.player.x, y: game_obj.player.y, path: [], walkable: [] });
+  // We use walkable to do one way tile logic. Rather than calculate on dequeue, we just set this when enqueing.
 
   while (!queue.isEmpty) {
     const current = queue.dequeue();
 
-    if (!canWalk(current.y, current.x, game_obj)) {
+    if (!canWalk(current.y, current.x, game_obj, current.walkable)) {
       continue;
     }
     if (visited.includes(`${current.y},${current.x}`)) {
@@ -508,10 +502,22 @@ export function canMoveTo(game_obj, tileX, tileY) {
     if (tileX === current.x && tileY === current.y) {
       return current.path;
     } else {
-      queue.enqueue({ x: current.x + 1, y: current.y, path: current.path.concat("right") });
-      queue.enqueue({ x: current.x - 1, y: current.y, path: current.path.concat("left") });
-      queue.enqueue({ x: current.x, y: current.y + 1, path: current.path.concat("down") });
-      queue.enqueue({ x: current.x, y: current.y - 1, path: current.path.concat("up") });
+      queue.enqueue({
+        x: current.x + 1, y: current.y, path: current.path.concat("right"),
+        walkable: walkable.concat(["one_way_right", "one_way_up", "one_way_down"]),
+      });
+      queue.enqueue({
+        x: current.x - 1, y: current.y, path: current.path.concat("left"),
+        walkable: walkable.concat(["one_way_left", "one_way_up", "one_way_down"]),
+      });
+      queue.enqueue({
+        x: current.x, y: current.y + 1, path: current.path.concat("down"),
+        walkable: walkable.concat(["one_way_right", "one_way_left", "one_way_down"]),
+      });
+      queue.enqueue({
+        x: current.x, y: current.y - 1, path: current.path.concat("up"),
+        walkable: walkable.concat(["one_way_right", "one_way_left", "one_way_up"]),
+      });
     }
 
   }
@@ -628,7 +634,7 @@ export function doGameMove(game_obj, move) {
 }
 
 function attemptMove(yPos, xPos, next, walkable) {
-  if (canWalkNoDisturb(yPos, xPos, next, walkable)) {
+  if (canWalk(yPos, xPos, next, walkable)) {
     next.player.x = xPos;
     next.player.y = yPos;
     return winCondition(next);

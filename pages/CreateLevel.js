@@ -187,14 +187,10 @@ export default function CreateLevel({ pageCallback, levelCallback, level, storeL
   }
   useEffect(updateIndex, [level]);
 
-  function testLevel() {
+  async function testLevel() {
+    await saveLevelToStorage();
     levelCallback(index);
     playTestCallback();
-  }
-
-  function shareLevel() {
-    levelCallback(index);
-    pageCallback("share");
   }
 
   // ==================
@@ -300,8 +296,8 @@ export default function CreateLevel({ pageCallback, levelCallback, level, storeL
         opacity: fadeToolsAnim,
         backgroundColor: (darkMode) ? colors.NEAR_BLACK : "white",
       }}>
-        <ScrollView horizontal decelerationRate={0.9} snapToInterval={win.width} snapToAlignment={"center"}
-          showsHorizontalScrollIndicator={false} contentOffset={{ x: win.width, y: 0 }}>
+        <ScrollView horizontal decelerationRate={0.9} snapToInterval={win.width} snapToAlignment="center"
+          showsHorizontalScrollIndicator={false} contentOffset={{ x: win.width, y: 0 }} overScrollMode="never">
 
           {/* PAGE ONE */}
           <View style={styles.page}>
