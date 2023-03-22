@@ -155,11 +155,10 @@ Built with JavaScript and React Native, Crates and Craters is a single player pu
 </h2>
 
 * Add more sound variations
-* Add option to turn off sounds
-* Finish creating local saving funcitonality
-* Make more levels
+* Make many, many more levels
 * Create a proper tutorial?
 * Look into ways to have level sharing server
-* Complete UI overhaul
 * Improve level sharing page
 * Implement variable board size
+* Make non-valid moves not count as a turn (don't tick bomb)
+* Rework oneways?

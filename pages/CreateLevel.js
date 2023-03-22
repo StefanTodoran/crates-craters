@@ -300,8 +300,8 @@ export default function CreateLevel({ pageCallback, levelCallback, level, storeL
         opacity: fadeToolsAnim,
         backgroundColor: (darkMode) ? colors.NEAR_BLACK : "white",
       }}>
-        <ScrollView horizontal decelerationRate={0.9} snapToInterval={win.width}
-          snapToAlignment={"center"} contentOffset={{ x: win.width, y: 0 }}>
+        <ScrollView horizontal decelerationRate={0.9} snapToInterval={win.width} snapToAlignment={"center"}
+          showsHorizontalScrollIndicator={false} contentOffset={{ x: win.width, y: 0 }}>
 
           {/* PAGE ONE */}
           <View style={styles.page}>

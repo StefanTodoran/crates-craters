@@ -35,6 +35,11 @@ export default function Player({ game, touch, darkMode, tileSize }) {
         let selectable = !(["outside", "crater", "wall"].includes(tile));
         selectable = (tile === "door" && game.keys === 0) ? false : selectable;
         selectable = (tile === "flag" && game.coins !== game.maxCoins) ? false : selectable;
+        
+        selectable = (tile === "one_way_left" && xPos > game.player.x) ? false : selectable;
+        selectable = (tile === "one_way_right" && xPos < game.player.x) ? false : selectable;
+        selectable = (tile === "one_way_up" && yPos > game.player.y) ? false : selectable;
+        selectable = (tile === "one_way_down" && yPos < game.player.y) ? false : selectable;
 
         if (selectable) {
           const optionStyle = styles.optionTile(xPos, yPos, tileSize, optionsAnim);
@@ -44,8 +49,6 @@ export default function Player({ game, touch, darkMode, tileSize }) {
     }
   }
 
-  // const still = (touch.x === 0 && touch.y === 0);
-  // const player_src = (still) ? graphics.PLAYER : (darkMode) ? graphics.PLAYER_OUTLINED_DARK : graphics.PLAYER_OUTLINED;
   const player_src = (darkMode) ? graphics.PLAYER_OUTLINED_DARK : graphics.PLAYER_OUTLINED;
 
   return (
