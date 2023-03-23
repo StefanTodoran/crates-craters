@@ -202,7 +202,7 @@ function printLevel(levelObj) {
         line += levelObj.board[i][j] + ", ";
       }
     }
-    console.log(line + "];");
+    console.log(line + "],");
   }
 }
 

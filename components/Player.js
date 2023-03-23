@@ -1,4 +1,4 @@
-import { StyleSheet, Dimensions, Image, Animated } from 'react-native';
+import { StyleSheet, Image, Animated } from 'react-native';
 import React, { useRef, useEffect } from "react";
 
 import { tileAt } from '../Game';

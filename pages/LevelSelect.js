@@ -1,11 +1,9 @@
-import { View, StyleSheet, Dimensions, Image, Animated, Pressable } from 'react-native';
-import React, { useState, useRef } from "react";
+import { View, StyleSheet, Dimensions, Animated } from 'react-native';
+import React, { useRef } from "react";
 
-import MenuButton from '../components/MenuButton';
 import LevelOption from '../components/LevelOption';
 
 import { levels, importStoredLevels } from '../Game';
-import { graphics } from '../Theme';
 import Selector from '../components/Selector';
 const win = Dimensions.get('window');
 

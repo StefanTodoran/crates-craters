@@ -1,8 +1,8 @@
-import { View, Text, StyleSheet, Dimensions } from 'react-native';
+import { Dimensions, Text, StyleSheet } from 'react-native';
 import React from "react";
 import MenuButton from './MenuButton';
 import { colors, graphics } from '../Theme';
-const win = Dimensions.get('window');
+const width = Dimensions.get('window').width;
 
 /**
  * LevelOption is a basic component for use in LevelSelect.js which
@@ -19,7 +19,10 @@ export default function LevelOption({ onPress, value, level }) {
   if (level) {
     return (
       <MenuButton onPress={onPress} value={value} label={level.name}
-        icon={level.designer === "default" ? graphics.CRATE : graphics.CRATER} />
+        icon={level.designer === "default" ? graphics.CRATE : graphics.CRATER} 
+        children={
+          <Text style={styles.number()}>{value}</Text>
+        } />
     );
   } else {
     return ( // We still give it an icon so it is the right size
@@ -27,3 +30,15 @@ export default function LevelOption({ onPress, value, level }) {
     );
   }
 }
+
+const styles = StyleSheet.create({
+  number: () => ({
+    position: "absolute",
+    width: "100%",
+    textAlign: "center",
+    fontSize: width * 0.03,
+    color: colors.OFF_WHITE,
+    fontFamily: "Montserrat-Medium",
+    fontWeight: "bold",
+  }),
+});

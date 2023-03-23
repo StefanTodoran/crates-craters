@@ -1,5 +1,5 @@
-import { Pressable, Text, StyleSheet, Image, Dimensions } from 'react-native';
-import React, { useContext, useEffect, useState } from 'react';
+import { Pressable, Text, StyleSheet, Image, Dimensions, View } from 'react-native';
+import React, { Component, useContext, useEffect, useState } from 'react';
 import { Audio } from 'expo-av';
 import { colors } from '../Theme';
 import { GlobalContext } from '../GlobalContext';
@@ -19,8 +19,12 @@ const width = Dimensions.get('window').width;
  * @param {boolean} invisible If true, the button is completely invisible (opacity of zero).
  * @param {boolean} disabled Whether or not the button can be pressed (changes appearance).
  * @param {boolean} allowOverflow Whether number of lines for the button text should cap at 1.
+ * OTHER:
+ * @param {React.ReactNode} children 
+ * Optional children to display (in same view as icon), should probably be position absolute.
+ * Used exclusively for LevelOption.
  */
-export default function MenuButton({ onPress, onLongPress, value, label, icon, invisible, disabled, allowOverflow }) {
+export default function MenuButton({ onPress, onLongPress, value, label, icon, invisible, disabled, allowOverflow, children }) {
   const { darkMode, dragSensitivity, doubleTapDelay, playAudio } = useContext(GlobalContext);
 
   const [pressed, setPressedState] = useState(false);
@@ -64,7 +68,12 @@ export default function MenuButton({ onPress, onLongPress, value, label, icon, i
       }],
     }} onPressIn={() => { setPressedState(!!onPress) }} onPressOut={() => { setPressedState(false) }}
       disabled={disabled} touchSoundDisabled={true}>
-      {(icon) && <Image style={styles.icon} source={icon} />}
+
+      <View style={{justifyContent: "center", alignItems: "center"}}>
+        {(icon) && <Image style={styles.icon} source={icon} />}
+        {children}
+      </View>
+
       <Text numberOfLines={allowOverflow ? 0 : 1} style={{
         ...styles.label, color: colors.MAIN_COLOR,
       }}>{label}</Text>
