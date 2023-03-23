@@ -55,18 +55,24 @@ export default function ShareLevel({ pageCallback }) {
   async function handleBarCodeScanned({ type, data }) {
     setScanned(true);
     const levelObj = encodingStringToLevel(data);
-    const existsLevel = await checkData(levelObj.name);
-
     printLevel(levelObj);
-    if (!existsLevel) {
-      const success = await storeData(levelObj, levelObj.name);
-      if (success) {
-        setInfo(`Successfully stored data for level "${levelObj.name}" by "${levelObj.designer}".`);
-      } else {
-        setInfo(`Failed to store data for level "${levelObj.name}" by "${levelObj.designer}".`);
-      }
+    
+    if (!levelObj) {
+      setInfo("Failed to read level data. Double check the QR code.");
     } else {
-      setInfo(`Level with name "${levelObj.name}" already exists!`);
+      const existsLevel = await checkData(levelObj.name);
+
+      if (!existsLevel) {
+        const success = await storeData(levelObj, levelObj.name);
+        
+        if (success) {
+          setInfo(`Successfully stored data for level "${levelObj.name}" by "${levelObj.designer}".`);
+        } else {
+          setInfo(`Failed to store data for level "${levelObj.name}" by "${levelObj.designer}".`);
+        }
+      } else {
+        setInfo(`Level with name "${levelObj.name}" already exists!`);
+      }
     }
 
     setTimeout(() => {
@@ -134,52 +140,35 @@ export default function ShareLevel({ pageCallback }) {
 }
 
 function levelToEncodingString(levelObj) {
-  let encodedStr = `${levelObj.name},${levelObj.designer},${levelObj.created},`;
+  let encodedStr = `${levelObj.name}&${levelObj.designer}&${levelObj.created}&`;
+
   for (let i = 0; i < levelObj.board.length; i++) {
     for (let j = 0; j < levelObj.board[0].length; j++) {
-      const tile = levelObj.board[i][j];
-
-      if (getTileEntityData(tile).type === null) {
-        encodedStr += levelObj.board[i][j];
-      } else {
-        encodedStr += "(" + levelObj.board[i][j] + ")";
-      }
+      encodedStr += levelObj.board[i][j] + ","
     }
     encodedStr += ";"
   }
+  
   return encodedStr.slice(0, -1);
 }
 
 function encodingStringToLevel(encondedStr) {
   try {
-    const data = encondedStr.split(",");
+    const data = encondedStr.split("&");
     const rawBoard = data[3].split(";");
-
-    console.log(rawBoard);
-
     const board = [];
+
     for (let i = 0; i < rawBoard.length; i++) {
+      const rawRow = rawBoard[i].split(",");
       const row = [];
 
-      let j = 0;
-      while (j < rawBoard[i].length) {
-        const char = rawBoard[i][j];
+      for (let j = 0; j < rawRow.length - 1; j++) { // -1 because of endline comma
+        const tile = parseInt(rawRow[j]);
 
-        if (char === "(") {
-          // We have the start of a tile entity.
-          let entity = "";
-          j++;
-
-          while (rawBoard[i][j] !== ")") {
-            console.log(rawBoard[i][j]);
-            entity += rawBoard[i][j];
-            j++;
-          }
-          row.push(entity);
-          j++;
+        if (!isNaN(tile)) {
+          row.push(tile);
         } else {
-          row.push(parseInt(rawBoard[i][j]));
-          j++;
+          row.push(rawRow[j]);
         }
       }
 

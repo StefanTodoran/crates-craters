@@ -196,25 +196,8 @@ const level_twenty = [
   [0, 4, 1, 1, 5, 5, 1, 0],
   [5, 0, 0, 0, 3, 0, 4, 6],
 ];
-const test = [
-  [1, 1, 1, 1, 1, 1, 1, 1],
-  [1, 0, 0, 0, 1, 4, 0, 1],
-  [1, 0, 7, 0, 1, 0, 4, 1],
-  [1, 0, 0, 0, 1, 5, 0, 1],
-  [1, 4, 4, 4, 1, 1, 1, 1],
-  [1, 0, 0, 0, 12, 6, 0, 1],
-  [1, 0, 0, 0, 1, 0, 0, 1],
-  [1, 13, 14, 1, 1, 4, 4, 1],
-  [1, 0, 0, 0, 1, 5, 5, 1],
-  [1, 0, 6, 0, 2, 0, 0, 1],
-  [1, 0, 11, 0, 1, 0, 0, 1],
-  [1, 0, 8, 0, 1, 0, 0, 1],
-  [1, 0, 0, 0, 1, 0, 3, 1],
-  [1, 1, 1, 1, 1, 1, 1, 1],
-];
 
 const defaults = [
-  createLevelObj("Test", "default", test),
   createLevelObj("Tutorial", "default", level_one),
   createLevelObj("Easy Peasy", "default", level_two),
   createLevelObj("Rooms", "default", level_three),

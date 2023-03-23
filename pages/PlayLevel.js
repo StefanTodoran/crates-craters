@@ -109,6 +109,7 @@ export default function PlayLevel({ pageCallback, levelCallback, gameStateCallba
 
   // Player input related state. The touchMove state is used for the <Player/> component 
   // preview of moves, gesture is used for actually completing those moves on release.
+  // const [touchMove, setTouchMove] = useState({ magY: 0, dirY: 0, magX: 0, dirX: 0 });
   const [touchMove, setTouchMove] = useState({ y: 0, x: 0 });
   const [gesture, setGesture] = useState([false, false, false, false]); // up, down, left, right
 
@@ -183,6 +184,10 @@ export default function PlayLevel({ pageCallback, levelCallback, gameStateCallba
     }
 
     setTouchMove({ y: Math.sign(gestureState.dy) * dragY, x: Math.sign(gestureState.dx) * dragX });
+    // setTouchMove({
+    //   magY: dragY, dirY: Math.sign(gestureState.dy), 
+    //   magX: dragX, dirX: Math.sign(gestureState.dx),
+    // });
   }
 
   function onEndGesture(evt, gestureState) {
@@ -215,6 +220,7 @@ export default function PlayLevel({ pageCallback, levelCallback, gameStateCallba
 
     // By updating state, the component will be rerendered and
     // the useEffect at the top will happen, calling handleGesture.
+    // setTouchMove({ magY: 0, dirY: 0, magX: 0, dirX: 0 });
     setTouchMove({ y: 0, x: 0 });
     setGesture([up, down, left, right]);
   }
@@ -231,6 +237,7 @@ export default function PlayLevel({ pageCallback, levelCallback, gameStateCallba
       onShouldBlockNativeResponder: (evt, gestureState) => panResponderEnabled.current,
 
       onPanResponderGrant: function (evt, gestureState) { // The gesture has started!
+        // setTouchMove({ magY: 0, dirY: 0, magX: 0, dirX: 0 });
         setTouchMove({ y: 0, x: 0 });
 
         const pressX = pressToIndex(gestureState.x0, tileSize);

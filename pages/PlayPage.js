@@ -10,6 +10,7 @@ const win = Dimensions.get('window');
 
 export default function PlayPage({ levelCallback, gameStateCallback, scrollCallback, editorCallback, level, game, playTest }) {
   const { darkMode } = useContext(GlobalContext);
+  const [page, setPageState] = useState(0);
 
   const anim = useRef(new Animated.Value(0)).current;
   const setAnimTo = (animState, callback) => {
@@ -54,7 +55,7 @@ export default function PlayPage({ levelCallback, gameStateCallback, scrollCallb
         </Animated.View>
       }
       {!modalOpen && <>
-        <LevelSelect pageCallback={setModalOpen} levelCallback={levelCallback} />
+        <LevelSelect pageCallback={setModalOpen} levelCallback={levelCallback} selectPage={page} setSelectPage={setPageState}/>
         <MenuButton onPress={setModalOpen} value="play" label="Resume" icon={graphics.KEY} disabled={!game || game.won || game.playtest} />
       </>}
     </>

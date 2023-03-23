@@ -35,7 +35,7 @@ export default function Player({ game, touch, darkMode, tileSize }) {
         let selectable = !(["outside", "crater", "wall"].includes(tile));
         selectable = (tile === "door" && game.keys === 0) ? false : selectable;
         selectable = (tile === "flag" && game.coins !== game.maxCoins) ? false : selectable;
-        
+
         selectable = (tile === "one_way_left" && xPos > game.player.x) ? false : selectable;
         selectable = (tile === "one_way_right" && xPos < game.player.x) ? false : selectable;
         selectable = (tile === "one_way_up" && yPos > game.player.y) ? false : selectable;
@@ -56,6 +56,12 @@ export default function Player({ game, touch, darkMode, tileSize }) {
       {options}
       <Animated.View style={{
         ...styles.player(game.player.x, game.player.y, tileSize, touch.x, touch.y),
+        // ...styles.player(
+        //   game.player.x, game.player.y,
+        //   tileSize,
+        //   touch.magX, touch.magY,
+        //   touch.dirX, touch.dirY,
+        // ),
       }}>
         <Image style={styles.tile("#00000000", tileSize)} source={player_src} />
       </Animated.View>
@@ -69,6 +75,19 @@ const styles = StyleSheet.create({
     height: size,
     backgroundColor: bgColor,
   }),
+  // player: (xPos, yPos, tileSize, magX, magY, dirX, dirY) => ({
+  //   position: "absolute",
+  //   left: xPos * tileSize,
+  //   top: yPos * tileSize,
+  //   transform: [
+  //     {
+  //       translateY: magY > tileSize ? dirY * tileSize : dirY * magY
+  //     },
+  //     {
+  //       translateX: magX > tileSize ? dirX * tileSize : dirX * magX
+  //     },
+  //   ],
+  // }),
   player: (xPos, yPos, tileSize, touchX, touchY) => ({
     position: "absolute",
     left: xPos * tileSize,

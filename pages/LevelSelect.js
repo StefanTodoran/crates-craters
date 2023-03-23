@@ -9,12 +9,14 @@ import { graphics } from '../Theme';
 import Selector from '../components/Selector';
 const win = Dimensions.get('window');
 
-export default function LevelSelect({ pageCallback, levelCallback }) {
-  const [page, setPageState] = useState(0);
-  // Controls which levels are currently being shown, i.e.
-  // say pageSize is five, then page 0 shows levels 1-5,
-  // page 1 shows levels 6-10, so on and so forth.
-
+/**
+ * @param {Function} pageCallback Sets the current open page for the modal in the parent. 
+ * @param {Function} levelCallback Sets the current level in the parent state so it can be passed to the PlayLevel component. 
+ * 
+ * @param {Function} selectPage Which page of levels should be shown.
+ * @param {Function} setSelectPage Used to change the current page being shown.
+ */
+export default function LevelSelect({ pageCallback, levelCallback, selectPage, setSelectPage }) {
   const openLevel = (level) => {
     levelCallback(level);
     pageCallback("play");
@@ -23,8 +25,8 @@ export default function LevelSelect({ pageCallback, levelCallback }) {
   const level_buttons = [];
   const pageSize = 6; // should be even
 
-  const pageStart = page * pageSize;
-  const pageEnd = (page + 1) * pageSize;
+  const pageStart = selectPage * pageSize;
+  const pageEnd = (selectPage + 1) * pageSize;
   importStoredLevels();
   for (let i = pageStart; i < pageEnd; i += 2) {
     const levelButton = (num) => {
@@ -47,10 +49,10 @@ export default function LevelSelect({ pageCallback, levelCallback }) {
   const pageChange = (value) => {
     Animated.timing(anim, {
       toValue: 0,
-      duration: 150,
+      duration: 100,
       useNativeDriver: true
     }).start(() => {
-      setPageState(value);
+      setSelectPage(value);
       Animated.timing(anim, {
         toValue: 1,
         duration: 250,
@@ -69,11 +71,11 @@ export default function LevelSelect({ pageCallback, levelCallback }) {
       </Animated.View>
       <View style={{ marginTop: 35, marginBottom: 15 }}>
         <Selector
-          onNext={() => { pageChange(page + 1) }} nextDisabled={!levels[pageEnd]}
-          onPrev={() => { pageChange(Math.max(0, page - 1)) }} prevDisabled={page === 0}
+          onNext={() => { pageChange(selectPage + 1) }} nextDisabled={!levels[pageEnd]}
+          onPrev={() => { pageChange(Math.max(0, selectPage - 1)) }} prevDisabled={selectPage === 0}
           // For some reason fast clicks in succession can move page below zero before 
           // disabling kicks in, unless we add this min and max force.
-          label={`Page #${page + 1}`} />
+          label={`Page #${selectPage + 1}`} />
       </View>
     </>
   );

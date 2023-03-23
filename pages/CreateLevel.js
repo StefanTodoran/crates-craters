@@ -89,32 +89,11 @@ export default function CreateLevel({ pageCallback, levelCallback, level, storeL
     fadeToolsAnim.setValue(start);
     Animated.timing(fadeToolsAnim, {
       toValue: end,
-      duration: 250,
+      duration: 200,
       useNativeDriver: true
     }).start(() => {
       if (modalWasOpen) {
         setToolsModalState(false);
-      }
-    });
-  }
-
-  const [optionsModalOpen, setOptionsModalState] = useState(false);
-  const fadeOptionsAnim = useRef(new Animated.Value(0)).current;
-  function toggleOptionsModal() {
-    const start = (optionsModalOpen) ? 1 : 0;
-    const end = (optionsModalOpen) ? 0 : 1;
-    const modalWasOpen = optionsModalOpen;
-    if (!modalWasOpen) { // If modal was not open
-      setOptionsModalState(true); // Set modal to open
-    }
-    fadeOptionsAnim.setValue(start);
-    Animated.timing(fadeOptionsAnim, {
-      toValue: end,
-      duration: 250,
-      useNativeDriver: true
-    }).start(() => {
-      if (modalWasOpen) {
-        setOptionsModalState(false);
       }
     });
   }
