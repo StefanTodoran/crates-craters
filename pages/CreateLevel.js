@@ -166,8 +166,7 @@ export default function CreateLevel({ pageCallback, levelCallback, level, storeL
   }
   useEffect(updateIndex, [level]);
 
-  async function testLevel() {
-    await saveLevelToStorage();
+  function testLevel() {
     levelCallback(index);
     playTestCallback();
   }
@@ -193,17 +192,6 @@ export default function CreateLevel({ pageCallback, levelCallback, level, storeL
       return jsonValue != null ? JSON.parse(jsonValue) : null;
     } catch (err) {
       console.log("\n\n(ERROR) >>> READING ERROR:\n", err);
-      return false;
-    }
-  }
-
-  async function removeData(storage_key) {
-    try {
-      await AsyncStorage.removeItem(storage_key);
-      return true;
-    }
-    catch (err) {
-      console.log("\n\n(ERROR) >>> REMOVING ERROR:\n", err);
       return false;
     }
   }

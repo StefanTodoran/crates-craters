@@ -1,50 +1,87 @@
-import { View, Text, StyleSheet, Image, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, Image, Dimensions, ScrollView } from 'react-native';
 import React, { useContext } from "react";
 
 import { colors, graphics } from '../Theme';
 import MenuButton from '../components/MenuButton';
 import { GlobalContext } from '../GlobalContext';
+import TextStyles, { normalize } from '../TextStyles';
+const win = Dimensions.get('window');
 
 export default function HowToPlay({ pageCallback }) {
   const { darkMode, dragSensitivity } = useContext(GlobalContext);
 
   return (
     <>
-      {/* <Image style={styles.banner} source={graphics.HOW_TO_BANNER} /> */}
+      <ScrollView style={[styles.scrollContainer, { borderColor: colors.MAIN_COLOR }]}
+        overScrollMode="never" showsVerticalScrollIndicator={false}>
+        <Text style={TextStyles.subtitle(darkMode)}>
+          Controls
+        </Text>
+        <Text style={TextStyles.paragraph(darkMode)}>
+          Swipe anywhere on the screen to control the player. Swipe in any direction to move one tile in that
+          direction. You cannot move diagonally. If there is a tile you could navigate to (without pushing
+          any crates) double tap on that tile to save some time and skip to that position.
+        </Text>
 
-      <Text style={styles.text(darkMode)}>
-        The objective of the game is simple: collect all of the coins before making your way to the
-        finish flag.
-      </Text>
-      <View style={styles.row}>
-        <Image style={styles.icon} source={graphics.FLAG} />
-        <Image style={styles.icon} source={graphics.COIN} />
-      </View>
+        <Text style={TextStyles.subtitle(darkMode)}>
+          Objective
+        </Text>
+        <Text style={TextStyles.paragraph(darkMode)}>
+          The goal of the game is to collect all coins before making your way to the finish flag.
+        </Text>
+        <View style={styles.row}>
+          <Image style={styles.icon} source={graphics.FLAG} />
+          <Image style={styles.icon} source={graphics.COIN} />
+        </View>
+        <Text style={TextStyles.paragraph(darkMode)}>
+          This is the ONLY requirement. You do not need to collect all keys, open all doors, or detonate all bombs.
+        </Text>
 
-      <Text style={styles.text(darkMode)}>
-        The first one are doors. Any key can unlock any door, but each key
-        is single use. There are, however, a number of obstacles in your way.
-      </Text>
-      <View style={styles.row}>
-        <Image style={styles.icon} source={graphics.DOOR} />
-        <Image style={styles.icon} source={graphics.KEY} />
-      </View>
+        <Text style={TextStyles.subtitle(darkMode)}>
+          Obstacles
+        </Text>
+        <Text style={TextStyles.paragraph(darkMode)}>
+          The first obstacle are doors. Any key can unlock any door, but each key
+          is single use. 
+        </Text>
+        <View style={styles.row}>
+          <Image style={styles.icon} source={graphics.DOOR} />
+          <Image style={styles.icon} source={graphics.KEY} />
+        </View>
 
-      <Text style={styles.text(darkMode)}>
-        The primary obstacle are crates and craters. You can't walk on either of these
-        tiles. However, if there is either an empty space or a crater behind a crate, you can push
-        it. If you push a crate into a crater, it "fills" the crater, creating a walkable tile.
-      </Text>
-      <View style={styles.row}>
-        <Image style={styles.icon} source={graphics.CRATE} />
-        <Image style={styles.icon} source={graphics.CRATER} />
-      </View>
+        <Text style={TextStyles.paragraph(darkMode)}>
+          The primary obstacle are crates and craters. You can't walk on either of these
+          tiles. However, if there is either an empty space or a crater behind a crate, you can push
+          it. If you push a crate into a crater, it "fills" the crater, creating a walkable tile.
+        </Text>
+        <View style={styles.row}>
+          <Image style={styles.icon} source={graphics.CRATE} />
+          <Image style={styles.icon} source={graphics.CRATER} />
+        </View>
 
-      <Text style={styles.text(darkMode)}>
-        Swipe in any direction to move one tile in that direction. You cannot move diagonally.
-        Double tap on a far away tile you can reach to automatically jump to that position.
-        Good luck out there!
-      </Text>
+        <Text style={TextStyles.paragraph(darkMode)}>
+          The another obstacle are one-way tiles. Only the player can pass through these tiles,
+          pushable tiles cannot. The player can enter them from any side except the side the arrow is 
+          pointing towards. 
+        </Text>
+        <View style={styles.row}>
+          <Image style={styles.icon} source={graphics.ONE_WAY_LEFT} />
+          <Image style={styles.icon} source={graphics.ONE_WAY_UP} />
+          <Image style={styles.icon} source={graphics.ONE_WAY_DOWN} />
+          <Image style={styles.icon} source={graphics.ONE_WAY_RIGHT} />
+        </View>
+
+        <Text style={TextStyles.paragraph(darkMode)}>
+          Lastly, we have bombs. These can be pushed just like crates, but cannot fill in craters. After
+          a set number of turns, the fuse expires and the bomb explodes adjacent crates.
+        </Text>
+        <View style={styles.row}>
+          <Image style={styles.icon} source={graphics.BOMB} />
+          <Image style={styles.icon} source={graphics.EXPLOSION} />
+        </View>
+
+        <View style={{ height: win.height * 0.035 }} />
+      </ScrollView>
 
       <View style={styles.buttonsContainer}>
         <MenuButton onPress={pageCallback} value={false} label="Back to Menu" icon={graphics.DOOR} />
@@ -53,38 +90,29 @@ export default function HowToPlay({ pageCallback }) {
   );
 }
 
-// Returns a list [height, width] of the size for an element based
-// on the image's size and the desired width percent to be occupied.
-const win = Dimensions.get('window');
-function sizeFromWidthPercent(percent, img_height, img_width) {
-  const ratio = win.width * percent / img_width;
-  return [win.width * percent, ratio * img_height];
-}
-
 const styles = StyleSheet.create({
   buttonsContainer: {
     alignItems: 'center',
     justifyContent: 'center',
     width: win.width * 0.55,
   },
-  banner: {
-    width: sizeFromWidthPercent(0.6, 141, 450)[0],
-    height: sizeFromWidthPercent(0.6, 141, 450)[1],
-  },
   row: {
     flexDirection: 'row',
     justifyContent: 'center',
-    marginBottom: 10,
+    marginBottom: normalize(16),
   },
-  text: darkMode => ({
-    width: win.width * 0.8,
-    marginBottom: 10,
-    color: (darkMode) ? colors.MAIN_COLOR : colors.DARK_COLOR,
-    fontFamily: "Montserrat-Regular",
-    fontWeight: "normal",
-  }),
   icon: {
     height: 30,
     width: 30,
+  },
+  scrollContainer: {
+    borderRadius: 5,
+    overflow: "hidden",
+    paddingHorizontal: win.width * 0.05,
+    paddingVertical: win.height * 0.01,
+    maxHeight: win.height * 0.6,
+    width: win.width * 0.8,
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
   }
 });

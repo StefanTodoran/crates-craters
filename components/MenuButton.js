@@ -1,9 +1,9 @@
-import { Pressable, Text, StyleSheet, Image, Dimensions, View } from 'react-native';
-import React, { Component, useContext, useEffect, useState } from 'react';
+import { Pressable, Text, StyleSheet, Image, View } from 'react-native';
+import React, { useContext, useEffect, useState } from 'react';
 import { Audio } from 'expo-av';
 import { colors } from '../Theme';
 import { GlobalContext } from '../GlobalContext';
-const width = Dimensions.get('window').width;
+import { normalize } from '../TextStyles';
 
 /**
  * MenuButton is the basic button type used throughout the project.
@@ -20,7 +20,7 @@ const width = Dimensions.get('window').width;
  * @param {boolean} disabled Whether or not the button can be pressed (changes appearance).
  * @param {boolean} allowOverflow Whether number of lines for the button text should cap at 1.
  * OTHER:
- * @param {React.ReactNode} children 
+ * @param {React.ReactNode} children
  * Optional children to display (in same view as icon), should probably be position absolute.
  * Used exclusively for LevelOption.
  */
@@ -85,7 +85,6 @@ const styles = StyleSheet.create({
   body: {
     borderWidth: 1,
     width: "100%",
-    // borderColor: colors.MAIN_COLOR, won't auto update here, we do it in the render function
     borderRadius: 10,
     paddingLeft: 15,
     paddingRight: 17.5,
@@ -98,16 +97,13 @@ const styles = StyleSheet.create({
   },
   label: {
     textAlign: "center",
-    // fontSize: 16,
-    fontSize: width * 0.04,
+    fontSize: normalize(18),
     marginLeft: 15,
     fontFamily: "Montserrat-Medium",
     fontWeight: "bold",
   },
   icon: {
-    // height: 30,
-    // width: 30,
-    height: width * 0.07,
-    width: width * 0.07,
+    height: normalize(30),
+    width: normalize(30),
   }
 });

@@ -101,22 +101,25 @@ const styles = StyleSheet.create({
       },
     ],
   }),
-  optionTile: (xPos, yPos, size, scaleAnim) => ({
+  optionTile: (xPos, yPos, size, anim) => ({
     position: "absolute",
     left: xPos * size,
     top: yPos * size,
     width: size,
     height: size,
-    opacity: 0.4,
+    opacity: anim.interpolate({ // was originally static 0.4
+      inputRange: [0, 1],
+      outputRange: [0.5, 0.2],
+    }),
 
     borderColor: colors.DARK_COLOR,
     borderStyle: "solid",
     borderWidth: 1,
 
     transform: [{
-      scale: scaleAnim.interpolate({
+      scale: anim.interpolate({
         inputRange: [0, 1],
-        outputRange: [0.85, 0.95],
+        outputRange: [0.8, 0.95],
       })
     }],
   }),

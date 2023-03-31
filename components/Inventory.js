@@ -17,35 +17,30 @@ export default function Inventory({ coins, maxCoins, keys }) {
 
   // =============
   // KEY ANIMATION
-  function usePrevious(value) {
-    const ref = useRef();
-    useEffect(() => {
-      ref.current = value;
-    });
-    return ref.current;
-  }
-  const prevKeys = usePrevious(keys);
-
+  const prevKeys = useRef();
   const keysAnim = useRef(new Animated.Value(0)).current;
   useEffect(() => {
-    const startVal = (prevKeys < keys) ? 0 : 1;
-    const endVal = (prevKeys < keys) ? 1 : 0;
-
+    const startVal = (prevKeys.current < keys) ? 0 : 1;
+    const endVal = (prevKeys.current < keys) ? 1 : 0;
+    
     keysAnim.setValue(startVal);
     Animated.timing(keysAnim, {
       toValue: endVal,
       duration: 500,
       useNativeDriver: true
-    }).start();
+    }).start(() => {
+      prevKeys.current = keys;
+    });
   }, [keys]);
 
   const inventory = [];
-  const displayKeys = (prevKeys > keys) ? prevKeys : keys;
+  const displayKeys = (prevKeys.current > keys) ? prevKeys.current : keys;
   // We don't do Math.max(prevKeys, keys); because there is a possibility of NaN.
+
   for (let i = 0; i < displayKeys; i++) {
     // If it is the last key and # of keys changed, animate it. Otherwise set animated to
     // one meaning not animated, since it is terminal animation value.
-    const animated = (i + 1 === displayKeys && prevKeys !== keys) ? keysAnim : 1;
+    const animated = (i + 1 === displayKeys && prevKeys.current !== keys) ? keysAnim : 1;
     inventory.push(<Animated.Image key={`key<${i}>`} source={graphics.KEY} style={[styles.icon(animated), {marginRight: -5}]} />)
   }
   // END KEY ANIMATION

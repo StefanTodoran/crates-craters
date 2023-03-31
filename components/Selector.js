@@ -3,6 +3,7 @@ import React, { useContext, useEffect, useState } from 'react';
 import { Audio } from 'expo-av';
 import { colors, graphics } from '../Theme';
 import { GlobalContext } from '../GlobalContext';
+import { normalize } from '../TextStyles';
 const win = Dimensions.get('window');
 
 /**
@@ -65,11 +66,10 @@ const styles = StyleSheet.create({
   },
   label: {
     textAlign: "center",
-    // color: colors.MAIN_COLOR, won't auto update here, so we do it in render funciton
-    fontSize: 16,
-    paddingRight: 5,
+    fontSize: normalize(18),
     fontFamily: "Montserrat-Medium",
     fontWeight: "bold",
+    paddingRight: 5,
   },
   icon: (pressed, disabled) => ({
     height: 17.5,

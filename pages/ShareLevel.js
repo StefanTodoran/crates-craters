@@ -9,6 +9,7 @@ import MenuButton from '../components/MenuButton';
 import { GlobalContext } from '../GlobalContext';
 import { getTileEntityData, levels } from '../Game';
 import Selector from '../components/Selector';
+import TextStyles from '../TextStyles';
 
 export default function ShareLevel({ pageCallback }) {
   const { darkMode, _ } = useContext(GlobalContext);
@@ -56,7 +57,7 @@ export default function ShareLevel({ pageCallback }) {
     setScanned(true);
     const levelObj = encodingStringToLevel(data);
     printLevel(levelObj);
-    
+
     if (!levelObj) {
       setInfo("Failed to read level data. Double check the QR code.");
     } else {
@@ -64,7 +65,7 @@ export default function ShareLevel({ pageCallback }) {
 
       if (!existsLevel) {
         const success = await storeData(levelObj, levelObj.name);
-        
+
         if (success) {
           setInfo(`Successfully stored data for level "${levelObj.name}" by "${levelObj.designer}".`);
         } else {
@@ -107,21 +108,23 @@ export default function ShareLevel({ pageCallback }) {
 
   return (
     <>
-      {/* <Image style={styles.banner} source={graphics.SHARE_BANNER} /> */}
-
-      <Text style={{ ...styles.text(darkMode), zIndex: 1 }}>
-        Scan this QR code to download level
-        "<Text style={styles.bold(darkMode)}>{levelObj.name}</Text>"
-        by "<Text style={styles.bold(darkMode)}>{levelObj.designer}</Text>",
-        or click the button below to load a level from a QR code.
-      </Text>
-      <View style={{ height: 15 }} />
+      <View style={{ marginBottom: 15, width: win.width * 0.8 }}>
+        <Text style={TextStyles.subtitle(darkMode)}>
+          SHARE LEVELS
+        </Text>
+        <Text style={{ ...TextStyles.paragraph(darkMode), zIndex: 1 }}>
+          Scan this QR code to download level
+          "<Text style={TextStyles.bold(darkMode)}>{levelObj.name}</Text>"
+          by "<Text style={TextStyles.bold(darkMode)}>{levelObj.designer}</Text>",
+          or click the button below to load a level from a QR code.
+        </Text>
+      </View>
 
       {scanned && <View style={styles.container}>
         <View style={styles.container}>
           <SvgQRCode value={encoding} enableLinearGradient={true} linearGradient={[colors.MAIN_COLOR, colors.DARK_COLOR]} backgroundColor={"transparent"} />
           <Animated.View style={styles.info(darkMode, anim)}>
-            <Text style={styles.bold(darkMode)}>{info}</Text>
+            <Text style={TextStyles.bold(darkMode)}>{info}</Text>
           </Animated.View>
         </View>
 
@@ -148,7 +151,7 @@ function levelToEncodingString(levelObj) {
     }
     encodedStr += ";"
   }
-  
+
   return encodedStr.slice(0, -1);
 }
 
@@ -220,18 +223,6 @@ const styles = StyleSheet.create({
     height: sizeFromWidthPercent(0.8, 146, 600)[1],
     zIndex: 1,
   },
-  text: darkMode => ({
-    width: win.width * 0.8,
-    marginBottom: 10,
-    color: (darkMode) ? colors.MAIN_COLOR : colors.DARK_COLOR,
-    fontFamily: "Montserrat-Regular",
-    fontWeight: "normal",
-  }),
-  bold: darkMode => ({
-    color: (darkMode) ? colors.MAIN_COLOR : colors.DARK_COLOR,
-    fontFamily: "Montserrat-Medium",
-    fontWeight: "bold",
-  }),
   buttonsContainer: {
     alignItems: "center",
     justifyContent: "center",
