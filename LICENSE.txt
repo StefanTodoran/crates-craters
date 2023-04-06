@@ -33,4 +33,21 @@ Redistribution is not permitted under any circumstance. This includes all parts
 of the Source. Use for educational or FOSS purposes may be permitted only via
 explicit written permission.
 
+4. Exclusions.
+
+A small number of assets included in the project are of foreign authorship, 
+such as the sound effects used courtesy of Michael Koenig. These assets are
+used via the Attribution 3.0 license and are property of Michael Koenig.
+
+https://soundbible.com/419-Tiny-Button-Push.html
+https://soundbible.com/761-Switch.html
+
+The coin and key sound effects come from Valuva Pandrom, who asserts the sound
+effect is free with no copyright. 
+
+https://www.youtube.com/watch?v=YA8R8svlhS4
+
+Only that assets explicitly listed under this section are excluded from the 
+license as described in the prior sections.
+
 END OF TERMS AND CONDITIONS

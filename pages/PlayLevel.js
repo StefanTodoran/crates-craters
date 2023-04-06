@@ -13,11 +13,6 @@ const win = Dimensions.get('window');
 
 import { Audio } from 'expo-av';
 import { GlobalContext } from '../GlobalContext';
-function getRandomInt(min, max) {
-  min = Math.ceil(min);
-  max = Math.floor(max);
-  return Math.floor(Math.random() * (max - min + 1)) + min;
-}
 
 /**
  * This component handles a wide variety of tasks related to level playing. It
@@ -88,9 +83,8 @@ export default function PlayLevel({ pageCallback, levelCallback, gameStateCallba
     await sound.playAsync();
   }
   async function playDoorSound() {
-    const doorSources = [require('../assets/audio/door_1.wav'), require('../assets/audio/door_2.wav'), require('../assets/audio/door_3.wav')];
-    const { sound } = await Audio.Sound.createAsync(doorSources[getRandomInt(0, doorSources.length)]);
-    setDoorSound(sound);
+    const { sound } = await Audio.Sound.createAsync(require('../assets/audio/door.wav'));
+    setCoinSound(sound);
     await sound.playAsync();
   }
 
