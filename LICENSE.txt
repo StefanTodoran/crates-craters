@@ -1,0 +1,36 @@
+Copyright (c) 2023 Stefan Todoran
+
+1. Definitions.
+
+"FOSS" shall mean "Free Open Source Software", or programs that have licenses
+which allow users to freely run the program for any purpose, modify the program
+as they please, and also to freely distribute copies of either the original 
+version or their own modified version without restriction.
+
+"License" shall mean the terms and conditions for use, reproduction, and 
+distribution as defined by the following sections of this document.
+
+"Source" shall any result of the work of authorship with respect to the 
+software product, including but not limited to software source code, 
+documentation, assets, level designs, or configuration files.
+
+"Machine Learning" algorithms shall refer to any computer systems that are able
+to use algorithms and statistical models to analyze and/or predict patterns in 
+data. This includes but is not limited to transformer neural networks, 
+convolutional neural networks, or any other form of supervised, unsupervised or 
+reinforced learning methods.
+
+2. Rights Reserved.
+
+The entirety of the Source, that is, all software, assets, and other works 
+included in this repository are completely proprietary. The use of any part
+or parts of the Source for the training of Machine Learning algorithms is 
+expressly prohibited, unless the model is FOSS.
+
+3. Redistribution.
+
+Redistribution is not permitted under any circumstance. This includes all parts
+of the Source. Use for educational or FOSS purposes may be permitted only via
+explicit written permission.
+
+END OF TERMS AND CONDITIONS

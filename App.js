@@ -154,7 +154,7 @@ export default function App() {
 
   useEffect(() => {
     const backAction = () => {
-      return scrollEnabled;
+      return !scrollEnabled;
     }
     BackHandler.addEventListener("hardwareBackPress", backAction);
 

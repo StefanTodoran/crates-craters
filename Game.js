@@ -213,22 +213,22 @@ const level_thirteen = [ // Prison
   [4, 4, 0, 5, 5, 0, 5, 6],
   [0, 4, 0, 0, 4, 0, 11, 0],
 ];
-const level_fourteen = [ // Left or Down?
-  [0, 4, 0, 1, 6, 0, 5, 3],
-  [4, 4, 0, 0, 0, 1, 0, 5],
-  [0, 0, 0, 1, 0, 0, 0, 0],
-  [0, 0, 0, 0, 5, "b:35", 0, 4],
-  [4, 5, 0, 0, 1, 5, 0, 0],
-  [6, 0, 1, 0, 0, 0, 0, 0],
-  [4, 1, 0, 0, 0, 0, 0, 0],
-  [4, 0, 2, 1, 0, 4, 0, 5],
-  [6, 0, 4, 4, 0, 0, 5, 4],
-  [1, 5, 1, 1, 0, 1, 6, 5],
-  [0, 0, 0, 0, 4, 0, 1, 5],
-  [0, 0, 7, 0, 1, 4, 0, 8],
-  [4, 4, 0, 0, 0, 0, 5, 4],
-  [0, 4, 0, 4, 0, 0, 0, 5],
-];
+// const level_fourteen = [ // TODO: REPLACE
+//   [0, 4, 0, 1, 6, 0, 5, 3],
+//   [4, 4, 0, 0, 0, 1, 0, 5],
+//   [0, 0, 0, 1, 0, 0, 0, 0],
+//   [0, 0, 0, 0, 5, "b:35", 0, 4],
+//   [4, 5, 0, 0, 1, 5, 0, 0],
+//   [6, 0, 1, 0, 0, 0, 0, 0],
+//   [4, 1, 0, 0, 0, 0, 0, 0],
+//   [4, 0, 2, 1, 0, 4, 0, 5],
+//   [6, 0, 4, 4, 0, 0, 5, 4],
+//   [1, 5, 1, 1, 0, 1, 6, 5],
+//   [0, 0, 0, 0, 4, 0, 1, 5],
+//   [0, 0, 7, 0, 1, 4, 0, 8],
+//   [4, 4, 0, 0, 0, 0, 5, 4],
+//   [0, 4, 0, 4, 0, 0, 0, 5],
+// ];
 const level_fifteen = [ // Doubling Up
   [8, 0, 2, 5, 0, 1, 0, 5],
   [0, 1, 1, 0, 5, 12, 6, 0],
@@ -291,7 +291,9 @@ const defaults = [
   createLevelObj("Marathon", "default", level_eleven),
   createLevelObj("No Way Home", "default", level_twelve),
   createLevelObj("Prison", "default", level_thirteen),
-  createLevelObj("Left or Down?", "default", level_fourteen),
+
+  // createLevelObj("Left or Down?", "default", level_fourteen),
+  
   createLevelObj("Doubling Up", "default", level_fifteen),
   createLevelObj("Stupid Door", "default", level_sixteen),
   createLevelObj("Pain", "default", level_twenty),
