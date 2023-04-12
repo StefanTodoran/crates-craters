@@ -6,18 +6,17 @@ import { Audio } from 'expo-av';
 import MenuButton from '../components/MenuButton';
 import GameBoard from '../components/GameBoard';
 
-import { cloneBoard, getSpawnPos, createLevelObj, identifier, levels, importStoredLevels, formatTileEntityData } from '../Game';
+import { cloneBoard, getSpawnPos, createLevelObj, identifier, levels, importStoredLevels, formatTileEntityData, storeData, getData, cloneLevelObj } from '../Game';
 import { colors, graphics } from '../Theme';
 import InputLine from '../components/InputLine';
 import { GlobalContext } from '../GlobalContext';
 import SliderBar from '../components/SliderBar';
-import Selector from '../components/Selector';
 import { ScrollView } from 'react-native';
 const win = Dimensions.get('window');
 
 /**
- * @param {Function} pageCallback
- * Takes a string and sets the page state in the parent.
+ * @param {Function} viewCallback
+ * Takes a string and sets the current application view.
  * 
  * @param {Function} levelCallback
  * Takes an integer and sets the level in the parent. Also clears parent's game state.
@@ -28,13 +27,15 @@ const win = Dimensions.get('window');
  *   "name": string,
  *   "designer": string,
  *   "board": number[][],
+ *   "created": string,
+ *   "completed": boolean,
  * }
  * 
  * @param {Function} storeLevelCallback
  * Callback used to update the above level object.
  */
-export default function CreateLevel({ pageCallback, levelCallback, level, storeLevelCallback, playTestCallback }) {
-  const { darkMode, dragSensitivity } = useContext(GlobalContext);
+export default function CreateLevel({ viewCallback, levelCallback, levelIndex, levelObj, storeLevelCallback, playTestCallback }) {
+  const { darkMode } = useContext(GlobalContext);
   const [keyboardShown, setKeyboardShown] = useState(true);
   const [fuseTimer, setFuseTimer] = useState(15);
 
@@ -43,10 +44,10 @@ export default function CreateLevel({ pageCallback, levelCallback, level, storeL
     // this in a useEffect so we don't update the parent state in the middle of a render.
     // We don't just have parent create the blank level since we want to abstract that away from App.js
 
-    if (!level) {
-      storeLevelCallback(createLevelObj("", "", null));
+    if (!levelObj) {
+      storeLevelCallback(cloneLevelObj(levelIndex));
     }
-  }, [level]);
+  }, [levelIndex, levelObj]);
 
   // ===================
   // SOUND RELATED SETUP
@@ -99,12 +100,12 @@ export default function CreateLevel({ pageCallback, levelCallback, level, storeL
   }
 
   function changeTile(y, x, type) {
-    const newBoard = cloneBoard(level.board);
+    const newBoard = cloneBoard(levelObj.board);
 
     // Clear current spawn position, if it exists. We
     // cannot allow multiple spawn locations!
     if (currentTool === "spawn") {
-      const spawnPos = getSpawnPos(level.board);
+      const spawnPos = getSpawnPos(levelObj.board);
       if (!(isNaN(spawnPos.y) || isNaN(spawnPos.x))) {
         newBoard[spawnPos.y][spawnPos.x] = 0;
       }
@@ -128,9 +129,9 @@ export default function CreateLevel({ pageCallback, levelCallback, level, storeL
     }
 
     storeLevelCallback({
-      name: level.name,
-      designer: level.designer,
-      created: level.created,
+      name: levelObj.name,
+      designer: levelObj.designer,
+      created: levelObj.created,
       board: newBoard,
     });
   }
@@ -144,27 +145,27 @@ export default function CreateLevel({ pageCallback, levelCallback, level, storeL
   function changeName(value) {
     storeLevelCallback({
       name: value,
-      designer: level.designer,
-      created: level.created,
-      board: level.board,
+      designer: levelObj.designer,
+      created: levelObj.created,
+      board: levelObj.board,
     });
   }
 
   function changeDesigner(value) {
     storeLevelCallback({
-      name: level.name,
+      name: levelObj.name,
       designer: value,
-      created: level.created,
-      board: level.board,
+      created: levelObj.created,
+      board: levelObj.board,
     });
   }
 
   const [index, setIndex] = useState(-1);
   function updateIndex() {
-    const updated = (level) ? levels.findIndex(element => element.name === level.name) : -1;
+    const updated = (levelObj) ? levels.findIndex(element => element.name === levelObj.name) : -1;
     setIndex(updated);
   }
-  useEffect(updateIndex, [level]);
+  useEffect(updateIndex, [levelObj]);
 
   function testLevel() {
     levelCallback(index);
@@ -174,37 +175,16 @@ export default function CreateLevel({ pageCallback, levelCallback, level, storeL
   // ==================
   // LOCAL DATA STORAGE
   // ==================
-  async function storeData(value, storage_key) {
-    try {
-      const jsonValue = JSON.stringify(value);
-      await AsyncStorage.setItem(storage_key, jsonValue);
-      return true;
-    } catch (err) {
-      console.log("\n\n(ERROR) >>> SAVING ERROR:\n", err);
-      return false;
-    }
-  }
-
-  // Local Data Reading
-  async function getData(storage_key) {
-    try {
-      const jsonValue = await AsyncStorage.getItem(storage_key);
-      return jsonValue != null ? JSON.parse(jsonValue) : null;
-    } catch (err) {
-      console.log("\n\n(ERROR) >>> READING ERROR:\n", err);
-      return false;
-    }
-  }
 
   const saveLevelToStorage = async () => {
-    if (level.name === "") {
+    if (levelObj.name === "") {
       return;
     }
-    await storeData(level, level.name);
+    await storeData(levelObj, levelObj.name);
     await importStoredLevels(); // Causes Game.js module to register the change
     updateIndex();
 
-    const board = level.board;
+    const board = levelObj.board;
     console.log("const level = [");
     for (let i = 0; i < board.length; i++) {
       let line = "  ["
@@ -218,17 +198,17 @@ export default function CreateLevel({ pageCallback, levelCallback, level, storeL
   }
 
   const loadLevelFromStorage = async () => {
-    const data = await getData(level.name);
+    const data = await getData(levelObj.name);
     if (data) {
       storeLevelCallback(data);
     }
   }
 
   const deleteLevelFromStorage = async () => {
-    if (level.name === "" || index === -1) {
+    if (levelObj.name === "" || index === -1) {
       return false; // Fail, level isn't saved
     }
-    await AsyncStorage.removeItem(level.name);
+    await AsyncStorage.removeItem(levelObj.name);
     levels.splice(index, 1);
     levelCallback(-1); // A bit of a hack, this clears the parent's game state, so if there
     // was a game in progress on the level being deleted, it gets cleared.
@@ -255,7 +235,7 @@ export default function CreateLevel({ pageCallback, levelCallback, level, storeL
 
   return (
     <SafeAreaView style={styles.container}>
-      {level && <GameBoard board={level.board} tileCallback={changeTile}></GameBoard>}
+      {levelObj && <GameBoard board={levelObj.board} tileCallback={changeTile}></GameBoard>}
 
       {/* START MODAL */}
       {toolsModalOpen && <Animated.View style={{
@@ -312,14 +292,14 @@ export default function CreateLevel({ pageCallback, levelCallback, level, storeL
           <View style={styles.page}>
             <Image style={styles.optionsBanner} source={graphics.OPTIONS_BANNER} />
             <View style={styles.inputContainer()}>
-              <InputLine label={"Level Name"} value={level.name} changeCallback={changeName} darkMode={darkMode} />
-              <InputLine label={"Designer"} value={level.designer} changeCallback={changeDesigner} darkMode={darkMode} />
+              <InputLine label={"Level Name"} value={levelObj.name} changeCallback={changeName} darkMode={darkMode} />
+              <InputLine label={"Designer"} value={levelObj.designer} changeCallback={changeDesigner} darkMode={darkMode} />
               <Text style={styles.text()}>
-                Created {level.created}
+                Created {levelObj.created}
               </Text>
             </View>
-            <View style={styles.row}>
-              <MenuButton onPress={saveLevelToStorage} label="Save Level" icon={graphics.SAVE_ICON} disabled={level.name === ""} />
+            {/* <View style={styles.row}>
+              <MenuButton onPress={saveLevelToStorage} label="Save Level" icon={graphics.SAVE_ICON} disabled={levelObj.name === ""} />
               <MenuButton onPress={loadLevelFromStorage} label="Load Level" icon={graphics.LOAD_ICON} disabled={index === -1} />
             </View>
             <View style={styles.row}>
@@ -328,7 +308,19 @@ export default function CreateLevel({ pageCallback, levelCallback, level, storeL
             </View>
             <View style={styles.row}>
               <MenuButton onPress={testLevel} label="Playtest" icon={graphics.PLAYER} disabled={index === -1} />
-              <MenuButton onPress={pageCallback} value="share" label="Share" icon={graphics.SHARE_ICON} disabled={index === -1} />
+              <MenuButton onPress={viewCallback} value="share" label="Share" icon={graphics.SHARE_ICON} disabled={index === -1} />
+            </View> */}
+            <View style={styles.row}>
+              <MenuButton onPress={saveLevelToStorage} label="Save Level" icon={graphics.SAVE_ICON} disabled={true} />
+              <MenuButton onPress={loadLevelFromStorage} label="Load Level" icon={graphics.LOAD_ICON} disabled={true} />
+            </View>
+            <View style={styles.row}>
+              <MenuButton onLongPress={deleteLevelFromStorage} label="Delete Level     (Long Press)" icon={graphics.DELETE_ICON} allowOverflow disabled={true} />
+              <MenuButton onLongPress={() => { storeLevelCallback(createLevelObj("", "", null)); }} label="Clear Level      (Long Press)" icon={graphics.HAMMER_ICON} allowOverflow />
+            </View>
+            <View style={styles.row}>
+              <MenuButton onPress={testLevel} label="Playtest" icon={graphics.PLAYER} disabled={true} />
+              <MenuButton onPress={viewCallback} value="share" label="Share" icon={graphics.SHARE_ICON} disabled={true} />
             </View>
           </View>
 
@@ -339,7 +331,7 @@ export default function CreateLevel({ pageCallback, levelCallback, level, storeL
       {(keyboardShown || Platform.OS === "ios") && /* on ios they aren't pushed up by the keyboard, no need to hide */
         <View style={styles.buttonsRow(darkMode)}>
           <MenuButton onPress={toggleToolsModal} label="Tools & Options" icon={graphics.HAMMER_ICON} />
-          <MenuButton onPress={pageCallback} value={false} label="Go Back" icon={graphics.DOOR} />
+          <MenuButton onPress={viewCallback} value="home" label="Go Back" icon={graphics.DOOR} />
         </View>}
     </SafeAreaView>
   );

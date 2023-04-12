@@ -11,6 +11,8 @@ import HomePage from './pages/HomePage';
 import IconButton from './components/IconButton';
 import LevelSelect from './pages/LevelSelect';
 import PlayLevel from './pages/PlayLevel';
+import CreateLevel from './pages/CreateLevel';
+import { storeData } from './Game';
 
 const win = Dimensions.get('window');
 
@@ -24,7 +26,6 @@ export default function App() {
   // the horizontal scrollview position, and for jumping to page.
   const [page, setPageState] = useState(0);
   const scrollRef = useRef();
-  const [scrollEnabled, setScrollEnabled] = useState(true);
 
   const anim = useRef(new Animated.Value(0)).current;
   const setAnimTo = (animState, callback) => {
@@ -41,36 +42,14 @@ export default function App() {
     if (newView === "home") {
       setAnimTo(0, () => {
         setView(newView);
-        setScrollEnabled(true);
       });
     } else {
       setView(newView);
-      setScrollEnabled(false);
       setAnimTo(1);
     }
   }
 
-  // Pages without scroll enabled (playing or editing) should be fullscreen.
-  // useEffect(() => {
-  //   setAnimTo(scrollEnabled ? 1 : 0);
-  // }, [scrollEnabled]);
-
-  async function storeData(value, storageKey) {
-    try {
-      const jsonValue = JSON.stringify(value);
-      await AsyncStorage.setItem(storageKey, jsonValue);
-
-      // let checkValue = await AsyncStorage.getItem(storageKey);
-      // checkValue = checkValue != null ? JSON.parse(checkValue) : null;
-      // return value == checkValue;
-
-      return true;
-    } catch (err) {
-      console.log("\n\n(ERROR) >>> SAVING ERROR:\n", err);
-      return false;
-    }
-  }
-
+  // Like the getData function in Game.js but with a fallback value.
   async function getData(storageKey, expectedType, defaultValue) {
     try {
       const jsonValue = await AsyncStorage.getItem(storageKey);
@@ -151,23 +130,30 @@ export default function App() {
     readSettingsFromStorage();
   }, []);
 
-  const [level, setLevelState] = useState(1); // the parent needs to know the level from LevelSelect to share with PlayLevel
-  const [game, setGameState] = useState(null); // stores the game state so levels can be resumed
-  const [editorLevel, setEditorLevel] = useState(null); // stores the level being created so it can be recovered
-  const changeLevel = (lvl) => {
-    setLevelState(lvl);
+  const [playLevel, setPlayLevel] = useState(1); // Stores the level number to be played / being played.
+  const [game, setGameState] = useState(null); // Stores the game state of the level being played.
+  const [editorLevel, setEditorLevel] = useState(null); // Stores the level number to be edited / being edited.
+  const [editorLevelObj, setEditorLevelObj] = useState(null); // Stores the level object being edited.
+  
+  const changePlayLevel = (lvl) => {
+    setPlayLevel(lvl);
     setGameState(null);
+  }
+  const changeEditorLevel = (lvl) => {
+    setEditorLevel(lvl);
+    // TODO: maybe save the editorLevelObj here?
+    setEditorLevelObj(null);
   }
 
   useEffect(() => { // TODO: update this method?
     const backAction = () => {
-      return !scrollEnabled;
+      return view !== "home";
     }
     BackHandler.addEventListener("hardwareBackPress", backAction);
 
     return () =>
       BackHandler.removeEventListener("hardwareBackPress", backAction);
-  }, [scrollEnabled]);
+  }, [view]);
 
   if (!fontsLoaded) {
     return null;
@@ -184,11 +170,11 @@ export default function App() {
         {/* HOME VIEW */}
         {view === "home" && <ScrollView horizontal pagingEnabled showsHorizontalScrollIndicator={false} onScroll={(evt) => {
           setPageState(Math.round(evt.nativeEvent.contentOffset.x / win.width));
-        }} scrollEnabled={scrollEnabled} ref={scrollRef} overScrollMode="never">
+        }} ref={scrollRef} overScrollMode="never">
 
           {/* LEVEL SELECT */}
           <View style={styles.page}>
-            <LevelSelect viewCallback={switchView} levelCallback={changeLevel} level={level} game={game} />
+            <LevelSelect viewCallback={switchView} playLevelCallback={changePlayLevel} editorLevelCallback={changeEditorLevel} level={playLevel} game={game} />
           </View>
 
           {/* MENU */}
@@ -200,15 +186,19 @@ export default function App() {
         </ScrollView>}
 
         {/* To keep footer position normal */}
-        {view !== "home" && <View style={styles.page}/>}
+        {view !== "home" && <View style={styles.page} />}
 
         {/* GAMEPLAY VIEW */}
         {view === "play" && <Animated.View style={styles.modal(anim, darkMode)}>
-          <PlayLevel viewCallback={switchView} levelCallback={changeLevel}
-            gameStateCallback={setGameState} level={level} game={game} />
+          <PlayLevel viewCallback={switchView} levelCallback={changePlayLevel}
+            gameStateCallback={setGameState} level={playLevel} game={game} />
         </Animated.View>}
 
         {/* EDIT VIEW */}
+        {view === "edit" && <Animated.View style={styles.modal(anim, darkMode)}>
+          <CreateLevel viewCallback={switchView} levelCallback={changePlayLevel} storeLevelCallback={setEditorLevelObj}
+            levelIndex={editorLevel} levelObj={editorLevelObj} playTestCallback={() => { }} />
+        </Animated.View>}
 
         {/* BOTTOM NAVIGATION */}
         <Animated.View style={styles.navbar(anim)}>

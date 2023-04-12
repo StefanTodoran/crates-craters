@@ -5,6 +5,22 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { graphics } from './Theme';
 import Queue from './components/Queue';
 
+const blank_level = [
+  [0, 0, 0, 0, 0, 0, 0, 0],
+  [0, 7, 0, 0, 0, 0, 0, 0],
+  [0, 0, 0, 0, 0, 0, 0, 0],
+  [0, 0, 0, 0, 0, 0, 0, 0],
+  [0, 0, 0, 0, 0, 0, 0, 0],
+  [0, 0, 0, 0, 0, 0, 0, 0],
+  [0, 0, 0, 0, 0, 0, 0, 0],
+  [0, 0, 0, 0, 0, 0, 0, 0],
+  [0, 0, 0, 0, 0, 0, 0, 0],
+  [0, 0, 0, 0, 0, 0, 0, 0],
+  [0, 0, 0, 0, 0, 0, 0, 0],
+  [0, 0, 0, 0, 0, 0, 0, 0],
+  [0, 0, 0, 0, 0, 0, 0, 0],
+  [0, 0, 0, 0, 0, 0, 0, 0],
+];
 const level_tutorial = [
   [1, 1, 1, 1, 1, 1, 1, 1],
   [1, 0, 0, 0, 1, 4, 0, 1],
@@ -306,17 +322,30 @@ export let levels = [...defaults];
  * @param {number[][]} board The board to be used, or null for a blank board.
  * @returns 
  */
-export function createLevelObj(name, designer, board, completed) {
+export function createLevelObj(name, designer, board) {
   if (board === null) {
     board = createBlankBoard(8, 14);
     // board = createBlankBoard(12, 21);
   }
+
   return {
     name: name,
     designer: designer,
     created: getFormatedDate(),
     board: board,
-    completed: !!completed,
+    completed: false,
+  };
+}
+
+export function cloneLevelObj(index) {
+  const target = levels[index];
+
+  return {
+    name: target.name,
+    designer: target.designer,
+    created: getFormatedDate(),
+    board: cloneBoard(target.board),
+    completed: false,
   };
 }
 
@@ -344,7 +373,8 @@ export async function importStoredLevels() {
   try {
     const keys = await AsyncStorage.getAllKeys();
     levels = [...defaults];
-
+    
+    const completedLevels = [];
     const settings = [
       "isAppDarkMode",
       "appDragSensitivity",
@@ -355,24 +385,52 @@ export async function importStoredLevels() {
 
     for (let i = 0; i < keys.length; i++) {
       if (settings.includes(keys[i])) {
-        continue;
+        // Ignore settings.
+        continue; 
+      } else if (keys[i].substring(0, 12) === "hasCompleted") {
+        // We can't mark the level completed now since we might
+        // not have loaded it, record for later.
+        completedLevels.push(parseInt(keys[i].substring(12)));
       } else {
+        // If it isn't a setting or completion marker, it is a level.
         const level = await getData(keys[i]);
         levels.push(level);
       }
     }
+
+    for (let i = 0; i < completedLevels.length; i++) {
+      levels[completedLevels[i]].completed = true;
+    }
+
+    levels.push(createLevelObj("Blank Level", "special", blank_level));
   } catch (err) {
     console.log("\n\n(ERROR) >>> IMPORTING ERROR:\n", err);
   }
 }
 
-async function getData(storage_key) {
+export async function storeData(value, storage_key) {
+  try {
+    const jsonValue = JSON.stringify(value);
+    await AsyncStorage.setItem(storage_key, jsonValue);
+    return true;
+  } catch (err) {
+    console.log("\n\n(ERROR) >>> SAVING ERROR:\n", err);
+    return false;
+  }
+}
+
+export async function getData(storage_key) {
   try {
     const jsonValue = await AsyncStorage.getItem(storage_key);
     return jsonValue != null ? JSON.parse(jsonValue) : null;
   } catch (err) {
     console.log("\n\n(ERROR) >>> READING ERROR:\n", err);
   }
+}
+
+export async function setCompleted(levelIndex) {
+  storeData(true, `hasCompleted${levelIndex}`);
+  levels[levelIndex].completed = true;
 }
 
 importStoredLevels();

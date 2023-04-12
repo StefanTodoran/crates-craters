@@ -8,13 +8,15 @@ import GameBoard from './GameBoard';
 import SimpleButton from './SimpleButton';
 const win = Dimensions.get('window');
 
-export default function LevelCard({ onPress, onPressValue, levelIndex, inProgress }) {
+export default function LevelCard({ viewCallback, playCallback, editCallback, levelIndex }) {
   const { darkMode } = useContext(GlobalContext);
   const level = levels[levelIndex];
 
   if (!level) return;
 
   const defaultLevel = level.designer === "default";
+  const specialLevel = level.designer === "special";
+
   const tileSize = calcTileSize(level.board[0].length, win);
   const playerPos = getSpawnPos(level.board);
 
@@ -41,11 +43,13 @@ export default function LevelCard({ onPress, onPressValue, levelIndex, inProgres
   }
 
   useEffect(() => {
-    setAnimTo(1);
+    // setTimeout(() => {
+      setAnimTo(1);
+    // }, levelIndex * 100);
   }, []);
 
   return (
-    <Animated.View style={[styles.container, { borderColor: colors.DARK_COLOR, opacity: anim }]}>
+    <Animated.View style={styles.container(anim)}>
 
       <View style={styles.row}>
         <View style={{ flexDirection: "row", justifyContent: "center" }}>
@@ -58,8 +62,9 @@ export default function LevelCard({ onPress, onPressValue, levelIndex, inProgres
           {/* Name & Designer */}
           <View style={{ flexDirection: "column", justifyContent: "center", marginLeft: normalize(10) }}>
             <Text style={styles.levelName(darkMode)}>{level.name}</Text>
-            {!defaultLevel && <Text style={styles.designerName(darkMode)}>Designed by "{level.designer}"</Text>}
+            {!(defaultLevel || specialLevel) && <Text style={styles.designerName(darkMode)}>Designed by "{level.designer}"</Text>}
             {defaultLevel && <Text style={styles.designerName(darkMode)}>Standard Level</Text>}
+            {specialLevel && <Text style={styles.designerName(darkMode)}>Empty Canvas</Text>}
           </View>
         </View>
 
@@ -70,9 +75,12 @@ export default function LevelCard({ onPress, onPressValue, levelIndex, inProgres
         <GameBoard board={level.board.slice(previewTop, previewBottom)} overrideTileSize={tileSize} rowCorrect={-0.1} />
 
         <View style={{ flexDirection: "column", flex: 0.9 }}>
-          {!inProgress && <SimpleButton onPress={() => { onPress(onPressValue) }} text={"Play"} icon={graphics.PLAY_ICON} />}
-          {inProgress && <SimpleButton onPress={() => { onPress(onPressValue) }} text={"Resume"} icon={graphics.KEY} />}
-          <SimpleButton onPress={() => { }} text={"Edit"} icon={graphics.HAMMER_ICON} disabled={defaultLevel} />
+          {playCallback && <SimpleButton onPress={() => { playCallback(levelIndex) }} text={"Play"} icon={graphics.PLAY_ICON} />}
+          {!playCallback && <SimpleButton onPress={() => { viewCallback("play") }} text={"Resume"} icon={graphics.KEY} />}
+          <SimpleButton text={"Edit"} icon={graphics.HAMMER_ICON} onPress={() => {
+            editCallback(levelIndex);
+            viewCallback("edit");
+          }} disabled={defaultLevel} />
         </View>
       </View>
 
@@ -86,7 +94,7 @@ export function calcTileSize(boardWidth, window) {
 }
 
 const styles = StyleSheet.create({
-  container: {
+  container: (anim) => ({
     flexDirection: "column",
     justifyContent: "center",
     alignItems: "center",
@@ -94,7 +102,15 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: normalize(10),
     marginVertical: normalize(10),
-  },
+    borderColor: colors.DARK_COLOR,
+    opacity: anim,
+    transform: [{
+      scale: anim.interpolate({
+        inputRange: [0, 1],
+        outputRange: [0.5, 1],
+      }),
+    }],
+  }),
   row: {
     flexDirection: "row",
     justifyContent: "space-between",

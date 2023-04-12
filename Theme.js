@@ -63,6 +63,7 @@ const blue_colors = {
   NEAR_BLACK: "#101219",
 
   MAIN_COLOR_TRANSPARENT(opacity) { return `rgba(129, 181, 254, ${opacity})`; },
+  NEAR_BLACK_TRANSPARENT(opacity) { return `rgba(16, 18, 25, ${opacity})`; },
 };
 
 // ORANGE THEME 🟠
@@ -129,6 +130,7 @@ const orange_colors = {
   NEAR_BLACK: "#170F0D", //"#0E0A09",
 
   MAIN_COLOR_TRANSPARENT(opacity) { return `rgba(247, 182, 155, ${opacity})`; },
+  NEAR_BLACK_TRANSPARENT(opacity) { return `rgba(14, 10, 9, ${opacity})`; },
 };
 
 // PURPLE THEME 🟣
@@ -196,6 +198,7 @@ const purple_colors = {
   NEAR_BLACK: "#15101A",
 
   MAIN_COLOR_TRANSPARENT(opacity) { return `rgba(204, 183, 229, ${opacity})`; },
+  NEAR_BLACK_TRANSPARENT(opacity) { return `rgba(21, 16, 26, ${opacity})`; },
 };
 
 // GREEN THEME 🟢
@@ -263,6 +266,7 @@ const green_colors = {
   NEAR_BLACK: "#0E160E",
 
   MAIN_COLOR_TRANSPARENT(opacity) { return `rgba(169, 223, 171, ${opacity})`; },
+  NEAR_BLACK_TRANSPARENT(opacity) { return `rgba(14, 22, 14, ${opacity})`; },
 };
 
 // EXPORTING

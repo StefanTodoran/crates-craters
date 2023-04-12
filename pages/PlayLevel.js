@@ -6,7 +6,7 @@ import GameBoard from '../components/GameBoard';
 import Inventory from '../components/Inventory';
 import Player from '../components/Player';
 
-import { doGameMove, initializeGameObj, calcTileSize, canMoveTo, levels } from '../Game';
+import { doGameMove, initializeGameObj, calcTileSize, canMoveTo, levels, setCompleted } from '../Game';
 import { colors, graphics } from '../Theme';
 import WinScreen from './WinScreen';
 const win = Dimensions.get('window');
@@ -33,7 +33,7 @@ import TextStyles, { normalize } from '../TextStyles';
  * Takes a string and sets the view state in the parent.
  * 
  * @param {Function} levelCallback
- * Takes an integer and updates the parent's level state as well as clearing current game state.
+ * Takes an integer and updates the parent's play level state as well as clearing current game state.
  * 
  * @param {Function} gameStateCallback
  * Takes a game object, stores it in the parent for resumeability. Should have this format:
@@ -85,7 +85,7 @@ export default function PlayLevel({ viewCallback, levelCallback, gameStateCallba
   }
   async function playDoorSound() {
     const { sound } = await Audio.Sound.createAsync(require('../assets/audio/door.wav'));
-    setCoinSound(sound);
+    setDoorSound(sound);
     await sound.playAsync();
   }
 
@@ -119,7 +119,7 @@ export default function PlayLevel({ viewCallback, levelCallback, gameStateCallba
       handleGesture();
       panResponderEnabled.current = !game.won;
       if (game.won) {
-        levels[level].completed = true;
+        setCompleted(level);
       }
     }
   }, [gesture, game]);
@@ -289,13 +289,12 @@ export default function PlayLevel({ viewCallback, levelCallback, gameStateCallba
     // MAKE SURE 0 <= animState <= 1
     Animated.timing(anim, {
       toValue: animState,
-      duration: 300,
+      duration: 350,
       useNativeDriver: true
     }).start(callback);
   }
 
   function toggleModal() {
-    console.log(modalOpen);
     if (modalOpen) {
       setAnimTo(0, () => { setModalOpen(false) });
     } else {
@@ -318,14 +317,16 @@ export default function PlayLevel({ viewCallback, levelCallback, gameStateCallba
         </View>
 
         {/* PAUSE MENU COMPONENTS */}
-        {modalOpen && <Animated.View style={styles.modal(anim)}>
-          <MenuButton onPress={viewCallback} value={"edit"} label="To Editor" icon={graphics.HAMMER_ICON} disabled={!test}/>
-          <MenuButton onPress={gameStateCallback} value={initializeGameObj(level)} label="Restart Level" icon={graphics.HELP_ICON}/>
-          <MenuButton onPress={viewCallback} value={"home"} label="To Level Select" icon={graphics.DOOR} disabled={test}/>
+        {modalOpen && <Animated.View style={styles.modal(anim, darkMode)}>
+          <MenuButton onPress={viewCallback} value={"edit"} label="To Editor" icon={graphics.HAMMER_ICON} disabled={!test} />
+          <MenuButton onPress={gameStateCallback} value={initializeGameObj(level)} label="Restart Level" icon={graphics.HELP_ICON} />
+          <MenuButton onPress={viewCallback} value={"home"} label="To Level Select" icon={graphics.DOOR} disabled={test} />
         </Animated.View>}
-        <View style={{ flexDirection: "row", justifyContent: "flex-end", height: normalize(50) }}>
+        <View style={{ flexDirection: "row", height: normalize(50) }}>
           {!game.won && <SimpleButton onPress={toggleModal} text="Pause Menu" />}
           {game.won && !test && <SimpleButton onPress={() => { levelCallback(level + 1) }} text="Next Level" />}
+          {game.won && <View style={{width: normalize(15)}}/>}
+          {game.won && <SimpleButton onPress={() => { viewCallback("home"); }} text="Go Back" />}
         </View>
       </SafeAreaView>}
     </>
@@ -349,7 +350,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-evenly",
   },
-  modal: (anim) => ({
+  modal: (anim, darkMode) => ({
     position: "absolute",
     top: 0,
     left: 0,
@@ -358,7 +359,7 @@ const styles = StyleSheet.create({
     flexDirection: "column",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(255, 255, 255, 0.85)",
+    backgroundColor: darkMode ? colors.NEAR_BLACK_TRANSPARENT(0.85) : "rgba(255, 255, 255, 0.85)",
     paddingHorizontal: win.width * 0.225,
     opacity: anim,
   }),
