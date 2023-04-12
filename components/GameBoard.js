@@ -5,10 +5,10 @@ import { tiles, getTileType, icon_src, calcTileSize, getTileEntityData } from '.
 import { colors } from '../Theme';
 const win = Dimensions.get('window');
 
-export default function GameBoard({ children, board, tileCallback }) {
+export default function GameBoard({ children, board, tileCallback, overrideTileSize, rowCorrect }) {
   const tilesBoard = [];
   const boardHeight = board.length; const boardWidth = board[0].length;
-  const tileSize = calcTileSize(boardWidth, boardHeight, win);
+  const tileSize = overrideTileSize ? overrideTileSize : calcTileSize(boardWidth, boardHeight, win);
 
   for (let i = 0; i < boardHeight; i++) {
     const row = [];
@@ -22,8 +22,8 @@ export default function GameBoard({ children, board, tileCallback }) {
       if (tileType === "wall") {
         // Wall tiles are just Views with border and background. We apply
         // the border based on adjacent walls.
-        const borderColor = oddTile ? colors.MEDIUM_WALL : colors.DARK_WALL;
-        const fillColor = oddTile ? colors.LIGHT_WALL : colors.MEDIUM_WALL;
+        const borderColor = oddTile ? colors.MAIN_COLOR_TRANSPARENT(0.65) : colors.MAIN_COLOR_TRANSPARENT(0.8);
+        const fillColor = oddTile ? colors.MAIN_COLOR_TRANSPARENT(0.5) : colors.MAIN_COLOR_TRANSPARENT(0.65);
 
         const borders = {
           borderTopWidth: i > 0 && tiles[board[i - 1][j]] === "wall" ? 0 : 5,
@@ -46,7 +46,7 @@ export default function GameBoard({ children, board, tileCallback }) {
 
         // Mostly this code follows from the regular tile code though.
         const icon = icon_src(tileType);
-        const bgColor = oddTile ? colors.LIGHT_TILE : colors.DARK_TILE;
+        const bgColor = oddTile ? colors.MAIN_COLOR_TRANSPARENT(0.03) : colors.MAIN_COLOR_TRANSPARENT(0.14);
 
         if (!tileCallback) {
           row.push(<View key={`tile<${i},${j}>`} style={{ position: "relative" }}>
@@ -67,7 +67,7 @@ export default function GameBoard({ children, board, tileCallback }) {
         // Regular tiles are sized like wall tiles but are Image elements. All
         // tiles have png sources so the checkered background colors can show through.
         const icon = icon_src(tileType);
-        const bgColor = oddTile ? colors.LIGHT_TILE : colors.DARK_TILE;
+        const bgColor = oddTile ? colors.MAIN_COLOR_TRANSPARENT(0.03) : colors.MAIN_COLOR_TRANSPARENT(0.14);
 
         if (!tileCallback) {
           row.push(<Image key={`tile<${i},${j}>`} style={styles.tile(bgColor, tileSize)} source={icon} />);
@@ -81,7 +81,11 @@ export default function GameBoard({ children, board, tileCallback }) {
 
     // Not even the slightest clue why but every other row has a tiny 1px gap vertically if we don't
     // add this scuffed litte negative marginTop... React Native boggles the mind sometimes ¯\_(ツ)_/¯
-    tilesBoard.push(<View key={`row<${i}>`} style={{ flexDirection: 'row', margin: 0, marginTop: -0.001 }}>{row}</View>);
+    tilesBoard.push(<View key={`row<${i}>`} style={{ 
+      flexDirection: 'row', 
+      margin: 0, 
+      marginTop: rowCorrect ? rowCorrect : 0, 
+    }}>{row}</View>);
   }
 
   return (

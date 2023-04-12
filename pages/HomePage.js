@@ -1,5 +1,5 @@
-import { StyleSheet, Image, Dimensions, View, Animated } from 'react-native';
-import React, { useContext, useEffect, useRef, useState } from "react";
+import { StyleSheet, Animated } from 'react-native';
+import React, { useContext, useRef, useState } from "react";
 
 import { colors, graphics } from '../Theme';
 import { GlobalContext } from '../GlobalContext';
@@ -7,7 +7,6 @@ import About from '../pages/About';
 import Settings from '../pages/Settings';
 import HowToPlay from '../pages/HowToPlay';
 import MenuButton from '../components/MenuButton';
-const win = Dimensions.get('window');
 
 export default function HomePage({ darkModeCallback, setThemeCallback, audioModeCallback, setSensitivityCallback, setTapDelayCallback }) {
   const { darkMode } = useContext(GlobalContext);
@@ -67,9 +66,8 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: win.width * 0.225,
+    alignItems: "center",
+    justifyContent: "center",
 
     backgroundColor: (dark) ? colors.NEAR_BLACK : "white",
     opacity: anim,

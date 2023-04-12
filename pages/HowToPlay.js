@@ -12,7 +12,10 @@ export default function HowToPlay({ pageCallback }) {
 
   return (
     <>
-      <ScrollView style={[styles.scrollContainer, { borderColor: colors.MAIN_COLOR }]}
+      <ScrollView style={styles.scrollContainer} contentContainerStyle={{
+        paddingHorizontal: win.width * 0.05,
+        paddingVertical: win.height * 0.01,
+      }}
         overScrollMode="never" showsVerticalScrollIndicator={false}>
         <Text style={TextStyles.subtitle(darkMode)}>
           Controls
@@ -42,7 +45,7 @@ export default function HowToPlay({ pageCallback }) {
         </Text>
         <Text style={TextStyles.paragraph(darkMode)}>
           The first obstacle are doors. Any key can unlock any door, but each key
-          is single use. 
+          is single use.
         </Text>
         <View style={styles.row}>
           <Image style={styles.icon} source={graphics.DOOR} />
@@ -61,8 +64,8 @@ export default function HowToPlay({ pageCallback }) {
 
         <Text style={TextStyles.paragraph(darkMode)}>
           The another obstacle are one-way tiles. Only the player can pass through these tiles,
-          pushable tiles cannot. The player can enter them from any side except the side the arrow is 
-          pointing towards. 
+          pushable tiles cannot. The player can enter them from any side except the side the arrow is
+          pointing towards.
         </Text>
         <View style={styles.row}>
           <Image style={styles.icon} source={graphics.ONE_WAY_LEFT} />
@@ -80,21 +83,20 @@ export default function HowToPlay({ pageCallback }) {
           <Image style={styles.icon} source={graphics.EXPLOSION} />
         </View>
 
-        <View style={{ height: win.height * 0.035 }} />
+        <View style={styles.buttonContainer}>
+          <MenuButton onPress={pageCallback} value={false} label="Back to Menu" icon={graphics.DOOR} />
+        </View>
       </ScrollView>
-
-      <View style={styles.buttonsContainer}>
-        <MenuButton onPress={pageCallback} value={false} label="Back to Menu" icon={graphics.DOOR} />
-      </View>
     </>
   );
 }
 
 const styles = StyleSheet.create({
-  buttonsContainer: {
+  buttonContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    width: win.width * 0.55,
+    paddingHorizontal: win.width * 0.225,
+    marginBottom: normalize(32),
   },
   row: {
     flexDirection: 'row',
@@ -106,13 +108,12 @@ const styles = StyleSheet.create({
     width: 30,
   },
   scrollContainer: {
-    borderRadius: 5,
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    flex: 1,
     overflow: "hidden",
-    paddingHorizontal: win.width * 0.05,
-    paddingVertical: win.height * 0.01,
-    maxHeight: win.height * 0.6,
-    width: win.width * 0.8,
-    borderTopWidth: 1,
-    borderBottomWidth: 1,
   }
 });

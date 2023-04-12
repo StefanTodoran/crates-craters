@@ -32,6 +32,7 @@ const blue_graphics = {
   SUPPORT_ICON: require('./assets/blue_theme/support_icon.png'),
   AUDIO_ON_ICON: require('./assets/blue_theme/audio_on_icon.png'),
   AUDIO_OFF_ICON: require('./assets/blue_theme/audio_off_icon.png'),
+  PLAY_ICON: require('./assets/blue_theme/play_icon.png'),
 
   HOME_OUTLINED_ICON: require('./assets/blue_theme/home_outlined_icon.png'),
   HOME_FILLED_ICON: require('./assets/blue_theme/home_filled_icon.png'),
@@ -61,13 +62,7 @@ const blue_colors = {
   DARK_COLOR: "#6AA7FD",
   NEAR_BLACK: "#101219",
 
-  MAIN_COLOR_TRANSPARENT: "rgba(129, 181, 254, 0.2)",
-  LIGHT_TILE: "rgba(129, 181, 254, 0.03)",
-  DARK_TILE: "rgba(129, 181, 254, 0.14)",
-
-  LIGHT_WALL: "rgba(129, 181, 254, 0.5)",
-  MEDIUM_WALL: "rgba(129, 181, 254, 0.65)",
-  DARK_WALL: "rgba(129, 181, 254, 0.8)",
+  MAIN_COLOR_TRANSPARENT(opacity) { return `rgba(129, 181, 254, ${opacity})`; },
 };
 
 // ORANGE THEME 🟠
@@ -104,6 +99,7 @@ const orange_graphics = {
   SUPPORT_ICON: require('./assets/orange_theme/support_icon.png'),
   AUDIO_ON_ICON: require('./assets/orange_theme/audio_on_icon.png'),
   AUDIO_OFF_ICON: require('./assets/orange_theme/audio_off_icon.png'),
+  PLAY_ICON: require('./assets/orange_theme/play_icon.png'),
 
   HOME_OUTLINED_ICON: require('./assets/orange_theme/home_outlined_icon.png'),
   HOME_FILLED_ICON: require('./assets/orange_theme/home_filled_icon.png'),
@@ -132,13 +128,7 @@ const orange_colors = {
   DARK_COLOR: "#FB976C",
   NEAR_BLACK: "#170F0D", //"#0E0A09",
 
-  MAIN_COLOR_TRANSPARENT: "rgba(247, 182, 155, 0.2)",
-  LIGHT_TILE: "rgba(247, 182, 155, 0.03)",
-  DARK_TILE: "rgba(247, 182, 155, 0.14)",
-
-  LIGHT_WALL: "rgba(247, 182, 155, 0.5)",
-  MEDIUM_WALL: "rgba(247, 182, 155, 0.65)",
-  DARK_WALL: "rgba(247, 182, 155, 0.8)",
+  MAIN_COLOR_TRANSPARENT(opacity) { return `rgba(247, 182, 155, ${opacity})`; },
 };
 
 // PURPLE THEME 🟣
@@ -175,6 +165,7 @@ const purple_graphics = {
   SUPPORT_ICON: require('./assets/purple_theme/support_icon.png'),
   AUDIO_ON_ICON: require('./assets/purple_theme/audio_on_icon.png'),
   AUDIO_OFF_ICON: require('./assets/purple_theme/audio_off_icon.png'),
+  PLAY_ICON: require('./assets/purple_theme/play_icon.png'),
 
   HOME_OUTLINED_ICON: require('./assets/purple_theme/home_outlined_icon.png'),
   HOME_FILLED_ICON: require('./assets/purple_theme/home_filled_icon.png'),
@@ -204,13 +195,7 @@ const purple_colors = {
   DARK_COLOR: "#B19CD8",
   NEAR_BLACK: "#15101A",
 
-  MAIN_COLOR_TRANSPARENT: "rgba(204, 183, 229, 0.2)",
-  LIGHT_TILE: "rgba(204, 183, 229, 0.03)",
-  DARK_TILE: "rgba(204, 183, 229, 0.14)",
-
-  LIGHT_WALL: "rgba(204, 183, 229, 0.5)",
-  MEDIUM_WALL: "rgba(204, 183, 229, 0.65)",
-  DARK_WALL: "rgba(204, 183, 229, 0.8)",
+  MAIN_COLOR_TRANSPARENT(opacity) { return `rgba(204, 183, 229, ${opacity})`; },
 };
 
 // GREEN THEME 🟢
@@ -247,6 +232,7 @@ const green_graphics = {
   SUPPORT_ICON: require('./assets/green_theme/support_icon.png'),
   AUDIO_ON_ICON: require('./assets/green_theme/audio_on_icon.png'),
   AUDIO_OFF_ICON: require('./assets/green_theme/audio_off_icon.png'),
+  PLAY_ICON: require('./assets/green_theme/play_icon.png'),
 
   HOME_OUTLINED_ICON: require('./assets/green_theme/home_outlined_icon.png'),
   HOME_FILLED_ICON: require('./assets/green_theme/home_filled_icon.png'),
@@ -276,13 +262,7 @@ const green_colors = {
   DARK_COLOR: "#8AD092",
   NEAR_BLACK: "#0E160E",
 
-  MAIN_COLOR_TRANSPARENT: "rgba(169, 223, 171, 0.2)",
-  LIGHT_TILE: "rgba(169, 223, 171, 0.03)",
-  DARK_TILE: "rgba(169, 223, 171, 0.14)",
-
-  LIGHT_WALL: "rgba(169, 223, 171, 0.5)",
-  MEDIUM_WALL: "rgba(169, 223, 171, 0.65)",
-  DARK_WALL: "rgba(169, 223, 171, 0.8)",
+  MAIN_COLOR_TRANSPARENT(opacity) { return `rgba(169, 223, 171, ${opacity})`; },
 };
 
 // EXPORTING

@@ -9,9 +9,8 @@ import { normalize } from '../TextStyles';
  * MenuButton is the basic button type used throughout the project.
  * It has a few simple props.
  * 
- * REQUIRED:
- * @param {string} label The text to be displayed in the button.
  * OPTIONAL:
+ * @param {string} label The text to be displayed in the button.
  * @param {any} value The value to be passed to the onPress function.
  * @param {Function} onPress The function to be called on press event.
  * @param {Function} onLongPress The function to be called on long press event.
@@ -19,13 +18,9 @@ import { normalize } from '../TextStyles';
  * @param {boolean} invisible If true, the button is completely invisible (opacity of zero).
  * @param {boolean} disabled Whether or not the button can be pressed (changes appearance).
  * @param {boolean} allowOverflow Whether number of lines for the button text should cap at 1.
- * OTHER:
- * @param {React.ReactNode} children
- * Optional children to display (in same view as icon), should probably be position absolute.
- * Used exclusively for LevelOption.
  */
-export default function MenuButton({ onPress, onLongPress, value, label, icon, invisible, disabled, allowOverflow, children }) {
-  const { darkMode, dragSensitivity, doubleTapDelay, playAudio } = useContext(GlobalContext);
+export default function MenuButton({ onPress, onLongPress, value, label, icon, invisible, disabled, allowOverflow }) {
+  // const { darkMode, dragSensitivity, doubleTapDelay, playAudio } = useContext(GlobalContext);
 
   const [pressed, setPressedState] = useState(false);
   const [sound, setSound] = useState();
@@ -59,9 +54,9 @@ export default function MenuButton({ onPress, onLongPress, value, label, icon, i
 
   return (
     <Pressable onPress={pressedFn} onLongPress={longPressedFn} style={{
-      ...styles.body,
+      ...styles.body(!!label),
       borderColor: colors.MAIN_COLOR,
-      backgroundColor: (pressed) ? colors.MAIN_COLOR_TRANSPARENT : "#00000000",
+      backgroundColor: (pressed) ? colors.MAIN_COLOR_TRANSPARENT(0.2) : "#00000000",
       opacity: (invisible) ? 0 : (disabled) ? 0.5 : 1,
       transform: [{
         scale: pressed ? 0.98 : 1,
@@ -69,32 +64,29 @@ export default function MenuButton({ onPress, onLongPress, value, label, icon, i
     }} onPressIn={() => { setPressedState(!!onPress) }} onPressOut={() => { setPressedState(false) }}
       disabled={disabled} touchSoundDisabled={true}>
 
-      <View style={{justifyContent: "center", alignItems: "center"}}>
-        {(icon) && <Image style={styles.icon} source={icon} />}
-        {children}
-      </View>
+      {(icon) && <Image style={styles.icon} source={icon} />}
 
-      <Text numberOfLines={allowOverflow ? 0 : 1} style={{
+      {!!label && <Text numberOfLines={allowOverflow ? 0 : 1} style={{
         ...styles.label, color: colors.MAIN_COLOR,
-      }}>{label}</Text>
+      }}>{label}</Text>}
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  body: {
+  body: (hasLabel) => ({
     borderWidth: 1,
-    width: "100%",
+    width: hasLabel ? "100%" : undefined,
     borderRadius: 10,
     paddingLeft: 15,
-    paddingRight: 17.5,
+    paddingRight: hasLabel ? 17.5 : 15,
     paddingVertical: 10,
     marginTop: 15,
     marginHorizontal: 5,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-  },
+  }),
   label: {
     textAlign: "center",
     fontSize: normalize(18),

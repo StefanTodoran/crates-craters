@@ -1,4 +1,4 @@
-import { View, StyleSheet, Dimensions, PanResponder, Animated, SafeAreaView, StatusBar } from 'react-native';
+import { View, StyleSheet, Dimensions, PanResponder, Animated, SafeAreaView, StatusBar, Pressable, Text } from 'react-native';
 import React, { useState, useRef, useEffect, useContext, useMemo } from 'react';
 
 import MenuButton from '../components/MenuButton';
@@ -13,13 +13,14 @@ const win = Dimensions.get('window');
 
 import { Audio } from 'expo-av';
 import { GlobalContext } from '../GlobalContext';
+import SimpleButton from '../components/SimpleButton';
+import TextStyles, { normalize } from '../TextStyles';
 
 /**
  * This component handles a wide variety of tasks related to level playing. It
  * controls the PanResponder that handles input gestures, including both swipe
  * movement gestures and long press gestures. It relays such data to the GameBoard,
- * Player, and Inventory components. This component also contains the navigation
- * buttons for this page.
+ * Player, and Inventory components.
  * 
  * The level to be played and current game state are passed to this component from
  * the parent. If the game state is empty, a new game is initialized based on the
@@ -28,8 +29,8 @@ import { GlobalContext } from '../GlobalContext';
  * 
  * Game sounds are also handled in this component.
  * 
- * @param {Function} pageCallback
- * Takes a string and sets the page state in the parent.
+ * @param {Function} viewCallback
+ * Takes a string and sets the view state in the parent.
  * 
  * @param {Function} levelCallback
  * Takes an integer and updates the parent's level state as well as clearing current game state.
@@ -57,7 +58,7 @@ import { GlobalContext } from '../GlobalContext';
  * Whether or not the play screen has been opened from the level creation menu. If it has, this
  * is a playtest run and the navigation buttons should show return to level creation, not levels.
  */
-export default function PlayLevel({ pageCallback, levelCallback, gameStateCallback, editorCallback, level, game, test }) {
+export default function PlayLevel({ viewCallback, levelCallback, gameStateCallback, level, game, test }) {
   const { darkMode, dragSensitivity, doubleTapDelay, playAudio } = useContext(GlobalContext);
 
   // Set up for sounds, most of this is just copied from the very
@@ -117,6 +118,9 @@ export default function PlayLevel({ pageCallback, levelCallback, gameStateCallba
     } else {
       handleGesture();
       panResponderEnabled.current = !game.won;
+      if (game.won) {
+        levels[level].completed = true;
+      }
     }
   }, [gesture, game]);
 
@@ -279,24 +283,49 @@ export default function PlayLevel({ pageCallback, levelCallback, gameStateCallba
     [prevTouchPos, tileSize, prevTouchTime]
   );
 
+  const [modalOpen, setModalOpen] = useState(false);
+  const anim = useRef(new Animated.Value(0)).current;
+  const setAnimTo = (animState, callback) => {
+    // MAKE SURE 0 <= animState <= 1
+    Animated.timing(anim, {
+      toValue: animState,
+      duration: 300,
+      useNativeDriver: true
+    }).start(callback);
+  }
+
+  function toggleModal() {
+    console.log(modalOpen);
+    if (modalOpen) {
+      setAnimTo(0, () => { setModalOpen(false) });
+    } else {
+      setModalOpen(true);
+      setAnimTo(1);
+    }
+  }
+
   return (
     <>
       {game && <SafeAreaView style={styles.container}>
+        {/* GAMEPLAY COMPONENTS */}
         <View {...panResponder.panHandlers}>
-          <GameBoard board={game.board} tileSize={tileSize}>
+          <GameBoard board={game.board} overrideTileSize={tileSize}>
             <Player game={game} touch={touchMove} darkMode={darkMode} tileSize={tileSize} />
             {touchPos && <Animated.View style={styles.indicator(touchPos.x, touchPos.y, tileSize, pressAnim)} />}
           </GameBoard>
           <Inventory coins={game.coins} maxCoins={game.maxCoins} keys={game.keys} />
           {game.won && <WinScreen darkMode={darkMode} />}
         </View>
-        <View style={styles.buttonsRow}>
-          {!game.won && <MenuButton onPress={gameStateCallback} value={initializeGameObj(level)} label="Restart"
-            icon={graphics.HELP_ICON} width={win.width / 3} />}
-          {game.won && <MenuButton onPress={levelCallback} value={level + 1} label="Next" icon={graphics.FLAG}
-            width={win.width / 3} disabled={level + 1 >= levels.length || test} />}
-          {!test && <MenuButton onPress={pageCallback} value={false} label="Go Back" icon={graphics.DOOR} width={win.width / 3} />}
-          {test && <MenuButton onPress={editorCallback} label="Go Back" icon={graphics.HAMMER_ICON} width={win.width / 3} />}
+
+        {/* PAUSE MENU COMPONENTS */}
+        {modalOpen && <Animated.View style={styles.modal(anim)}>
+          <MenuButton onPress={viewCallback} value={"edit"} label="To Editor" icon={graphics.HAMMER_ICON} disabled={!test}/>
+          <MenuButton onPress={gameStateCallback} value={initializeGameObj(level)} label="Restart Level" icon={graphics.HELP_ICON}/>
+          <MenuButton onPress={viewCallback} value={"home"} label="To Level Select" icon={graphics.DOOR} disabled={test}/>
+        </Animated.View>}
+        <View style={{ flexDirection: "row", justifyContent: "flex-end", height: normalize(50) }}>
+          {!game.won && <SimpleButton onPress={toggleModal} text="Pause Menu" />}
+          {game.won && !test && <SimpleButton onPress={() => { levelCallback(level + 1) }} text="Next Level" />}
         </View>
       </SafeAreaView>}
     </>
@@ -313,36 +342,33 @@ function pressToIndex(touchPos, tileSize) {
   return Math.floor((touchPos + correction) / tileSize);
 }
 
-function deviates(numA, numB, tolerance) {
-  return Math.abs(numA - numB) > tolerance;
-}
-
 const styles = StyleSheet.create({
   container: {
+    paddingTop: StatusBar.currentHeight + 15,
+    // paddingBottom: win.height * 0.05,
+    alignItems: "center",
+    justifyContent: "space-evenly",
+  },
+  modal: (anim) => ({
     position: "absolute",
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
-    flex: 1,
-    paddingTop: StatusBar.currentHeight + 15,
-    paddingBottom: win.height * 0.05,
+    flexDirection: "column",
     alignItems: "center",
-    justifyContent: "space-around",
-  },
-  buttonsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: win.width * 0.45,
-  },
+    justifyContent: "center",
+    backgroundColor: "rgba(255, 255, 255, 0.85)",
+    paddingHorizontal: win.width * 0.225,
+    opacity: anim,
+  }),
   indicator: (xPos, yPos, size, anim) => ({
     position: "absolute",
     left: xPos * size,
     top: yPos * size,
     width: size,
     height: size,
-    backgroundColor: colors.MAIN_COLOR_TRANSPARENT,
+    backgroundColor: colors.MAIN_COLOR_TRANSPARENT(0.2),
     borderColor: colors.DARK_COLOR,
     borderStyle: "solid",
     borderWidth: 1,

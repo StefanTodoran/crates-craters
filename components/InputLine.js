@@ -68,7 +68,7 @@ const styles = StyleSheet.create({
     fontWeight: "normal",
     color: anim.interpolate({
       inputRange: [0, 1],
-      outputRange: [colors.LIGHT_WALL, colors.DARK_WALL],
+      outputRange: [colors.MAIN_COLOR_TRANSPARENT(0.5), colors.MAIN_COLOR_TRANSPARENT(0.8)],
     }),
     transform: [{
       translateY: anim.interpolate({

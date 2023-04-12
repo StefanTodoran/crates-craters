@@ -1,5 +1,5 @@
-import { StyleSheet, Image, Dimensions, View, Animated } from 'react-native';
-import React, { useContext, useEffect, useRef, useState } from "react";
+import { StyleSheet, Dimensions, Animated } from 'react-native';
+import React, { useContext, useRef, useState } from "react";
 
 import { colors, graphics } from '../Theme';
 import { GlobalContext } from '../GlobalContext';
@@ -85,7 +85,6 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: win.width * 0.225,
 
     backgroundColor: (dark) ? colors.NEAR_BLACK : "white",
     opacity: anim,

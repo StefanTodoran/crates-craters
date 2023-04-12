@@ -5,7 +5,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { graphics } from './Theme';
 import Queue from './components/Queue';
 
-const level_one = [
+const level_tutorial = [
   [1, 1, 1, 1, 1, 1, 1, 1],
   [1, 0, 0, 0, 1, 4, 0, 1],
   [1, 0, 7, 0, 1, 0, 4, 1],
@@ -21,7 +21,7 @@ const level_one = [
   [1, 0, 0, 0, 1, 0, 3, 1],
   [1, 1, 1, 1, 1, 1, 1, 1],
 ];
-const level_two = [
+const level_easy_peasy = [
   [1, 1, 1, 1, 1, 1, 1, 1],
   [1, 0, 0, 0, 4, 7, 0, 1],
   [1, 6, 1, 1, 5, 4, 0, 1],
@@ -37,7 +37,7 @@ const level_two = [
   [1, 0, 0, 0, 4, 0, 0, 1],
   [1, 1, 1, 1, 1, 1, 1, 1],
 ];
-const level_three = [
+const level_rooms = [
   [0, 0, 2, 0, 1, 1, 1, 3],
   [0, 0, 1, 0, 1, 0, 0, 5],
   [4, 4, 1, 0, 2, 0, 4, 0],
@@ -53,7 +53,7 @@ const level_three = [
   [1, 1, 1, 1, 2, 1, 1, 4],
   [1, 1, 1, 3, 0, 0, 0, 0],
 ];
-const level_four = [
+const level_choices = [
   [0, 0, 0, 6, 1, 0, 0, 0],
   [0, 4, 0, 1, 0, 0, 3, 5],
   [4, 0, 4, 1, 0, 4, 4, 0],
@@ -69,7 +69,7 @@ const level_four = [
   [4, 4, 0, 0, 1, 0, 0, 6],
   [6, 0, 5, 0, 0, 0, 0, 0],
 ];
-const level_five = [
+const level_running_laps = [
   [0, 0, 0, 1, 0, 1, 1, 0],
   [0, 7, 0, 0, 4, 0, 8, 0],
   [0, 0, 0, 1, 0, 0, 1, 5],
@@ -85,7 +85,7 @@ const level_five = [
   [0, 6, 5, 0, 0, 1, 6, 0],
   [6, 0, 1, 0, 0, 4, 0, 0],
 ];
-const level_six = [
+const level_the_hallway = [
   [0, 0, 1, 8, 1, 1, 1, 1],
   [0, 6, 1, 2, 1, 0, 6, 0],
   [4, 0, 5, 5, 0, 4, 4, 4],
@@ -101,7 +101,7 @@ const level_six = [
   [0, 4, 0, 0, 5, 4, 0, 0],
   [0, 0, 4, 0, 4, 0, 4, 6],
 ];
-const level_seven = [
+const level_trickster = [
   [3, 0, 5, 0, 0, 1, 6, 3],
   [4, 4, 0, 4, 4, 1, 1, 2],
   [4, 0, 4, 0, 0, 0, 0, 5],
@@ -117,7 +117,7 @@ const level_seven = [
   [0, 0, 1, 1, 6, 1, 3, 4],
   [0, 0, 1, 1, 0, 1, 1, 1],
 ];
-const level_eight = [
+const level_bust_the_wall = [
   [0, 0, 2, 0, 0, 4, 8, 5],
   [1, 7, 4, 5, 6, 4, 0, 1],
   [0, 4, 0, 5, 1, 0, 0, 4],
@@ -133,7 +133,7 @@ const level_eight = [
   [6, 4, 1, 6, 4, 5, 3, 0],
   [0, 1, 4, 0, 4, 5, 5, 4],
 ];
-const level_nine = [
+const level_deja_vu = [
   [0, 4, 0, 1, 0, 4, 0, 6],
   [4, 4, 0, 0, 0, 0, 5, 1],
   [0, 0, 0, 4, 0, 5, 0, 0],
@@ -149,7 +149,7 @@ const level_nine = [
   [5, 5, 0, 4, 0, 0, 5, 3],
   [6, 1, 0, 0, 4, 0, 5, 4],
 ];
-const level_ten = [
+const level_race_the_clock = [
   [0, 4, 0, 1, 6, 0, 5, 3],
   [4, 4, 0, 0, 0, 1, 0, 5],
   [0, 0, 0, 1, 0, 0, 0, 0],
@@ -165,7 +165,7 @@ const level_ten = [
   [4, 4, 0, 0, 0, 0, 5, 4],
   [0, 4, 0, 4, 0, 0, 0, 5],
 ];
-const level_eleven = [ // Marathon
+const level_marathon = [ // Marathon
   [4, 4, 5, 0, 0, 6, 1, 4],
   [5, 0, 5, 4, 0, 5, 0, 0],
   [0, 5, 0, 5, 1, 0, 0, 0],
@@ -181,7 +181,7 @@ const level_eleven = [ // Marathon
   [4, 0, 3, 4, 0, 0, "b:40", 1],
   [4, 0, 5, 5, 4, 0, 2, 6],
 ];
-const level_twelve = [ // No Way Home
+const level_no_way_home = [ // No Way Home
   [4, 0, 1, 1, 0, 14, 0, 6],
   [4, 3, 4, 0, 5, 0, 5, 1],
   [5, 4, 5, 0, 0, 5, 0, 0],
@@ -197,7 +197,7 @@ const level_twelve = [ // No Way Home
   [5, 8, 1, 0, 4, 5, 1, 0],
   [0, 0, 1, 1, 0, 12, 0, 3],
 ];
-const level_thirteen = [ // Prison
+const level_prison = [ // Prison
   [0, 5, 3, 4, 0, 0, 4, 0],
   [0, 4, 6, 5, 0, 0, 4, 4],
   [0, 1, 1, 0, 0, 0, 0, 0],
@@ -213,23 +213,23 @@ const level_thirteen = [ // Prison
   [4, 4, 0, 5, 5, 0, 5, 6],
   [0, 4, 0, 0, 4, 0, 11, 0],
 ];
-// const level_fourteen = [ // TODO: REPLACE
-//   [0, 4, 0, 1, 6, 0, 5, 3],
-//   [4, 4, 0, 0, 0, 1, 0, 5],
-//   [0, 0, 0, 1, 0, 0, 0, 0],
-//   [0, 0, 0, 0, 5, "b:35", 0, 4],
-//   [4, 5, 0, 0, 1, 5, 0, 0],
-//   [6, 0, 1, 0, 0, 0, 0, 0],
-//   [4, 1, 0, 0, 0, 0, 0, 0],
-//   [4, 0, 2, 1, 0, 4, 0, 5],
-//   [6, 0, 4, 4, 0, 0, 5, 4],
-//   [1, 5, 1, 1, 0, 1, 6, 5],
-//   [0, 0, 0, 0, 4, 0, 1, 5],
-//   [0, 0, 7, 0, 1, 4, 0, 8],
-//   [4, 4, 0, 0, 0, 0, 5, 4],
-//   [0, 4, 0, 4, 0, 0, 0, 5],
-// ];
-const level_fifteen = [ // Doubling Up
+const level_the_wall = [
+  [0, 4, 0, 0, 5, 0, 4, 0],
+  [4, 4, 0, 0, 1, 0, 6, 0],
+  [0, 0, 0, 1, 0, 5, 1, 1],
+  [4, 0, 0, 0, 7, 0, 0, 2],
+  [4, 0, 1, 14, 0, 0, 0, 4],
+  [0, 0, 0, 4, 1, 0, 5, 5],
+  [13, 5, 0, 0, 0, 0, 4, 5],
+  [6, 12, 0, 0, 8, 0, 5, 5],
+  [0, 1, 4, 4, 0, 0, 1, 5],
+  [14, 1, 0, 4, 0, 0, 1, 6],
+  [0, 1, 1, 13, 1, 1, 1, 1],
+  [0, 4, 0, 0, 4, 0, 4, 0],
+  [4, 0, 4, 14, 0, 14, 1, 3],
+  [5, 0, 4, 5, 4, 0, 0, 0],
+];
+const level_doubling_up = [ // Doubling Up
   [8, 0, 2, 5, 0, 1, 0, 5],
   [0, 1, 1, 0, 5, 12, 6, 0],
   [0, 0, 4, 0, 4, 1, 1, 14],
@@ -245,7 +245,7 @@ const level_fifteen = [ // Doubling Up
   [1, 0, 0, 0, 5, 0, 4, 5],
   [6, 0, 4, 0, 0, 4, 4, 5],
 ];
-const level_sixteen = [
+const level_stupid_door = [
   [4, 4, 5, 0, 0, 6, 1, 4],
   [5, 0, 5, 4, 0, 5, 0, 0],
   [0, 5, 0, 5, 1, 0, 0, 0],
@@ -261,7 +261,7 @@ const level_sixteen = [
   [4, 0, 3, 4, 0, 0, "b:41", 1],
   [4, 0, 5, 5, 4, 0, 2, 6],
 ];
-const level_twenty = [
+const level_pain = [
   [1, 6, 5, 1, 4, 0, 4, 0],
   [5, 4, 0, 3, 5, 0, 4, 4],
   [0, 4, 1, 1, 0, 0, 0, 0],
@@ -278,25 +278,23 @@ const level_twenty = [
 ];
 
 const defaults = [
-  createLevelObj("Tutorial", "default", level_one),
-  createLevelObj("Easy Peasy", "default", level_two),
-  createLevelObj("Rooms", "default", level_three),
-  createLevelObj("Choices", "default", level_four),
-  createLevelObj("Running Laps", "default", level_five),
-  createLevelObj("The Hallway", "default", level_six),
-  createLevelObj("Trickster", "default", level_seven),
-  createLevelObj("Bust the Wall?", "default", level_eight),
-  createLevelObj("Deja Vu", "default", level_nine),
-  createLevelObj("Race the Clock", "default", level_ten),
-  createLevelObj("Marathon", "default", level_eleven),
-  createLevelObj("No Way Home", "default", level_twelve),
-  createLevelObj("Prison", "default", level_thirteen),
-
-  // createLevelObj("Left or Down?", "default", level_fourteen),
-  
-  createLevelObj("Doubling Up", "default", level_fifteen),
-  createLevelObj("Stupid Door", "default", level_sixteen),
-  createLevelObj("Pain", "default", level_twenty),
+  createLevelObj("Tutorial", "default", level_tutorial),
+  createLevelObj("Easy Peasy", "default", level_easy_peasy),
+  createLevelObj("Rooms", "default", level_rooms),
+  createLevelObj("Choices", "default", level_choices),
+  createLevelObj("Running Laps", "default", level_running_laps),
+  createLevelObj("The Hallway", "default", level_the_hallway),
+  createLevelObj("Trickster", "default", level_trickster),
+  createLevelObj("Bust the Wall?", "default", level_bust_the_wall),
+  createLevelObj("Deja Vu", "default", level_deja_vu),
+  createLevelObj("Race the Clock", "default", level_race_the_clock),
+  createLevelObj("Marathon", "default", level_marathon),
+  createLevelObj("No Way Home", "default", level_no_way_home),
+  createLevelObj("Prison", "default", level_prison),
+  createLevelObj("The Wall", "default", level_the_wall),
+  createLevelObj("Doubling Up", "default", level_doubling_up),
+  createLevelObj("Stupid Door", "default", level_stupid_door),
+  createLevelObj("Pain", "default", level_pain),
 ];
 
 export let levels = [...defaults];
@@ -308,7 +306,7 @@ export let levels = [...defaults];
  * @param {number[][]} board The board to be used, or null for a blank board.
  * @returns 
  */
-export function createLevelObj(name, designer, board) {
+export function createLevelObj(name, designer, board, completed) {
   if (board === null) {
     board = createBlankBoard(8, 14);
     // board = createBlankBoard(12, 21);
@@ -318,6 +316,7 @@ export function createLevelObj(name, designer, board) {
     designer: designer,
     created: getFormatedDate(),
     board: board,
+    completed: !!completed,
   };
 }
 
@@ -548,7 +547,7 @@ function countTimesInArray(array, val) {
  * @returns {(boolean|Array)} Either false or a list of strings
  */
 export function canMoveTo(game_obj, tileX, tileY) {
-  const walkable = ["coin", "key"];
+  const walkable = ["coin", "key", "one_way_left", "one_way_right", "one_way_up", "one_way_down"];
   if (!canWalk(tileY, tileX, game_obj, walkable)) {
     return false;
   }

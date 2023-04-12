@@ -183,6 +183,7 @@ function encodingStringToLevel(encondedStr) {
       designer: data[1],
       created: data[2],
       board: board,
+      completed: false,
     }
   } catch (err) {
     console.log("\n\n(ERROR) >>> QR READING ERROR:\n", err);

@@ -2,6 +2,7 @@ import { View, StyleSheet, Dimensions, Animated } from 'react-native';
 import React, { useEffect, useRef } from "react";
 
 import { colors, graphics } from '../Theme';
+import { normalize } from '../TextStyles';
 const win = Dimensions.get('window');
 
 export default function Inventory({ coins, maxCoins, keys }) {
@@ -55,7 +56,7 @@ export default function Inventory({ coins, maxCoins, keys }) {
         <Animated.Text style={styles.coinsText(coinsAnim)}>{coins}</Animated.Text>
         <Animated.Text style={{
           color: colors.DARK_COLOR,
-          fontSize: 10,
+          fontSize: normalize(12),
           ...styles.font,
         }}>/{maxCoins}</Animated.Text>
         <Animated.Image style={styles.icon(coinsAnim)} source={graphics.COIN} />
@@ -69,11 +70,11 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     width: win.width * 0.9,
-    marginBottom: 10,
+    marginBottom: normalize(10),
   },
   coinsText: (anim) => ({
     color: colors.MAIN_COLOR,
-    fontSize: 18,
+    fontSize: normalize(20),
     opacity: anim,
     ...styles.font,
   }),
@@ -82,8 +83,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   icon: (anim) => ({
-    height: 32,
-    width: 32,
+    height: normalize(32),
+    width: normalize(32),
     transform: [{
       scale: anim,
     }],

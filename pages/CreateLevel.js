@@ -398,7 +398,7 @@ const styles = StyleSheet.create({
   text: () => ({
     marginTop: 5,
     marginBottom: 15,
-    color: colors.DARK_WALL,
+    color: colors.MAIN_COLOR_TRANSPARENT(0.8),
     fontSize: 12,
     fontFamily: "Montserrat-Regular",
     fontWeight: "normal",

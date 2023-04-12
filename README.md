@@ -159,6 +159,7 @@ Built with JavaScript and React Native, Crates and Craters is a single player pu
 * Create a proper tutorial?
 * Look into ways to have level sharing server
 * Improve level sharing page
-* Implement variable board size
 * Make non-valid moves not count as a turn (don't tick bomb)
-* Rework oneways?
+* Implement variable board size?
+* Make it so completetion status of levels is saved
+* Rework how levels are marked as default?

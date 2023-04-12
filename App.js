@@ -2,15 +2,15 @@ import { StatusBar } from 'expo-status-bar';
 import { useFonts } from 'expo-font';
 import * as NavigationBar from 'expo-navigation-bar';
 import { useEffect, useRef, useState } from 'react';
-import { StyleSheet, View, Image, Dimensions, Animated, BackHandler, ScrollView, SafeAreaView, Pressable } from 'react-native';
+import { StyleSheet, View, Image, Dimensions, Animated, BackHandler, ScrollView, SafeAreaView, StatusBar as RNStatusBar } from 'react-native';
 
 import { colors, graphics, nextTheme } from './Theme';
 import { GlobalContext } from './GlobalContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import PlayPage from './pages/PlayPage';
-import SharePage from './pages/SharePage';
 import HomePage from './pages/HomePage';
 import IconButton from './components/IconButton';
+import LevelSelect from './pages/LevelSelect';
+import PlayLevel from './pages/PlayLevel';
 
 const win = Dimensions.get('window');
 
@@ -36,19 +36,24 @@ export default function App() {
     }).start(callback);
   }
 
-  useEffect(() => {
-    setAnimTo(scrollEnabled ? 1 : 0);
-  }, [scrollEnabled]);
+  const [view, setView] = useState("home");
+  const switchView = (newView) => {
+    if (newView === "home") {
+      setAnimTo(0, () => {
+        setView(newView);
+        setScrollEnabled(true);
+      });
+    } else {
+      setView(newView);
+      setScrollEnabled(false);
+      setAnimTo(1);
+    }
+  }
 
-  const [doPlayTest, setPlayTest] = useState(false);
-  function openPlayTest() {
-    setPlayTest(true);
-    scrollRef.current?.scrollTo({ x: win.width, animated: true });
-  }
-  function backToEditor() {
-    setPlayTest(false);
-    scrollRef.current?.scrollTo({ x: win.width * 2, animated: true });
-  }
+  // Pages without scroll enabled (playing or editing) should be fullscreen.
+  // useEffect(() => {
+  //   setAnimTo(scrollEnabled ? 1 : 0);
+  // }, [scrollEnabled]);
 
   async function storeData(value, storageKey) {
     try {
@@ -130,6 +135,8 @@ export default function App() {
     didReadSettings.current = true;
   }
 
+  // Any time an option holding some setting's state is updated,
+  // we should write this to storage so it remains the same next startup.
   useEffect(() => {
     if (didReadSettings.current) {
       storeData(darkMode, "isAppDarkMode");
@@ -152,7 +159,7 @@ export default function App() {
     setGameState(null);
   }
 
-  useEffect(() => {
+  useEffect(() => { // TODO: update this method?
     const backAction = () => {
       return !scrollEnabled;
     }
@@ -160,7 +167,7 @@ export default function App() {
 
     return () =>
       BackHandler.removeEventListener("hardwareBackPress", backAction);
-  }, [scrollEnabled]); // TODO: update this
+  }, [scrollEnabled]);
 
   if (!fontsLoaded) {
     return null;
@@ -169,40 +176,48 @@ export default function App() {
   return (
     <GlobalContext.Provider value={{ darkMode, dragSensitivity, doubleTapDelay, playAudio }}>
       <SafeAreaView style={{ flex: 1, backgroundColor: (darkMode) ? colors.NEAR_BLACK : "white" }}>
-        {/* PAGE CONTENT */}
-        <ScrollView horizontal pagingEnabled showsHorizontalScrollIndicator={false} onScroll={(evt) => {
-          setPageState(Math.round(evt.nativeEvent.contentOffset.x / win.width));
-        }} scrollEnabled={scrollEnabled} ref={scrollRef} overScrollMode="never">
-          <View style={styles.page}>
-            <HomePage darkModeCallback={toggleDarkMode} setThemeCallback={setCurTheme} audioModeCallback={toggleAudioMode}
-              setSensitivityCallback={setSensitivity} setTapDelayCallback={setTapDelay}></HomePage>
-          </View>
-          <View style={styles.page}>
-            <PlayPage levelCallback={changeLevel} gameStateCallback={setGameState} scrollCallback={setScrollEnabled}
-              editorCallback={backToEditor} level={level} game={game} playTest={doPlayTest}></PlayPage>
-          </View>
-          <View style={styles.page}>
-            <SharePage levelCallback={changeLevel} storeLevelCallback={setEditorLevel} scrollCallback={setScrollEnabled}
-              playTestCallback={openPlayTest} level={level} editorLevel={editorLevel}></SharePage>
-          </View>
-        </ScrollView>
-
         {/* HEADER BANNER */}
         <Animated.View style={styles.header(anim)}>
           <Image style={styles.banner} source={graphics.TITLE_BANNER} />
         </Animated.View>
 
+        {/* HOME VIEW */}
+        {view === "home" && <ScrollView horizontal pagingEnabled showsHorizontalScrollIndicator={false} onScroll={(evt) => {
+          setPageState(Math.round(evt.nativeEvent.contentOffset.x / win.width));
+        }} scrollEnabled={scrollEnabled} ref={scrollRef} overScrollMode="never">
+
+          {/* LEVEL SELECT */}
+          <View style={styles.page}>
+            <LevelSelect viewCallback={switchView} levelCallback={changeLevel} level={level} game={game} />
+          </View>
+
+          {/* MENU */}
+          <View style={styles.page}>
+            <HomePage darkModeCallback={toggleDarkMode} setThemeCallback={setCurTheme} audioModeCallback={toggleAudioMode}
+              setSensitivityCallback={setSensitivity} setTapDelayCallback={setTapDelay}></HomePage>
+          </View>
+
+        </ScrollView>}
+
+        {/* To keep footer position normal */}
+        {view !== "home" && <View style={styles.page}/>}
+
+        {/* GAMEPLAY VIEW */}
+        {view === "play" && <Animated.View style={styles.modal(anim, darkMode)}>
+          <PlayLevel viewCallback={switchView} levelCallback={changeLevel}
+            gameStateCallback={setGameState} level={level} game={game} />
+        </Animated.View>}
+
+        {/* EDIT VIEW */}
+
         {/* BOTTOM NAVIGATION */}
         <Animated.View style={styles.navbar(anim)}>
           <IconButton onPress={() => { scrollRef.current?.scrollTo({ x: 0, animated: true }); }}
-            source={page === 0 ? graphics.HOME_FILLED_ICON : graphics.HOME_OUTLINED_ICON} />
+            source={page === 0 ? graphics.PLAY_FILLED_ICON : graphics.PLAY_OUTLINED_ICON} />
           <IconButton onPress={() => { scrollRef.current?.scrollTo({ x: win.width, animated: true }); }}
-            source={page === 1 ? graphics.PLAY_FILLED_ICON : graphics.PLAY_OUTLINED_ICON} />
-          <IconButton onPress={() => { scrollRef.current?.scrollTo({ x: win.width * 2, animated: true }); }}
-            source={page === 2 ? graphics.SHARE_FILLED_ICON : graphics.SHARE_OUTLINED_ICON} />
+            source={page === 1 ? graphics.SHARE_FILLED_ICON : graphics.SHARE_OUTLINED_ICON} />
         </Animated.View>
       </SafeAreaView>
-
       <StatusBar style="auto" />
     </GlobalContext.Provider>
   );
@@ -225,38 +240,46 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     width: win.width,
-    height: win.height,
     paddingHorizontal: win.width * 0.225,
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: colors.MAIN_COLOR_TRANSPARENT(0.3),
   },
   header: (anim) => ({
-    position: 'absolute',
+    paddingTop: RNStatusBar.currentHeight,
     flexDirection: 'row',
     justifyContent: 'center',
+    paddingBottom: '2%',
     width: win.width,
-    top: '3%',
     transform: [{
       translateY: anim.interpolate({
         inputRange: [0, 1],
-        outputRange: [-100, 0],
+        outputRange: [0, -100],
       }),
     }],
   }),
   navbar: (anim) => ({
     flexDirection: 'row',
     justifyContent: 'space-evenly',
-    position: 'absolute',
-    bottom: 0,
     width: '100%',
-    paddingVertical: '2%',
+    paddingBottom: '2%',
+    paddingTop: '4%',
     transform: [{
       translateY: anim.interpolate({
         inputRange: [0, 1],
-        outputRange: [100, 0],
+        outputRange: [0, 100],
       }),
     }],
   }),
-  icon: {
-    width: sizeFromWidthPercent(0.1, 100, 100)[0],
-    height: sizeFromWidthPercent(0.1, 100, 100)[1],
-  },
+  modal: (anim, darkMode) => ({
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: (darkMode) ? colors.NEAR_BLACK : "white",
+    opacity: anim,
+  }),
 });

@@ -1,16 +1,13 @@
 import { StyleSheet, Dimensions, Animated } from 'react-native';
 import React, { useContext, useEffect, useRef, useState } from "react";
 
-import { colors, graphics } from '../Theme';
+import { colors } from '../Theme';
 import { GlobalContext } from '../GlobalContext';
 import LevelSelect from '../pages/LevelSelect';
 import PlayLevel from '../pages/PlayLevel';
-import MenuButton from '../components/MenuButton';
-const win = Dimensions.get('window');
 
-export default function PlayPage({ levelCallback, gameStateCallback, scrollCallback, editorCallback, level, game, playTest }) {
+export default function PlayPage({ levelCallback, gameStateCallback, scrollCallback, editorCallback, level, game }) {
   const { darkMode } = useContext(GlobalContext);
-  const [page, setPageState] = useState(0);
 
   const anim = useRef(new Animated.Value(0)).current;
   const setAnimTo = (animState, callback) => {
@@ -23,7 +20,7 @@ export default function PlayPage({ levelCallback, gameStateCallback, scrollCallb
   }
 
   const [modalOpen, setModalState] = useState(false); // false or the model which should be open
-  const setModalOpen = (modalState, suppressScrollCallback) => {
+  const setModalOpen = (modalState) => {
     if (modalState) {
       setModalState(modalState);
       setAnimTo(1);
@@ -33,30 +30,19 @@ export default function PlayPage({ levelCallback, gameStateCallback, scrollCallb
       });
     }
 
-    if (!suppressScrollCallback) {
-      scrollCallback(!modalState);
-    }
+    scrollCallback(!modalState);
   }
-
-  useEffect(() => {
-    if (playTest) {
-      setModalOpen(true);
-    } else {
-      setModalOpen(false, true);
-    }
-  }, [playTest]);
 
   return (
     <>
       {modalOpen &&
         <Animated.View style={styles.modal(darkMode, anim)}>
           <PlayLevel pageCallback={setModalOpen} levelCallback={levelCallback} editorCallback={editorCallback}
-            gameStateCallback={gameStateCallback} level={level} game={game} test={playTest} />
+            gameStateCallback={gameStateCallback} level={level} game={game} />
         </Animated.View>
       }
       {!modalOpen && <>
-        <LevelSelect pageCallback={setModalOpen} levelCallback={levelCallback} selectPage={page} setSelectPage={setPageState}/>
-        <MenuButton onPress={setModalOpen} value="play" label="Resume" icon={graphics.KEY} disabled={!game || game.won || game.playtest} />
+        <LevelSelect pageCallback={setModalOpen} levelCallback={levelCallback} level={level} game={game}/>
       </>}
     </>
   );
@@ -70,9 +56,8 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: win.width * 0.225,
+    alignItems: "center",
+    justifyContent: "center",
 
     backgroundColor: (dark) ? colors.NEAR_BLACK : "white",
     opacity: anim,

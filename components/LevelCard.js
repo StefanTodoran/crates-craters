@@ -1,0 +1,133 @@
+import { Text, StyleSheet, View, Dimensions, Image, Animated } from 'react-native';
+import React, { useContext, useEffect, useRef, useState } from "react";
+import { colors, graphics } from '../Theme';
+import TextStyles, { normalize } from '../TextStyles';
+import { getSpawnPos, levels } from '../Game';
+import { GlobalContext } from '../GlobalContext';
+import GameBoard from './GameBoard';
+import SimpleButton from './SimpleButton';
+const win = Dimensions.get('window');
+
+export default function LevelCard({ onPress, onPressValue, levelIndex, inProgress }) {
+  const { darkMode } = useContext(GlobalContext);
+  const level = levels[levelIndex];
+
+  if (!level) return;
+
+  const defaultLevel = level.designer === "default";
+  const tileSize = calcTileSize(level.board[0].length, win);
+  const playerPos = getSpawnPos(level.board);
+
+  const previewSize = 2;
+  let previewTop, previewBottom;
+  if (playerPos.y - previewSize < 0) {
+    previewTop = 0;
+    previewBottom = (previewSize * 2);
+  } else if (playerPos.y + previewSize > level.board.length) {
+    previewTop = level.board.length - (previewSize * 2);
+    previewBottom = level.board.length;
+  } else {
+    previewTop = playerPos.y - previewSize;
+    previewBottom = playerPos.y + previewSize;
+  }
+
+  const anim = useRef(new Animated.Value(0)).current;
+  const setAnimTo = (animState, callback) => {
+    Animated.timing(anim, {
+      toValue: animState,
+      duration: 200,
+      useNativeDriver: true
+    }).start(callback);
+  }
+
+  useEffect(() => {
+    setAnimTo(1);
+  }, []);
+
+  return (
+    <Animated.View style={[styles.container, { borderColor: colors.DARK_COLOR, opacity: anim }]}>
+
+      <View style={styles.row}>
+        <View style={{ flexDirection: "row", justifyContent: "center" }}>
+          {/* Icon & Number */}
+          <View style={{ justifyContent: "center", alignItems: "center" }}>
+            <Image style={styles.bigIcon} source={defaultLevel ? graphics.CRATE : graphics.CRATER} />
+            <Text style={styles.number()}>{levelIndex + 1}</Text>
+          </View>
+
+          {/* Name & Designer */}
+          <View style={{ flexDirection: "column", justifyContent: "center", marginLeft: normalize(10) }}>
+            <Text style={styles.levelName(darkMode)}>{level.name}</Text>
+            {!defaultLevel && <Text style={styles.designerName(darkMode)}>Designed by "{level.designer}"</Text>}
+            {defaultLevel && <Text style={styles.designerName(darkMode)}>Standard Level</Text>}
+          </View>
+        </View>
+
+        {level.completed && <Image style={styles.icon} source={graphics.FLAG} />}
+      </View>
+
+      <View style={styles.row}>
+        <GameBoard board={level.board.slice(previewTop, previewBottom)} overrideTileSize={tileSize} rowCorrect={-0.1} />
+
+        <View style={{ flexDirection: "column", flex: 0.9 }}>
+          {!inProgress && <SimpleButton onPress={() => { onPress(onPressValue) }} text={"Play"} icon={graphics.PLAY_ICON} />}
+          {inProgress && <SimpleButton onPress={() => { onPress(onPressValue) }} text={"Resume"} icon={graphics.KEY} />}
+          <SimpleButton onPress={() => { }} text={"Edit"} icon={graphics.HAMMER_ICON} disabled={defaultLevel} />
+        </View>
+      </View>
+
+    </Animated.View>
+  );
+}
+
+export function calcTileSize(boardWidth, window) {
+  const maxWidth = (window.width * 0.5) / boardWidth;
+  return maxWidth;
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flexDirection: "column",
+    justifyContent: "center",
+    alignItems: "center",
+    width: win.width * 0.9,
+    borderWidth: 1,
+    borderRadius: normalize(10),
+    marginVertical: normalize(10),
+  },
+  row: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    width: "100%",
+    paddingHorizontal: normalize(15),
+    paddingVertical: normalize(10),
+  },
+  number: () => ({
+    position: "absolute",
+    width: "100%",
+    textAlign: "center",
+    fontSize: normalize(15),
+    color: colors.OFF_WHITE,
+    fontFamily: "Montserrat-Medium",
+    fontWeight: "bold",
+  }),
+  icon: {
+    height: normalize(25),
+    width: normalize(25),
+  },
+  bigIcon: {
+    height: normalize(35),
+    width: normalize(35),
+  },
+  levelName: (darkMode) => ({
+    ...TextStyles.subtitle(darkMode),
+    marginTop: 0,
+    marginBottom: 0,
+  }),
+  designerName: (darkMode) => ({
+    ...TextStyles.paragraph(darkMode),
+    marginTop: 0,
+    marginBottom: 0,
+  }),
+});
