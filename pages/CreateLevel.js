@@ -12,6 +12,8 @@ import InputLine from '../components/InputLine';
 import { GlobalContext } from '../GlobalContext';
 import SliderBar from '../components/SliderBar';
 import { ScrollView } from 'react-native';
+import SimpleButton from '../components/SimpleButton';
+import { normalize } from '../TextStyles';
 const win = Dimensions.get('window');
 
 /**
@@ -36,18 +38,20 @@ const win = Dimensions.get('window');
  */
 export default function CreateLevel({ viewCallback, levelCallback, levelIndex, levelObj, storeLevelCallback, playTestCallback }) {
   const { darkMode } = useContext(GlobalContext);
-  const [keyboardShown, setKeyboardShown] = useState(true);
-  const [fuseTimer, setFuseTimer] = useState(15);
 
-  useEffect(() => {
-    // If there is already a level object we wish to continue editing it. We have to wrap
-    // this in a useEffect so we don't update the parent state in the middle of a render.
-    // We don't just have parent create the blank level since we want to abstract that away from App.js
+  // useEffect(() => {
+  //   // If there is already a level object we wish to continue editing it. We have to wrap
+  //   // this in a useEffect so we don't update the parent state in the middle of a render.
+  //   // We don't just have parent create the blank level since we want to abstract that away from App.js
 
-    if (!levelObj) {
-      storeLevelCallback(cloneLevelObj(levelIndex));
-    }
-  }, [levelIndex, levelObj]);
+  //   if (!levelObj) {
+  //     storeLevelCallback(cloneLevelObj(levelIndex));
+  //   }
+  // }, [levelIndex, levelObj]);
+
+  const special = levelObj.designer === "special";
+  const [levelName, setLevelName] = useState(levelObj.name);
+  const [levelDesigner, setLevelDesigner] = useState("");
 
   // ===================
   // SOUND RELATED SETUP
@@ -77,16 +81,18 @@ export default function CreateLevel({ viewCallback, levelCallback, levelIndex, l
   // ===============
 
   const [currentTool, selectTool] = useState("wall");
+  const [toolsModalOpen, setToolsModalState] = useState(special);
 
-  const [toolsModalOpen, setToolsModalState] = useState(false);
-  const fadeToolsAnim = useRef(new Animated.Value(0)).current;
+  const fadeToolsAnim = useRef(new Animated.Value(special ? 1 : 0)).current;
   function toggleToolsModal() {
     const start = (toolsModalOpen) ? 1 : 0;
     const end = (toolsModalOpen) ? 0 : 1;
     const modalWasOpen = toolsModalOpen;
+
     if (!modalWasOpen) { // If modal was not open
       setToolsModalState(true); // Set modal to open
     }
+
     fadeToolsAnim.setValue(start);
     Animated.timing(fadeToolsAnim, {
       toValue: end,
@@ -141,48 +147,31 @@ export default function CreateLevel({ viewCallback, levelCallback, levelIndex, l
     toggleToolsModal();
   }
 
-  // The following functions are used for the options modal.
-  function changeName(value) {
-    storeLevelCallback({
-      name: value,
-      designer: levelObj.designer,
-      created: levelObj.created,
-      board: levelObj.board,
-    });
-  }
-
-  function changeDesigner(value) {
-    storeLevelCallback({
-      name: levelObj.name,
-      designer: value,
-      created: levelObj.created,
-      board: levelObj.board,
-    });
-  }
-
-  const [index, setIndex] = useState(-1);
-  function updateIndex() {
-    const updated = (levelObj) ? levels.findIndex(element => element.name === levelObj.name) : -1;
-    setIndex(updated);
-  }
-  useEffect(updateIndex, [levelObj]);
-
   function testLevel() {
-    levelCallback(index);
+    levelCallback(levelIndex);
     playTestCallback();
+  }
+
+  const validNameAndDesigner = (levelDesigner !== "default" && levelDesigner !== "special" && levelDesigner !== "" && levelName !== "");
+
+  function isNameTaken() {
+    return false;
+  }
+
+  function createNewLevel() {
+    //
   }
 
   // ==================
   // LOCAL DATA STORAGE
   // ==================
-
-  const saveLevelToStorage = async () => {
-    if (levelObj.name === "") {
+  async function saveLevelToStorage() {
+    if (levelObj.designer === "special" || levelObj.designer === "default") {
       return;
     }
+
     await storeData(levelObj, levelObj.name);
     await importStoredLevels(); // Causes Game.js module to register the change
-    updateIndex();
 
     const board = levelObj.board;
     console.log("const level = [");
@@ -197,142 +186,114 @@ export default function CreateLevel({ viewCallback, levelCallback, levelIndex, l
     console.log("];");
   }
 
-  const loadLevelFromStorage = async () => {
-    const data = await getData(levelObj.name);
-    if (data) {
-      storeLevelCallback(data);
+  async function deleteLevelFromStorage() {
+    if (levelObj.designer === "special" || levelObj.designer === "default") {
+      return;
     }
-  }
 
-  const deleteLevelFromStorage = async () => {
-    if (levelObj.name === "" || index === -1) {
-      return false; // Fail, level isn't saved
-    }
     await AsyncStorage.removeItem(levelObj.name);
-    levels.splice(index, 1);
-    levelCallback(-1); // A bit of a hack, this clears the parent's game state, so if there
+    await importStoredLevels();
+
+    // A bit of a hack, this clears the parent's game state, so if there
     // was a game in progress on the level being deleted, it gets cleared.
-    setIndex(-1);
+    levelCallback(-1);
   }
+  // ================
+  // END DATA STORAGE
+  // ================
 
-  // We want to hide the modal's toolbar if the user is inputing text into
-  // the level name or designer text inputs, so we need to some event listeners.
-  useEffect(() => {
-    const showEvent = Platform.OS === 'ios' ? "keyboardWillShow" : "keyboardDidShow";
-    const showListener = Keyboard.addListener(showEvent, () => {
-      setKeyboardShown(false);
-    });
-    const hideEvent = Platform.OS === 'ios' ? "keyboardWillHide" : "keyboardDidHide";
-    const hideListener = Keyboard.addListener(hideEvent, () => {
-      setKeyboardShown(true);
-    });
-
-    return function cleanup() {
-      showListener.remove();
-      hideListener.remove();
-    }
-  }, []);
-
+  const [fuseTimer, setFuseTimer] = useState(15);
   return (
     <SafeAreaView style={styles.container}>
-      {levelObj && <GameBoard board={levelObj.board} tileCallback={changeTile}></GameBoard>}
+      {special && <>
+      <Image style={styles.optionsBanner} source={graphics.OPTIONS_BANNER} />
+      <View style={styles.inputContainer()}>
+        <InputLine label={"Level Name"} value={levelName} changeCallback={setLevelName} darkMode={darkMode} />
+        <InputLine label={"Designer"} value={levelDesigner} changeCallback={setLevelDesigner} darkMode={darkMode} />
+        <Text style={styles.text()}>
+          Created {levelObj.created}
+        </Text>
+      </View>
+      <View style={styles.singleButton}>
+        <MenuButton onPress={createNewLevel} label="Create Level" icon={graphics.SAVE_ICON} disabled={!validNameAndDesigner || isNameTaken()}/>
+      </View>
+      <View style={styles.singleButton}>
+        <MenuButton onPress={() => { viewCallback("home"); }} label="Back to Menu" icon={graphics.DOOR} />
+      </View>
+      </>}
 
-      {/* START MODAL */}
-      {toolsModalOpen && <Animated.View style={{
-        ...styles.modal,
-        opacity: fadeToolsAnim,
-        backgroundColor: (darkMode) ? colors.NEAR_BLACK : "white",
-      }}>
-        <ScrollView horizontal decelerationRate={0.9} snapToInterval={win.width} snapToAlignment="center"
-          showsHorizontalScrollIndicator={false} contentOffset={{ x: win.width, y: 0 }} overScrollMode="never">
+      {!special && <>
+        {levelObj && <GameBoard board={levelObj.board} tileCallback={changeTile}></GameBoard>}
 
-          {/* PAGE ONE */}
-          <View style={styles.page}>
-            <Image style={styles.toolsBanner} source={graphics.TOOLS_BANNER} />
-            <View style={styles.row}>
-              <MenuButton onPress={changeTool} value="one_way_left" label="Left" icon={graphics.ONE_WAY_LEFT} />
-              <MenuButton onPress={changeTool} value="one_way_right" label="Right" icon={graphics.ONE_WAY_RIGHT} />
-            </View>
-            <View style={styles.row}>
-              <MenuButton onPress={changeTool} value="one_way_up" label="Up" icon={graphics.ONE_WAY_UP} />
-              <MenuButton onPress={changeTool} value="one_way_down" label="Down" icon={graphics.ONE_WAY_DOWN} />
-            </View>
-            <View style={{ height: 15 }} />
-            <View style={styles.row}>
-              <SliderBar label="Fuse Timer" value={fuseTimer} units={" turns"}
-                minValue={1} maxValue={100} changeCallback={setFuseTimer} darkMode={darkMode} />
-            </View>
-            <View style={styles.row}>
-              <MenuButton onPress={changeTool} value="bomb" label="Bomb" icon={graphics.BOMB} />
-            </View>
-          </View>
+        {/* START MODAL */}
+        {toolsModalOpen && <Animated.View style={{
+          ...styles.modal,
+          opacity: fadeToolsAnim,
+          backgroundColor: darkMode ? colors.NEAR_BLACK_TRANSPARENT(0.85) : "rgba(255, 255, 255, 0.85)",
+        }}>
+          <ScrollView overScrollMode="never" style={{ width: "100%" }}>
 
-          {/* PAGE TWO */}
-          <View style={styles.page}>
-            <Image style={styles.toolsBanner} source={graphics.TOOLS_BANNER} />
-            <View style={styles.row}>
-              <MenuButton onPress={changeTool} value="crate" label="Crate" icon={graphics.CRATE} />
-              <MenuButton onPress={changeTool} value="crater" label="Crater" icon={graphics.CRATER} />
+            <View style={styles.section}>
+              <Image style={styles.toolsBanner} source={graphics.TOOLS_BANNER} />
+              <View style={styles.row}>
+                <MenuButton onPress={changeTool} value="crate" label="Crate" icon={graphics.CRATE} />
+                <MenuButton onPress={changeTool} value="crater" label="Crater" icon={graphics.CRATER} />
+              </View>
+              <View style={styles.row}>
+                <MenuButton onPress={changeTool} value="door" label="Door" icon={graphics.DOOR} />
+                <MenuButton onPress={changeTool} value="key" label="Key" icon={graphics.KEY} />
+              </View>
+              <View style={styles.row}>
+                <MenuButton onPress={changeTool} value="flag" label="Flag" icon={graphics.FLAG} />
+                <MenuButton onPress={changeTool} value="coin" label="Coin" icon={graphics.COIN} />
+              </View>
+              <View style={styles.row}>
+                <MenuButton onPress={changeTool} value="wall" label="Wall" icon={graphics.WALL_ICON} />
+                <MenuButton onPress={changeTool} value="spawn" label="Player" icon={graphics.PLAYER} />
+              </View>
+              <View style={styles.row}>
+                <MenuButton onPress={changeTool} value="one_way_left" label="Left" icon={graphics.ONE_WAY_LEFT} />
+                <MenuButton onPress={changeTool} value="one_way_right" label="Right" icon={graphics.ONE_WAY_RIGHT} />
+              </View>
+              <View style={styles.row}>
+                <MenuButton onPress={changeTool} value="one_way_up" label="Up" icon={graphics.ONE_WAY_UP} />
+                <MenuButton onPress={changeTool} value="one_way_down" label="Down" icon={graphics.ONE_WAY_DOWN} />
+              </View>
+              <View style={{ height: 15 }} />
+              <View style={styles.row}>
+                <SliderBar label="Fuse Timer" value={fuseTimer} units={" turns"}
+                  minValue={1} maxValue={100} changeCallback={setFuseTimer} darkMode={darkMode} />
+              </View>
+              <View style={styles.row}>
+                <MenuButton onPress={changeTool} value="bomb" label="Bomb" icon={graphics.BOMB} />
+              </View>
             </View>
-            <View style={styles.row}>
-              <MenuButton onPress={changeTool} value="door" label="Door" icon={graphics.DOOR} />
-              <MenuButton onPress={changeTool} value="key" label="Key" icon={graphics.KEY} />
-            </View>
-            <View style={styles.row}>
-              <MenuButton onPress={changeTool} value="flag" label="Flag" icon={graphics.FLAG} />
-              <MenuButton onPress={changeTool} value="coin" label="Coin" icon={graphics.COIN} />
-            </View>
-            <View style={styles.row}>
-              <MenuButton onPress={changeTool} value="wall" label="Wall" icon={graphics.WALL_ICON} />
-              <MenuButton onPress={changeTool} value="spawn" label="Player" icon={graphics.PLAYER} />
-            </View>
-          </View>
 
-          {/* PAGE THREE */}
-          <View style={styles.page}>
-            <Image style={styles.optionsBanner} source={graphics.OPTIONS_BANNER} />
-            <View style={styles.inputContainer()}>
-              <InputLine label={"Level Name"} value={levelObj.name} changeCallback={changeName} darkMode={darkMode} />
-              <InputLine label={"Designer"} value={levelObj.designer} changeCallback={changeDesigner} darkMode={darkMode} />
-              <Text style={styles.text()}>
-                Created {levelObj.created}
-              </Text>
+            <View style={styles.section}>
+              <Image style={styles.optionsBanner} source={graphics.OPTIONS_BANNER} />
+              <View style={styles.row}>
+                <MenuButton onLongPress={deleteLevelFromStorage} label="Delete Level     (Long Press)" icon={graphics.DELETE_ICON} allowOverflow />
+                <MenuButton onLongPress={() => { storeLevelCallback(createLevelObj("", "", null)); }} label="Clear Level      (Long Press)" icon={graphics.HAMMER_ICON} allowOverflow />
+              </View>
+              <View style={styles.row}>
+                <MenuButton onPress={testLevel} label="Playtest" icon={graphics.PLAYER} />
+                <MenuButton onPress={saveLevelToStorage} label="Save Level" icon={graphics.SAVE_ICON} />
+              </View>
             </View>
-            {/* <View style={styles.row}>
-              <MenuButton onPress={saveLevelToStorage} label="Save Level" icon={graphics.SAVE_ICON} disabled={levelObj.name === ""} />
-              <MenuButton onPress={loadLevelFromStorage} label="Load Level" icon={graphics.LOAD_ICON} disabled={index === -1} />
-            </View>
-            <View style={styles.row}>
-              <MenuButton onLongPress={deleteLevelFromStorage} label="Delete Level     (Long Press)" icon={graphics.DELETE_ICON} allowOverflow disabled={index === -1} />
-              <MenuButton onLongPress={() => { storeLevelCallback(createLevelObj("", "", null)); }} label="Clear Level      (Long Press)" icon={graphics.HAMMER_ICON} allowOverflow />
-            </View>
-            <View style={styles.row}>
-              <MenuButton onPress={testLevel} label="Playtest" icon={graphics.PLAYER} disabled={index === -1} />
-              <MenuButton onPress={viewCallback} value="share" label="Share" icon={graphics.SHARE_ICON} disabled={index === -1} />
-            </View> */}
-            <View style={styles.row}>
-              <MenuButton onPress={saveLevelToStorage} label="Save Level" icon={graphics.SAVE_ICON} disabled={true} />
-              <MenuButton onPress={loadLevelFromStorage} label="Load Level" icon={graphics.LOAD_ICON} disabled={true} />
-            </View>
-            <View style={styles.row}>
-              <MenuButton onLongPress={deleteLevelFromStorage} label="Delete Level     (Long Press)" icon={graphics.DELETE_ICON} allowOverflow disabled={true} />
-              <MenuButton onLongPress={() => { storeLevelCallback(createLevelObj("", "", null)); }} label="Clear Level      (Long Press)" icon={graphics.HAMMER_ICON} allowOverflow />
-            </View>
-            <View style={styles.row}>
-              <MenuButton onPress={testLevel} label="Playtest" icon={graphics.PLAYER} disabled={true} />
-              <MenuButton onPress={viewCallback} value="share" label="Share" icon={graphics.SHARE_ICON} disabled={true} />
-            </View>
-          </View>
 
-        </ScrollView>
-      </Animated.View>}
-      {/* END MODAL */}
+          </ScrollView>
+        </Animated.View>}
+        {/* END MODAL */}
 
-      {(keyboardShown || Platform.OS === "ios") && /* on ios they aren't pushed up by the keyboard, no need to hide */
-        <View style={styles.buttonsRow(darkMode)}>
-          <MenuButton onPress={toggleToolsModal} label="Tools & Options" icon={graphics.HAMMER_ICON} />
-          <MenuButton onPress={viewCallback} value="home" label="Go Back" icon={graphics.DOOR} />
-        </View>}
+        <View style={styles.buttonsRow}>
+          <SimpleButton onPress={() => { toggleToolsModal(); }} text="Tools & Options" />
+          <View style={{ width: normalize(15) }} />
+          <SimpleButton onPress={() => {
+            saveLevelToStorage();
+            viewCallback("home");
+          }} text="Save & Exit" />
+        </View>
+      </>}
     </SafeAreaView>
   );
 }
@@ -346,46 +307,45 @@ function sizeFromWidthPercent(percent, img_height, img_width) {
 
 const styles = StyleSheet.create({
   container: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    flex: 1,
     paddingTop: StatusBar.currentHeight + 15,
     alignItems: "center",
-    justifyContent: "space-between",
+    justifyContent: "space-evenly",
+    width: "100%",
   },
-  page: {
+  section: {
     flexDirection: "column",
     justifyContent: "center",
     alignItems: "center",
-    width: win.width,
+    width: "100%",
+    marginBottom: normalize(50),
   },
   row: {
     flexDirection: "row",
     justifyContent: "center",
     width: win.width * 0.45,
   },
-  buttonsRow: (darkMode) => ({
-    paddingBottom: 30,
+  buttonsRow: {
+    flexDirection: "row",
+    height: normalize(50),
+    marginTop: normalize(15),
+  },
+  singleButton: {
+    paddingHorizontal: "22.5%",
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: (darkMode) ? colors.NEAR_BLACK : "white",
-    borderTopColor: colors.MAIN_COLOR,
-    borderTopWidth: 1,
-    width: win.width * 0.45,
-  }),
+  },
   modal: {
     position: "absolute",
     top: 0,
     left: 0,
     right: 0,
-    bottom: 0,
+    bottom: normalize(63), // height of buttonsRow, except slightly less for some reason?
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: colors.MAIN_COLOR_TRANSPARENT(0.3),
     alignItems: "center",
     justifyContent: "center",
-    paddingBottom: "20%",
   },
   text: () => ({
     marginTop: 5,

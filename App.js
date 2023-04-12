@@ -12,7 +12,7 @@ import IconButton from './components/IconButton';
 import LevelSelect from './pages/LevelSelect';
 import PlayLevel from './pages/PlayLevel';
 import CreateLevel from './pages/CreateLevel';
-import { storeData } from './Game';
+import { cloneLevelObj, storeData } from './Game';
 
 const win = Dimensions.get('window');
 
@@ -141,8 +141,7 @@ export default function App() {
   }
   const changeEditorLevel = (lvl) => {
     setEditorLevel(lvl);
-    // TODO: maybe save the editorLevelObj here?
-    setEditorLevelObj(null);
+    setEditorLevelObj(cloneLevelObj(lvl));
   }
 
   useEffect(() => { // TODO: update this method?
