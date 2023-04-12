@@ -107,7 +107,7 @@ const styles = StyleSheet.create({
     transform: [{
       scale: anim.interpolate({
         inputRange: [0, 1],
-        outputRange: [0.5, 1],
+        outputRange: [0.9, 1],
       }),
     }],
   }),

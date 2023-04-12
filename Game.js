@@ -314,6 +314,9 @@ const defaults = [
 ];
 
 export let levels = [...defaults];
+export function countCustomLevels() {
+  return levels.length - defaults.length;
+}
 
 /**
  * Creates a level object, the type used by level select and parts of Game.js

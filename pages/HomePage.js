@@ -7,6 +7,8 @@ import About from '../pages/About';
 import Settings from '../pages/Settings';
 import HowToPlay from '../pages/HowToPlay';
 import MenuButton from '../components/MenuButton';
+import ShareLevel from './ShareLevel';
+import { countCustomLevels } from '../Game';
 
 export default function HomePage({ darkModeCallback, setThemeCallback, audioModeCallback, setSensitivityCallback, setTapDelayCallback }) {
   const { darkMode } = useContext(GlobalContext);
@@ -41,6 +43,8 @@ export default function HomePage({ darkModeCallback, setThemeCallback, audioMode
   } else if (modalOpen === "settings") {
     content = <Settings pageCallback={setModalOpen} darkModeCallback={darkModeCallback} audioModeCallback={audioModeCallback}
     setThemeCallback={setThemeCallback} setSensitivityCallback={setSensitivityCallback} setTapDelayCallback={setTapDelayCallback} />;
+  } else if (modalOpen === "share") {
+    content = <ShareLevel pageCallback={setModalOpen}/>
   }
 
   return (
@@ -48,6 +52,7 @@ export default function HomePage({ darkModeCallback, setThemeCallback, audioMode
       <MenuButton onPress={setModalOpen} value="how" label="How to Play" icon={graphics.HELP_ICON} />
       <MenuButton onPress={setModalOpen} value="settings" label="App Settings" icon={graphics.OPTIONS_ICON} />
       <MenuButton onPress={setModalOpen} value="about" label="About the App" icon={graphics.PLAYER} />
+      <MenuButton onPress={setModalOpen} value="share" label="Share Levels" icon={graphics.SHARE_ICON} disabled={countCustomLevels() === 0}/>
 
       {modalOpen &&
         <Animated.View style={styles.modal(darkMode, anim)}>

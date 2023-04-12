@@ -7,19 +7,27 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { colors, graphics } from '../Theme';
 import MenuButton from '../components/MenuButton';
 import { GlobalContext } from '../GlobalContext';
-import { getTileEntityData, levels } from '../Game';
+import { levels } from '../Game';
 import Selector from '../components/Selector';
 import TextStyles from '../TextStyles';
 
 export default function ShareLevel({ pageCallback }) {
-  const { darkMode, _ } = useContext(GlobalContext);
+  const { darkMode } = useContext(GlobalContext);
   const [level, selectLevel] = useState(0);
 
   function nextLevel() {
-    selectLevel(level === levels.length - 1 ? 0 : level + 1);
+    let next = level;
+    while (levels[next].designer === "default" || levels[next].designer === "special") {
+      next = level === levels.length - 1 ? 0 : next + 1;
+    }
+    selectLevel(next);
   }
   function prevLevel() {
-    selectLevel(level === 0 ? levels.length - 1 : level - 1);
+    let prev = level;
+    while (levels[prev].designer === "default" || levels[prev].designer === "special") {
+      prev = level === 0 ? levels.length - 1 : level - 1;
+    }
+    selectLevel(prev);
   }
 
   const levelObj = levels[level];
