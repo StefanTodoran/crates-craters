@@ -14,15 +14,16 @@ import LevelCard from '../components/LevelCard';
  */
 export default function LevelSelect({ viewCallback, playLevelCallback, editorLevelCallback, level, game }) {
   const [elementHeight, setElementHeight] = useState(false);
+  const scrollRef = useRef();
 
   const openLevel = useCallback((level) => {
     playLevelCallback(level);
     viewCallback("play");
   }, [level]);
 
-  useEffect(() => {
-    importStoredLevels();
-  }, []);
+  // useEffect(() => {
+  //   importStoredLevels();
+  // }, []);
 
   const playing = (!game || game.won || game.playtest) ? -1 : level;
 
@@ -36,16 +37,15 @@ export default function LevelSelect({ viewCallback, playLevelCallback, editorLev
       </View>}
       {elementHeight &&
         <FlatList
-          overScrollMode="never"
-          showsVerticalScrollIndicator={false}
-          style={{
-            overflow: "hidden",
-          }}
+          ref={scrollRef}
+          style={{ overflow: "hidden" }}
           contentContainerStyle={{
             paddingHorizontal: "5%",
             paddingVertical: "5%",
             alignItems: "center",
           }}
+          overScrollMode="never"
+          showsVerticalScrollIndicator={false}
           data={levels}
           renderItem={({ item, index }) =>
             index === playing ?
@@ -58,7 +58,12 @@ export default function LevelSelect({ viewCallback, playLevelCallback, editorLev
           getItemLayout={(data, index) => (
             { length: elementHeight, offset: elementHeight * index, index }
           )}
-          initialScrollIndex={(!game || game.won || game.playtest) ? 0 : level}
+          onLayout={() => {
+            if (game && !game.won && !game.playtest) {
+              scrollRef.current.scrollToIndex({ index: level });
+            }
+          }}
+          // initialScrollIndex={(!game || game.won || game.playtest) ? 0 : level}
           // onEndReached={() => { importStoredLevels(); }}
         />
       }
