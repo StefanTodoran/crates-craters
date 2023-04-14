@@ -8,7 +8,8 @@ import GameBoard from './GameBoard';
 import SimpleButton from './SimpleButton';
 const win = Dimensions.get('window');
 
-export default function LevelCard({ viewCallback, playCallback, editCallback, levelIndex }) {
+const LevelCard = React.memo(
+function LevelCard({ viewCallback, playCallback, editCallback, levelIndex }) {
   const { darkMode } = useContext(GlobalContext);
   const level = levels[levelIndex];
 
@@ -86,9 +87,11 @@ export default function LevelCard({ viewCallback, playCallback, editCallback, le
 
     </Animated.View>
   );
-}
+})
 
-export function calcTileSize(boardWidth, window) {
+export default LevelCard;
+
+function calcTileSize(boardWidth, window) {
   const maxWidth = (window.width * 0.5) / boardWidth;
   return maxWidth;
 }

@@ -14,7 +14,7 @@ const win = Dimensions.get('window');
 import { Audio } from 'expo-av';
 import { GlobalContext } from '../GlobalContext';
 import SimpleButton from '../components/SimpleButton';
-import TextStyles, { normalize } from '../TextStyles';
+import { normalize } from '../TextStyles';
 
 /**
  * This component handles a wide variety of tasks related to level playing. It

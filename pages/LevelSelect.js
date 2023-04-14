@@ -1,5 +1,5 @@
 import { FlatList, View } from 'react-native';
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 
 import { levels, importStoredLevels } from '../Game';
 import LevelCard from '../components/LevelCard';
@@ -15,10 +15,10 @@ import LevelCard from '../components/LevelCard';
 export default function LevelSelect({ viewCallback, playLevelCallback, editorLevelCallback, level, game }) {
   const [elementHeight, setElementHeight] = useState(false);
 
-  const openLevel = (level) => {
+  const openLevel = useCallback((level) => {
     playLevelCallback(level);
     viewCallback("play");
-  }
+  }, [level]);
 
   useEffect(() => {
     importStoredLevels();
@@ -58,8 +58,8 @@ export default function LevelSelect({ viewCallback, playLevelCallback, editorLev
           getItemLayout={(data, index) => (
             { length: elementHeight, offset: elementHeight * index, index }
           )}
-        // initialScrollIndex={(!game || game.won || game.playtest) ? 0 : level}
-        // onEndReached={() => { importStoredLevels(); }}
+          initialScrollIndex={(!game || game.won || game.playtest) ? 0 : level}
+          // onEndReached={() => { importStoredLevels(); }}
         />
       }
     </>

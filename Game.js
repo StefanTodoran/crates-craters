@@ -315,7 +315,8 @@ const defaults = [
 
 export let levels = [...defaults];
 export function countCustomLevels() {
-  return levels.length - defaults.length;
+  // There will always be the default levels and Blank Level at least.
+  return levels.length - (defaults.length + 1);
 }
 
 /**

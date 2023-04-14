@@ -1,4 +1,4 @@
-import { Text, StyleSheet, Image, Dimensions, View, Animated } from 'react-native';
+import { Text, StyleSheet, Dimensions, View, Animated } from 'react-native';
 import React, { useContext, useEffect, useRef, useState } from "react";
 import SvgQRCode from 'react-native-qrcode-svg';
 import { BarCodeScanner } from 'expo-barcode-scanner';
@@ -7,26 +7,29 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { colors, graphics } from '../Theme';
 import MenuButton from '../components/MenuButton';
 import { GlobalContext } from '../GlobalContext';
-import { levels } from '../Game';
+import { countCustomLevels, levels } from '../Game';
 import Selector from '../components/Selector';
 import TextStyles from '../TextStyles';
 
 export default function ShareLevel({ pageCallback }) {
   const { darkMode } = useContext(GlobalContext);
-  const [level, selectLevel] = useState(0);
 
+  const firstCustom = levels.findIndex(lvl => (lvl.designer !== "default" && lvl.designer !== "special"));
+  const [level, selectLevel] = useState(firstCustom);
+
+  const buttonsDisabled = countCustomLevels() === 1;
   function nextLevel() {
     let next = level;
-    while (levels[next].designer === "default" || levels[next].designer === "special") {
-      next = level === levels.length - 1 ? 0 : next + 1;
-    }
+    do {
+      next = (next + 1) % levels.length;
+    } while (levels[next].designer === "default" || levels[next].designer === "special");
     selectLevel(next);
   }
   function prevLevel() {
     let prev = level;
-    while (levels[prev].designer === "default" || levels[prev].designer === "special") {
-      prev = level === 0 ? levels.length - 1 : level - 1;
-    }
+    do {
+      prev = prev === 0 ? levels.length - 1 : prev - 1;
+    } while (levels[prev].designer === "default" || levels[prev].designer === "special");
     selectLevel(prev);
   }
 
@@ -137,7 +140,9 @@ export default function ShareLevel({ pageCallback }) {
         </View>
 
         <View style={{ height: 35 }} />
-        <Selector onNext={nextLevel} onPrev={prevLevel} label={`Share "${levelObj.name}" QR`} />
+        <Selector label={`Share "${levelObj.name}" QR`}
+          onNext={nextLevel} nextDisabled={buttonsDisabled}
+          onPrev={prevLevel} prevDisabled={buttonsDisabled} />
       </View>}
       {!scanned && <BarCodeScanner onBarCodeScanned={handleBarCodeScanned} style={{ height: "50%", width: "100%" }} />}
 

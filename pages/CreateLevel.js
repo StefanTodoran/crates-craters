@@ -20,8 +20,11 @@ const win = Dimensions.get('window');
  * @param {Function} viewCallback
  * Takes a string and sets the current application view.
  * 
- * @param {Function} levelCallback
- * Takes an integer and sets the level in the parent. Also clears parent's game state.
+ * @param {Function} playLevelCallback
+ * Takes an integer and sets the play level in the parent. Also clears parent's game state.
+ * 
+ * @param {Function} editorLevelCallback
+ * Takes an integer and sets the editor level in the parent. Also loads the appropriate editor level object.
  * 
  * @param {Object} level
  * An object representing the current level being edited. Same format as data stored in AsyncStorage.
@@ -36,18 +39,8 @@ const win = Dimensions.get('window');
  * @param {Function} storeLevelCallback
  * Callback used to update the above level object.
  */
-export default function CreateLevel({ viewCallback, levelCallback, levelIndex, levelObj, storeLevelCallback, playTestCallback }) {
+export default function CreateLevel({ viewCallback, playLevelCallback, editorLevelCallback, levelIndex, levelObj, storeLevelCallback, playTestCallback }) {
   const { darkMode } = useContext(GlobalContext);
-
-  // useEffect(() => {
-  //   // If there is already a level object we wish to continue editing it. We have to wrap
-  //   // this in a useEffect so we don't update the parent state in the middle of a render.
-  //   // We don't just have parent create the blank level since we want to abstract that away from App.js
-
-  //   if (!levelObj) {
-  //     storeLevelCallback(cloneLevelObj(levelIndex));
-  //   }
-  // }, [levelIndex, levelObj]);
 
   const special = levelObj.designer === "special";
   const [levelName, setLevelName] = useState(levelObj.name);
@@ -148,42 +141,38 @@ export default function CreateLevel({ viewCallback, levelCallback, levelIndex, l
   }
 
   function testLevel() {
-    levelCallback(levelIndex);
+    playLevelCallback(levelIndex);
     playTestCallback();
   }
 
   const validNameAndDesigner = (levelDesigner !== "default" && levelDesigner !== "special" && levelDesigner !== "" && levelName !== "");
 
   function isNameTaken() {
-    return false;
+    return levels.some(lvl => lvl.name === levelName);
   }
 
-  function createNewLevel() {
-    //
+  async function createNewLevel() {
+    const newLevel = cloneLevelObj(levelIndex);
+    newLevel.name = levelName;
+    newLevel.designer = levelDesigner;
+    
+    const success = await saveLevelToStorage(newLevel, levelName);
+    if (success) {
+      editorLevelCallback(levels.findIndex(lvl => lvl.name === levelName));
+    }
   }
 
   // ==================
   // LOCAL DATA STORAGE
   // ==================
-  async function saveLevelToStorage() {
-    if (levelObj.designer === "special" || levelObj.designer === "default") {
-      return;
+  async function saveLevelToStorage(targetLevelObject, targetLevelName) {
+    if (targetLevelObject.designer === "special" || targetLevelObject.designer === "default") {
+      return false;
     }
 
-    await storeData(levelObj, levelObj.name);
+    const success = await storeData(targetLevelObject, targetLevelName);
     await importStoredLevels(); // Causes Game.js module to register the change
-
-    const board = levelObj.board;
-    console.log("const level = [");
-    for (let i = 0; i < board.length; i++) {
-      let line = "  ["
-      for (let j = 0; j < board[0].length; j++) {
-        line += board[i][j] + ", "
-      }
-      line += "],"
-      console.log(line);
-    }
-    console.log("];");
+    return success;
   }
 
   async function deleteLevelFromStorage() {
@@ -196,7 +185,8 @@ export default function CreateLevel({ viewCallback, levelCallback, levelIndex, l
 
     // A bit of a hack, this clears the parent's game state, so if there
     // was a game in progress on the level being deleted, it gets cleared.
-    levelCallback(-1);
+    playLevelCallback(-1);
+    viewCallback("home");
   }
   // ================
   // END DATA STORAGE
@@ -276,8 +266,8 @@ export default function CreateLevel({ viewCallback, levelCallback, levelIndex, l
                 <MenuButton onLongPress={() => { storeLevelCallback(createLevelObj("", "", null)); }} label="Clear Level      (Long Press)" icon={graphics.HAMMER_ICON} allowOverflow />
               </View>
               <View style={styles.row}>
-                <MenuButton onPress={testLevel} label="Playtest" icon={graphics.PLAYER} />
-                <MenuButton onPress={saveLevelToStorage} label="Save Level" icon={graphics.SAVE_ICON} />
+                <MenuButton onPress={testLevel} label="Playtest" icon={graphics.PLAYER} disabled={true}/>
+                <MenuButton onPress={() => {saveLevelToStorage(levelObj, levelObj.name)}} label="Save Level" icon={graphics.SAVE_ICON} />
               </View>
             </View>
 
@@ -289,7 +279,7 @@ export default function CreateLevel({ viewCallback, levelCallback, levelIndex, l
           <SimpleButton onPress={() => { toggleToolsModal(); }} text="Tools & Options" />
           <View style={{ width: normalize(15) }} />
           <SimpleButton onPress={() => {
-            saveLevelToStorage();
+            saveLevelToStorage(levelObj, levelObj.name);
             viewCallback("home");
           }} text="Save & Exit" />
         </View>

@@ -1,7 +1,7 @@
 import { StatusBar } from 'expo-status-bar';
 import { useFonts } from 'expo-font';
 import * as NavigationBar from 'expo-navigation-bar';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { StyleSheet, View, Image, Dimensions, Animated, BackHandler, ScrollView, SafeAreaView, StatusBar as RNStatusBar } from 'react-native';
 
 import { colors, graphics, nextTheme } from './Theme';
@@ -38,7 +38,7 @@ export default function App() {
   }
 
   const [view, setView] = useState("home");
-  const switchView = (newView) => {
+  const switchView = useCallback((newView) => {
     if (newView === "home") {
       setAnimTo(0, () => {
         setView(newView);
@@ -47,7 +47,7 @@ export default function App() {
       setView(newView);
       setAnimTo(1);
     }
-  }
+  }, []);
 
   // Like the getData function in Game.js but with a fallback value.
   async function getData(storageKey, expectedType, defaultValue) {
@@ -134,15 +134,15 @@ export default function App() {
   const [game, setGameState] = useState(null); // Stores the game state of the level being played.
   const [editorLevel, setEditorLevel] = useState(null); // Stores the level number to be edited / being edited.
   const [editorLevelObj, setEditorLevelObj] = useState(null); // Stores the level object being edited.
-  
-  const changePlayLevel = (lvl) => {
+
+  const changePlayLevel = useCallback((lvl) => {
     setPlayLevel(lvl);
     setGameState(null);
-  }
-  const changeEditorLevel = (lvl) => {
+  }, []);
+  const changeEditorLevel = useCallback((lvl) => {
     setEditorLevel(lvl);
     setEditorLevelObj(cloneLevelObj(lvl));
-  }
+  }, []);
 
   useEffect(() => { // TODO: update this method?
     const backAction = () => {
@@ -195,8 +195,8 @@ export default function App() {
 
         {/* EDIT VIEW */}
         {view === "edit" && <Animated.View style={styles.modal(anim, darkMode)}>
-          <CreateLevel viewCallback={switchView} levelCallback={changePlayLevel} storeLevelCallback={setEditorLevelObj}
-            levelIndex={editorLevel} levelObj={editorLevelObj} playTestCallback={() => { }} />
+          <CreateLevel viewCallback={switchView} playLevelCallback={changePlayLevel} editorLevelCallback={changeEditorLevel}
+            storeLevelCallback={setEditorLevelObj} levelIndex={editorLevel} levelObj={editorLevelObj} playTestCallback={() => { }} />
         </Animated.View>}
 
         {/* BOTTOM NAVIGATION */}
