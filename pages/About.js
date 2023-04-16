@@ -37,7 +37,7 @@ export default function About({ pageCallback }) {
           label="Stefan Todoran" icon={graphics.LOGO} />
         <MenuButton onPress={(url) => { Linking.openURL(url) }} value={"https://www.paypal.com/donate/?business=5EGAWXCBNDGHC&no_recurring=0&item_name=Help+support+the+future+development+of+Crates+%26+Craters%21+If+you+have+any+suggestions+for+the+game%2C+please+reach+out+to+me%21&currency_code=USD"}
           label="Support C&C" icon={graphics.SUPPORT_ICON} />
-        <MenuButton onPress={pageCallback} value={false} label="Back to Menu" icon={graphics.DOOR} />
+        <MenuButton onPress={pageCallback} value={false} label="Back to Menu" icon={graphics.DOOR_ICON} />
       </View>
     </>
   );

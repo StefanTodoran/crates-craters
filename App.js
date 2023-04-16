@@ -105,12 +105,15 @@ export default function App() {
     setSensitivity(await getData("appDragSensitivity", "number", 60));
     setTapDelay(await getData("appDoubleTapDelay", "number", 250));
 
-    let theme = "purple"; // by default, Theme.js exports purple theme
-    const targetTheme = await getData("appTheme", "string", "purple");
-    while (theme !== targetTheme) {
-      theme = nextTheme();
-    }
-    setCurTheme(theme);
+    // At the moment there is only one theme, uncomment and
+    // fix this funciton when that changes.
+
+    // let theme = "purple"; // by default, Theme.js exports purple theme
+    // const targetTheme = await getData("appTheme", "string", "purple");
+    // while (theme !== targetTheme) {
+    //   theme = nextTheme();
+    // }
+    // setCurTheme(theme);
     didReadSettings.current = true;
   }
 
@@ -232,7 +235,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: win.width * 0.225,
     borderTopWidth: 1,
     borderBottomWidth: 1,
-    borderColor: colors.MAIN_COLOR_TRANSPARENT(0.3),
+    borderColor: colors.MAIN_PURPLE_TRANSPARENT(0.3),
   },
   header: (anim) => ({
     paddingTop: RNStatusBar.currentHeight,

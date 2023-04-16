@@ -60,7 +60,7 @@ export default function LevelSelect({ viewCallback, playLevelCallback, editorLev
           )}
           onLayout={() => {
             if (game && !game.won && !game.playtest) {
-              scrollRef.current.scrollToIndex({ index: level });
+              scrollRef.current.scrollToIndex({ index: level, animated: false });
             }
           }}
           // initialScrollIndex={(!game || game.won || game.playtest) ? 0 : level}

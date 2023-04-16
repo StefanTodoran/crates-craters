@@ -48,7 +48,7 @@ export default function HowToPlay({ pageCallback }) {
           is single use.
         </Text>
         <View style={styles.row}>
-          <Image style={styles.icon} source={graphics.DOOR} />
+          <Image style={styles.icon} source={graphics.DOOR_ICON} />
           <Image style={styles.icon} source={graphics.KEY} />
         </View>
 
@@ -84,7 +84,7 @@ export default function HowToPlay({ pageCallback }) {
         </View>
 
         <View style={styles.buttonContainer}>
-          <MenuButton onPress={pageCallback} value={false} label="Back to Menu" icon={graphics.DOOR} />
+          <MenuButton onPress={pageCallback} value={false} label="Back to Menu" icon={graphics.DOOR_ICON} />
         </View>
       </ScrollView>
     </>

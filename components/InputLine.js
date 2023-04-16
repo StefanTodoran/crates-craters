@@ -28,7 +28,7 @@ export default function InputLine({ label, value, changeCallback, darkMode }) {
   return (
     <View style={{
       ...styles.container,
-      borderBottomColor: colors.MAIN_COLOR,
+      borderBottomColor: colors.MAIN_PURPLE,
     }}>
       <Animated.Text style={styles.label(anim)}>
         {label}
@@ -45,8 +45,8 @@ export default function InputLine({ label, value, changeCallback, darkMode }) {
           onFocus={() => { setFocus(true); }}
           onBlur={() => { setFocus(false); }}
           value={value}
-          selectionColor={colors.MAIN_COLOR}
-          cursorColor={colors.MAIN_COLOR}
+          selectionColor={colors.MAIN_PURPLE}
+          cursorColor={colors.MAIN_PURPLE}
           maxLength={14}
         />
       </Animated.View>
@@ -68,7 +68,7 @@ const styles = StyleSheet.create({
     fontWeight: "normal",
     color: anim.interpolate({
       inputRange: [0, 1],
-      outputRange: [colors.MAIN_COLOR_TRANSPARENT(0.5), colors.MAIN_COLOR_TRANSPARENT(0.8)],
+      outputRange: [colors.MAIN_PURPLE_TRANSPARENT(0.5), colors.MAIN_PURPLE_TRANSPARENT(0.8)],
     }),
     transform: [{
       translateY: anim.interpolate({
@@ -90,7 +90,7 @@ const styles = StyleSheet.create({
     }],
   }),
   input: (darkMode) => ({
-    color: (darkMode) ? colors.MAIN_COLOR : colors.DARK_COLOR,
+    color: (darkMode) ? colors.MAIN_PURPLE : colors.DARK_PURPLE,
     width: "100%",
     fontFamily: "Montserrat-Regular",
     fontWeight: "normal",

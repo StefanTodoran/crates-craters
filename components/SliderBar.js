@@ -16,8 +16,20 @@ const barWidth = win.width / 2;
  * @param {number} minValue
  * @param {number} maxValue
  * @param {Function} changeCallback The callback to use when the value inside is changed.
+ * 
+ * OPTIONAL:
+ * @params mainColor, knobColor
+ * Overrides for the various colors of the slider bar.
  */
-export default function SliderBar({ label, units, value, minValue, maxValue, changeCallback, darkMode }) {
+export default function SliderBar({
+  label,
+  units,
+  value,
+  minValue, maxValue,
+  changeCallback,
+  mainColor,
+  knobColor,
+}) {
   const [pressed, setPressed] = useState(false);
   const [movedAmount, setMovedAmount] = useState(value);
 
@@ -59,11 +71,16 @@ export default function SliderBar({ label, units, value, minValue, maxValue, cha
   return (
     <View style={styles.container} {...panResponder.panHandlers}>
       <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-        <Text style={styles.text(darkMode)}>{label}</Text>
-        <Text style={styles.text(darkMode)}>{value}{units}</Text>
+        <Text style={styles.text(mainColor)}>{label}</Text>
+        <Text style={styles.text(mainColor)}>{value}{units}</Text>
       </View>
-      <View style={styles.bar(darkMode)}>
-        <Animated.View style={styles.slider(darkMode, calcOffsetFromValue(), pressed)}></Animated.View>
+      <View style={styles.bar(mainColor)}>
+        <Animated.View style={styles.slider(
+          calcOffsetFromValue(),
+          pressed,
+          mainColor,
+          knobColor,
+        )}></Animated.View>
       </View>
     </View>
   );
@@ -76,19 +93,19 @@ const styles = StyleSheet.create({
     paddingTop: 5,
     paddingBottom: 15,
   },
-  bar: darkMode => ({
+  bar: (color) => ({
     width: "100%",
     height: 3,
     borderRadius: 3,
-    backgroundColor: (darkMode) ? colors.MAIN_COLOR : colors.DARK_COLOR,
+    backgroundColor: color,
   }),
-  text: darkMode => ({
+  text: (color) => ({
     marginBottom: 10,
-    color: (darkMode) ? colors.MAIN_COLOR : colors.DARK_COLOR,
+    color: color,
     fontFamily: "Montserrat-Regular",
     fontWeight: "normal",
   }),
-  slider: (darkMode, xPos, pressed) => ({
+  slider: (xPos, pressed, color, fillColor) => ({
     position: "absolute",
     top: (pressed) ? -9 : -6,
     left: xPos - ((pressed) ? 9 : 6),
@@ -96,8 +113,8 @@ const styles = StyleSheet.create({
     width: (pressed) ? 21 : 15,
     borderRadius: (pressed) ? 11 : 7,
     borderWidth: 1,
-    borderColor: (darkMode) ? colors.MAIN_COLOR : colors.DARK_COLOR,
-    backgroundColor: (darkMode) ? colors.NEAR_BLACK : colors.OFF_WHITE,
+    borderColor: color,
+    backgroundColor: fillColor,
   }),
 
   // transform: [{

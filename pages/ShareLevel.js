@@ -133,7 +133,7 @@ export default function ShareLevel({ pageCallback }) {
 
       {scanned && <View style={styles.container}>
         <View style={styles.container}>
-          <SvgQRCode value={encoding} enableLinearGradient={true} linearGradient={[colors.MAIN_COLOR, colors.DARK_COLOR]} backgroundColor={"transparent"} />
+          <SvgQRCode value={encoding} enableLinearGradient={true} linearGradient={[colors.MAIN_PURPLE, colors.DARK_PURPLE]} backgroundColor={"transparent"} />
           <Animated.View style={styles.info(darkMode, anim)}>
             <Text style={TextStyles.bold(darkMode)}>{info}</Text>
           </Animated.View>
@@ -149,7 +149,7 @@ export default function ShareLevel({ pageCallback }) {
       <View style={{ height: 15 }} />
       <View style={styles.buttonsContainer}>
         <MenuButton onPress={setScanned} value={!scanned} label="Scan Level QR" icon={graphics.LOAD_ICON} />
-        <MenuButton onPress={pageCallback} value={false} label="Go Back" icon={graphics.DOOR} />
+        <MenuButton onPress={pageCallback} value={false} label="Go Back" icon={graphics.DOOR_ICON} />
       </View>
     </>
   );

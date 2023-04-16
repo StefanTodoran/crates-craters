@@ -30,9 +30,9 @@ const styles = StyleSheet.create({
     paddingVertical: normalize(3),
     paddingHorizontal: normalize(10),
     borderWidth: 1,
-    borderColor: colors.MAIN_COLOR_TRANSPARENT(0.5),
+    borderColor: colors.MAIN_PURPLE_TRANSPARENT(0.5),
     borderRadius: normalize(10),
-    backgroundColor: (pressed) ? colors.MAIN_COLOR_TRANSPARENT(0.2) : "#00000000",
+    backgroundColor: (pressed) ? colors.MAIN_PURPLE_TRANSPARENT(0.2) : "#00000000",
     transform: [{
       scale: pressed ? 0.98 : 1,
     }],

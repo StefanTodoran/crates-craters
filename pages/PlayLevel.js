@@ -320,7 +320,7 @@ export default function PlayLevel({ viewCallback, levelCallback, gameStateCallba
         {modalOpen && <Animated.View style={styles.modal(anim, darkMode)}>
           <MenuButton onPress={viewCallback} value={"edit"} label="To Editor" icon={graphics.HAMMER_ICON} disabled={!test} />
           <MenuButton onPress={gameStateCallback} value={initializeGameObj(level)} label="Restart Level" icon={graphics.HELP_ICON} />
-          <MenuButton onPress={viewCallback} value={"home"} label="To Level Select" icon={graphics.DOOR} disabled={test} />
+          <MenuButton onPress={viewCallback} value={"home"} label="To Level Select" icon={graphics.DOOR_ICON} disabled={test} />
         </Animated.View>}
         <View style={{ flexDirection: "row", height: normalize(50) }}>
           {!game.won && <SimpleButton onPress={toggleModal} text="Pause Menu" />}
@@ -369,8 +369,8 @@ const styles = StyleSheet.create({
     top: yPos * size,
     width: size,
     height: size,
-    backgroundColor: colors.MAIN_COLOR_TRANSPARENT(0.2),
-    borderColor: colors.DARK_COLOR,
+    backgroundColor: colors.NEAR_BLACK_TRANSPARENT(0.05),
+    borderColor: colors.DIM_GRAY,
     borderStyle: "solid",
     borderWidth: 1,
     borderRadius: 2,

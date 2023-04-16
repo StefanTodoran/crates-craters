@@ -15,12 +15,27 @@ import { normalize } from '../TextStyles';
  * @param {Function} onPress The function to be called on press event.
  * @param {Function} onLongPress The function to be called on long press event.
  * @param {ImageSourcePropType} icon The image to be displayed in the button, optional.
- * @param {boolean} invisible If true, the button is completely invisible (opacity of zero).
  * @param {boolean} disabled Whether or not the button can be pressed (changes appearance).
  * @param {boolean} allowOverflow Whether number of lines for the button text should cap at 1.
+ * 
+ * @params borderColor, backgroundColor, darkModeBackgroundColor, pressedColor, textColor
+ * Overrides for the various aspects of the button coloring.
  */
-export default function MenuButton({ onPress, onLongPress, value, label, icon, invisible, disabled, allowOverflow }) {
-  // const { darkMode, dragSensitivity, doubleTapDelay, playAudio } = useContext(GlobalContext);
+export default function MenuButton({
+  onPress,
+  onLongPress,
+  value,
+  label,
+  icon,
+  disabled,
+  allowOverflow,
+  borderColor,
+  backgroundColor,
+  darkModeBackgroundColor,
+  pressedColor,
+  textColor
+}) {
+  const { darkMode } = useContext(GlobalContext);
 
   const [pressed, setPressedState] = useState(false);
   const [sound, setSound] = useState();
@@ -53,28 +68,31 @@ export default function MenuButton({ onPress, onLongPress, value, label, icon, i
   }
 
   return (
-    <Pressable onPress={pressedFn} onLongPress={longPressedFn} style={{
-      ...styles.body(!!label),
-      borderColor: colors.MAIN_COLOR,
-      backgroundColor: (pressed) ? colors.MAIN_COLOR_TRANSPARENT(0.2) : "#00000000",
-      opacity: (invisible) ? 0 : (disabled) ? 0.5 : 1,
-      transform: [{
-        scale: pressed ? 0.98 : 1,
-      }],
-    }} onPressIn={() => { setPressedState(!!onPress) }} onPressOut={() => { setPressedState(false) }}
+    <Pressable style={styles.body(
+      !!label,
+      pressed,
+      disabled,
+      darkMode,
+      borderColor ? borderColor : colors.MAIN_PURPLE,
+      backgroundColor ? backgroundColor : colors.OFF_WHITE,
+      darkModeBackgroundColor ? darkModeBackgroundColor : colors.MAIN_PURPLE_TRANSPARENT(0.1),
+      pressedColor ? pressedColor : colors.MAIN_PURPLE_TRANSPARENT(0.3),
+    )}
+      onPress={pressedFn} onLongPress={longPressedFn}
+      onPressIn={() => { setPressedState(!!onPress) }} onPressOut={() => { setPressedState(false) }}
       disabled={disabled} touchSoundDisabled={true}>
 
       {(icon) && <Image style={styles.icon} source={icon} />}
 
       {!!label && <Text numberOfLines={allowOverflow ? 0 : 1} style={{
-        ...styles.label, color: colors.MAIN_COLOR,
+        ...styles.label, color: textColor ? textColor : colors.MIDDLE_PURPLE,
       }}>{label}</Text>}
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  body: (hasLabel) => ({
+  body: (hasLabel, isPressed, isDisabled, darkMode, borderColor, bgColor, bgColorDarkMode, pressedColor) => ({
     borderWidth: 1,
     width: hasLabel ? "100%" : undefined,
     borderRadius: 10,
@@ -86,6 +104,14 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
+
+    borderColor: borderColor,
+    backgroundColor: (isPressed) ? pressedColor :
+      (darkMode) ? bgColorDarkMode : bgColor,
+    opacity: (isDisabled) ? 0.5 : 1,
+    transform: [{
+      scale: isPressed ? 0.98 : 1,
+    }],
   }),
   label: {
     textAlign: "center",

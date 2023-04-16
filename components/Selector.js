@@ -45,7 +45,7 @@ export default function Selector({ label, onNext, onPrev, nextDisabled, prevDisa
       </Pressable>
       <Text style={{
         width: win.width / 2,
-        ...styles.label, color: colors.MAIN_COLOR,
+        ...styles.label, color: colors.MAIN_PURPLE,
       }}>{label}</Text>
       <Pressable disabled={nextDisabled} touchSoundDisabled={true} onPress={() => {
         // if (playAudio) { playSound(); }

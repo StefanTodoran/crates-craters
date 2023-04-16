@@ -155,7 +155,7 @@ export default function CreateLevel({ viewCallback, playLevelCallback, editorLev
     const newLevel = cloneLevelObj(levelIndex);
     newLevel.name = levelName;
     newLevel.designer = levelDesigner;
-    
+
     const success = await saveLevelToStorage(newLevel, levelName);
     if (success) {
       editorLevelCallback(levels.findIndex(lvl => lvl.name === levelName));
@@ -196,20 +196,20 @@ export default function CreateLevel({ viewCallback, playLevelCallback, editorLev
   return (
     <SafeAreaView style={styles.container}>
       {special && <>
-      <Image style={styles.optionsBanner} source={graphics.OPTIONS_BANNER} />
-      <View style={styles.inputContainer()}>
-        <InputLine label={"Level Name"} value={levelName} changeCallback={setLevelName} darkMode={darkMode} />
-        <InputLine label={"Designer"} value={levelDesigner} changeCallback={setLevelDesigner} darkMode={darkMode} />
-        <Text style={styles.text()}>
-          Created {levelObj.created}
-        </Text>
-      </View>
-      <View style={styles.singleButton}>
-        <MenuButton onPress={createNewLevel} label="Create Level" icon={graphics.SAVE_ICON} disabled={!validNameAndDesigner || isNameTaken()}/>
-      </View>
-      <View style={styles.singleButton}>
-        <MenuButton onPress={() => { viewCallback("home"); }} label="Back to Menu" icon={graphics.DOOR} />
-      </View>
+        <Image style={styles.optionsBanner} source={graphics.OPTIONS_BANNER} />
+        <View style={styles.inputContainer()}>
+          <InputLine label={"Level Name"} value={levelName} changeCallback={setLevelName} darkMode={darkMode} />
+          <InputLine label={"Designer"} value={levelDesigner} changeCallback={setLevelDesigner} darkMode={darkMode} />
+          <Text style={styles.text()}>
+            Created {levelObj.created}
+          </Text>
+        </View>
+        <View style={styles.singleButton}>
+          <MenuButton onPress={createNewLevel} label="Create Level" icon={graphics.SAVE_ICON} disabled={!validNameAndDesigner || isNameTaken()} />
+        </View>
+        <View style={styles.singleButton}>
+          <MenuButton onPress={() => { viewCallback("home"); }} label="Back to Menu" icon={graphics.DOOR_ICON} />
+        </View>
       </>}
 
       {!special && <>
@@ -230,32 +230,62 @@ export default function CreateLevel({ viewCallback, playLevelCallback, editorLev
                 <MenuButton onPress={changeTool} value="crater" label="Crater" icon={graphics.CRATER} />
               </View>
               <View style={styles.row}>
-                <MenuButton onPress={changeTool} value="door" label="Door" icon={graphics.DOOR} />
-                <MenuButton onPress={changeTool} value="key" label="Key" icon={graphics.KEY} />
-              </View>
-              <View style={styles.row}>
-                <MenuButton onPress={changeTool} value="flag" label="Flag" icon={graphics.FLAG} />
-                <MenuButton onPress={changeTool} value="coin" label="Coin" icon={graphics.COIN} />
-              </View>
-              <View style={styles.row}>
                 <MenuButton onPress={changeTool} value="wall" label="Wall" icon={graphics.WALL_ICON} />
-                <MenuButton onPress={changeTool} value="spawn" label="Player" icon={graphics.PLAYER} />
+                <MenuButton onPress={changeTool} value="spawn" label="Spawn" icon={graphics.PLAYER} />
               </View>
               <View style={styles.row}>
-                <MenuButton onPress={changeTool} value="one_way_left" label="Left" icon={graphics.ONE_WAY_LEFT} />
-                <MenuButton onPress={changeTool} value="one_way_right" label="Right" icon={graphics.ONE_WAY_RIGHT} />
+                <MenuButton onPress={changeTool} value="door" label="Door" icon={graphics.DOOR}
+                  borderColor={"#b8e5b9"} backgroundColor={"#fafffa"} textColor={"#9BD99D"}
+                  darkModeBackgroundColor={`rgba(169, 223, 171, 0.1)`} pressedColor={`rgba(169, 223, 171, 0.3)`}
+                />
+                <MenuButton onPress={changeTool} value="key" label="Key" icon={graphics.KEY}
+                  borderColor={"#b8e5b9"} backgroundColor={"#fafffa"} textColor={"#9BD99D"}
+                  darkModeBackgroundColor={`rgba(169, 223, 171, 0.1)`} pressedColor={`rgba(169, 223, 171, 0.3)`}
+                />
               </View>
               <View style={styles.row}>
-                <MenuButton onPress={changeTool} value="one_way_up" label="Up" icon={graphics.ONE_WAY_UP} />
-                <MenuButton onPress={changeTool} value="one_way_down" label="Down" icon={graphics.ONE_WAY_DOWN} />
+                <MenuButton onPress={changeTool} value="flag" label="Flag" icon={graphics.FLAG}
+                  borderColor={"#FFE7A8"} backgroundColor={"#FFFDF7"} textColor={"#FFE08E"}
+                  darkModeBackgroundColor={`rgba(255, 231, 168, 0.1)`} pressedColor={`rgba(255, 231, 168, 0.3)`}
+                />
+                <MenuButton onPress={changeTool} value="coin" label="Coin" icon={graphics.COIN}
+                  borderColor={"#FFE7A8"} backgroundColor={"#FFFDF7"} textColor={"#FFE08E"}
+                  darkModeBackgroundColor={`rgba(255, 231, 168, 0.1)`} pressedColor={`rgba(255, 231, 168, 0.3)`}
+                />
+              </View>
+              <View style={styles.row}>
+                <MenuButton onPress={changeTool} value="one_way_left" label="Left" icon={graphics.ONE_WAY_LEFT}
+                  borderColor={colors.MAIN_BLUE} backgroundColor={"#FBFCFF"} textColor={"#81B5FE"}
+                  darkModeBackgroundColor={`rgba(129, 181, 254, 0.1)`} pressedColor={`rgba(129, 181, 254, 0.2)`}
+                />
+                <MenuButton onPress={changeTool} value="one_way_right" label="Right" icon={graphics.ONE_WAY_RIGHT}
+                  borderColor={colors.MAIN_BLUE} backgroundColor={"#FBFCFF"} textColor={"#81B5FE"}
+                  darkModeBackgroundColor={`rgba(129, 181, 254, 0.1)`} pressedColor={`rgba(129, 181, 254, 0.2)`}
+                />
+              </View>
+              <View style={styles.row}>
+                <MenuButton onPress={changeTool} value="one_way_up" label="Up" icon={graphics.ONE_WAY_UP}
+                  borderColor={colors.MAIN_BLUE} backgroundColor={"#FBFCFF"} textColor={"#81B5FE"}
+                  darkModeBackgroundColor={`rgba(129, 181, 254, 0.1)`} pressedColor={`rgba(129, 181, 254, 0.2)`}
+                />
+                <MenuButton onPress={changeTool} value="one_way_down" label="Down" icon={graphics.ONE_WAY_DOWN}
+                  borderColor={colors.MAIN_BLUE} backgroundColor={"#FBFCFF"} textColor={"#81B5FE"}
+                  darkModeBackgroundColor={`rgba(129, 181, 254, 0.1)`} pressedColor={`rgba(129, 181, 254, 0.2)`}
+                />
               </View>
               <View style={{ height: 15 }} />
               <View style={styles.row}>
                 <SliderBar label="Fuse Timer" value={fuseTimer} units={" turns"}
-                  minValue={1} maxValue={100} changeCallback={setFuseTimer} darkMode={darkMode} />
+                  minValue={1} maxValue={100} changeCallback={setFuseTimer}
+                  mainColor={darkMode ? "#F79B9B" : "#FB6C6C"}
+                  knobColor={darkMode ? "#1E0D0D" : "#FFFAFA"}
+                />
               </View>
               <View style={styles.row}>
-                <MenuButton onPress={changeTool} value="bomb" label="Bomb" icon={graphics.BOMB} />
+                <MenuButton onPress={changeTool} value="bomb" label="Bomb" icon={graphics.BOMB}
+                  borderColor={"#F79B9B"} backgroundColor={"#FFFAFA"} textColor={"#F97E7E"}
+                  darkModeBackgroundColor={`rgba(239, 131, 131, 0.1)`} pressedColor={`rgba(239, 131, 131, 0.2)`}
+                />
               </View>
             </View>
 
@@ -266,8 +296,8 @@ export default function CreateLevel({ viewCallback, playLevelCallback, editorLev
                 <MenuButton onLongPress={() => { storeLevelCallback(createLevelObj("", "", null)); }} label="Clear Level      (Long Press)" icon={graphics.HAMMER_ICON} allowOverflow />
               </View>
               <View style={styles.row}>
-                <MenuButton onPress={testLevel} label="Playtest" icon={graphics.PLAYER} disabled={true}/>
-                <MenuButton onPress={() => {saveLevelToStorage(levelObj, levelObj.name)}} label="Save Level" icon={graphics.SAVE_ICON} />
+                <MenuButton onPress={testLevel} label="Playtest" icon={graphics.PLAYER} disabled={true} />
+                <MenuButton onPress={() => { saveLevelToStorage(levelObj, levelObj.name) }} label="Save Level" icon={graphics.SAVE_ICON} />
               </View>
             </View>
 
@@ -333,14 +363,14 @@ const styles = StyleSheet.create({
     bottom: normalize(63), // height of buttonsRow, except slightly less for some reason?
     borderTopWidth: 1,
     borderBottomWidth: 1,
-    borderColor: colors.MAIN_COLOR_TRANSPARENT(0.3),
+    borderColor: colors.MAIN_PURPLE_TRANSPARENT(0.3),
     alignItems: "center",
     justifyContent: "center",
   },
   text: () => ({
     marginTop: 5,
     marginBottom: 15,
-    color: colors.MAIN_COLOR_TRANSPARENT(0.8),
+    color: colors.MAIN_PURPLE_TRANSPARENT(0.8),
     fontSize: 12,
     fontFamily: "Montserrat-Regular",
     fontWeight: "normal",
@@ -349,7 +379,7 @@ const styles = StyleSheet.create({
     position: "relative",
     width: 4 * win.width / 5,
     marginBottom: 10,
-    borderColor: colors.MAIN_COLOR,
+    borderColor: colors.MAIN_PURPLE,
     borderWidth: 1,
     borderRadius: 10,
     paddingHorizontal: 15,

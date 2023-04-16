@@ -50,7 +50,7 @@ function LevelCard({ viewCallback, playCallback, editCallback, levelIndex }) {
   }, []);
 
   return (
-    <Animated.View style={styles.container(anim)}>
+    <Animated.View style={styles.container(anim, darkMode)}>
 
       <View style={styles.row}>
         <View style={{ flexDirection: "row", justifyContent: "center" }}>
@@ -69,7 +69,7 @@ function LevelCard({ viewCallback, playCallback, editCallback, levelIndex }) {
           </View>
         </View>
 
-        {level.completed && <Image style={styles.icon} source={graphics.FLAG} />}
+        {level.completed && <Image style={styles.icon} source={graphics.FLAG_ICON} />}
       </View>
 
       <View style={styles.row}>
@@ -77,7 +77,7 @@ function LevelCard({ viewCallback, playCallback, editCallback, levelIndex }) {
 
         <View style={{ flexDirection: "column", flex: 0.9 }}>
           {playCallback && <SimpleButton onPress={() => { playCallback(levelIndex) }} text={"Play"} icon={graphics.PLAY_ICON} />}
-          {!playCallback && <SimpleButton onPress={() => { viewCallback("play") }} text={"Resume"} icon={graphics.KEY} />}
+          {!playCallback && <SimpleButton onPress={() => { viewCallback("play") }} text={"Resume"} icon={graphics.KEY_ICON} />}
           <SimpleButton text={"Edit"} icon={graphics.HAMMER_ICON} onPress={() => {
             editCallback(levelIndex);
             viewCallback("edit");
@@ -97,7 +97,7 @@ function calcTileSize(boardWidth, window) {
 }
 
 const styles = StyleSheet.create({
-  container: (anim) => ({
+  container: (anim, darkMode) => ({
     flexDirection: "column",
     justifyContent: "center",
     alignItems: "center",
@@ -105,7 +105,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: normalize(10),
     marginVertical: normalize(10),
-    borderColor: colors.DARK_COLOR,
+    borderColor: colors.DARK_PURPLE,
+    backgroundColor: darkMode ? colors.MAIN_PURPLE_TRANSPARENT(0.1) : colors.OFF_WHITE,
     opacity: anim,
     transform: [{
       scale: anim.interpolate({

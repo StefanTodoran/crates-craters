@@ -55,7 +55,7 @@ export default function Inventory({ coins, maxCoins, keys }) {
       <View style={styles.row}>
         <Animated.Text style={styles.coinsText(coinsAnim)}>{coins}</Animated.Text>
         <Animated.Text style={{
-          color: colors.DARK_COLOR,
+          color: "#A7A2A9",
           fontSize: normalize(12),
           ...styles.font,
         }}>/{maxCoins}</Animated.Text>
@@ -73,7 +73,7 @@ const styles = StyleSheet.create({
     marginBottom: normalize(10),
   },
   coinsText: (anim) => ({
-    color: colors.MAIN_COLOR,
+    color: colors.DIM_GRAY,
     fontSize: normalize(20),
     opacity: anim,
     ...styles.font,

@@ -109,10 +109,11 @@ const styles = StyleSheet.create({
     height: size,
     opacity: anim.interpolate({ // was originally static 0.4
       inputRange: [0, 1],
-      outputRange: [0.5, 0.2],
+      outputRange: [0.3, 0],
+      // outputRange: [0.5, 0.2],
     }),
 
-    borderColor: colors.DARK_COLOR,
+    borderColor: colors.DIM_GRAY,
     borderStyle: "solid",
     borderWidth: 1,
 

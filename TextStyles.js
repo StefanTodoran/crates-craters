@@ -16,7 +16,7 @@ export function normalize(size) {
 
 export default StyleSheet.create({
   paragraph: (darkMode) => ({
-    color: (darkMode) ? colors.MAIN_COLOR : colors.DARK_COLOR,
+    color: (darkMode) ? colors.MAIN_PURPLE : colors.DARK_PURPLE,
     fontFamily: "Montserrat-Regular",
     fontWeight: "normal",
     fontSize: normalize(16),
@@ -24,7 +24,7 @@ export default StyleSheet.create({
   }),
 
   bold: (darkMode) => ({
-    color: (darkMode) ? colors.MAIN_COLOR : colors.DARK_COLOR,
+    color: (darkMode) ? colors.MAIN_PURPLE : colors.DARK_PURPLE,
     fontFamily: "Montserrat-Medium",
     fontWeight: "bold",
     fontSize: normalize(16),
@@ -33,7 +33,7 @@ export default StyleSheet.create({
   }),
 
   subtitle: (darkMode) => ({
-    color: (darkMode) ? colors.MAIN_COLOR : colors.DARK_COLOR,
+    color: (darkMode) ? colors.MAIN_PURPLE : colors.DARK_PURPLE,
     fontFamily: "Montserrat-Medium",
     fontWeight: "bold",
     textTransform: "uppercase",

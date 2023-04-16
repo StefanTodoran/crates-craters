@@ -1,7 +1,7 @@
 import { StyleSheet, Text, Dimensions, View } from 'react-native';
 import React, { useContext } from "react";
 
-import { graphics, nextTheme } from '../Theme';
+import { colors, graphics, nextTheme } from '../Theme';
 import MenuButton from '../components/MenuButton';
 import SliderBar from '../components/SliderBar';
 import { GlobalContext } from '../GlobalContext';
@@ -13,7 +13,7 @@ export default function Settings({ pageCallback, darkModeCallback, audioModeCall
   return (
     <>
       <View style={styles.buttonsContainer}>
-        <Text style={[TextStyles.subtitle(darkMode), {width: "100%", marginBottom: 0}]}>
+        <Text style={[TextStyles.subtitle(darkMode), { width: "100%", marginBottom: 0 }]}>
           Settings
         </Text>
 
@@ -21,16 +21,22 @@ export default function Settings({ pageCallback, darkModeCallback, audioModeCall
         <MenuButton onPress={() => {
           const newTheme = nextTheme();
           setThemeCallback(newTheme);
-        }} value={null} label="Change App Theme" icon={graphics.THEME_ICON} />
+        }} value={null} label="Change App Theme" icon={graphics.THEME_ICON} disabled={true} />
 
         <View style={{ height: 15 }} />
         <SliderBar label="Drag Sensitivity" value={dragSensitivity} units={"%"}
-          minValue={10} maxValue={200} changeCallback={setSensitivityCallback} darkMode={darkMode} />
+          minValue={10} maxValue={200} changeCallback={setSensitivityCallback}
+          mainColor={darkMode ? colors.MAIN_PURPLE : colors.DARK_PURPLE}
+          knobColor={darkMode ? colors.NEAR_BLACK : colors.OFF_WHITE}
+        />
         <SliderBar label="Double Tap Delay" value={doubleTapDelay} units={"ms"}
-          minValue={100} maxValue={500} changeCallback={setTapDelayCallback} darkMode={darkMode} />
+          minValue={100} maxValue={500} changeCallback={setTapDelayCallback}
+          mainColor={darkMode ? colors.MAIN_PURPLE : colors.DARK_PURPLE}
+          knobColor={darkMode ? colors.NEAR_BLACK : colors.OFF_WHITE}
+        />
 
         <MenuButton onPress={audioModeCallback} value={null} label="Toggle Sounds" icon={playAudio ? graphics.AUDIO_ON_ICON : graphics.AUDIO_OFF_ICON} />
-        <MenuButton onPress={pageCallback} value={false} label="Back to Menu" icon={graphics.DOOR} />
+        <MenuButton onPress={pageCallback} value={false} label="Back to Menu" icon={graphics.DOOR_ICON} />
       </View>
     </>
   );
