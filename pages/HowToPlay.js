@@ -48,7 +48,7 @@ export default function HowToPlay({ pageCallback }) {
           is single use.
         </Text>
         <View style={styles.row}>
-          <Image style={styles.icon} source={graphics.DOOR_ICON} />
+          <Image style={styles.icon} source={graphics.DOOR} />
           <Image style={styles.icon} source={graphics.KEY} />
         </View>
 

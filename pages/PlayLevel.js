@@ -294,6 +294,11 @@ export default function PlayLevel({ viewCallback, levelCallback, gameStateCallba
     }).start(callback);
   }
 
+  function restartLevel() {
+    gameStateCallback(initializeGameObj(level));
+    toggleModal();
+  }
+
   function toggleModal() {
     if (modalOpen) {
       setAnimTo(0, () => { setModalOpen(false) });
@@ -310,7 +315,7 @@ export default function PlayLevel({ viewCallback, levelCallback, gameStateCallba
         <View {...panResponder.panHandlers}>
           <GameBoard board={game.board} overrideTileSize={tileSize}>
             <Player game={game} touch={touchMove} darkMode={darkMode} tileSize={tileSize} />
-            {touchPos && <Animated.View style={styles.indicator(touchPos.x, touchPos.y, tileSize, pressAnim)} />}
+            {touchPos && <Animated.View style={styles.indicator(touchPos.x, touchPos.y, tileSize, pressAnim, darkMode)} />}
           </GameBoard>
           <Inventory coins={game.coins} maxCoins={game.maxCoins} keys={game.keys} />
           {game.won && <WinScreen darkMode={darkMode} />}
@@ -319,7 +324,7 @@ export default function PlayLevel({ viewCallback, levelCallback, gameStateCallba
         {/* PAUSE MENU COMPONENTS */}
         {modalOpen && <Animated.View style={styles.modal(anim, darkMode)}>
           <MenuButton onPress={viewCallback} value={"edit"} label="To Editor" icon={graphics.HAMMER_ICON} disabled={!test} />
-          <MenuButton onPress={gameStateCallback} value={initializeGameObj(level)} label="Restart Level" icon={graphics.HELP_ICON} />
+          <MenuButton onPress={restartLevel} label="Restart Level" icon={graphics.HELP_ICON} />
           <MenuButton onPress={viewCallback} value={"home"} label="To Level Select" icon={graphics.DOOR_ICON} disabled={test} />
         </Animated.View>}
         <View style={{ flexDirection: "row", height: normalize(50) }}>
@@ -363,14 +368,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: win.width * 0.225,
     opacity: anim,
   }),
-  indicator: (xPos, yPos, size, anim) => ({
+  indicator: (xPos, yPos, size, anim, darkMode) => ({
     position: "absolute",
     left: xPos * size,
     top: yPos * size,
     width: size,
     height: size,
-    backgroundColor: colors.NEAR_BLACK_TRANSPARENT(0.05),
-    borderColor: colors.DIM_GRAY,
+    backgroundColor: (darkMode) ? colors.OFF_WHITE_TRANSPARENT(0.2) : colors.NEAR_BLACK_TRANSPARENT(0.1),
+    borderColor: (darkMode) ? colors.OFF_WHITE : colors.DIM_GRAY,
     borderStyle: "solid",
     borderWidth: 1,
     borderRadius: 2,

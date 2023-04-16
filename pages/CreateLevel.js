@@ -122,7 +122,7 @@ export default function CreateLevel({ viewCallback, playLevelCallback, editorLev
         newBoard[y][x] = identifier[currentTool];
       }
       playSuccessSound();
-    } else {
+    } else if (type !== "spawn") { // never allow deletion of spawn tile, or we can error on play attempt
       newBoard[y][x] = 0; // empty
       playErrorSound();
     }

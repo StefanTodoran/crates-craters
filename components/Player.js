@@ -42,7 +42,7 @@ export default function Player({ game, touch, darkMode, tileSize }) {
         selectable = (tile === "one_way_down" && yPos < game.player.y) ? false : selectable;
 
         if (selectable) {
-          const optionStyle = styles.optionTile(xPos, yPos, tileSize, optionsAnim);
+          const optionStyle = styles.optionTile(xPos, yPos, tileSize, optionsAnim, darkMode);
           options.push(<Animated.View key={`option<${x},${y}}`} style={optionStyle}></Animated.View>)
         }
       }
@@ -101,7 +101,7 @@ const styles = StyleSheet.create({
       },
     ],
   }),
-  optionTile: (xPos, yPos, size, anim) => ({
+  optionTile: (xPos, yPos, size, anim, darkMode) => ({
     position: "absolute",
     left: xPos * size,
     top: yPos * size,
@@ -109,11 +109,11 @@ const styles = StyleSheet.create({
     height: size,
     opacity: anim.interpolate({ // was originally static 0.4
       inputRange: [0, 1],
-      outputRange: [0.3, 0],
+      outputRange: [0.75, 0.3],
       // outputRange: [0.5, 0.2],
     }),
 
-    borderColor: colors.DIM_GRAY,
+    borderColor: (darkMode) ? colors.OFF_WHITE : colors.DIM_GRAY,
     borderStyle: "solid",
     borderWidth: 1,
 

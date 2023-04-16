@@ -269,7 +269,7 @@
 //   NEAR_BLACK_TRANSPARENT(opacity) { return `rgba(14, 22, 14, ${opacity})`; },
 // };
 
-// TEST THEME
+// MAIN THEME
 const main_graphics = {
   DOOR: require('./assets/main_theme/door.png'),
   KEY: require('./assets/main_theme/key.png'),
@@ -342,6 +342,7 @@ const main_colors = {
   MAIN_BLUE_TRANSPARENT(opacity) { return `rgba(129, 181, 254, ${opacity})`; },
   MAIN_PURPLE_TRANSPARENT(opacity) { return `rgba(204, 183, 229, ${opacity})`; },
   NEAR_BLACK_TRANSPARENT(opacity) { return `rgba(21, 16, 26, ${opacity})`; },
+  OFF_WHITE_TRANSPARENT(opacity) { return `rgba(254, 250, 255, ${opacity})`; },
 };
 
 // EXPORTING
