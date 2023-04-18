@@ -2,15 +2,15 @@
 
 <h2 style="display: flex; align-items: center;">
   About
-  <img src="assets/purple_theme/crate.png" style="height: 1em; margin-left: 0.3em;"/>
-  <img src="assets/purple_theme/crater.png" style="height: 1em;"/>
+  <img src="assets/main_theme/crate.png" style="height: 1em; margin-left: 0.3em;"/>
+  <img src="assets/main_theme/crater.png" style="height: 1em;"/>
 </h2>
 
 Built with JavaScript and React Native, Crates and Craters is a single player puzzle game built for iOS and Android. Don't let the simple premise and minimalist graphics decieve you thought, the game gets challenging, fast!
 
 <h2 style="display: flex; align-items: center;">
   Features
-  <img src="assets/purple_theme/theme_icon.png" style="height: 1em;"/>
+  <img src="assets/main_theme/theme_icon.png" style="height: 1em;"/>
 </h2>
 
 * Dozens of puzzling levels
@@ -41,7 +41,7 @@ Built with JavaScript and React Native, Crates and Craters is a single player pu
     <td style="padding-left: 10%;">
       <h2 style="display: flex; align-items: center;">
         How To Play
-        <img src="assets/purple_theme/help_icon.png" style="height: 1em; margin-left: 0.3em;"/>
+        <img src="assets/main_theme/help_icon.png" style="height: 1em; margin-left: 0.3em;"/>
       </h2>
       <p>
         The objective of the game is to collect all of the coins and reach the flag. The map is a grid of square tiles, where the player can move vertically and horizontally one tile at a time. The player can walk on any empty floor tile or tiles occupied by coins or keys to collect those items.
@@ -111,8 +111,8 @@ Built with JavaScript and React Native, Crates and Craters is a single player pu
     <td style="padding-right: 10%;">
       <h2 style="display: flex; align-items: center;">
         Running Locally
-        <img src="assets/purple_theme/player.png" style="height: 1em;"/>
-        <img src="assets/purple_theme/left_icon.png" style="width: 1em;"/>
+        <img src="assets/main_theme/player.png" style="height: 1em;"/>
+        <img src="assets/main_theme/left_icon.png" style="width: 1em;"/>
       </h2>
       <p>
         Running and testing the app locally will require that you possess a phone with Expo Go installed on it and a working internet connection. Open the root folder and type `expo start`. For some reason, tunnel is the only connection type that works, so open the dev tools and switch to that mode.
@@ -120,8 +120,8 @@ Built with JavaScript and React Native, Crates and Craters is a single player pu
       <br>
       <h2 style="display: flex; align-items: center;">
         Building APK
-        <img src="assets/purple_theme/options_icon.png" style="height: 1em; margin-left: 0.2em;"/>
-        <img src="assets/purple_theme/hammer_icon.png" style="height: 1em;"/>
+        <img src="assets/main_theme/options_icon.png" style="height: 1em; margin-left: 0.2em;"/>
+        <img src="assets/main_theme/hammer_icon.png" style="height: 1em;"/>
       </h2>
       <p>
         Make sure you are logged in to expo with `expo whoami`. If not logged in, run <b>expo login</b>.
@@ -151,7 +151,7 @@ Built with JavaScript and React Native, Crates and Craters is a single player pu
 
 <h2 style="display: flex; align-items: center;">
   TODO
-  <img src="assets/purple_theme/flag.png" style="height: 1em;"/>
+  <img src="assets/main_theme/flag.png" style="height: 1em;"/>
 </h2>
 
 * Add sound effect for crate pushed into crater

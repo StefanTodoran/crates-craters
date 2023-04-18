@@ -47,7 +47,7 @@ export default function InputLine({ label, value, changeCallback, darkMode }) {
           value={value}
           selectionColor={colors.MAIN_PURPLE}
           cursorColor={colors.MAIN_PURPLE}
-          maxLength={14}
+          maxLength={18}
         />
       </Animated.View>
     </View>

@@ -9,91 +9,92 @@ import SimpleButton from './SimpleButton';
 const win = Dimensions.get('window');
 
 const LevelCard = React.memo(
-function LevelCard({ viewCallback, playCallback, editCallback, levelIndex }) {
-  const { darkMode } = useContext(GlobalContext);
-  const level = levels[levelIndex];
+  function LevelCard({ viewCallback, playCallback, editCallback, levelIndex }) {
+    const { darkMode } = useContext(GlobalContext);
+    const level = levels[levelIndex];
 
-  if (!level) return;
+    if (!level) return;
 
-  const defaultLevel = level.designer === "default";
-  const specialLevel = level.designer === "special";
+    const defaultLevel = level.designer === "default";
+    const specialLevel = level.designer === "special";
 
-  const tileSize = calcTileSize(level.board[0].length, win);
-  const playerPos = getSpawnPos(level.board);
+    const tileSize = calcTileSize(level.board[0].length, win);
+    const playerPos = getSpawnPos(level.board);
 
-  const previewSize = 2;
-  let previewTop, previewBottom;
-  if (playerPos.y - previewSize < 0) {
-    previewTop = 0;
-    previewBottom = (previewSize * 2);
-  } else if (playerPos.y + previewSize > level.board.length) {
-    previewTop = level.board.length - (previewSize * 2);
-    previewBottom = level.board.length;
-  } else {
-    previewTop = playerPos.y - previewSize;
-    previewBottom = playerPos.y + previewSize;
-  }
+    const previewSize = 2;
+    let previewTop, previewBottom;
+    if (playerPos.y - previewSize < 0) {
+      previewTop = 0;
+      previewBottom = (previewSize * 2);
+    } else if (playerPos.y + previewSize > level.board.length) {
+      previewTop = level.board.length - (previewSize * 2);
+      previewBottom = level.board.length;
+    } else {
+      previewTop = playerPos.y - previewSize;
+      previewBottom = playerPos.y + previewSize;
+    }
 
-  const anim = useRef(new Animated.Value(0)).current;
-  const setAnimTo = (animState, callback) => {
-    Animated.timing(anim, {
-      toValue: animState,
-      duration: 200,
-      useNativeDriver: true
-    }).start(callback);
-  }
+    const anim = useRef(new Animated.Value(0)).current;
+    const setAnimTo = (animState, callback) => {
+      Animated.timing(anim, {
+        toValue: animState,
+        duration: 200,
+        useNativeDriver: true
+      }).start(callback);
+    }
 
-  useEffect(() => {
-    // setTimeout(() => {
+    useEffect(() => {
+      // setTimeout(() => {
       setAnimTo(1);
-    // }, levelIndex * 100);
-  }, []);
+      // }, levelIndex * 100);
+    }, []);
 
-  return (
-    <Animated.View style={styles.container(anim, darkMode)}>
+    return (
+      <Animated.View style={styles.container(anim, darkMode)}>
 
-      <View style={styles.row}>
-        <View style={{ flexDirection: "row", justifyContent: "center" }}>
-          {/* Icon & Number */}
-          <View style={{ justifyContent: "center", alignItems: "center" }}>
-            <Image style={styles.bigIcon} source={defaultLevel ? graphics.CRATE : graphics.CRATER} />
-            <Text style={styles.number()}>{levelIndex + 1}</Text>
+        <View style={styles.row}>
+          <View style={{ flexDirection: "row", justifyContent: "flex-start" }}>
+            {/* Icon & Number */}
+            <View style={{ justifyContent: "center", alignItems: "center" }}>
+              <Image style={styles.bigIcon} source={defaultLevel ? graphics.CRATE : graphics.CRATER} />
+              <Text style={styles.number()}>{levelIndex + 1}</Text>
+            </View>
+
+            {/* Name & Designer */}
+            <View style={{ flexDirection: "column", justifyContent: "center", marginLeft: normalize(10) }}>
+              <Text style={styles.levelName(darkMode)} numberOfLines={1}>{level.name}</Text>
+              {!(defaultLevel || specialLevel) &&
+                <Text style={styles.designerName(darkMode)} numberOfLines={1}>Designed by "{level.designer}"</Text>}
+              {defaultLevel && <Text style={styles.designerName(darkMode)}>Standard Level</Text>}
+              {specialLevel && <Text style={styles.designerName(darkMode)}>Empty Canvas</Text>}
+            </View>
           </View>
 
-          {/* Name & Designer */}
-          <View style={{ flexDirection: "column", justifyContent: "center", marginLeft: normalize(10) }}>
-            <Text style={styles.levelName(darkMode)}>{level.name}</Text>
-            {!(defaultLevel || specialLevel) && <Text style={styles.designerName(darkMode)}>Designed by "{level.designer}"</Text>}
-            {defaultLevel && <Text style={styles.designerName(darkMode)}>Standard Level</Text>}
-            {specialLevel && <Text style={styles.designerName(darkMode)}>Empty Canvas</Text>}
+          {level.completed && <Image style={styles.icon} source={graphics.FLAG_ICON} />}
+        </View>
+
+        <View style={styles.row}>
+          <GameBoard board={level.board.slice(previewTop, previewBottom)} overrideTileSize={tileSize} rowCorrect={-0.1} />
+
+          <View style={{ flexDirection: "column", flex: 0.9 }}>
+            {playCallback && <SimpleButton onPress={() => { playCallback(levelIndex) }} text={"Play"} icon={graphics.PLAY_ICON} />}
+            {!playCallback && <SimpleButton onPress={() => { viewCallback("play") }} text={"Resume"} icon={graphics.KEY_ICON} />}
+            <SimpleButton text={"Edit"} icon={graphics.HAMMER_ICON} onPress={() => {
+              editCallback(levelIndex);
+              viewCallback("edit");
+            }} disabled={defaultLevel} />
           </View>
         </View>
 
-        {level.completed && <Image style={styles.icon} source={graphics.FLAG_ICON} />}
-      </View>
-
-      <View style={styles.row}>
-        <GameBoard board={level.board.slice(previewTop, previewBottom)} overrideTileSize={tileSize} rowCorrect={-0.1} />
-
-        <View style={{ flexDirection: "column", flex: 0.9 }}>
-          {playCallback && <SimpleButton onPress={() => { playCallback(levelIndex) }} text={"Play"} icon={graphics.PLAY_ICON} />}
-          {!playCallback && <SimpleButton onPress={() => { viewCallback("play") }} text={"Resume"} icon={graphics.KEY_ICON} />}
-          <SimpleButton text={"Edit"} icon={graphics.HAMMER_ICON} onPress={() => {
-            editCallback(levelIndex);
-            viewCallback("edit");
-          }} disabled={defaultLevel} />
-        </View>
-      </View>
-
-    </Animated.View>
-  );
-})
+      </Animated.View>
+    );
+  })
 
 export default LevelCard;
 
 function calcTileSize(boardWidth, window) {
   const maxWidth = (window.width * 0.5) / boardWidth;
-  return maxWidth;
+  return Math.floor(maxWidth);
 }
 
 const styles = StyleSheet.create({

@@ -245,7 +245,7 @@ const level_the_wall = [
   [4, 0, 4, 14, 0, 14, 1, 3],
   [5, 0, 4, 5, 4, 0, 0, 0],
 ];
-const level_doubling_up = [ // Doubling Up
+const level_buzzer_beater = [
   [8, 0, 2, 5, 0, 1, 0, 5],
   [0, 1, 1, 0, 5, 12, 6, 0],
   [0, 0, 4, 0, 4, 1, 1, 14],
@@ -309,7 +309,7 @@ const defaults = [
   createLevelObj("No Way Home", "default", level_no_way_home),
   createLevelObj("Prison", "default", level_prison),
   createLevelObj("The Wall", "default", level_the_wall),
-  createLevelObj("Doubling Up", "default", level_doubling_up),
+  createLevelObj("Buzzer Beater", "default", level_buzzer_beater),
   createLevelObj("Stupid Door", "default", level_stupid_door),
   createLevelObj("Pain", "default", level_pain),
 ];
@@ -465,7 +465,7 @@ export function icon_src(type) {
 export function calcTileSize(boardWidth, boardHeight, window) {
   const maxWidth = (window.width * 0.9) / boardWidth;
   const maxHeight = (window.height * 0.8) / boardHeight;
-  return Math.min(maxWidth, maxHeight);
+  return Math.floor(Math.min(maxWidth, maxHeight));
 }
 
 export function getTileType(tile) {

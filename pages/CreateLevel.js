@@ -172,6 +172,8 @@ export default function CreateLevel({ viewCallback, playLevelCallback, editorLev
 
     const success = await storeData(targetLevelObject, targetLevelName);
     await importStoredLevels(); // Causes Game.js module to register the change
+    playLevelCallback(-1); // Clears in progress level
+
     return success;
   }
 
