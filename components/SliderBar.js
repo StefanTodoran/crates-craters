@@ -1,6 +1,5 @@
 import { View, Animated, Text, StyleSheet, Dimensions, PanResponder } from 'react-native';
 import React, { useEffect, useState } from "react";
-import { colors } from '../Theme';
 
 const win = Dimensions.get('window');
 const barWidth = win.width / 2;
@@ -45,8 +44,10 @@ export default function SliderBar({
 
   useEffect(() => {
     if (pressed) {
-      const sensitivity = 25;
-      const newValue = Math.max(minValue, Math.min(maxValue, Math.round(value + (movedAmount * sensitivity))))
+      // While 8 is just a value that gave decent results, we
+      // base this on the range since larger ranges require higher sensitivity.
+      const sensitivity = (maxValue - minValue) / 8;
+      const newValue = Math.max(minValue, Math.min(maxValue, Math.round(value + (movedAmount * sensitivity))));
       changeCallback(newValue);
     }
   }, [movedAmount]);

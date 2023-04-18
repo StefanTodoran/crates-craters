@@ -1,4 +1,4 @@
-import { Text, StyleSheet, Dimensions, View, Animated } from 'react-native';
+import { Text, StyleSheet, Dimensions, View, Animated, ScrollView } from 'react-native';
 import React, { useContext, useEffect, useRef, useState } from "react";
 import SvgQRCode from 'react-native-qrcode-svg';
 import { BarCodeScanner } from 'expo-barcode-scanner';
@@ -9,7 +9,7 @@ import MenuButton from '../components/MenuButton';
 import { GlobalContext } from '../GlobalContext';
 import { countCustomLevels, levels } from '../Game';
 import Selector from '../components/Selector';
-import TextStyles from '../TextStyles';
+import TextStyles, { normalize } from '../TextStyles';
 
 export default function ShareLevel({ pageCallback }) {
   const { darkMode } = useContext(GlobalContext);
@@ -118,8 +118,11 @@ export default function ShareLevel({ pageCallback }) {
   }
 
   return (
-    <>
-      <View style={{ marginBottom: 15, width: win.width * 0.8 }}>
+    <ScrollView style={styles.scrollContainer} contentContainerStyle={{
+      paddingBottom: win.height * 0.1,
+      paddingTop: win.height * 0.1,
+    }} overScrollMode="never" showsVerticalScrollIndicator={false}>
+      <View style={{ marginBottom: 15, paddingHorizontal: win.width * 0.05 }}>
         <Text style={TextStyles.subtitle(darkMode)}>
           SHARE LEVELS
         </Text>
@@ -149,9 +152,9 @@ export default function ShareLevel({ pageCallback }) {
       <View style={{ height: 15 }} />
       <View style={styles.buttonsContainer}>
         <MenuButton onPress={setScanned} value={!scanned} label="Scan Level QR" icon={graphics.LOAD_ICON} />
-        <MenuButton onPress={pageCallback} value={false} label="Go Back" icon={graphics.DOOR_ICON} />
+        <MenuButton onPress={pageCallback} value={false} label="Back to Menu" icon={graphics.DOOR_ICON} />
       </View>
-    </>
+    </ScrollView>
   );
 }
 
@@ -240,7 +243,8 @@ const styles = StyleSheet.create({
   buttonsContainer: {
     alignItems: "center",
     justifyContent: "center",
-    width: win.width * 0.45,
+    width: win.width,
+    paddingHorizontal: win.width * 0.225,
   },
   container: {
     alignItems: "center",

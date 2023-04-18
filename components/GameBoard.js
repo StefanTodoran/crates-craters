@@ -85,7 +85,7 @@ export default function GameBoard({ children, board, tileCallback, overrideTileS
     tilesBoard.push(<View key={`row<${i}>`} style={{
       flexDirection: 'row',
       margin: 0,
-      marginTop: rowCorrect ? rowCorrect : 0,
+      marginTop: rowCorrect ? rowCorrect : -0.01,
     }}>{row}</View>);
   }
 

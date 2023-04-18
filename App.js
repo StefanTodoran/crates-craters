@@ -135,8 +135,8 @@ export default function App() {
 
   const [playLevel, setPlayLevel] = useState(1); // Stores the level number to be played / being played.
   const [game, setGameState] = useState(null); // Stores the game state of the level being played.
-  const [editorLevel, setEditorLevel] = useState(null); // Stores the level number to be edited / being edited.
-  const [editorLevelObj, setEditorLevelObj] = useState(null); // Stores the level object being edited.
+  const [editorLevel, setEditorLevel] = useState(-1); // Stores the level number to be edited / being edited.
+  const [editorLevelObj, setEditorLevelObj] = useState(-1); // Stores the level object being edited.
 
   const changePlayLevel = useCallback((lvl) => {
     setPlayLevel(lvl);
@@ -176,7 +176,9 @@ export default function App() {
 
           {/* LEVEL SELECT */}
           <View style={styles.page}>
-            <LevelSelect viewCallback={switchView} playLevelCallback={changePlayLevel} editorLevelCallback={changeEditorLevel} level={playLevel} game={game} />
+            <LevelSelect viewCallback={switchView}
+              playLevelCallback={changePlayLevel} editorLevelCallback={changeEditorLevel}
+              playLevel={playLevel} editorLevel={editorLevel} game={game} />
           </View>
 
           {/* MENU */}
