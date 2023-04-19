@@ -293,6 +293,22 @@ const level_pain = [
   [5, 0, 0, 0, 3, 0, 4, 0],
   [1, 4, 4, 1, 1, 4, 5, 6],
 ];
+const level_doubling_up = [
+  [0, 0, 0, 5, 5, 6, 4, 11],
+  [4, 4, 0, 0, 1, 4, 4, 6],
+  [0, 6, 0, 0, 1, 4, 0, 4],
+  [5, 4, 5, 2, 0, 0, 0, 0],
+  [1, 14, 1, 0, 0, 0, 0, 13],
+  [3, 4, 0, 0, 0, 0, "b:35", 2],
+  [5, 4, 5, 0, 0, 1, 13, 1],
+  [0, 0, 0, 5, 4, 11, 7, 6],
+  [8, 5, 0, 0, 0, 1, 1, 1],
+  [0, 0, 0, 0, 4, 5, 4, 0],
+  [1, 14, 0, 14, 5, 5, 4, 4],
+  [12, "b:95", 5, 0, 0, 0, 0, 0],
+  [0, 6, 12, 4, 12, 4, 0, 5],
+  [0, 4, 0, 5, 1, 13, 5, 3],
+]
 
 const defaults = [
   createLevelObj("Tutorial", "default", level_tutorial),
@@ -312,6 +328,7 @@ const defaults = [
   createLevelObj("Buzzer Beater", "default", level_buzzer_beater),
   createLevelObj("Stupid Door", "default", level_stupid_door),
   createLevelObj("Pain", "default", level_pain),
+  createLevelObj("Doubling Up", "default", level_doubling_up),
 ];
 
 export let levels = [...defaults];
@@ -378,7 +395,7 @@ export async function importStoredLevels() {
   try {
     const keys = await AsyncStorage.getAllKeys();
     levels = [...defaults];
-    
+
     const completedLevels = [];
     const settings = [
       "isAppDarkMode",
@@ -391,7 +408,7 @@ export async function importStoredLevels() {
     for (let i = 0; i < keys.length; i++) {
       if (settings.includes(keys[i])) {
         // Ignore settings.
-        continue; 
+        continue;
       } else if (keys[i].substring(0, 12) === "hasCompleted") {
         // We can't mark the level completed now since we might
         // not have loaded it, record for later.
@@ -610,8 +627,8 @@ function countTimesInArray(array, val) {
  * @returns {(boolean|Array)} Either false or a list of strings
  */
 export function canMoveTo(game_obj, tileX, tileY) {
-  const walkable = ["coin", "key", "one_way_left", "one_way_right", "one_way_up", "one_way_down"];
-  if (!canWalk(tileY, tileX, game_obj, walkable)) {
+  const walkable = ["coin", "key"];
+  if (!canWalk(tileY, tileX, game_obj, walkable.concat(["one_way_right", "one_way_left", "one_way_up", "one_way_down"]))) {
     return false;
   }
 
@@ -739,29 +756,37 @@ export function doGameMove(game_obj, move) {
     next.board[one_further.y][one_further.x] = game_obj.board[move_to.y][move_to.x];
   }
 
-  // Tile entity logic handling.
-  for (let i = 0; i < dimensions[0]; i++) {
-    for (let j = 0; j < dimensions[1]; j++) {
-      const data = getTileEntityData(next.board[i][j]);
+  const moved = attemptMove(move_to.y, move_to.x, next, walkable);
+  if (moved) {
+    // Tile entity logic handling. If we haven't moved, we shouldn't
+    // decrease bomb fuse (invalid moves shouldn't count as a move).
 
-      if (data.type === "bomb") {
-        data.fuse--;
-
-        if (data.fuse > 0) {
-          const updated = formatTileEntityData(data);
-          next.board[i][j] = updated;
-        } else {
-          if (tileAt(i - 1, j, next.board) === "crate") { next.board[i - 1][j] = 10; }
-          if (tileAt(i + 1, j, next.board) === "crate") { next.board[i + 1][j] = 10; }
-          if (tileAt(i, j - 1, next.board) === "crate") { next.board[i][j - 1] = 10; }
-          if (tileAt(i, j + 1, next.board) === "crate") { next.board[i][j + 1] = 10; }
-          next.board[i][j] = 9;
+    for (let i = 0; i < dimensions[0]; i++) {
+      for (let j = 0; j < dimensions[1]; j++) {
+        const data = getTileEntityData(next.board[i][j]);
+  
+        if (data.type === "bomb") {
+          data.fuse--;
+  
+          if (data.fuse > 0) {
+            const updated = formatTileEntityData(data);
+            next.board[i][j] = updated;
+          } else {
+            if (tileAt(i - 1, j, next.board) === "crate") { next.board[i - 1][j] = 10; }
+            if (tileAt(i + 1, j, next.board) === "crate") { next.board[i + 1][j] = 10; }
+            if (tileAt(i, j - 1, next.board) === "crate") { next.board[i][j - 1] = 10; }
+            if (tileAt(i, j + 1, next.board) === "crate") { next.board[i][j + 1] = 10; }
+            next.board[i][j] = 9;
+          }
         }
       }
     }
   }
 
-  next.won = attemptMove(move_to.y, move_to.x, next, walkable);
+
+
+
+  next.won = winCondition(next);
   return next;
 }
 
@@ -769,7 +794,7 @@ function attemptMove(yPos, xPos, next, walkable) {
   if (canWalk(yPos, xPos, next, walkable)) {
     next.player.x = xPos;
     next.player.y = yPos;
-    return winCondition(next);
+    return true;
   }
   return false;
 }

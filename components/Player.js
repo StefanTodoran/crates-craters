@@ -53,7 +53,7 @@ export default function Player({ game, touch, darkMode, tileSize }) {
 
   return (
     <>
-      {options}
+      {!game.won && options}
       <Animated.View style={{
         ...styles.player(game.player.x, game.player.y, tileSize, touch.x, touch.y),
         // ...styles.player(

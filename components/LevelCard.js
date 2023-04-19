@@ -88,7 +88,8 @@ const LevelCard = React.memo(
 
       </Animated.View>
     );
-  })
+  }
+);
 
 export default LevelCard;
 

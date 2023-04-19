@@ -9,7 +9,7 @@ import MenuButton from '../components/MenuButton';
 import { GlobalContext } from '../GlobalContext';
 import { countCustomLevels, levels } from '../Game';
 import Selector from '../components/Selector';
-import TextStyles, { normalize } from '../TextStyles';
+import TextStyles from '../TextStyles';
 
 export default function ShareLevel({ pageCallback }) {
   const { darkMode } = useContext(GlobalContext);
@@ -119,41 +119,50 @@ export default function ShareLevel({ pageCallback }) {
 
   return (
     <ScrollView style={styles.scrollContainer} contentContainerStyle={{
-      paddingBottom: win.height * 0.1,
-      paddingTop: win.height * 0.1,
+      paddingBottom: scanned ? win.height * 0.1 : win.height * 0.05,
+      paddingTop: scanned ? win.height * 0.1 : win.height * 0.05,
     }} overScrollMode="never" showsVerticalScrollIndicator={false}>
-      <View style={{ marginBottom: 15, paddingHorizontal: win.width * 0.05 }}>
-        <Text style={TextStyles.subtitle(darkMode)}>
-          SHARE LEVELS
-        </Text>
-        <Text style={{ ...TextStyles.paragraph(darkMode), zIndex: 1 }}>
-          Scan this QR code to download level
-          "<Text style={TextStyles.bold(darkMode)}>{levelObj.name}</Text>"
-          by "<Text style={TextStyles.bold(darkMode)}>{levelObj.designer}</Text>",
-          or click the button below to load a level from a QR code.
-        </Text>
-      </View>
-
-      {scanned && <View style={styles.container}>
-        <View style={styles.container}>
-          <SvgQRCode value={encoding} enableLinearGradient={true} linearGradient={[colors.MAIN_PURPLE, colors.DARK_PURPLE]} backgroundColor={"transparent"} />
-          <Animated.View style={styles.info(darkMode, anim)}>
-            <Text style={TextStyles.bold(darkMode)}>{info}</Text>
-          </Animated.View>
+      {scanned && <>
+        <View style={{ marginBottom: 15, paddingHorizontal: win.width * 0.05 }}>
+          <Text style={TextStyles.subtitle(darkMode)}>
+            SHARE LEVELS
+          </Text>
+          <Text style={{ ...TextStyles.paragraph(darkMode), zIndex: 1 }}>
+            Scan this QR code to download level
+            "<Text style={TextStyles.bold(darkMode)}>{levelObj.name}</Text>"
+            by "<Text style={TextStyles.bold(darkMode)}>{levelObj.designer}</Text>",
+            or click the button below to load a level from a QR code.
+          </Text>
         </View>
 
-        <View style={{ height: 35 }} />
-        <Selector label={`Share "${levelObj.name}" QR`}
-          onNext={nextLevel} nextDisabled={buttonsDisabled}
-          onPrev={prevLevel} prevDisabled={buttonsDisabled} />
-      </View>}
-      {!scanned && <BarCodeScanner onBarCodeScanned={handleBarCodeScanned} style={{ height: "50%", width: "100%" }} />}
+        <View style={styles.container}>
+          <View style={styles.container}>
+            <SvgQRCode value={encoding} enableLinearGradient={true} linearGradient={[colors.MAIN_PURPLE, colors.DARK_PURPLE]} backgroundColor={"transparent"} />
+            <Animated.View style={styles.info(darkMode, anim)}>
+              <Text style={TextStyles.bold(darkMode)}>{info}</Text>
+            </Animated.View>
+          </View>
 
-      <View style={{ height: 15 }} />
-      <View style={styles.buttonsContainer}>
-        <MenuButton onPress={setScanned} value={!scanned} label="Scan Level QR" icon={graphics.LOAD_ICON} />
-        <MenuButton onPress={pageCallback} value={false} label="Back to Menu" icon={graphics.DOOR_ICON} />
-      </View>
+          <View style={{ height: 35 }} />
+          <Selector label={`Share "${levelObj.name}" QR`}
+            onNext={nextLevel} nextDisabled={buttonsDisabled}
+            onPrev={prevLevel} prevDisabled={buttonsDisabled} />
+        </View>
+
+        <View style={{ height: 15 }} />
+        <View style={styles.buttonsContainer}>
+          <MenuButton onPress={setScanned} value={!scanned} label="Scan Level QR" icon={graphics.LOAD_ICON} />
+          <MenuButton onPress={pageCallback} value={false} label="Back to Menu" icon={graphics.DOOR_ICON} />
+        </View>
+      </>}
+      {!scanned && <>
+        <BarCodeScanner onBarCodeScanned={handleBarCodeScanned} style={{ height: win.height * 0.55 }} />
+
+        <View style={{ height: 15 }} />
+        <View style={styles.buttonsContainer}>
+          <MenuButton onPress={setScanned} value={!scanned} label="Cancel Scan" icon={graphics.LOAD_ICON} />
+        </View>
+      </>}
     </ScrollView>
   );
 }
@@ -261,7 +270,8 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    justifyContent: "center",
     alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: win.width * 0.225,
   }),
 });

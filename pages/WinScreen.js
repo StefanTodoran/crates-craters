@@ -69,7 +69,7 @@ export default function WinScreen({ darkMode }) {
     <Animated.View style={{
       ...styles.modal,
       opacity: fadeAnim,
-      backgroundColor: (darkMode) ? colors.NEAR_BLACK : "white",
+      backgroundColor: (darkMode) ? colors.NEAR_BLACK_TRANSPARENT(0.95) : "rgba(255, 255, 255, 0.9)",
     }}>
       <Image style={styles.banner} source={graphics.WIN_BANNER} />
       {confetti}

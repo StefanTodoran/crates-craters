@@ -26,7 +26,8 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#FFFFFF"
       },
-      "package": "com.stefantodoran.cratesncraters"
+      "package": "com.stefantodoran.cratesncraters",
+      "versionCode": 2
     },
     "web": {
       "favicon": "./assets/favicon.png"
