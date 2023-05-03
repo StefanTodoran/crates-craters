@@ -154,11 +154,11 @@ Built with JavaScript and React Native, Crates and Craters is a single player pu
   <img src="assets/main_theme/flag.png" style="height: 1em;"/>
 </h2>
 
+* Figure out why nav buttons update so slowly
 * Add sound effect for crate pushed into crater
 * Add more sound variations
 * Make many, many more levels
 * Create a proper tutorial?
 * Look into ways to have level sharing server
-* Make non-valid moves not count as a turn (don't tick bomb)
 * Rework how levels are marked as default?
 * Improve VirtualizedList performance especially as content length increases

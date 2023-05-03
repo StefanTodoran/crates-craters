@@ -190,7 +190,7 @@ export default function PlayLevel({ viewCallback, levelCallback, gameStateCallba
         playedSound = true;
       }
 
-      if (!playedSound && new_state.won) {
+      if (!playedSound && !new_state.won) {
         playMoveSound();
       }
     }
@@ -295,8 +295,8 @@ export default function PlayLevel({ viewCallback, levelCallback, gameStateCallba
                 current = doGameMove(current, path[i]);
               }
               gameStateCallback(current);
+              if (playAudio) playMoveSound();
             }
-            if (playAudio) playMoveSound();
           }, 750);
         }
         setPrevTouchPos({
