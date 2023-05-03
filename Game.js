@@ -738,6 +738,7 @@ export function doGameMove(game_obj, move) {
     tileAt(one_further.y, one_further.x, next.board) === "empty") {
     next.board[move_to.y][move_to.x] = 0;
     next.board[one_further.y][one_further.x] = identifier["crate"];
+    next.soundEvent = "push";
   }
 
   // Pushing a crate into a crater.
@@ -745,6 +746,7 @@ export function doGameMove(game_obj, move) {
     tileAt(one_further.y, one_further.x, next.board) === "crater") {
     next.board[move_to.y][move_to.x] = 0;
     next.board[one_further.y][one_further.x] = 0;
+    next.soundEvent = "fill";
   }
 
   // Pushing a bomb onto an empty tile.
@@ -754,6 +756,7 @@ export function doGameMove(game_obj, move) {
     // We don't just set using indentifier["bomb"] since bomb is a string
     // so that it can contain fuse time. We need to persist this data.
     next.board[one_further.y][one_further.x] = game_obj.board[move_to.y][move_to.x];
+    next.soundEvent = "push";
   }
 
   const moved = attemptMove(move_to.y, move_to.x, next, walkable);
@@ -777,6 +780,7 @@ export function doGameMove(game_obj, move) {
             if (tileAt(i, j - 1, next.board) === "crate") { next.board[i][j - 1] = 10; }
             if (tileAt(i, j + 1, next.board) === "crate") { next.board[i][j + 1] = 10; }
             next.board[i][j] = 9;
+            next.soundEvent = "explosion";
           }
         }
       }
@@ -844,6 +848,7 @@ function cloneGameObj(game_obj) {
     coins: game_obj.coins,
     keys: game_obj.keys,
     won: game_obj.won,
+    soundEvent: null,
   };
 }
 

@@ -36,18 +36,18 @@ export default function MenuButton({
   textColor
 }) {
   const { darkMode } = useContext(GlobalContext);
-
   const [pressed, setPressedState] = useState(false);
-  const [sound, setSound] = useState();
-  async function playSound() {
-    const { sound } = await Audio.Sound.createAsync(require('../assets/audio/button.wav'));
-    setSound(sound);
-    await sound.playAsync();
-  }
 
-  useEffect(() => {
-    return sound ? () => { sound.unloadAsync(); } : undefined;
-  }, [sound]);
+  // const [sound, setSound] = useState();
+  // async function playSound() {
+  //   const { sound } = await Audio.Sound.createAsync(require('../assets/audio/button.wav'));
+  //   setSound(sound);
+  //   await sound.playAsync();
+  // }
+
+  // useEffect(() => {
+  //   return sound ? () => { sound.unloadAsync(); } : undefined;
+  // }, [sound]);
 
   // This ensures that onPress is optional.
   const pressedFn = () => {
@@ -80,7 +80,7 @@ export default function MenuButton({
     )}
       onPress={pressedFn} onLongPress={longPressedFn}
       onPressIn={() => { setPressedState(!!onPress) }} onPressOut={() => { setPressedState(false) }}
-      disabled={disabled} touchSoundDisabled={true}>
+      disabled={disabled} touchSoundDisabled={false} android_disableSound={false}>
 
       {(icon) && <Image style={styles.icon} source={icon} />}
 

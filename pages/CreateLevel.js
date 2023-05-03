@@ -40,7 +40,7 @@ const win = Dimensions.get('window');
  * Callback used to update the above level object.
  */
 export default function CreateLevel({ viewCallback, playLevelCallback, editorLevelCallback, levelIndex, levelObj, storeLevelCallback, playTestCallback }) {
-  const { darkMode } = useContext(GlobalContext);
+  const { darkMode, dragSensitivity, doubleTapDelay, playAudio } = useContext(GlobalContext);
 
   const special = levelObj.designer === "special";
   const [levelName, setLevelName] = useState(levelObj.name);
@@ -53,12 +53,12 @@ export default function CreateLevel({ viewCallback, playLevelCallback, editorLev
   const [errorSound, setErrorSound] = useState();
 
   async function playSuccessSound() {
-    const { sound } = await Audio.Sound.createAsync(require('../assets/audio/move.wav'));
+    const { sound } = await Audio.Sound.createAsync(require('../assets/audio/push.wav'));
     setSuccessSound(sound);
     await sound.playAsync();
   }
   async function playErrorSound() {
-    const { sound } = await Audio.Sound.createAsync(require('../assets/audio/badmove.wav'));
+    const { sound } = await Audio.Sound.createAsync(require('../assets/audio/fill.wav'));
     setErrorSound(sound);
     await sound.playAsync();
   }
@@ -121,10 +121,12 @@ export default function CreateLevel({ viewCallback, playLevelCallback, editorLev
         // Normal non-entity tile logic.
         newBoard[y][x] = identifier[currentTool];
       }
-      playSuccessSound();
+
+      if (playAudio) playSuccessSound();
     } else if (type !== "spawn") { // never allow deletion of spawn tile, or we can error on play attempt
       newBoard[y][x] = 0; // empty
-      playErrorSound();
+
+      if (playAudio) playErrorSound();
     }
 
     storeLevelCallback({

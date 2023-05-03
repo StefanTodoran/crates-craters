@@ -108,8 +108,8 @@ export default function App() {
     // At the moment there is only one theme, uncomment and
     // fix this funciton when that changes.
 
-    // let theme = "purple"; // by default, Theme.js exports purple theme
-    // const targetTheme = await getData("appTheme", "string", "purple");
+    // let theme = "main"; // by default, Theme.js exports main theme
+    // const targetTheme = await getData("appTheme", "string", "main");
     // while (theme !== targetTheme) {
     //   theme = nextTheme();
     // }
@@ -257,7 +257,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-evenly',
     width: '100%',
     paddingBottom: '2%',
-    paddingTop: '4%',
+    paddingTop: '3%',
     transform: [{
       translateY: anim.interpolate({
         inputRange: [0, 1],

@@ -1,35 +1,23 @@
-import { Pressable, Text, StyleSheet, Image, Dimensions } from 'react-native';
-import React, { useContext, useEffect, useState } from 'react';
-import { Audio } from 'expo-av';
+import { Pressable, StyleSheet, Image, Dimensions } from 'react-native';
+import React, { useState } from 'react';
 import { colors } from '../Theme';
-import { GlobalContext } from '../GlobalContext';
 const win = Dimensions.get('window');
 
 export default function IconButton({ onPress, source }) {
-  const { darkMode, dragSensitivity, doubleTapDelay, playAudio } = useContext(GlobalContext);
-
   const [pressed, setPressedState] = useState(false);
-  const [sound, setSound] = useState();
-  async function playSound() {
-    const { sound } = await Audio.Sound.createAsync(require('../assets/audio/button.wav'));
-    setSound(sound);
-    await sound.playAsync();
-  }
-
-  useEffect(() => {
-    return sound ? () => { sound.unloadAsync(); } : undefined;
-  }, [sound]);
 
   // This ensures that onPress is optional.
   const pressedFn = () => {
     if (!!onPress) {
       onPress();
-      // if (playAudio) { playSound(); }
     }
   }
 
   return (
     <Pressable onPress={pressedFn} style={{
+      padding: sizeFromWidthPercent(0.02, 100, 100)[0],
+      borderRadius: sizeFromWidthPercent(0.02, 100, 100)[0],
+      backgroundColor: pressed ? colors.MAIN_PURPLE_TRANSPARENT(0.1) : "#00000000",
       transform: [{
         scale: pressed ? 0.95 : 1,
       }],
@@ -48,7 +36,7 @@ function sizeFromWidthPercent(percent, img_height, img_width) {
 
 const styles = StyleSheet.create({
   icon: {
-    width: sizeFromWidthPercent(0.1, 100, 100)[0],
-    height: sizeFromWidthPercent(0.1, 100, 100)[1],
+    width: sizeFromWidthPercent(0.09, 100, 100)[0],
+    height: sizeFromWidthPercent(0.09, 100, 100)[1],
   },
 });

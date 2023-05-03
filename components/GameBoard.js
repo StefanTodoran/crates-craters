@@ -35,7 +35,8 @@ export default function GameBoard({ children, board, tileCallback, overrideTileS
         if (!tileCallback) {
           row.push(<View key={`tile<${i},${j}>`} style={[styles.wallTile(fillColor, borderColor, tileSize), borders]} />);
         } else {
-          row.push(<Pressable key={`tile<${i},${j}>`} style={[styles.wallTile(fillColor, borderColor, tileSize), borders]} onPress={pressCallback} />);
+          row.push(<Pressable key={`tile<${i},${j}>`} style={[styles.wallTile(fillColor, borderColor, tileSize), borders]}
+            onPress={pressCallback} touchSoundDisabled={true} android_disableSound={true} />);
         }
       } else {
         // Regular tiles are sized like wall tiles but are Image elements. All
@@ -61,7 +62,8 @@ export default function GameBoard({ children, board, tileCallback, overrideTileS
               {contents}
             </View>);
           } else {
-            row.push(<Pressable key={`tile<${i},${j}>`} onPress={pressCallback} style={{ position: "relative" }}>
+            row.push(<Pressable key={`tile<${i},${j}>`} onPress={pressCallback}
+              touchSoundDisabled={true} android_disableSound={true} style={{ position: "relative" }}>
               {contents}
             </Pressable>);
           }
@@ -72,7 +74,8 @@ export default function GameBoard({ children, board, tileCallback, overrideTileS
           if (!tileCallback) {
             row.push(<Image key={`tile<${i},${j}>`} style={styles.tile(bgColor, tileSize)} source={icon} />);
           } else {
-            row.push(<Pressable key={`tile<${i},${j}>`} onPress={pressCallback}>
+            row.push(<Pressable key={`tile<${i},${j}>`} onPress={pressCallback}
+              touchSoundDisabled={true} android_disableSound={true}>
               <Image style={styles.tile(bgColor, tileSize)} source={icon} />
             </Pressable>);
           }
@@ -132,7 +135,7 @@ const styles = StyleSheet.create({
   entity: (fontSize) => ({
     fontFamily: "Montserrat-Regular",
     fontWeight: "normal",
-    color: "white", 
+    color: "white",
     fontSize: fontSize
   }),
 });

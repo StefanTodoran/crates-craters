@@ -64,18 +64,25 @@ export default function PlayLevel({ viewCallback, levelCallback, gameStateCallba
   // Set up for sounds, most of this is just copied from the very
   // limited expo-av documentation so don't mess with it.
   const [moveSound, setMoveSound] = useState();
-  const [errorSound, setErrorSound] = useState();
+  const [pushSound, setPushSound] = useState();
+  const [fillSound, setFillSound] = useState();
   const [coinSound, setCoinSound] = useState();
   const [doorSound, setDoorSound] = useState();
+  const [boomSound, setBoomSound] = useState();
 
   async function playMoveSound() {
     const { sound } = await Audio.Sound.createAsync(require('../assets/audio/move.wav'));
     setMoveSound(sound);
     await sound.playAsync();
   }
-  async function playErrorSound() {
-    const { sound } = await Audio.Sound.createAsync(require('../assets/audio/badmove.wav'));
-    setErrorSound(sound);
+  async function playPushSound() {
+    const { sound } = await Audio.Sound.createAsync(require('../assets/audio/push.wav'));
+    setPushSound(sound);
+    await sound.playAsync();
+  }
+  async function playFillSound() {
+    const { sound } = await Audio.Sound.createAsync(require('../assets/audio/fill.wav'));
+    setFillSound(sound);
     await sound.playAsync();
   }
   async function playCoinSound() {
@@ -88,19 +95,27 @@ export default function PlayLevel({ viewCallback, levelCallback, gameStateCallba
     setDoorSound(sound);
     await sound.playAsync();
   }
+  async function playExplosionSound() {
+    const { sound } = await Audio.Sound.createAsync(require('../assets/audio/explosion.wav'));
+    setBoomSound(sound);
+    await sound.playAsync();
+  }
 
   useEffect(() => {
-    return moveSound ? () => { moveSound.unloadAsync(); } : undefined;
-  }, [moveSound]);
+    return pushSound ? () => { pushSound.unloadAsync(); } : undefined;
+  }, [pushSound]);
   useEffect(() => {
-    return errorSound ? () => { errorSound.unloadAsync(); } : undefined;
-  }, [errorSound]);
+    return fillSound ? () => { fillSound.unloadAsync(); } : undefined;
+  }, [fillSound]);
   useEffect(() => {
     return coinSound ? () => { coinSound.unloadAsync(); } : undefined;
   }, [coinSound]);
   useEffect(() => {
     return doorSound ? () => { doorSound.unloadAsync(); } : undefined;
   }, [doorSound]);
+  useEffect(() => {
+    return boomSound ? () => { boomSound.unloadAsync(); } : undefined;
+  }, [boomSound]);
 
   // Player input related state. The touchMove state is used for the <Player/> component 
   // preview of moves, gesture is used for actually completing those moves on release.
@@ -152,17 +167,31 @@ export default function PlayLevel({ viewCallback, levelCallback, gameStateCallba
       new_state = doGameMove(game, "right");
     }
 
-    // Check which if any sounds need to be played
     if (playAudio) {
-      if (new_state.player.x === game.player.x && new_state.player.y === game.player.y) {
-        playErrorSound();
-      } else {
+      let playedSound = false;
+      if (new_state.soundEvent === "explosion") {
+        playExplosionSound();
+        playedSound = true;
+      }
+      if (new_state.soundEvent === "push") {
+        playPushSound();
+        playedSound = true;
+      }
+      if (new_state.soundEvent === "fill") {
+        playFillSound();
+        playedSound = true;
+      }
+      if (new_state.coins > game.coins || new_state.keys > game.keys) {
+        playCoinSound();
+        playedSound = true;
+      }
+      if (new_state.keys < game.keys) {
+        playDoorSound();
+        playedSound = true;
+      }
+
+      if (!playedSound && new_state.won) {
         playMoveSound();
-        if (new_state.coins > game.coins || new_state.keys > game.keys) {
-          playCoinSound();
-        } else if (new_state.keys < game.keys) {
-          playDoorSound();
-        }
       }
     }
 
@@ -267,6 +296,7 @@ export default function PlayLevel({ viewCallback, levelCallback, gameStateCallba
               }
               gameStateCallback(current);
             }
+            if (playAudio) playMoveSound();
           }, 750);
         }
         setPrevTouchPos({
@@ -330,7 +360,7 @@ export default function PlayLevel({ viewCallback, levelCallback, gameStateCallba
         <View style={{ flexDirection: "row", height: normalize(50) }}>
           {!game.won && <SimpleButton onPress={toggleModal} text="Pause Menu" />}
           {game.won && !test && <SimpleButton onPress={() => { levelCallback(level + 1) }} text="Next Level" />}
-          {game.won && <View style={{width: normalize(15)}}/>}
+          {game.won && <View style={{ width: normalize(15) }} />}
           {game.won && <SimpleButton onPress={() => { viewCallback("home"); }} text="Go Back" />}
         </View>
       </SafeAreaView>}
