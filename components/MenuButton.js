@@ -1,4 +1,4 @@
-import { Pressable, Text, StyleSheet, Image, View } from 'react-native';
+import { Pressable, Text, StyleSheet, Image } from 'react-native';
 import React, { useContext, useEffect, useState } from 'react';
 import { Audio } from 'expo-av';
 import { colors } from '../Theme';

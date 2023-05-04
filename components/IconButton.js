@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { colors } from '../Theme';
 const win = Dimensions.get('window');
 
-export default function IconButton({ onPress, source }) {
+export default function IconButton({ onPress, imageSrc, svgContent }) {
   const [pressed, setPressedState] = useState(false);
 
   // This ensures that onPress is optional.
@@ -22,7 +22,8 @@ export default function IconButton({ onPress, source }) {
         scale: pressed ? 0.95 : 1,
       }],
     }} onPressIn={() => { setPressedState(!!onPress) }} onPressOut={() => { setPressedState(false) }}>
-      <Image style={styles.icon} source={source} />
+      {imageSrc && <Image style={styles.icon} source={imageSrc} />}
+      {!imageSrc && svgContent}
     </Pressable>
   );
 }

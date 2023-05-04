@@ -24,6 +24,8 @@ export default function LevelSelect({ viewCallback, playLevelCallback, editorLev
 
   const playIndex = (!game) ? -1 : playLevel;
   const editIndex = playIndex === -1 ? editorLevel : -1;
+  const scrollIndex = (game && !game.playtest && playIndex > 0) ? playIndex :
+                      (editIndex > 0) ? editIndex : 0;
 
   return (
     <>
@@ -48,19 +50,17 @@ export default function LevelSelect({ viewCallback, playLevelCallback, editorLev
           renderItem={({ item, index }) =>
             index === playIndex && !game.won ?
               <LevelCard viewCallback={viewCallback} editCallback={editorLevelCallback}
-                levelIndex={index} /> :
+                levelIndex={index} scrollIndex={scrollIndex} /> :
               <LevelCard viewCallback={viewCallback} editCallback={editorLevelCallback}
-                playCallback={openLevel} levelIndex={index} />
+                playCallback={openLevel} levelIndex={index} scrollIndex={scrollIndex} />
           }
           keyExtractor={item => `${item.name},${item.designer}`}
           getItemLayout={(data, index) => (
             { length: elementHeight, offset: elementHeight * index, index }
           )}
           onLayout={() => {
-            if (game && !game.playtest && playIndex > 0) {
-              scrollRef.current.scrollToIndex({ index: playIndex, animated: false });
-            } else if (editIndex > 0) {
-              scrollRef.current.scrollToIndex({ index: editIndex, animated: false });
+            if (scrollIndex) {
+              scrollRef.current.scrollToIndex({ index: scrollIndex, animated: false });
             }
           }}
         />

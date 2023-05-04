@@ -13,6 +13,7 @@ import LevelSelect from './pages/LevelSelect';
 import PlayLevel from './pages/PlayLevel';
 import CreateLevel from './pages/CreateLevel';
 import { cloneLevelObj, storeData } from './Game';
+import { Path, Svg } from 'react-native-svg';
 
 const win = Dimensions.get('window');
 
@@ -171,7 +172,8 @@ export default function App() {
 
         {/* HOME VIEW */}
         {view === "home" && <ScrollView horizontal pagingEnabled showsHorizontalScrollIndicator={false} onScroll={(evt) => {
-          setPageState(Math.round(evt.nativeEvent.contentOffset.x / win.width));
+          // setPageState(Math.round(evt.nativeEvent.contentOffset.x / win.width));
+          setPageState(Math.round(evt.nativeEvent.contentOffset.x / win.width * 10) / 10);
         }} ref={scrollRef} overScrollMode="never">
 
           {/* LEVEL SELECT */}
@@ -207,14 +209,52 @@ export default function App() {
         {/* BOTTOM NAVIGATION */}
         <Animated.View style={styles.navbar(anim)}>
           <IconButton onPress={() => { scrollRef.current?.scrollTo({ x: 0, animated: true }); }}
-            source={page === 0 ? graphics.PLAY_FILLED_ICON : graphics.PLAY_OUTLINED_ICON} />
+            svgContent={PlayIcon(1- page)} />
           <IconButton onPress={() => { scrollRef.current?.scrollTo({ x: win.width, animated: true }); }}
-            source={page === 1 ? graphics.SHARE_FILLED_ICON : graphics.SHARE_OUTLINED_ICON} />
+            svgContent={ShareIcon(page)} />
         </Animated.View>
       </SafeAreaView>
       <StatusBar style="auto" />
     </GlobalContext.Provider>
   );
+}
+
+function PlayIcon(opacity) {
+  return (
+    <Svg
+      width={sizeFromWidthPercent(0.09, 100, 100)[0]}
+      height={sizeFromWidthPercent(0.09, 100, 100)[0]}
+      viewBox="0 0 100 100"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <Path
+        d="M26.5 8.83c0-2.045 2.32-3.225 3.972-2.021l56.51 41.17a2.5 2.5 0 010 4.042l-56.51 41.17c-1.652 1.204-3.972.024-3.972-2.02V8.829z"
+        fill={colors.MAIN_PURPLE_TRANSPARENT(opacity)}
+        stroke="#CCB7E5"
+        strokeWidth={5}
+      />
+    </Svg>
+  )
+}
+
+function ShareIcon(opacity) {
+  return (
+    <Svg
+      width={sizeFromWidthPercent(0.09, 100, 100)[0]}
+      height={sizeFromWidthPercent(0.09, 100, 100)[0]}
+      viewBox="0 0 100 100"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <Path
+        d="M58.822 79.113c-.005.146-.007.292-.007.439 0 7.681 6.176 13.948 13.843 13.948 7.666 0 13.842-6.267 13.842-13.948 0-7.682-6.176-13.949-13.843-13.949-4.21 0-7.974 1.895-10.507 4.87L38.89 56.825a13.993 13.993 0 001.295-5.895c0-1.922-.387-3.757-1.088-5.427l24.526-15.488a13.734 13.734 0 009.035 3.38c7.666 0 13.842-6.266 13.842-13.948C86.5 11.767 80.324 5.5 72.657 5.5c-7.666 0-13.842 6.267-13.842 13.948 0 .873.08 1.73.233 2.561l-26.19 16.613a13.708 13.708 0 00-6.515-1.64c-7.667 0-13.843 6.267-13.843 13.949 0 7.681 6.176 13.948 13.843 13.948 2.07 0 4.038-.46 5.805-1.283l26.674 15.517z"
+        fill={colors.MAIN_PURPLE_TRANSPARENT(opacity)}
+        stroke="#CCB7E5"
+        strokeWidth={5}
+      />
+    </Svg>
+  )
 }
 
 // Returns a list [height, width] of the size for an element based

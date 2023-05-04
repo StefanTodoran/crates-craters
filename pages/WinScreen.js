@@ -1,17 +1,21 @@
 import { StyleSheet, Dimensions, Image, Animated } from 'react-native';
-import React, { useEffect, useRef } from "react";
+import React, { useContext, useEffect, useRef } from "react";
 import { Audio } from 'expo-av';
 import { colors, graphics } from '../Theme';
+import { GlobalContext } from '../GlobalContext';
 const win = Dimensions.get('window');
 
-export default function WinScreen({ darkMode }) {
+export default function WinScreen() {
+  const { darkMode, dragSensitivity, doubleTapDelay, playAudio } = useContext(GlobalContext);
+
   useEffect(() => {
     async function playSound() {
       const { sound } = await Audio.Sound.createAsync(require('../assets/audio/victory.wav'));
       await sound.playAsync();
     }
+
     // A useEffect hook must return a function, not a promise.
-    playSound();
+    if (playAudio) playSound();
 
     return function unmountCleanUp() {
       if (sound) { sound.unloadAsync(); }

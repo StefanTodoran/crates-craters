@@ -348,7 +348,7 @@ export default function PlayLevel({ viewCallback, levelCallback, gameStateCallba
             {touchPos && <Animated.View style={styles.indicator(touchPos.x, touchPos.y, tileSize, pressAnim, darkMode)} />}
           </GameBoard>
           <Inventory coins={game.coins} maxCoins={game.maxCoins} keys={game.keys} />
-          {game.won && <WinScreen darkMode={darkMode} />}
+          {game.won && <WinScreen />}
         </View>
 
         {/* PAUSE MENU COMPONENTS */}
