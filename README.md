@@ -6,7 +6,7 @@
   <img src="assets/main_theme/crater.png" style="height: 1em;"/>
 </h2>
 
-Built with JavaScript and React Native, Crates and Craters is a single player puzzle game built for iOS and Android. Don't let the simple premise and minimalist graphics decieve you thought, the game gets challenging, fast!
+Built with JavaScript and React Native, Crates and Craters is a single player puzzle game built for iOS and Android. Don't let the simple premise and minimalist graphics decieve you, the simple mechanics compound to create challenging and layered gameplay!
 
 <h2 style="display: flex; align-items: center;">
   Features
@@ -15,7 +15,6 @@ Built with JavaScript and React Native, Crates and Craters is a single player pu
 
 * Dozens of puzzling levels
 * A built in level editor and level sharing
-* Several color themes
 * Minimalist game design and graphics
 * Small app size
 * Light and dark modes
@@ -28,14 +27,14 @@ Built with JavaScript and React Native, Crates and Craters is a single player pu
     <td>
       <picture>
         <source 
-          srcset="misc/demo-1-dark.jpg"
+          srcset="misc/screenshot_1_dark.jpg"
           media="(prefers-color-scheme: dark)"
         />
         <source
-          srcset="misc/demo-1.jpg"
+          srcset="misc/screenshot_1.jpg"
           media="(prefers-color-scheme: light), (prefers-color-scheme: no-preference)"
         />
-        <img src="misc/demo-1.jpg"/>
+        <img src="misc/screenshot_1.jpg"/>
       </picture>
     </td>
     <td style="padding-left: 10%;">
@@ -61,19 +60,21 @@ Built with JavaScript and React Native, Crates and Craters is a single player pu
         The primary obstacles and namesakes of the game are crates and craters. The player cannot walk on either type of tile, however, if there is an empty tile or a crater behind a crate, the player can <b>push</b> the crate by walking into it. If the tile behind is an empty tile, this simply moves the crate to that tile. Keep in mind that the player needs to be able to get behind the crate to push it!
         <br><br>
         If the tile the crate is pushed into is a crater, the crate will fall in and <b>fill in</b> the crater, creating a normal, walkable floor space. Crates cannot be pushed onto coins, keys, or into doors or the flag.
+        <br><br>
+        Another tile which has interactions with crates are bombs. Bombs display a number representing their fuse. After that number of turns, the bomb will detonate, destorying adjacent crates. Bombs, like crates, can be pushed.
       </p>
     </td>
     <td>
       <picture>
         <source 
-          srcset="misc/demo-2-dark.jpg"
+          srcset="misc/screenshot_4_dark.jpg"
           media="(prefers-color-scheme: dark)"
         />
         <source
-          srcset="misc/demo-2.jpg"
+          srcset="misc/screenshot_4.jpg"
           media="(prefers-color-scheme: light), (prefers-color-scheme: no-preference)"
         />
-        <img src="misc/demo-2.jpg"/>
+        <img src="misc/screenshot_4.jpg"/>
       </picture>
     </td>
   </tr>
@@ -84,21 +85,21 @@ Built with JavaScript and React Native, Crates and Craters is a single player pu
     <td>
       <picture>
         <source 
-          srcset="misc/demo-3-dark.jpg"
+          srcset="misc/screenshot_5_dark.jpg"
           media="(prefers-color-scheme: dark)"
         />
         <source
-          srcset="misc/demo-3.jpg"
+          srcset="misc/screenshot_5.jpg"
           media="(prefers-color-scheme: light), (prefers-color-scheme: no-preference)"
         />
-        <img src="misc/demo-3.jpg"/>
+        <img src="misc/screenshot_5.jpg"/>
       </picture>
     </td>
     <td style="padding-left: 10%;">
       <p>
-        In order to successfully complete a level, the player must be able to reach the flag and stand on that tile after having collected all the coins.
+        The final tile type are one ways. These tiles are fairly simple, the player can move onto them from any direction, except the direction in which the arrow is pointing. Also, pushables like bombs and crates cannot pass through one ways (in any direction).
         <br><br>
-        Not every key need be collected, nor every door opened. Beware of decoy keys, especially if a level contains less doors than keys!
+        In order to successfully complete a level, the player must be able to reach the flag and stand on that tile after having collected all the coins. Not every key need be collected, nor every door opened. Beware of decoy keys, especially if a level contains less doors than keys!
         <br><br>
         These are all of the basic rules of Crates & Craters. There is a <b>how to play</b> page in the app in case you forget, or you can hop on in and try the tutorial levels to get started!
       </p>
@@ -134,14 +135,14 @@ Built with JavaScript and React Native, Crates and Craters is a single player pu
     <td>
       <picture>
         <source 
-          srcset="misc/demo-4-dark.jpg"
+          srcset="misc/screenshot_6_dark.jpg"
           media="(prefers-color-scheme: dark)"
         />
         <source
-          srcset="misc/demo-4.jpg"
+          srcset="misc/screenshot_6.jpg"
           media="(prefers-color-scheme: light), (prefers-color-scheme: no-preference)"
         />
-        <img src="misc/demo-4.jpg"/>
+        <img src="misc/screenshot_6.jpg"/>
       </picture>
     </td>
   </tr>
@@ -155,8 +156,6 @@ Built with JavaScript and React Native, Crates and Craters is a single player pu
 </h2>
 
 * Figure out why nav buttons update so slowly
-* Add sound effect for crate pushed into crater
-* Add more sound variations
 * Make many, many more levels
 * Create a proper tutorial?
 * Look into ways to have level sharing server
