@@ -71,36 +71,39 @@ export default function PlayLevel({ viewCallback, levelCallback, gameStateCallba
   const [boomSound, setBoomSound] = useState();
 
   async function playMoveSound() {
-    const { sound } = await Audio.Sound.createAsync(require('../assets/audio/move.wav'));
-    setMoveSound(sound);
-    await sound.playAsync();
+      const { sound } = await Audio.Sound.createAsync(require('../assets/audio/move.wav'));
+      setMoveSound(sound);
+      await sound.playAsync();
   }
   async function playPushSound() {
-    const { sound } = await Audio.Sound.createAsync(require('../assets/audio/push.wav'));
-    setPushSound(sound);
-    await sound.playAsync();
+      const { sound } = await Audio.Sound.createAsync(require('../assets/audio/push.wav'));
+      setPushSound(sound);
+      await sound.playAsync();
   }
   async function playFillSound() {
-    const { sound } = await Audio.Sound.createAsync(require('../assets/audio/fill.wav'));
-    setFillSound(sound);
-    await sound.playAsync();
+      const { sound } = await Audio.Sound.createAsync(require('../assets/audio/fill.wav'));
+      setFillSound(sound);
+      await sound.playAsync();
   }
   async function playCoinSound() {
-    const { sound } = await Audio.Sound.createAsync(require('../assets/audio/coin.wav'));
-    setCoinSound(sound);
-    await sound.playAsync();
+      const { sound } = await Audio.Sound.createAsync(require('../assets/audio/coin.wav'));
+      setCoinSound(sound);
+      await sound.playAsync();
   }
   async function playDoorSound() {
-    const { sound } = await Audio.Sound.createAsync(require('../assets/audio/door.wav'));
-    setDoorSound(sound);
-    await sound.playAsync();
+      const { sound } = await Audio.Sound.createAsync(require('../assets/audio/door.wav'));
+      setDoorSound(sound);
+      await sound.playAsync();
   }
   async function playExplosionSound() {
-    const { sound } = await Audio.Sound.createAsync(require('../assets/audio/explosion.wav'));
-    setBoomSound(sound);
-    await sound.playAsync();
+      const { sound } = await Audio.Sound.createAsync(require('../assets/audio/explosion.wav'));
+      setBoomSound(sound);
+      await sound.playAsync();
   }
 
+  useEffect(() => {
+    return moveSound ? () => { moveSound.unloadAsync(); } : undefined;
+  }, [moveSound]);
   useEffect(() => {
     return pushSound ? () => { pushSound.unloadAsync(); } : undefined;
   }, [pushSound]);
@@ -353,9 +356,8 @@ export default function PlayLevel({ viewCallback, levelCallback, gameStateCallba
 
         {/* PAUSE MENU COMPONENTS */}
         {modalOpen && <Animated.View style={styles.modal(anim, darkMode)}>
-          <MenuButton onPress={viewCallback} value={"edit"} label="To Editor" icon={graphics.HAMMER_ICON} disabled={!test} />
           <MenuButton onPress={restartLevel} label="Restart Level" icon={graphics.HELP_ICON} />
-          <MenuButton onPress={viewCallback} value={"home"} label="To Level Select" icon={graphics.DOOR_ICON} disabled={test} />
+          <MenuButton onPress={viewCallback} value={"home"} label="To Level Select" icon={graphics.DOOR_ICON} />
         </Animated.View>}
         <View style={{ flexDirection: "row", height: normalize(50) }}>
           {!game.won && <SimpleButton onPress={toggleModal} text="Pause Menu" />}

@@ -119,8 +119,10 @@ export default function ShareLevel({ pageCallback }) {
 
   return (
     <ScrollView style={styles.scrollContainer} contentContainerStyle={{
-      paddingBottom: scanned ? win.height * 0.1 : win.height * 0.05,
-      paddingTop: scanned ? win.height * 0.1 : win.height * 0.05,
+      // paddingBottom: scanned ? win.height * 0.1 : win.height * 0.05,
+      // paddingTop: scanned ? win.height * 0.1 : win.height * 0.05,
+      justifyContent: "center",
+      height: "100%",
     }} overScrollMode="never" showsVerticalScrollIndicator={false}>
       {scanned && <>
         <View style={{ marginBottom: 15, paddingHorizontal: win.width * 0.05 }}>

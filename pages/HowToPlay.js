@@ -13,7 +13,7 @@ export default function HowToPlay({ pageCallback }) {
   return (
     <ScrollView style={styles.scrollContainer} contentContainerStyle={{
       paddingHorizontal: win.width * 0.05,
-      paddingVertical: win.height * 0.01,
+      paddingVertical: win.height * 0.05,
     }} overScrollMode="never" showsVerticalScrollIndicator={false}>
       <Text style={TextStyles.subtitle(darkMode)}>
         Controls

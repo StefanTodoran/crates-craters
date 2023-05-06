@@ -38,8 +38,8 @@ export default function Settings({ pageCallback, darkModeCallback, audioModeCall
 
   return (
     <ScrollView style={styles.scrollContainer} contentContainerStyle={{
-      paddingBottom: win.height * 0.1,
-      paddingTop: win.height * 0.1,
+      height: "100%",
+      justifyContent: "center",
       alignItems: "center",
     }} overScrollMode="never" showsVerticalScrollIndicator={false}>
       <View style={styles.buttonsContainer}>

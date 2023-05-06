@@ -155,7 +155,6 @@ Built with JavaScript and React Native, Crates and Craters is a single player pu
   <img src="assets/main_theme/flag.png" style="height: 1em;"/>
 </h2>
 
-* Figure out why nav buttons update so slowly
 * Make many, many more levels
 * Create a proper tutorial?
 * Look into ways to have level sharing server

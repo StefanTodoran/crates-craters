@@ -2,7 +2,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useFonts } from 'expo-font';
 import * as NavigationBar from 'expo-navigation-bar';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { StyleSheet, View, Image, Dimensions, Animated, BackHandler, ScrollView, SafeAreaView, StatusBar as RNStatusBar } from 'react-native';
+import { StyleSheet, View, Image, Dimensions, Animated, BackHandler, SafeAreaView, StatusBar as RNStatusBar } from 'react-native';
 
 import { colors, graphics, nextTheme } from './Theme';
 import { GlobalContext } from './GlobalContext';
@@ -13,25 +13,25 @@ import LevelSelect from './pages/LevelSelect';
 import PlayLevel from './pages/PlayLevel';
 import CreateLevel from './pages/CreateLevel';
 import { cloneLevelObj, storeData } from './Game';
-import { Path, Svg } from 'react-native-svg';
 
 const win = Dimensions.get('window');
 
+/**
+ * App is the main entry point into the application. App contains global state,
+ * such as the level in progress, the current page, and settings such as dark mode.
+ * App handles the transition between different pages, the loading of settings from
+ * storage, and the providing of these settings via a context. 
+ */
 export default function App() {
   const [fontsLoaded] = useFonts({
     'Montserrat-Regular': require('./assets/Montserrat-Regular.ttf'),
     'Montserrat-Medium': require('./assets/Montserrat-Medium.ttf'),
   });
 
-  // Page state is used so that the navbar icons can reflect
-  // the horizontal scrollview position, and for jumping to page.
-  const [page, setPageState] = useState(0);
-  const scrollRef = useRef();
-
-  const anim = useRef(new Animated.Value(0)).current;
+  const pageAnim = useRef(new Animated.Value(0)).current;
   const setAnimTo = (animState, callback) => {
     // MAKE SURE 0 <= animState <= 1
-    Animated.timing(anim, {
+    Animated.timing(pageAnim, {
       toValue: animState,
       duration: 300,
       useNativeDriver: true
@@ -158,6 +158,10 @@ export default function App() {
       BackHandler.removeEventListener("hardwareBackPress", backAction);
   }, [view]);
 
+  // This is used so that the level select component only needs to calculate
+  // the level select element height one time.
+  const [levelElementHeight, setElementHeight] = useState(false);
+
   if (!fontsLoaded) {
     return null;
   }
@@ -165,96 +169,72 @@ export default function App() {
   return (
     <GlobalContext.Provider value={{ darkMode, dragSensitivity, doubleTapDelay, playAudio }}>
       <SafeAreaView style={{ flex: 1, backgroundColor: (darkMode) ? colors.NEAR_BLACK : "white" }}>
+
         {/* HEADER BANNER */}
-        <Animated.View style={styles.header(anim)}>
+        <Animated.View style={styles.header(pageAnim)}>
           <Image style={styles.banner} source={graphics.TITLE_BANNER} />
+
+          <View style={styles.menuButton}>
+            <IconButton onPress={() => { switchView("settings") }} />
+          </View>
         </Animated.View>
 
         {/* HOME VIEW */}
-        {view === "home" && <ScrollView horizontal pagingEnabled showsHorizontalScrollIndicator={false} onScroll={(evt) => {
-          // setPageState(Math.round(evt.nativeEvent.contentOffset.x / win.width));
-          setPageState(Math.round(evt.nativeEvent.contentOffset.x / win.width * 10) / 10);
-        }} ref={scrollRef} overScrollMode="never">
-
-          {/* LEVEL SELECT */}
+        {view === "home" &&
           <View style={styles.page}>
-            <LevelSelect viewCallback={switchView}
-              playLevelCallback={changePlayLevel} editorLevelCallback={changeEditorLevel}
-              playLevel={playLevel} editorLevel={editorLevel} game={game} />
+            <LevelSelect
+              viewCallback={switchView}
+              playLevelCallback={changePlayLevel}
+              editorLevelCallback={changeEditorLevel}
+              playLevel={playLevel} editorLevel={editorLevel} game={game}
+              elementHeight={levelElementHeight} storeElementHeightCallback={setElementHeight}
+            />
           </View>
+        }
 
-          {/* MENU */}
-          <View style={styles.page}>
-            <HomePage darkModeCallback={toggleDarkMode} setThemeCallback={setCurTheme} audioModeCallback={toggleAudioMode}
-              setSensitivityCallback={setSensitivity} setTapDelayCallback={setTapDelay}></HomePage>
-          </View>
-
-        </ScrollView>}
-
-        {/* To keep footer position normal */}
-        {view !== "home" && <View style={styles.page} />}
+        {/* SETTINGS VIEW */}
+        {view === "settings" &&
+          <Animated.View style={[styles.modal(pageAnim, darkMode), styles.page]}>
+            <HomePage
+              viewCallback={switchView}
+              darkModeCallback={toggleDarkMode}
+              setThemeCallback={setCurTheme}
+              audioModeCallback={toggleAudioMode}
+              setSensitivityCallback={setSensitivity}
+              setTapDelayCallback={setTapDelay}
+            />
+          </Animated.View>
+        }
 
         {/* GAMEPLAY VIEW */}
-        {view === "play" && <Animated.View style={styles.modal(anim, darkMode)}>
-          <PlayLevel viewCallback={switchView} levelCallback={changePlayLevel}
-            gameStateCallback={setGameState} level={playLevel} game={game} />
-        </Animated.View>}
+        {view === "play" &&
+          <Animated.View style={styles.modal(pageAnim, darkMode)}>
+            <PlayLevel
+              viewCallback={switchView}
+              level={playLevel} levelCallback={changePlayLevel}
+              game={game} gameStateCallback={setGameState}
+            />
+          </Animated.View>
+        }
 
         {/* EDIT VIEW */}
-        {view === "edit" && <Animated.View style={styles.modal(anim, darkMode)}>
-          <CreateLevel viewCallback={switchView} playLevelCallback={changePlayLevel} editorLevelCallback={changeEditorLevel}
-            storeLevelCallback={setEditorLevelObj} levelIndex={editorLevel} levelObj={editorLevelObj} playTestCallback={() => { }} />
-        </Animated.View>}
+        {view === "edit" &&
+          <Animated.View style={styles.modal(pageAnim, darkMode)}>
+            <CreateLevel
+              viewCallback={switchView}
+              playLevelCallback={changePlayLevel}
+              editorLevelCallback={changeEditorLevel}
+              storeLevelCallback={setEditorLevelObj}
+              levelIndex={editorLevel} levelObj={editorLevelObj}
+              playTestCallback={() => { }}
+            />
+          </Animated.View>
+        }
 
-        {/* BOTTOM NAVIGATION */}
-        <Animated.View style={styles.navbar(anim)}>
-          <IconButton onPress={() => { scrollRef.current?.scrollTo({ x: 0, animated: true }); }}
-            svgContent={PlayIcon(1- page)} />
-          <IconButton onPress={() => { scrollRef.current?.scrollTo({ x: win.width, animated: true }); }}
-            svgContent={ShareIcon(page)} />
-        </Animated.View>
       </SafeAreaView>
-      <StatusBar style="auto" />
+      <StatusBar style={darkMode ? "light" : "dark"} />
     </GlobalContext.Provider>
   );
-}
-
-function PlayIcon(opacity) {
-  return (
-    <Svg
-      width={sizeFromWidthPercent(0.09, 100, 100)[0]}
-      height={sizeFromWidthPercent(0.09, 100, 100)[0]}
-      viewBox="0 0 100 100"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <Path
-        d="M26.5 8.83c0-2.045 2.32-3.225 3.972-2.021l56.51 41.17a2.5 2.5 0 010 4.042l-56.51 41.17c-1.652 1.204-3.972.024-3.972-2.02V8.829z"
-        fill={colors.MAIN_PURPLE_TRANSPARENT(opacity)}
-        stroke="#CCB7E5"
-        strokeWidth={5}
-      />
-    </Svg>
-  )
-}
-
-function ShareIcon(opacity) {
-  return (
-    <Svg
-      width={sizeFromWidthPercent(0.09, 100, 100)[0]}
-      height={sizeFromWidthPercent(0.09, 100, 100)[0]}
-      viewBox="0 0 100 100"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <Path
-        d="M58.822 79.113c-.005.146-.007.292-.007.439 0 7.681 6.176 13.948 13.843 13.948 7.666 0 13.842-6.267 13.842-13.948 0-7.682-6.176-13.949-13.843-13.949-4.21 0-7.974 1.895-10.507 4.87L38.89 56.825a13.993 13.993 0 001.295-5.895c0-1.922-.387-3.757-1.088-5.427l24.526-15.488a13.734 13.734 0 009.035 3.38c7.666 0 13.842-6.266 13.842-13.948C86.5 11.767 80.324 5.5 72.657 5.5c-7.666 0-13.842 6.267-13.842 13.948 0 .873.08 1.73.233 2.561l-26.19 16.613a13.708 13.708 0 00-6.515-1.64c-7.667 0-13.843 6.267-13.843 13.949 0 7.681 6.176 13.948 13.843 13.948 2.07 0 4.038-.46 5.805-1.283l26.674 15.517z"
-        fill={colors.MAIN_PURPLE_TRANSPARENT(opacity)}
-        stroke="#CCB7E5"
-        strokeWidth={5}
-      />
-    </Svg>
-  )
 }
 
 // Returns a list [height, width] of the size for an element based
@@ -271,20 +251,24 @@ const styles = StyleSheet.create({
   },
   page: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     width: win.width,
     paddingHorizontal: win.width * 0.225,
-    borderTopWidth: 1,
-    borderBottomWidth: 1,
-    borderColor: colors.MAIN_PURPLE_TRANSPARENT(0.3),
   },
   header: (anim) => ({
     paddingTop: RNStatusBar.currentHeight,
-    flexDirection: 'row',
-    justifyContent: 'center',
-    paddingBottom: '2%',
+    flexDirection: "row",
+    justifyContent: "center",
+    paddingBottom: "2%",
     width: win.width,
+    zIndex: 1,
+    borderBottomWidth: 1,
+    borderColor: colors.MAIN_PURPLE_TRANSPARENT(0.3),
+    opacity: anim.interpolate({
+      inputRange: [0, 1],
+      outputRange: [1, 0],
+    }),
     transform: [{
       translateY: anim.interpolate({
         inputRange: [0, 1],
@@ -292,20 +276,7 @@ const styles = StyleSheet.create({
       }),
     }],
   }),
-  navbar: (anim) => ({
-    flexDirection: 'row',
-    justifyContent: 'space-evenly',
-    width: '100%',
-    paddingBottom: '2%',
-    paddingTop: '3%',
-    transform: [{
-      translateY: anim.interpolate({
-        inputRange: [0, 1],
-        outputRange: [0, 100],
-      }),
-    }],
-  }),
-  modal: (anim, darkMode) => ({
+  modal: (animState, darkMode) => ({
     position: "absolute",
     top: 0,
     left: 0,
@@ -314,6 +285,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: (darkMode) ? colors.NEAR_BLACK : "white",
-    opacity: anim,
+    opacity: animState,
   }),
+  menuButton: {
+    position: "absolute",
+    top: RNStatusBar.currentHeight + (win.width * 0.02),
+    right: "3%",
+  },
 });

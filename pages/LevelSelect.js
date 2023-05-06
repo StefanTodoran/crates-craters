@@ -12,9 +12,11 @@ import LevelCard from '../components/LevelCard';
  * @param {number} playLevel The level currently being played (if a level is being played). 
  * @param {number} editorLevel The level currently being edited (if a level is being edited). 
  * @param {Object} game The current game object, if a game is in progress.
+ * 
+ * @param {number} elementHeight The element size, used for pre scroll.
+ * @param {Function} storeElementHeightCallback Sets the element size, so this doesn't have to be recalculated every time we want to display the component.
  */
-export default function LevelSelect({ viewCallback, playLevelCallback, editorLevelCallback, playLevel, editorLevel, game }) {
-  const [elementHeight, setElementHeight] = useState(false);
+function LevelSelectBase({ viewCallback, playLevelCallback, editorLevelCallback, playLevel, editorLevel, game, elementHeight, storeElementHeightCallback }) {
   const scrollRef = useRef();
 
   const openLevel = useCallback((playLevel) => {
@@ -25,13 +27,13 @@ export default function LevelSelect({ viewCallback, playLevelCallback, editorLev
   const playIndex = (!game) ? -1 : playLevel;
   const editIndex = playIndex === -1 ? editorLevel : -1;
   const scrollIndex = (game && !game.playtest && playIndex > 0) ? playIndex :
-                      (editIndex > 0) ? editIndex : 0;
+    (editIndex > 0) ? editIndex : 0;
 
   return (
     <>
       {!elementHeight && <View onLayout={(event) => {
         let { x, y, width, height } = event.nativeEvent.layout;
-        setElementHeight(height);
+        storeElementHeightCallback(height);
       }} style={{ opacity: 0 }}>
         <LevelCard viewCallback={viewCallback} levelCallback={openLevel} levelIndex={0} inProgress={playIndex === 0} />
       </View>}
@@ -48,11 +50,12 @@ export default function LevelSelect({ viewCallback, playLevelCallback, editorLev
           showsVerticalScrollIndicator={false}
           data={levels}
           renderItem={({ item, index }) =>
-            index === playIndex && !game.won ?
-              <LevelCard viewCallback={viewCallback} editCallback={editorLevelCallback}
-                levelIndex={index} scrollIndex={scrollIndex} /> :
-              <LevelCard viewCallback={viewCallback} editCallback={editorLevelCallback}
-                playCallback={openLevel} levelIndex={index} scrollIndex={scrollIndex} />
+            <LevelCard
+              viewCallback={viewCallback}
+              editCallback={editorLevelCallback}
+              playCallback={index === playIndex && !game.won ? undefined : openLevel}
+              levelIndex={index}
+              scrollIndex={scrollIndex} />
           }
           keyExtractor={item => `${item.name},${item.designer}`}
           getItemLayout={(data, index) => (
@@ -68,3 +71,5 @@ export default function LevelSelect({ viewCallback, playLevelCallback, editorLev
     </>
   );
 }
+
+export default LevelSelect = React.memo(LevelSelectBase);

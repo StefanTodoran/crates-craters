@@ -13,8 +13,8 @@ export default function About({ pageCallback }) {
   return (
     <ScrollView style={styles.scrollContainer} contentContainerStyle={{
       paddingHorizontal: win.width * 0.05,
-      paddingBottom: win.height * 0.1,
-      paddingTop: win.height * 0.1,
+      justifyContent: "center",
+      height: "100%",
     }} overScrollMode="never" showsVerticalScrollIndicator={false}>
       <Text style={TextStyles.subtitle(darkMode)}>
         Attribution

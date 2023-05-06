@@ -43,10 +43,10 @@ function LevelCardBase({ viewCallback, playCallback, editCallback, levelIndex, s
   }
 
   useEffect(() => {
-    // setAnimTo(1);
-    setTimeout(() => {
-      setAnimTo(1);
-    }, (levelIndex - scrollIndex) * 100);
+    setAnimTo(1);
+    // setTimeout(() => {
+    //   setAnimTo(1);
+    // }, (levelIndex - scrollIndex) * 100);
   }, []);
 
   return (
