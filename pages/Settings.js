@@ -51,7 +51,7 @@ export default function Settings({ pageCallback, darkModeCallback, audioModeCall
         <MenuButton onPress={() => {
           const newTheme = nextTheme();
           setThemeCallback(newTheme);
-        }} value={null} label="Change App Theme" icon={graphics.THEME_ICON} disabled={true} />
+        }} value={null} label="Change App Theme" icon={graphics.THEME_ICON} />
 
         <View style={{ height: 15 }} />
         <SliderBar label="Drag Sensitivity" value={newDragSens} units={"%"}

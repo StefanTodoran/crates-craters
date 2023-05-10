@@ -9,10 +9,9 @@ npm-debug.*
 *.mobileprovision
 *.orig.*
 web-build/
-assets/blue_theme
-assets/orange_theme
-assets/purple_theme
-assets/green_theme
+
+# temporary
+assets/pirate_theme
 
 # macOS
 .DS_Store

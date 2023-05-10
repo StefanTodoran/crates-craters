@@ -308,7 +308,23 @@ const level_doubling_up = [
   [12, "b:95", 5, 0, 0, 0, 0, 0],
   [0, 6, 12, 4, 12, 4, 0, 5],
   [0, 4, 0, 5, 1, 13, 5, 3],
-]
+];
+const level_warzone = [
+  [5, 4, 5, 5, 0, 4, 0, 11,],
+  [4, 1, 6, 4, 1, 13, 4, 5,],
+  [5, 3, 5, 0, 1, 6, 12, 0,],
+  [4, 4, 0, 0, 0, 4, 1, 4,],
+  [0, 1, 5, 0, 13, 0, 1, 6,],
+  [6, 8, 5, "b:25", 5, 2, "b:75", 5,],
+  [2, 5, 1, 13, 1, 0, 4, 0,],
+  [0, 0, 4, 7, 5, 11, "b:5", 4,],
+  [5, 4, 0, 4, 3, "b:50", 2, 4,],
+  [1, 5, 0, 0, 13, 0, 13, 11,],
+  [6, 4, 1, 14, 4, 0, 1, 13,],
+  [3, 0, 4, 0, 4, 0, 1, 6,],
+  [4, 5, 4, 4, 5, 0, 5, 4,],
+  [5, 4, "b:10", 4, 0, 5, 0, 4,],
+];
 
 const defaults = [
   createLevelObj("Tutorial", "default", level_tutorial),
@@ -329,6 +345,8 @@ const defaults = [
   createLevelObj("Stupid Door", "default", level_stupid_door),
   createLevelObj("Pain", "default", level_pain),
   createLevelObj("Doubling Up", "default", level_doubling_up),
+  // Put a few between these (two much bomb stuff)
+  createLevelObj("Warzone", "default", level_warzone),
 ];
 
 export let levels = [...defaults];
@@ -767,10 +785,10 @@ export function doGameMove(game_obj, move) {
     for (let i = 0; i < dimensions[0]; i++) {
       for (let j = 0; j < dimensions[1]; j++) {
         const data = getTileEntityData(next.board[i][j]);
-  
+
         if (data.type === "bomb") {
           data.fuse--;
-  
+
           if (data.fuse > 0) {
             const updated = formatTileEntityData(data);
             next.board[i][j] = updated;

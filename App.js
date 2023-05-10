@@ -181,7 +181,7 @@ export default function App() {
 
         {/* HOME VIEW */}
         {view === "home" &&
-          <View style={styles.page}>
+          <View style={[styles.page, { paddingHorizontal: 0 }]}>
             <LevelSelect
               viewCallback={switchView}
               playLevelCallback={changePlayLevel}

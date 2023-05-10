@@ -8,7 +8,7 @@ const scale = SCREEN_WIDTH / SAMSUNG_S8_WIDTH;
 export function normalize(size) {
   const newSize = size * scale;
   if (Platform.OS === "ios") {
-    return Math.round(PixelRatio.roundToNearestPixel(newSize));
+    return Math.round(PixelRatio.roundToNearestPixel(newSize)) - 4;
   } else {
     return Math.round(PixelRatio.roundToNearestPixel(newSize)) - 2;
   }
@@ -37,7 +37,7 @@ export default StyleSheet.create({
     fontFamily: "Montserrat-Medium",
     fontWeight: "bold",
     textTransform: "uppercase",
-    letterSpacing: 1,
+    letterSpacing: Platform.OS === "ios" ? 1 : 2,
     fontSize: normalize(20),
     marginBottom: normalize(8),
     marginTop: normalize(12),

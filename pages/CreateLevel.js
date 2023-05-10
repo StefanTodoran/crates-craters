@@ -13,7 +13,7 @@ import { GlobalContext } from '../GlobalContext';
 import SliderBar from '../components/SliderBar';
 import { ScrollView } from 'react-native';
 import SimpleButton from '../components/SimpleButton';
-import { normalize } from '../TextStyles';
+import TextStyles, { normalize } from '../TextStyles';
 const win = Dimensions.get('window');
 
 /**
@@ -200,7 +200,7 @@ export default function CreateLevel({ viewCallback, playLevelCallback, editorLev
   return (
     <SafeAreaView style={styles.container}>
       {special && <>
-        <Image style={styles.optionsBanner} source={graphics.OPTIONS_BANNER} />
+        <Text style={styles.subtitle(darkMode)}>Creation</Text>
         <View style={styles.inputContainer()}>
           <InputLine label={"Level Name"} value={levelName} changeCallback={setLevelName} darkMode={darkMode} />
           <InputLine label={"Designer"} value={levelDesigner} changeCallback={setLevelDesigner} darkMode={darkMode} />
@@ -228,7 +228,7 @@ export default function CreateLevel({ viewCallback, playLevelCallback, editorLev
           <ScrollView overScrollMode="never" style={{ width: "100%" }}>
 
             <View style={styles.section}>
-              <Image style={styles.toolsBanner} source={graphics.TOOLS_BANNER} />
+              <Text style={styles.subtitle(darkMode)}>Tools</Text>
               <View style={styles.row}>
                 <MenuButton onPress={changeTool} value="crate" label="Crate" icon={graphics.CRATE} />
                 <MenuButton onPress={changeTool} value="crater" label="Crater" icon={graphics.CRATER} />
@@ -294,7 +294,7 @@ export default function CreateLevel({ viewCallback, playLevelCallback, editorLev
             </View>
 
             <View style={styles.section}>
-              <Image style={styles.optionsBanner} source={graphics.OPTIONS_BANNER} />
+              <Text style={styles.subtitle(darkMode)}>Options</Text>
               <View style={styles.row}>
                 <MenuButton onLongPress={deleteLevelFromStorage} label="Delete Level     (Long Press)" icon={graphics.DELETE_ICON} allowOverflow />
                 <MenuButton onLongPress={() => { storeLevelCallback(createLevelObj("", "", null)); }} label="Clear Level      (Long Press)" icon={graphics.HAMMER_ICON} allowOverflow />
@@ -341,7 +341,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     width: "100%",
-    marginBottom: normalize(50),
+    marginBottom: normalize(36),
   },
   row: {
     flexDirection: "row",
@@ -378,6 +378,11 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontFamily: "Montserrat-Regular",
     fontWeight: "normal",
+  }),
+  subtitle: (darkMode) => ({
+    ...TextStyles.subtitle(darkMode),
+    marginTop: normalize(32),
+    marginBottom: normalize(8),
   }),
   inputContainer: () => ({
     position: "relative",

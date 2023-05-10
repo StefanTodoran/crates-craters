@@ -1,17 +1,49 @@
-import { View, StyleSheet, Dimensions, Image, Pressable, Text } from 'react-native';
-import React from "react";
+import { View, StyleSheet, Dimensions, Image, Pressable, Text, Platform } from 'react-native';
+import React, { useEffect, useState } from "react";
 
 import { tiles, getTileType, icon_src, calcTileSize, getTileEntityData } from '../Game';
 import { colors } from '../Theme';
 const win = Dimensions.get('window');
 
-export default function GameBoard({ children, board, tileCallback, overrideTileSize, rowCorrect }) {
+function GameBoard({ children, board, tileCallback, overrideTileSize, rowCorrect }) {
+  const tilesBoard = buildUpBoard(board, tileCallback, overrideTileSize, rowCorrect);
+
+  return (
+    <View style={styles.board(colors)}>
+      {tilesBoard}
+      {children}
+    </View>
+  );
+}
+
+function ForceRerenderGameBoard({ children, board, tileCallback, overrideTileSize, rowCorrect }) {
+  const [rerender, forceRerender] = useState(false);
+  useEffect(() => {
+    forceRerender(true);
+  }, [board]);
+
+  useEffect(() => {
+    forceRerender(false);
+  }, [rerender]);
+
+  const tilesBoard = buildUpBoard(board, tileCallback, overrideTileSize, rowCorrect);
+
+  return (
+    <View style={styles.board(colors)}>
+      {!rerender && tilesBoard}
+      {children}
+    </View>
+  );
+}
+
+function buildUpBoard(board, tileCallback, overrideTileSize, rowCorrect) {
   const tilesBoard = [];
   const boardHeight = board.length; const boardWidth = board[0].length;
   const tileSize = overrideTileSize ? overrideTileSize : calcTileSize(boardWidth, boardHeight, win);
 
   for (let i = 0; i < boardHeight; i++) {
     const row = [];
+
     for (let j = 0; j < boardWidth; j++) {
       // We need to know oddTile (board is checkered color-wise) and the tile type
       // regardless of whether the tile will be a wall or regular tile.
@@ -92,13 +124,11 @@ export default function GameBoard({ children, board, tileCallback, overrideTileS
     }}>{row}</View>);
   }
 
-  return (
-    <View style={styles.board(colors)}>
-      {tilesBoard}
-      {children}
-    </View>
-  );
+  return tilesBoard;
 }
+
+const PlatformGameBoard = Platform.OS === "ios" ? ForceRerenderGameBoard : GameBoard;
+export default PlatformGameBoard;
 
 function isEven(num) { return num % 2 === 0; }
 

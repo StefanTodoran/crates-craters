@@ -1,4 +1,4 @@
-<img src="misc/banner-2.png" alt="Crates and Craters" style="width: 100%;"/>
+<img src="assets/main_theme/banner.png" alt="Crates and Craters" style="width: 100%;"/>
 
 <h2 style="display: flex; align-items: center;">
   About
