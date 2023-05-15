@@ -50,7 +50,7 @@ function LevelCardBase({ viewCallback, playCallback, editCallback, levelIndex, s
   }, []);
 
   return (
-    <Animated.View style={styles.container(anim, darkMode)}>
+    <Animated.View style={styles.container(anim, darkMode, !playCallback)}>
 
       <View style={styles.row}>
         <View style={{ flexDirection: "row", justifyContent: "flex-start" }}>
@@ -70,7 +70,8 @@ function LevelCardBase({ viewCallback, playCallback, editCallback, levelIndex, s
           </View>
         </View>
 
-        {level.completed && <Image style={styles.icon} source={graphics.FLAG_ICON} />}
+        {!playCallback && <Image style={styles.icon} source={graphics.PLAYER} />}
+        {playCallback && level.completed && <Image style={styles.icon} source={graphics.FLAG_ICON} />}
       </View>
 
       <View style={styles.row}>
@@ -78,7 +79,7 @@ function LevelCardBase({ viewCallback, playCallback, editCallback, levelIndex, s
 
         <View style={{ flexDirection: "column", flex: 0.9 }}>
           {playCallback && <SimpleButton onPress={() => { playCallback(levelIndex) }} text={"Play"} icon={graphics.PLAY_ICON} />}
-          {!playCallback && <SimpleButton onPress={() => { viewCallback("play") }} text={"Resume"} icon={graphics.KEY_ICON} />}
+          {!playCallback && <SimpleButton onPress={() => { viewCallback("play") }} text={"Resume"} icon={graphics.KEY_ICON} main={true} />}
           <SimpleButton text={"Edit"} icon={graphics.HAMMER_ICON} onPress={() => {
             editCallback(levelIndex);
             viewCallback("edit");
@@ -98,12 +99,14 @@ function calcTileSize(boardWidth, window) {
 }
 
 const styles = StyleSheet.create({
-  container: (anim, darkMode) => ({
+  container: (anim, darkMode, highlighted) => ({
     flexDirection: "column",
     justifyContent: "center",
     alignItems: "center",
     width: win.width * 0.9,
-    borderWidth: 1,
+    borderWidth: highlighted ? 2 : 1,
+    paddingHorizontal: highlighted ? normalize(15) - 2 : normalize(15),
+    paddingBottom: normalize(5),
     borderRadius: normalize(10),
     marginVertical: normalize(10),
     borderColor: colors.DARK_PURPLE,
@@ -121,7 +124,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     width: "100%",
-    paddingHorizontal: normalize(15),
+    // paddingHorizontal: normalize(15),
     paddingVertical: normalize(10),
   },
   number: () => ({

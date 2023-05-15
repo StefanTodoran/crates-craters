@@ -43,7 +43,8 @@ function LevelSelectBase({ viewCallback, playLevelCallback, editorLevelCallback,
           style={{ overflow: "hidden" }}
           contentContainerStyle={{
             paddingHorizontal: "5%",
-            paddingVertical: "5%",
+            paddingBottom: "4%",
+            paddingTop: "3%",
             alignItems: "center",
           }}
           overScrollMode="never"

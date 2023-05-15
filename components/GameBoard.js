@@ -1,12 +1,15 @@
 import { View, StyleSheet, Dimensions, Image, Pressable, Text, Platform } from 'react-native';
-import React, { useEffect, useState } from "react";
+import React from "react";
 
 import { tiles, getTileType, icon_src, calcTileSize, getTileEntityData } from '../Game';
 import { colors } from '../Theme';
+
+import { TileIcon } from '../assets/svg/Icons';
+
 const win = Dimensions.get('window');
 
-function GameBoard({ children, board, tileCallback, overrideTileSize, rowCorrect }) {
-  const tilesBoard = buildUpBoard(board, tileCallback, overrideTileSize, rowCorrect);
+export default function GameBoard({ children, board, tileCallback, overrideTileSize, rowCorrect }) {
+  const tilesBoard = buildUpBoard(board, tileCallback, overrideTileSize, rowCorrect, Platform.OS === "ios");
 
   return (
     <View style={styles.board(colors)}>
@@ -16,27 +19,7 @@ function GameBoard({ children, board, tileCallback, overrideTileSize, rowCorrect
   );
 }
 
-function ForceRerenderGameBoard({ children, board, tileCallback, overrideTileSize, rowCorrect }) {
-  const [rerender, forceRerender] = useState(false);
-  useEffect(() => {
-    forceRerender(true);
-  }, [board]);
-
-  useEffect(() => {
-    forceRerender(false);
-  }, [rerender]);
-
-  const tilesBoard = buildUpBoard(board, tileCallback, overrideTileSize, rowCorrect);
-
-  return (
-    <View style={styles.board(colors)}>
-      {!rerender && tilesBoard}
-      {children}
-    </View>
-  );
-}
-
-function buildUpBoard(board, tileCallback, overrideTileSize, rowCorrect) {
+function buildUpBoard(board, tileCallback, overrideTileSize, rowCorrect, useSvg) {
   const tilesBoard = [];
   const boardHeight = board.length; const boardWidth = board[0].length;
   const tileSize = overrideTileSize ? overrideTileSize : calcTileSize(boardWidth, boardHeight, win);
@@ -45,74 +28,7 @@ function buildUpBoard(board, tileCallback, overrideTileSize, rowCorrect) {
     const row = [];
 
     for (let j = 0; j < boardWidth; j++) {
-      // We need to know oddTile (board is checkered color-wise) and the tile type
-      // regardless of whether the tile will be a wall or regular tile.
-      const oddTile = (isEven(i) && isEven(j)) || (!isEven(i) && !isEven(j));
-      const tileType = getTileType(board[i][j]);
-      const pressCallback = () => { tileCallback(i, j, tileType) };
-
-      if (tileType === "wall") {
-        // Wall tiles are just Views with border and background. We apply
-        // the border based on adjacent walls.
-        const borderColor = oddTile ? colors.MAIN_BLUE_TRANSPARENT(0.65) : colors.MAIN_BLUE_TRANSPARENT(0.8);
-        const fillColor = oddTile ? colors.MAIN_BLUE_TRANSPARENT(0.5) : colors.MAIN_BLUE_TRANSPARENT(0.65);
-
-        const borders = {
-          borderTopWidth: i > 0 && tiles[board[i - 1][j]] === "wall" ? 0 : 5,
-          borderBottomWidth: i + 1 < boardHeight && tiles[board[i + 1][j]] === "wall" ? 0 : 5,
-          borderLeftWidth: j > 0 && tiles[board[i][j - 1]] === "wall" ? 0 : 5,
-          borderRightWidth: j + 1 < boardWidth && tiles[board[i][j + 1]] === "wall" ? 0 : 5,
-        };
-
-        if (!tileCallback) {
-          row.push(<View key={`tile<${i},${j}>`} style={[styles.wallTile(fillColor, borderColor, tileSize), borders]} />);
-        } else {
-          row.push(<Pressable key={`tile<${i},${j}>`} style={[styles.wallTile(fillColor, borderColor, tileSize), borders]}
-            onPress={pressCallback} touchSoundDisabled={true} android_disableSound={true} />);
-        }
-      } else {
-        // Regular tiles are sized like wall tiles but are Image elements. All
-        // tiles have png sources so the checkered background colors can show through.
-        const icon = icon_src(tileType);
-        const bgColor = oddTile ? colors.MAIN_BLUE_TRANSPARENT(0.03) : colors.MAIN_BLUE_TRANSPARENT(0.14);
-
-        if (tileType === "bomb") {
-          // Bomb tiles are special, in that unlike walls, door or other tiles
-          // they carry associated data (e.g. fuse time). They aren't represented as just
-          // a number but as a string, so we need to get that data and display it.
-
-          const fuseData = getTileEntityData(board[i][j]).fuse;
-          const contents = <>
-            <Image style={styles.tile(bgColor, tileSize)} source={icon} />
-            <View style={styles.entityContainer(tileSize)}>
-              <Text style={[styles.entity(tileSize / 3)]}>{fuseData}</Text>
-            </View>
-          </>;
-
-          if (!tileCallback) {
-            row.push(<View key={`tile<${i},${j}>`} style={{ position: "relative" }}>
-              {contents}
-            </View>);
-          } else {
-            row.push(<Pressable key={`tile<${i},${j}>`} onPress={pressCallback}
-              touchSoundDisabled={true} android_disableSound={true} style={{ position: "relative" }}>
-              {contents}
-            </Pressable>);
-          }
-        } else {
-          // Again we need a quick if to determine whether tiles should be 
-          // wrapped in pressable or not.
-
-          if (!tileCallback) {
-            row.push(<Image key={`tile<${i},${j}>`} style={styles.tile(bgColor, tileSize)} source={icon} />);
-          } else {
-            row.push(<Pressable key={`tile<${i},${j}>`} onPress={pressCallback}
-              touchSoundDisabled={true} android_disableSound={true}>
-              <Image style={styles.tile(bgColor, tileSize)} source={icon} />
-            </Pressable>);
-          }
-        }
-      }
+      row.push(getTile(i, j, board, tileSize, boardWidth, boardHeight, tileCallback, useSvg));
     }
 
     // Not even the slightest clue why but every other row has a tiny 1px gap vertically if we don't
@@ -127,8 +43,80 @@ function buildUpBoard(board, tileCallback, overrideTileSize, rowCorrect) {
   return tilesBoard;
 }
 
-const PlatformGameBoard = Platform.OS === "ios" ? ForceRerenderGameBoard : GameBoard;
-export default PlatformGameBoard;
+function getTile(i, j, board, tileSize, boardWidth, boardHeight, tileCallback, useSvg) {
+  // We need to know oddTile (board is checkered color-wise) and the tile type
+  // regardless of whether the tile will be a wall, entity, or regular tile.
+  const oddTile = (isEven(i) && isEven(j)) || (!isEven(i) && !isEven(j));
+  const tileType = getTileType(board[i][j]);
+  const pressCallback = () => { tileCallback(i, j, tileType) };
+
+  if (tileType === "wall") {
+    // Wall tiles are just Views with border and background. We apply
+    // the border based on adjacent walls.
+    const borderColor = oddTile ? colors.MAIN_BLUE_TRANSPARENT(0.65) : colors.MAIN_BLUE_TRANSPARENT(0.8);
+    const fillColor = oddTile ? colors.MAIN_BLUE_TRANSPARENT(0.5) : colors.MAIN_BLUE_TRANSPARENT(0.65);
+
+    const borders = {
+      borderTopWidth: i > 0 && tiles[board[i - 1][j]] === "wall" ? 0 : 5,
+      borderBottomWidth: i + 1 < boardHeight && tiles[board[i + 1][j]] === "wall" ? 0 : 5,
+      borderLeftWidth: j > 0 && tiles[board[i][j - 1]] === "wall" ? 0 : 5,
+      borderRightWidth: j + 1 < boardWidth && tiles[board[i][j + 1]] === "wall" ? 0 : 5,
+    };
+
+    if (!tileCallback) {
+      return <View key={`tile<${i},${j}>`} style={[styles.wallTile(fillColor, borderColor, tileSize), borders]} />;
+    } else {
+      return <Pressable key={`tile<${i},${j}>`} style={[styles.wallTile(fillColor, borderColor, tileSize), borders]}
+        onPress={pressCallback} touchSoundDisabled={true} android_disableSound={true} />;
+    }
+  } else {
+    // Regular tiles are sized like wall tiles but are Image elements. All
+    // tiles have png sources so the checkered background colors can show through.
+    const icon = icon_src(tileType);
+    const bgColor = oddTile ? colors.MAIN_BLUE_TRANSPARENT(0.03) : colors.MAIN_BLUE_TRANSPARENT(0.14);
+
+    if (tileType === "bomb") {
+      // Bomb tiles are special, in that unlike walls, door or other tiles
+      // they carry associated data (e.g. fuse time). They aren't represented as just
+      // a number but as a string, so we need to get that data and display it.
+
+      const fuseData = getTileEntityData(board[i][j]).fuse;
+      const contents = <>
+        {/* <Image style={styles.tile(bgColor, tileSize)} source={icon} /> */}
+        <TileIcon bgColor={bgColor} tileSize={tileSize} tileType={tileType}/>
+        <View style={styles.entityContainer(tileSize)}>
+          <Text style={[styles.entity(tileSize / 3)]}>{fuseData}</Text>
+        </View>
+      </>;
+
+      if (!tileCallback) {
+        return <View key={`tile<${i},${j}>`} style={{ position: "relative" }}>
+          {contents}
+        </View>;
+      } else {
+        return <Pressable key={`tile<${i},${j}>`} onPress={pressCallback}
+          touchSoundDisabled={true} android_disableSound={true} style={{ position: "relative" }}>
+          {contents}
+        </Pressable>;
+      }
+    } else {
+      // Again we need a quick if to determine whether tiles should be 
+      // wrapped in pressable or not.
+
+      if (!tileCallback) {
+        return <Image key={`tile<${i},${j}>`} style={styles.tile(bgColor, tileSize)} source={icon} />;
+      } else {
+        return <Pressable key={`tile<${i},${j}>`} onPress={pressCallback}
+          touchSoundDisabled={true} android_disableSound={true}>
+          <Image style={styles.tile(bgColor, tileSize)} source={icon} />
+        </Pressable>;
+      }
+    }
+  }
+}
+
+// const bgColor = oddTile ? colors.MAIN_BLUE_TRANSPARENT(0.03) : colors.MAIN_BLUE_TRANSPARENT(0.14);
+//         row.push(<TileIcon key={`tile<${i},${j}>`} bgColor={bgColor} tileSize={tileSize} pressCallback={tileCallback && pressCallback}/>);
 
 function isEven(num) { return num % 2 === 0; }
 

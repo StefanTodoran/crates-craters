@@ -116,7 +116,10 @@ Built with JavaScript and React Native, Crates and Craters is a single player pu
         <img src="assets/main_theme/left_icon.png" style="width: 1em;"/>
       </h2>
       <p>
-        Running and testing the app locally will require that you possess a phone with Expo Go installed on it and a working internet connection. Open the root folder and type `expo start`. For some reason, tunnel is the only connection type that works, so open the dev tools and switch to that mode.
+        Running and testing the app locally will require that you possess a phone with Expo Go installed on it and a working internet connection. To work with live refresh, run:<br>
+        <b>expo start</b><br>
+        Since the game is fairly computationally intensive for React Native, to see production accurate performance run:<br>
+        <b>npx expo start --no-dev --minify</b>
       </p>
       <br>
       <h2 style="display: flex; align-items: center;">
@@ -125,7 +128,7 @@ Built with JavaScript and React Native, Crates and Craters is a single player pu
         <img src="assets/main_theme/hammer_icon.png" style="height: 1em;"/>
       </h2>
       <p>
-        Make sure you are logged in to expo with `expo whoami`. If not logged in, run <b>expo login</b>.
+        Make sure you are logged in to expo with <b>expo whoami</b>. If not logged in, run <b>expo login</b>.
         Then use this command to build to apk for android: <br>
         <b>eas build -p android --profile preview</b><br>
         Or to build app bundle for production: <br>

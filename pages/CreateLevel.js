@@ -310,12 +310,12 @@ export default function CreateLevel({ viewCallback, playLevelCallback, editorLev
         {/* END MODAL */}
 
         <View style={styles.buttonsRow}>
-          <SimpleButton onPress={() => { toggleToolsModal(); }} text="Tools & Options" />
+          <SimpleButton onPress={() => { toggleToolsModal(); }} text="Tools & Options" main={true}/>
           <View style={{ width: normalize(15) }} />
           <SimpleButton onPress={() => {
             saveLevelToStorage(levelObj, levelObj.name);
             viewCallback("home");
-          }} text="Save & Exit" />
+          }} text="Save & Exit"/>
         </View>
       </>}
     </SafeAreaView>

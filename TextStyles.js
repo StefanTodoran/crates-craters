@@ -37,7 +37,7 @@ export default StyleSheet.create({
     fontFamily: "Montserrat-Medium",
     fontWeight: "bold",
     textTransform: "uppercase",
-    letterSpacing: Platform.OS === "ios" ? 1 : 2,
+    letterSpacing: 1,
     fontSize: normalize(20),
     marginBottom: normalize(8),
     marginTop: normalize(12),

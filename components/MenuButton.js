@@ -33,7 +33,7 @@ export default function MenuButton({
   backgroundColor,
   darkModeBackgroundColor,
   pressedColor,
-  textColor
+  textColor,
 }) {
   const { darkMode } = useContext(GlobalContext);
   const [pressed, setPressedState] = useState(false);

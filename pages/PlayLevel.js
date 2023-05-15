@@ -14,7 +14,7 @@ const win = Dimensions.get('window');
 import { Audio } from 'expo-av';
 import { GlobalContext } from '../GlobalContext';
 import SimpleButton from '../components/SimpleButton';
-import { normalize } from '../TextStyles';
+import TextStyles, { normalize } from '../TextStyles';
 
 /**
  * This component handles a wide variety of tasks related to level playing. It
@@ -71,34 +71,34 @@ export default function PlayLevel({ viewCallback, levelCallback, gameStateCallba
   const [boomSound, setBoomSound] = useState();
 
   async function playMoveSound() {
-      const { sound } = await Audio.Sound.createAsync(require('../assets/audio/move.wav'));
-      setMoveSound(sound);
-      await sound.playAsync();
+    const { sound } = await Audio.Sound.createAsync(require('../assets/audio/move.wav'));
+    setMoveSound(sound);
+    await sound.playAsync();
   }
   async function playPushSound() {
-      const { sound } = await Audio.Sound.createAsync(require('../assets/audio/push.wav'));
-      setPushSound(sound);
-      await sound.playAsync();
+    const { sound } = await Audio.Sound.createAsync(require('../assets/audio/push.wav'));
+    setPushSound(sound);
+    await sound.playAsync();
   }
   async function playFillSound() {
-      const { sound } = await Audio.Sound.createAsync(require('../assets/audio/fill.wav'));
-      setFillSound(sound);
-      await sound.playAsync();
+    const { sound } = await Audio.Sound.createAsync(require('../assets/audio/fill.wav'));
+    setFillSound(sound);
+    await sound.playAsync();
   }
   async function playCoinSound() {
-      const { sound } = await Audio.Sound.createAsync(require('../assets/audio/coin.wav'));
-      setCoinSound(sound);
-      await sound.playAsync();
+    const { sound } = await Audio.Sound.createAsync(require('../assets/audio/coin.wav'));
+    setCoinSound(sound);
+    await sound.playAsync();
   }
   async function playDoorSound() {
-      const { sound } = await Audio.Sound.createAsync(require('../assets/audio/door.wav'));
-      setDoorSound(sound);
-      await sound.playAsync();
+    const { sound } = await Audio.Sound.createAsync(require('../assets/audio/door.wav'));
+    setDoorSound(sound);
+    await sound.playAsync();
   }
   async function playExplosionSound() {
-      const { sound } = await Audio.Sound.createAsync(require('../assets/audio/explosion.wav'));
-      setBoomSound(sound);
-      await sound.playAsync();
+    const { sound } = await Audio.Sound.createAsync(require('../assets/audio/explosion.wav'));
+    setBoomSound(sound);
+    await sound.playAsync();
   }
 
   useEffect(() => {
@@ -356,14 +356,15 @@ export default function PlayLevel({ viewCallback, levelCallback, gameStateCallba
 
         {/* PAUSE MENU COMPONENTS */}
         {modalOpen && <Animated.View style={styles.modal(anim, darkMode)}>
+          <Text style={styles.subtitle(darkMode)}>Menu</Text>
           <MenuButton onPress={restartLevel} label="Restart Level" icon={graphics.HELP_ICON} />
           <MenuButton onPress={viewCallback} value={"home"} label="To Level Select" icon={graphics.DOOR_ICON} />
         </Animated.View>}
         <View style={{ flexDirection: "row", height: normalize(50) }}>
           {!game.won && <SimpleButton onPress={toggleModal} text="Pause Menu" />}
-          {game.won && !test && <SimpleButton onPress={() => { levelCallback(level + 1) }} text="Next Level" />}
+          {game.won && <SimpleButton onPress={() => { viewCallback("home"); }} text="Back" />}
           {game.won && <View style={{ width: normalize(15) }} />}
-          {game.won && <SimpleButton onPress={() => { viewCallback("home"); }} text="Go Back" />}
+          {game.won && !test && <SimpleButton onPress={() => { levelCallback(level + 1) }} text="Next Level" main={true} wide={true}/>}
         </View>
       </SafeAreaView>}
     </>
@@ -381,6 +382,10 @@ function pressToIndex(touchPos, tileSize) {
 }
 
 const styles = StyleSheet.create({
+  subtitle: (darkMode) => ({
+    ...TextStyles.subtitle(darkMode),
+    marginBottom: -normalize(5),
+  }),
   container: {
     paddingTop: StatusBar.currentHeight + 15,
     // paddingBottom: win.height * 0.05,
