@@ -57,16 +57,16 @@ function LevelCardBase({ viewCallback, playCallback, editCallback, levelIndex, s
           {/* Icon & Number */}
           <View style={{ justifyContent: "center", alignItems: "center" }}>
             <Image style={styles.bigIcon} source={defaultLevel ? graphics.CRATE : graphics.CRATER} />
-            <Text style={styles.number()}>{levelIndex + 1}</Text>
+            <Text allowFontScaling={false} style={styles.number()}>{levelIndex + 1}</Text>
           </View>
 
           {/* Name & Designer */}
           <View style={{ flexDirection: "column", justifyContent: "center", marginLeft: normalize(10) }}>
-            <Text style={styles.levelName(darkMode)} numberOfLines={1}>{level.name}</Text>
+            <Text allowFontScaling={false} style={styles.levelName(darkMode)} numberOfLines={1}>{level.name}</Text>
             {!(defaultLevel || specialLevel) &&
-              <Text style={styles.designerName(darkMode)} numberOfLines={1}>Designed by "{level.designer}"</Text>}
-            {defaultLevel && <Text style={styles.designerName(darkMode)}>Standard Level</Text>}
-            {specialLevel && <Text style={styles.designerName(darkMode)}>Empty Canvas</Text>}
+              <Text allowFontScaling={false} style={styles.designerName(darkMode)} numberOfLines={1}>Designed by "{level.designer}"</Text>}
+            {defaultLevel && <Text allowFontScaling={false} style={styles.designerName(darkMode)}>Standard Level</Text>}
+            {specialLevel && <Text allowFontScaling={false} style={styles.designerName(darkMode)}>Empty Canvas</Text>}
           </View>
         </View>
 

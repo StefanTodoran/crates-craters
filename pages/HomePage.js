@@ -53,7 +53,7 @@ export default function HomePage({ darkModeCallback, setThemeCallback, audioMode
       <MenuButton onPress={setModalOpen} value="settings" label="App Settings" icon={graphics.OPTIONS_ICON} />
       <MenuButton onPress={setModalOpen} value="about" label="About the App" icon={graphics.PLAYER} />
       <MenuButton onPress={setModalOpen} value="share" label="Share Levels" icon={graphics.SHARE_ICON} disabled={countCustomLevels() === 0}/>
-      <MenuButton onPress={viewCallback} value="home" label="Return to Home" icon={graphics.DOOR_ICON}/>
+      <MenuButton onPress={viewCallback} value="home" label="Go Back" icon={graphics.DOOR_ICON}/>
 
       {modalOpen &&
         <Animated.View style={styles.modal(darkMode, anim)}>

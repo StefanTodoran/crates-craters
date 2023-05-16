@@ -154,7 +154,7 @@ export default function ShareLevel({ pageCallback }) {
         <View style={{ height: 15 }} />
         <View style={styles.buttonsContainer}>
           <MenuButton onPress={setScanned} value={!scanned} label="Scan Level QR" icon={graphics.LOAD_ICON} />
-          <MenuButton onPress={pageCallback} value={false} label="Back to Menu" icon={graphics.DOOR_ICON} />
+          <MenuButton onPress={pageCallback} value={false} label="Go Back" icon={graphics.DOOR_ICON} />
         </View>
       </>}
       {!scanned && <>

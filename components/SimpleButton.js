@@ -8,8 +8,8 @@ export default function SimpleButton({ onPress, text, icon, disabled, main, wide
   const { darkMode } = useContext(GlobalContext);
   const [pressed, setPressedState] = useState(false);
 
-  const fillColor = (darkMode) ? colors.MAIN_PURPLE_TRANSPARENT(0.5) : colors.MAIN_PURPLE;
-  const pressedFillColor = (darkMode) ? colors.MAIN_PURPLE_TRANSPARENT(0.7) : colors.MAIN_PURPLE_TRANSPARENT(0.8);
+  const fillColor = (darkMode) ? colors.MAIN_PURPLE_TRANSPARENT(0.8) : colors.MAIN_PURPLE;
+  const pressedFillColor = (darkMode) ? colors.MAIN_PURPLE : colors.MAIN_PURPLE_TRANSPARENT(0.8);
 
   return (
     <Pressable style={[styles.simpleButton(pressed, disabled, !!icon), main && {
@@ -22,10 +22,11 @@ export default function SimpleButton({ onPress, text, icon, disabled, main, wide
       }
     }} onPressIn={() => { setPressedState(!disabled) }} onPressOut={() => { setPressedState(false) }}>
       {icon && <Image style={styles.bigIcon} source={icon} />}
-      <Text style={[TextStyles.paragraph(darkMode), {
+      <Text allowFontScaling={false} style={[TextStyles.paragraph(darkMode), {
         marginBottom: 0,
         marginLeft: icon ? normalize(10) : 0,
         color: main ? "white" : colors.MAIN_PURPLE,
+        fontSize: normalize(14),
       }]}>{text}</Text>
     </Pressable>
   );

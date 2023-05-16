@@ -43,7 +43,7 @@ export default function Selector({ label, onNext, onPrev, nextDisabled, prevDisa
       onPressIn={() => {setPrevPressed(true)}} onPressOut={() => {setPrevPressed(false)}}>
         <Image style={styles.icon(prevPressed, prevDisabled)} source={graphics.LEFT_ICON} />
       </Pressable>
-      <Text style={{
+      <Text allowFontScaling={false} style={{
         width: win.width / 2,
         ...styles.label, color: colors.MAIN_PURPLE,
       }}>{label}</Text>
@@ -66,7 +66,7 @@ const styles = StyleSheet.create({
   },
   label: {
     textAlign: "center",
-    fontSize: normalize(18),
+    fontSize: normalize(16),
     fontFamily: "Montserrat-Medium",
     fontWeight: "bold",
     paddingRight: 5,

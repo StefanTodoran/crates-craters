@@ -23,7 +23,7 @@ export default function Inventory({ coins, maxCoins, keys }) {
   useEffect(() => {
     const startVal = (prevKeys.current < keys) ? 0 : 1;
     const endVal = (prevKeys.current < keys) ? 1 : 0;
-    
+
     keysAnim.setValue(startVal);
     Animated.timing(keysAnim, {
       toValue: endVal,
@@ -42,19 +42,19 @@ export default function Inventory({ coins, maxCoins, keys }) {
     // If it is the last key and # of keys changed, animate it. Otherwise set animated to
     // one meaning not animated, since it is terminal animation value.
     const animated = (i + 1 === displayKeys && prevKeys.current !== keys) ? keysAnim : 1;
-    inventory.push(<Animated.Image key={`key<${i}>`} source={graphics.KEY} style={[styles.icon(animated), {marginRight: -5}]} />)
+    inventory.push(<Animated.Image key={`key<${i}>`} source={graphics.KEY} style={[styles.icon(animated), { marginRight: -5 }]} />)
   }
   // END KEY ANIMATION
   // =================
 
   return (
     <View style={styles.inventory}>
-      <View style={[styles.row, {marginLeft: 5}]}>
+      <View style={[styles.row, { marginLeft: 5 }]}>
         {inventory}
       </View>
       <View style={styles.row}>
-        <Animated.Text style={styles.coinsText(coinsAnim)}>{coins}</Animated.Text>
-        <Animated.Text style={{
+        <Animated.Text allowFontScaling={false} style={styles.coinsText(coinsAnim)}>{coins}</Animated.Text>
+        <Animated.Text allowFontScaling={false} style={{
           color: "#A7A2A9",
           fontSize: normalize(12),
           ...styles.font,

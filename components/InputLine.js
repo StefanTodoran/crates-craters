@@ -30,7 +30,7 @@ export default function InputLine({ label, value, changeCallback, darkMode }) {
       ...styles.container,
       borderBottomColor: colors.MAIN_PURPLE,
     }}>
-      <Animated.Text style={styles.label(anim)}>
+      <Animated.Text style={styles.label(anim)} allowFontScaling={false}>
         {label}
       </Animated.Text>
       <Animated.View style={styles.inputContainer(anim)}>
@@ -48,6 +48,7 @@ export default function InputLine({ label, value, changeCallback, darkMode }) {
           selectionColor={colors.MAIN_PURPLE}
           cursorColor={colors.MAIN_PURPLE}
           maxLength={18}
+          allowFontScaling={false}
         />
       </Animated.View>
     </View>

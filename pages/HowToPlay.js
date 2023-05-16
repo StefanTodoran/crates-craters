@@ -82,7 +82,7 @@ export default function HowToPlay({ pageCallback }) {
       </View>
 
       <View style={styles.buttonContainer}>
-        <MenuButton onPress={pageCallback} value={false} label="Back to Menu" icon={graphics.DOOR_ICON} />
+        <MenuButton onPress={pageCallback} value={false} label="Go Back" icon={graphics.DOOR_ICON} />
       </View>
     </ScrollView>
   );

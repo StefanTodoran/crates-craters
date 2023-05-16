@@ -84,7 +84,7 @@ export default function MenuButton({
 
       {(icon) && <Image style={styles.icon} source={icon} />}
 
-      {!!label && <Text numberOfLines={allowOverflow ? 0 : 1} style={{
+      {!!label && <Text numberOfLines={allowOverflow ? 0 : 1} allowFontScaling={false} style={{
         ...styles.label, color: textColor ? textColor : colors.MIDDLE_PURPLE,
       }}>{label}</Text>}
     </Pressable>
@@ -115,7 +115,7 @@ const styles = StyleSheet.create({
   }),
   label: {
     textAlign: "center",
-    fontSize: normalize(18),
+    fontSize: normalize(16),
     marginLeft: 15,
     fontFamily: "Montserrat-Medium",
     fontWeight: "bold",

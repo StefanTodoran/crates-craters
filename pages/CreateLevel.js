@@ -212,7 +212,7 @@ export default function CreateLevel({ viewCallback, playLevelCallback, editorLev
           <MenuButton onPress={createNewLevel} label="Create Level" icon={graphics.SAVE_ICON} disabled={!validNameAndDesigner || isNameTaken()} />
         </View>
         <View style={styles.singleButton}>
-          <MenuButton onPress={() => { viewCallback("home"); }} label="Back to Menu" icon={graphics.DOOR_ICON} />
+          <MenuButton onPress={() => { viewCallback("home"); }} label="Go Back" icon={graphics.DOOR_ICON} />
         </View>
       </>}
 
@@ -310,12 +310,12 @@ export default function CreateLevel({ viewCallback, playLevelCallback, editorLev
         {/* END MODAL */}
 
         <View style={styles.buttonsRow}>
-          <SimpleButton onPress={() => { toggleToolsModal(); }} text="Tools & Options" main={true}/>
+          <SimpleButton onPress={() => { toggleToolsModal(); }} text="Tools & Options" />
           <View style={{ width: normalize(15) }} />
           <SimpleButton onPress={() => {
             saveLevelToStorage(levelObj, levelObj.name);
             viewCallback("home");
-          }} text="Save & Exit"/>
+          }} text="Save & Exit" />
         </View>
       </>}
     </SafeAreaView>

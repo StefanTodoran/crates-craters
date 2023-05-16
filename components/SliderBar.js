@@ -1,5 +1,6 @@
 import { View, Animated, Text, StyleSheet, Dimensions, PanResponder } from 'react-native';
 import React, { useEffect, useState } from "react";
+import { normalize } from '../TextStyles';
 
 const win = Dimensions.get('window');
 const barWidth = win.width / 2;
@@ -72,8 +73,8 @@ export default function SliderBar({
   return (
     <View style={styles.container} {...panResponder.panHandlers}>
       <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-        <Text style={styles.text(mainColor)}>{label}</Text>
-        <Text style={styles.text(mainColor)}>{value}{units}</Text>
+        <Text allowFontScaling={false} style={styles.text(mainColor)}>{label}</Text>
+        <Text allowFontScaling={false} style={styles.text(mainColor)}>{value}{units}</Text>
       </View>
       <View style={styles.bar(mainColor)}>
         <Animated.View style={styles.slider(
@@ -105,6 +106,7 @@ const styles = StyleSheet.create({
     color: color,
     fontFamily: "Montserrat-Regular",
     fontWeight: "normal",
+    fontSize: normalize(15),
   }),
   slider: (xPos, pressed, color, fillColor) => ({
     position: "absolute",

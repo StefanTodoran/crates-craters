@@ -2,8 +2,8 @@
   "expo": {
     "name": "Crates & Craters",
     "slug": "crates-n-craters",
-    "owner": "todorantechnologies",
-    "version": "0.3.6",
+    // "owner": "todorantechnologies",
+    "version": "0.3.7",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -28,7 +28,7 @@
         "backgroundColor": "#FFFFFF"
       },
       "package": "com.stefantodoran.cratesncraters",
-      "versionCode": 3
+      "versionCode": 4
     },
     "web": {
       "favicon": "./assets/favicon.png"
