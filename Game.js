@@ -23,18 +23,18 @@ const blank_level = [
 ];
 const level_tutorial = [
   [1, 1, 1, 1, 1, 1, 1, 1],
-  [1, 0, 0, 0, 1, 4, 0, 1],
-  [1, 0, 7, 0, 1, 0, 4, 1],
-  [1, 0, 0, 0, 1, 5, 0, 1],
-  [1, 4, 4, 4, 1, 1, 1, 1],
-  [1, 0, 0, 0, 12, 6, 0, 1],
-  [1, 0, 0, 0, 1, 0, 0, 1],
-  [1, 1, 1, 1, 1, 4, 4, 1],
-  [1, 0, 0, 0, 1, 5, 5, 1],
-  [1, 0, 6, 0, 2, 0, 0, 1],
-  [1, 0, 0, 0, 1, 0, 0, 1],
-  [1, 0, 8, 0, 1, 0, 0, 1],
-  [1, 0, 0, 0, 1, 0, 3, 1],
+  [1, 0, 0, 4, 0, 0, 0, 5],
+  [1, 7, 0, 4, 0, 0, 0, 5],
+  [1, 0, 6, 4, 0, 0, 0, 5],
+  [1, 1, 1, 1, 1, 1, 0, 1],
+  [1, 0, 3, 0, 0, 0, 4, 1],
+  [1, 0, 0, 0, 4, 0, 5, 1],
+  [1, 0, 0, 0, 0, 6, 0, 1],
+  [1, 5, 0, 4, 0, 0, 0, 1],
+  [1, 5, 1, 1, 1, 1, 1, 1],
+  [1, 0, 0, 5, 1, 0, 0, 0],
+  [1, 0, 0, 4, 2, 0, 8, 0],
+  [1, 0, 6, 0, 1, 0, 0, 0],
   [1, 1, 1, 1, 1, 1, 1, 1],
 ];
 const level_easy_peasy = [
@@ -51,6 +51,22 @@ const level_easy_peasy = [
   [1, 1, 1, 1, 13, 0, 4, 1],
   [1, 0, 6, 5, 0, 4, 0, 1],
   [1, 0, 0, 0, 4, 0, 0, 1],
+  [1, 1, 1, 1, 1, 1, 1, 1],
+];
+const level_having_a_blast = [
+  [1, 1, 1, 1, 1, 1, 1, 1],
+  [0, 0, 1, 0, 0, 5, 4, 5],
+  [0, 0, 2, 4, 7, "b:25", 5, 0],
+  [6, 0, 1, 0, 13, 0, 0, 0],
+  [0, 0, 1, 5, 0, 0, 0, 4],
+  [4, 0, 1, 0, 4, 0, 0, 5],
+  [0, 4, 1, 0, 0, 0, 4, 1],
+  [0, 0, 1, 1, 4, 4, 4, 1],
+  [0, 0, 5, 1, 4, 6, 3, 1],
+  [0, 0, 0, 1, 1, 13, 13, 1],
+  [0, 0, 0, 5, 6, 0, 0, 1],
+  [0, 0, 4, 1, 0, 8, 0, 1],
+  [5, 4, 5, 1, 0, 0, 0, 1],
   [1, 1, 1, 1, 1, 1, 1, 1],
 ];
 const level_rooms = [
@@ -181,7 +197,7 @@ const level_race_the_clock = [
   [4, 4, 0, 0, 0, 0, 5, 4],
   [0, 4, 0, 4, 0, 0, 0, 5],
 ];
-const level_marathon = [ // Marathon
+const level_marathon = [
   [4, 4, 5, 0, 0, 6, 1, 4],
   [5, 0, 5, 4, 0, 5, 0, 0],
   [0, 5, 0, 5, 1, 0, 0, 0],
@@ -197,7 +213,7 @@ const level_marathon = [ // Marathon
   [4, 0, 3, 4, 0, 0, "b:40", 1],
   [4, 0, 5, 5, 4, 0, 2, 6],
 ];
-const level_no_way_home = [ // No Way Home
+const level_no_way_home = [
   [4, 0, 1, 1, 0, 14, 0, 6],
   [4, 3, 4, 0, 5, 0, 5, 1],
   [5, 4, 5, 0, 0, 5, 0, 0],
@@ -213,7 +229,7 @@ const level_no_way_home = [ // No Way Home
   [5, 8, 1, 0, 4, 5, 1, 0],
   [0, 0, 1, 1, 0, 12, 0, 3],
 ];
-const level_prison = [ // Prison
+const level_prison = [
   [0, 5, 3, 4, 0, 0, 4, 0],
   [0, 4, 6, 5, 0, 0, 4, 4],
   [0, 1, 1, 0, 0, 0, 0, 0],
@@ -311,7 +327,7 @@ const level_doubling_up = [
 ];
 const level_warzone = [
   [5, 4, 5, 5, 0, 4, 0, 11,],
-  [4, 1, 6, 4, 1, 13, 4, 5,],
+  [4, 1, 6, 5, 1, 13, 4, 5,],
   [5, 3, 5, 0, 1, 6, 12, 0,],
   [4, 4, 0, 0, 0, 4, 1, 4,],
   [0, 1, 5, 0, 13, 0, 1, 6,],
@@ -326,9 +342,17 @@ const level_warzone = [
   [5, 4, "b:10", 4, 0, 5, 0, 4,],
 ];
 
+// LEVEL IDEAS:
+// Pesky Coin (coins blocking crates)
+// Key Chain (tons of keys & doors)
+// Potholes (lots of craters)
+// Demolition Man (no craters only bombs)
+// Payday (tons of coins)
+
 const defaults = [
   createLevelObj("Tutorial", "default", level_tutorial),
   createLevelObj("Easy Peasy", "default", level_easy_peasy),
+  createLevelObj("Having a Blast", "default", level_having_a_blast),
   createLevelObj("Rooms", "default", level_rooms),
   createLevelObj("Choices", "default", level_choices),
   createLevelObj("Running Laps", "default", level_running_laps),

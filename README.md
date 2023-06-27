@@ -1,4 +1,5 @@
-<img src="assets/main_theme/banner.png" alt="Crates and Craters" style="width: 100%;"/>
+<!-- <img src="assets/main_theme/banner.png" alt="Crates and Craters" style="width: 100%;"/> -->
+<img src="misc/banner.png" alt="Crates and Craters" style="width: 100%; border-radius: 10px; margin-bottom: 20px;"/>
 
 <h2 style="display: flex; align-items: center;">
   About
@@ -27,14 +28,14 @@ Built with JavaScript and React Native, Crates and Craters is a single player pu
     <td>
       <picture>
         <source 
-          srcset="misc/screenshot_1_dark.jpg"
+          srcset="misc/screenshot_1_dark.png"
           media="(prefers-color-scheme: dark)"
         />
         <source
-          srcset="misc/screenshot_1.jpg"
+          srcset="misc/screenshot_1.png"
           media="(prefers-color-scheme: light), (prefers-color-scheme: no-preference)"
         />
-        <img src="misc/screenshot_1.jpg"/>
+        <img src="misc/screenshot_1.png"/>
       </picture>
     </td>
     <td style="padding-left: 10%;">
@@ -67,14 +68,14 @@ Built with JavaScript and React Native, Crates and Craters is a single player pu
     <td>
       <picture>
         <source 
-          srcset="misc/screenshot_4_dark.jpg"
+          srcset="misc/screenshot_4_dark.png"
           media="(prefers-color-scheme: dark)"
         />
         <source
-          srcset="misc/screenshot_4.jpg"
+          srcset="misc/screenshot_4.png"
           media="(prefers-color-scheme: light), (prefers-color-scheme: no-preference)"
         />
-        <img src="misc/screenshot_4.jpg"/>
+        <img src="misc/screenshot_4.png"/>
       </picture>
     </td>
   </tr>
@@ -85,14 +86,14 @@ Built with JavaScript and React Native, Crates and Craters is a single player pu
     <td>
       <picture>
         <source 
-          srcset="misc/screenshot_5_dark.jpg"
+          srcset="misc/screenshot_5_dark.png"
           media="(prefers-color-scheme: dark)"
         />
         <source
-          srcset="misc/screenshot_5.jpg"
+          srcset="misc/screenshot_5.png"
           media="(prefers-color-scheme: light), (prefers-color-scheme: no-preference)"
         />
-        <img src="misc/screenshot_5.jpg"/>
+        <img src="misc/screenshot_5.png"/>
       </picture>
     </td>
     <td style="padding-left: 10%;">
@@ -138,14 +139,14 @@ Built with JavaScript and React Native, Crates and Craters is a single player pu
     <td>
       <picture>
         <source 
-          srcset="misc/screenshot_6_dark.jpg"
+          srcset="misc/screenshot_6_dark.png"
           media="(prefers-color-scheme: dark)"
         />
         <source
-          srcset="misc/screenshot_6.jpg"
+          srcset="misc/screenshot_6.png"
           media="(prefers-color-scheme: light), (prefers-color-scheme: no-preference)"
         />
-        <img src="misc/screenshot_6.jpg"/>
+        <img src="misc/screenshot_6.png"/>
       </picture>
     </td>
   </tr>
@@ -163,3 +164,4 @@ Built with JavaScript and React Native, Crates and Craters is a single player pu
 * Look into ways to have level sharing server
 * Rework how levels are marked as default?
 * Improve VirtualizedList performance especially as content length increases
+* Better way to do local level storage (read from file?)
