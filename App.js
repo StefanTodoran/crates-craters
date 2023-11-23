@@ -1,20 +1,20 @@
-import { StatusBar } from 'expo-status-bar';
-import { useFonts } from 'expo-font';
-import * as NavigationBar from 'expo-navigation-bar';
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { StyleSheet, View, Image, Dimensions, Animated, BackHandler, SafeAreaView, StatusBar as RNStatusBar } from 'react-native';
+import { StatusBar } from "expo-status-bar";
+import { useFonts } from "expo-font";
+import * as NavigationBar from "expo-navigation-bar";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { StyleSheet, View, Image, Dimensions, Animated, BackHandler, SafeAreaView, StatusBar as RNStatusBar } from "react-native";
 
-import { colors, graphics, nextTheme } from './Theme';
-import { GlobalContext } from './GlobalContext';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import HomePage from './pages/HomePage';
-import IconButton from './components/IconButton';
-import LevelSelect from './pages/LevelSelect';
-import PlayLevel from './pages/PlayLevel';
-import CreateLevel from './pages/CreateLevel';
-import { cloneLevelObj, storeData } from './Game';
+import { colors, graphics, nextTheme } from "./Theme";
+import { GlobalContext } from "./GlobalContext";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import HomePage from "./pages/HomePage";
+import IconButton from "./components/IconButton";
+import LevelSelect from "./pages/LevelSelect";
+import PlayLevel from "./pages/PlayLevel";
+import CreateLevel from "./pages/CreateLevel";
+import { cloneLevelObj, storeData } from "./Game";
 
-const win = Dimensions.get('window');
+const win = Dimensions.get("window");
 
 /**
  * App is the main entry point into the application. App contains global state,
@@ -24,8 +24,8 @@ const win = Dimensions.get('window');
  */
 export default function App() {
   const [fontsLoaded] = useFonts({
-    'Montserrat-Regular': require('./assets/Montserrat-Regular.ttf'),
-    'Montserrat-Medium': require('./assets/Montserrat-Medium.ttf'),
+    "Montserrat-Regular": require("./assets/Montserrat-Regular.ttf"),
+    "Montserrat-Medium": require("./assets/Montserrat-Medium.ttf"),
   });
 
   const pageAnim = useRef(new Animated.Value(0)).current;
