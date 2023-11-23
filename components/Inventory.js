@@ -1,9 +1,9 @@
-import { View, StyleSheet, Dimensions, Animated } from 'react-native';
+import { View, StyleSheet, Dimensions, Animated } from "react-native";
 import React, { useEffect, useRef } from "react";
 
-import { colors, graphics } from '../Theme';
-import { normalize } from '../TextStyles';
-const win = Dimensions.get('window');
+import { colors, graphics } from "../Theme";
+import { normalize } from "../TextStyles";
+const win = Dimensions.get("window");
 
 export default function Inventory({ coins, maxCoins, keys }) {
   const coinsAnim = useRef(new Animated.Value(0)).current;

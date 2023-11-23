@@ -1,6 +1,6 @@
-import { View, Animated, Text, StyleSheet, TextInput } from 'react-native';
+import { View, Animated, Text, StyleSheet, TextInput } from "react-native";
 import React, { useRef, useEffect, useState } from "react";
-import { colors } from '../Theme';
+import { colors } from "../Theme";
 
 /**
  * InputLine is an augmentation of the basic TextInput that has

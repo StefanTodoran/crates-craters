@@ -1,8 +1,8 @@
-import { Pressable, Dimensions } from 'react-native';
+import { Pressable, Dimensions } from "react-native";
 import React, { useState } from 'react';
 import { Path, Svg } from 'react-native-svg';
-import { colors } from '../Theme';
-const win = Dimensions.get('window');
+import { colors } from "../Theme";
+const win = Dimensions.get("window");
 
 export default function IconButton({ onPress }) {
   const [pressed, setPressedState] = useState(false);

@@ -1,8 +1,8 @@
-import { View, Animated, Text, StyleSheet, Dimensions, PanResponder } from 'react-native';
+import { View, Animated, Text, StyleSheet, Dimensions, PanResponder } from "react-native";
 import React, { useEffect, useState } from "react";
-import { normalize } from '../TextStyles';
+import { normalize } from "../TextStyles";
 
-const win = Dimensions.get('window');
+const win = Dimensions.get("window");
 const barWidth = win.width / 2;
 
 /**

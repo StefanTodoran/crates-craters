@@ -1,12 +1,12 @@
-import { Text, StyleSheet, View, Dimensions, Image, Animated } from 'react-native';
+import { Text, StyleSheet, View, Dimensions, Image, Animated } from "react-native";
 import React, { useContext, useEffect, useRef, useState } from "react";
-import { colors, graphics } from '../Theme';
-import TextStyles, { normalize } from '../TextStyles';
+import { colors, graphics } from "../Theme";
+import TextStyles, { normalize } from "../TextStyles";
 import { getSpawnPos, levels } from '../Game';
-import { GlobalContext } from '../GlobalContext';
+import { GlobalContext } from "../GlobalContext";
 import GameBoard from './GameBoard';
 import SimpleButton from './SimpleButton';
-const win = Dimensions.get('window');
+const win = Dimensions.get("window");
 
 function LevelCardBase({ viewCallback, playCallback, editCallback, levelIndex, scrollIndex }) {
   const { darkMode } = useContext(GlobalContext);

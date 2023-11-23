@@ -1,10 +1,10 @@
-import { Pressable, View, Text, StyleSheet, Image, Dimensions } from 'react-native';
+import { Pressable, View, Text, StyleSheet, Image, Dimensions } from "react-native";
 import React, { useContext, useEffect, useState } from 'react';
 import { Audio } from 'expo-av';
-import { colors, graphics } from '../Theme';
-import { GlobalContext } from '../GlobalContext';
-import { normalize } from '../TextStyles';
-const win = Dimensions.get('window');
+import { colors, graphics } from "../Theme";
+import { GlobalContext } from "../GlobalContext";
+import { normalize } from "../TextStyles";
+const win = Dimensions.get("window");
 
 /**
  * MenuButton is the basic button type used throughout the project.

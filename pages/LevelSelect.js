@@ -1,4 +1,4 @@
-import { FlatList, View } from 'react-native';
+import { FlatList, View } from "react-native";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 
 import { levels } from '../Game';

@@ -1,12 +1,12 @@
-import { StyleSheet, Animated } from 'react-native';
+import { StyleSheet, Animated } from "react-native";
 import React, { useContext, useRef, useState } from "react";
 
-import { colors, graphics } from '../Theme';
-import { GlobalContext } from '../GlobalContext';
+import { colors, graphics } from "../Theme";
+import { GlobalContext } from "../GlobalContext";
 import About from '../pages/About';
 import Settings from '../pages/Settings';
 import HowToPlay from '../pages/HowToPlay';
-import MenuButton from '../components/MenuButton';
+import MenuButton from "../components/MenuButton";
 import ShareLevel from './ShareLevel';
 import { countCustomLevels } from '../Game';
 

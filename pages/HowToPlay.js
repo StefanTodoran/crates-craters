@@ -1,11 +1,11 @@
-import { View, Text, StyleSheet, Image, Dimensions, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, Image, Dimensions, ScrollView } from "react-native";
 import React, { useContext } from "react";
 
-import { colors, graphics } from '../Theme';
-import MenuButton from '../components/MenuButton';
-import { GlobalContext } from '../GlobalContext';
-import TextStyles, { normalize } from '../TextStyles';
-const win = Dimensions.get('window');
+import { colors, graphics } from "../Theme";
+import MenuButton from "../components/MenuButton";
+import { GlobalContext } from "../GlobalContext";
+import TextStyles, { normalize } from "../TextStyles";
+const win = Dimensions.get("window");
 
 export default function HowToPlay({ pageCallback }) {
   const { darkMode } = useContext(GlobalContext);

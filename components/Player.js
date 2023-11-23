@@ -1,8 +1,8 @@
-import { StyleSheet, Image, Animated } from 'react-native';
+import { StyleSheet, Image, Animated } from "react-native";
 import React, { useRef, useEffect } from "react";
 
 import { tileAt } from '../Game';
-import { colors, graphics } from '../Theme';
+import { colors, graphics } from "../Theme";
 
 export default function Player({ game, touch, darkMode, tileSize }) {
   const optionsAnim = useRef(new Animated.Value(0)).current;

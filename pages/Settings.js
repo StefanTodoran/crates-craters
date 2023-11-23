@@ -1,11 +1,11 @@
-import { StyleSheet, Text, Dimensions, View, ScrollView } from 'react-native';
+import { StyleSheet, Text, Dimensions, View, ScrollView } from "react-native";
 import React, { useContext, useEffect, useRef, useState } from "react";
 
-import { colors, graphics, nextTheme } from '../Theme';
-import MenuButton from '../components/MenuButton';
+import { colors, graphics, nextTheme } from "../Theme";
+import MenuButton from "../components/MenuButton";
 import SliderBar from '../components/SliderBar';
-import { GlobalContext } from '../GlobalContext';
-import TextStyles, { normalize } from '../TextStyles';
+import { GlobalContext } from "../GlobalContext";
+import TextStyles, { normalize } from "../TextStyles";
 
 export default function Settings({ pageCallback, darkModeCallback, audioModeCallback, setThemeCallback, setSensitivityCallback, setTapDelayCallback }) {
   const { darkMode, dragSensitivity, doubleTapDelay, playAudio } = useContext(GlobalContext);
@@ -74,7 +74,7 @@ export default function Settings({ pageCallback, darkModeCallback, audioModeCall
 
 // Returns a list [height, width] of the size for an element based
 // on the image's size and the desired width percent to be occupied.
-const win = Dimensions.get('window');
+const win = Dimensions.get("window");
 
 
 const styles = StyleSheet.create({

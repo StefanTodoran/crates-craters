@@ -1,11 +1,11 @@
-import { Text, StyleSheet, Dimensions, Linking, View, ScrollView } from 'react-native';
+import { Text, StyleSheet, Dimensions, Linking, View, ScrollView } from "react-native";
 import React, { useContext } from "react";
 
-import { graphics } from '../Theme';
-import MenuButton from '../components/MenuButton';
-import { GlobalContext } from '../GlobalContext';
-import TextStyles, { normalize } from '../TextStyles';
-const win = Dimensions.get('window');
+import { graphics } from "../Theme";
+import MenuButton from "../components/MenuButton";
+import { GlobalContext } from "../GlobalContext";
+import TextStyles, { normalize } from "../TextStyles";
+const win = Dimensions.get("window");
 
 export default function About({ pageCallback }) {
   const { darkMode } = useContext(GlobalContext);

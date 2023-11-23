@@ -1,12 +1,12 @@
-import { View, StyleSheet, Dimensions, Image, Pressable, Text, Platform } from 'react-native';
+import { View, StyleSheet, Dimensions, Image, Pressable, Text, Platform } from "react-native";
 import React from "react";
 
 import { tiles, getTileType, icon_src, calcTileSize, getTileEntityData } from '../Game';
-import { colors } from '../Theme';
+import { colors } from "../Theme";
 
 import { TileIcon } from '../assets/Icons';
 
-const win = Dimensions.get('window');
+const win = Dimensions.get("window");
 
 export default function GameBoard({ children, board, tileCallback, overrideTileSize, rowCorrect }) {
   const tilesBoard = buildUpBoard(board, tileCallback, overrideTileSize, rowCorrect, Platform.OS === "ios");

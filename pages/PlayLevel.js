@@ -1,20 +1,20 @@
-import { View, StyleSheet, Dimensions, PanResponder, Animated, SafeAreaView, StatusBar, Pressable, Text } from 'react-native';
+import { View, StyleSheet, Dimensions, PanResponder, Animated, SafeAreaView, StatusBar, Pressable, Text } from "react-native";
 import React, { useState, useRef, useEffect, useContext, useMemo } from 'react';
 
-import MenuButton from '../components/MenuButton';
+import MenuButton from "../components/MenuButton";
 import GameBoard from '../components/GameBoard';
 import Inventory from '../components/Inventory';
 import Player from '../components/Player';
 
 import { doGameMove, initializeGameObj, calcTileSize, canMoveTo, levels, setCompleted } from '../Game';
-import { colors, graphics } from '../Theme';
+import { colors, graphics } from "../Theme";
 import WinScreen from './WinScreen';
-const win = Dimensions.get('window');
+const win = Dimensions.get("window");
 
 import { Audio } from 'expo-av';
-import { GlobalContext } from '../GlobalContext';
+import { GlobalContext } from "../GlobalContext";
 import SimpleButton from '../components/SimpleButton';
-import TextStyles, { normalize } from '../TextStyles';
+import TextStyles, { normalize } from "../TextStyles";
 
 /**
  * This component handles a wide variety of tasks related to level playing. It

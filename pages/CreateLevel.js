@@ -1,20 +1,20 @@
-import { View, StyleSheet, Dimensions, Animated, Image, Text, Keyboard, Platform, StatusBar, SafeAreaView } from 'react-native';
+import { View, StyleSheet, Dimensions, Animated, Image, Text, Keyboard, Platform, StatusBar, SafeAreaView } from "react-native";
 import React, { useState, useRef, useEffect, useContext } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Audio } from 'expo-av';
 
-import MenuButton from '../components/MenuButton';
+import MenuButton from "../components/MenuButton";
 import GameBoard from '../components/GameBoard';
 
 import { cloneBoard, getSpawnPos, createLevelObj, identifier, levels, importStoredLevels, formatTileEntityData, storeData, getData, cloneLevelObj } from '../Game';
-import { colors, graphics } from '../Theme';
+import { colors, graphics } from "../Theme";
 import InputLine from '../components/InputLine';
-import { GlobalContext } from '../GlobalContext';
+import { GlobalContext } from "../GlobalContext";
 import SliderBar from '../components/SliderBar';
-import { ScrollView } from 'react-native';
+import { ScrollView } from "react-native";
 import SimpleButton from '../components/SimpleButton';
-import TextStyles, { normalize } from '../TextStyles';
-const win = Dimensions.get('window');
+import TextStyles, { normalize } from "../TextStyles";
+const win = Dimensions.get("window");
 
 /**
  * @param {Function} viewCallback

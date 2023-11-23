@@ -1,8 +1,8 @@
-import { Pressable, Text, StyleSheet, Image } from 'react-native';
+import { Pressable, Text, StyleSheet, Image } from "react-native";
 import React, { useContext, useState } from 'react';
-import { colors } from '../Theme';
-import TextStyles, { normalize } from '../TextStyles';
-import { GlobalContext } from '../GlobalContext';
+import { colors } from "../Theme";
+import TextStyles, { normalize } from "../TextStyles";
+import { GlobalContext } from "../GlobalContext";
 
 export default function SimpleButton({ onPress, text, icon, disabled, main, wide }) {
   const { darkMode } = useContext(GlobalContext);
