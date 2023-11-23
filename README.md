@@ -35,7 +35,7 @@ Built with JavaScript and React Native, Crates and Craters is a single player pu
           srcset="misc/screenshot_1.png"
           media="(prefers-color-scheme: light), (prefers-color-scheme: no-preference)"
         />
-        <img src="misc/screenshot_1.png"/>
+        <img src="misc/screenshot_1.png" style="border-radius: 5px;"/>
       </picture>
     </td>
     <td style="padding-left: 10%;">
@@ -75,7 +75,7 @@ Built with JavaScript and React Native, Crates and Craters is a single player pu
           srcset="misc/screenshot_4.png"
           media="(prefers-color-scheme: light), (prefers-color-scheme: no-preference)"
         />
-        <img src="misc/screenshot_4.png"/>
+        <img src="misc/screenshot_4.png" style="border-radius: 5px;"/>
       </picture>
     </td>
   </tr>
@@ -93,7 +93,7 @@ Built with JavaScript and React Native, Crates and Craters is a single player pu
           srcset="misc/screenshot_5.png"
           media="(prefers-color-scheme: light), (prefers-color-scheme: no-preference)"
         />
-        <img src="misc/screenshot_5.png"/>
+        <img src="misc/screenshot_5.png" style="border-radius: 5px;"/>
       </picture>
     </td>
     <td style="padding-left: 10%;">
@@ -146,7 +146,7 @@ Built with JavaScript and React Native, Crates and Craters is a single player pu
           srcset="misc/screenshot_6.png"
           media="(prefers-color-scheme: light), (prefers-color-scheme: no-preference)"
         />
-        <img src="misc/screenshot_6.png"/>
+        <img src="misc/screenshot_6.png" style="border-radius: 5px;"/>
       </picture>
     </td>
   </tr>
@@ -159,9 +159,10 @@ Built with JavaScript and React Native, Crates and Craters is a single player pu
   <img src="assets/main_theme/flag.png" style="height: 1em;"/>
 </h2>
 
-* Make many, many more levels
-* Create a proper tutorial?
-* Look into ways to have level sharing server
-* Rework how levels are marked as default?
 * Improve VirtualizedList performance especially as content length increases
+* Use cloud service to allow storage and sharing of user-created levels
+  * Could store normal levels here too, with levels downloaded as you go?
+  * Rework how levels are stored to a more robust system
 * Better way to do local level storage (read from file?)
+* Design and add many, many more levels, perhaps with new tile types
+* Create a proper tutorial? as opposed to simply an easy level
