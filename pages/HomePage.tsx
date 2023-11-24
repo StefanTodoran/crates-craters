@@ -1,20 +1,41 @@
 import { StyleSheet, Animated } from "react-native";
 import React, { useContext, useRef, useState } from "react";
 
+import GlobalContext from "../GlobalContext";
 import { colors, graphics } from "../Theme";
-import { GlobalContext } from "../GlobalContext";
-import About from '../pages/About';
-import Settings from '../pages/Settings';
-import HowToPlay from '../pages/HowToPlay';
+import { PageView } from "../util/types";
+import About from "./About";
+import Settings from "./Settings";
+import HowToPlay from "./HowToPlay";
 import MenuButton from "../components/MenuButton";
-import ShareLevel from './ShareLevel';
-import { countCustomLevels } from '../Game';
+import ShareLevel from "./ShareLevel";
 
-export default function HomePage({ darkModeCallback, setThemeCallback, audioModeCallback, setSensitivityCallback, setTapDelayCallback, viewCallback }) {
+enum ModalPage {
+  NONE,
+  ABOUT,
+  HOWTO,
+  SETTINGS,
+}
+
+interface Props {
+  viewCallback: (newView: PageView) => void,
+  darkModeCallback: (darkMode: boolean) => void, 
+  audioModeCallback: (playAudio: boolean) => void, 
+  setSensitivityCallback: (sensitivity: number) => void, 
+  setTapDelayCallback: (delay: number) => void, 
+}
+
+export default function HomePage({ 
+  viewCallback,
+  darkModeCallback, 
+  audioModeCallback, 
+  setSensitivityCallback, 
+  setTapDelayCallback, 
+}: Props) {
   const { darkMode } = useContext(GlobalContext);
 
   const anim = useRef(new Animated.Value(0)).current;
-  const setAnimTo = (animState, callback) => {
+  const setAnimTo = (animState: number, callback?: () => void) => {
     // MAKE SURE 0 <= animState <= 1
     Animated.timing(anim, {
       toValue: animState,
@@ -23,8 +44,8 @@ export default function HomePage({ darkModeCallback, setThemeCallback, audioMode
     }).start(callback);
   }
 
-  const [modalOpen, setModalState] = useState(false); // false or the model which should be open
-  const setModalOpen = (modalState) => {
+  const [modalOpen, setModalState] = useState(ModalPage.NONE); // false or the model which should be open
+  const setModalOpen = (modalState: boolean) => {
     if (modalState) {
       setModalState(modalState);
       setAnimTo(1);
@@ -36,15 +57,13 @@ export default function HomePage({ darkModeCallback, setThemeCallback, audioMode
   }
 
   let content = <></>;
-  if (modalOpen === "about") {
+  if (modalOpen === ModalPage.ABOUT) {
     content = <About pageCallback={setModalOpen}/>
-  } else if (modalOpen === "how") {
+  } else if (modalOpen === ModalPage.HOWTO) {
     content = <HowToPlay pageCallback={setModalOpen} />;
-  } else if (modalOpen === "settings") {
+  } else if (modalOpen === ModalPage.SETTINGS) {
     content = <Settings pageCallback={setModalOpen} darkModeCallback={darkModeCallback} audioModeCallback={audioModeCallback}
-    setThemeCallback={setThemeCallback} setSensitivityCallback={setSensitivityCallback} setTapDelayCallback={setTapDelayCallback} />;
-  } else if (modalOpen === "share") {
-    content = <ShareLevel pageCallback={setModalOpen}/>
+    setThemeCallback={() => {}} setSensitivityCallback={setSensitivityCallback} setTapDelayCallback={setTapDelayCallback} />;
   }
 
   return (
@@ -52,10 +71,9 @@ export default function HomePage({ darkModeCallback, setThemeCallback, audioMode
       <MenuButton onPress={setModalOpen} value="how" label="How to Play" icon={graphics.HELP_ICON} />
       <MenuButton onPress={setModalOpen} value="settings" label="App Settings" icon={graphics.OPTIONS_ICON} />
       <MenuButton onPress={setModalOpen} value="about" label="About the App" icon={graphics.PLAYER} />
-      <MenuButton onPress={setModalOpen} value="share" label="Share Levels" icon={graphics.SHARE_ICON} disabled={countCustomLevels() === 0}/>
       <MenuButton onPress={viewCallback} value="home" label="Go Back" icon={graphics.DOOR_ICON}/>
 
-      {modalOpen &&
+      {false && modalOpen &&
         <Animated.View style={styles.modal(darkMode, anim)}>
           {content}
         </Animated.View>

@@ -1,4 +1,4 @@
-import { useContext, useEffect, useRef, useState } from "react";
+import { useContext, useRef } from "react";
 import { Animated, Dimensions, ScrollView, View } from "react-native";
 import MenuPage from "./MenuPage";
 import GlobalContext from "../GlobalContext";
@@ -7,33 +7,37 @@ import CrateGraphic from "../assets/crates.png";
 import DoorGraphic from "../assets/door_n_keys.png";
 import CoinGraphic from "../assets/coin_stack.png";
 import { normalize } from "../TextStyles";
+import { PageView } from "../util/types";
 const win = Dimensions.get("window");
 
 const pages = [
   {
     color: "#CCB7E5",
     source: CrateGraphic,
-    text: "PLAY",
+    text: "LEVELS",
+    target: PageView.LEVELS,
   },
   {
     color: "#BBE6BC",
     source: DoorGraphic,
     text: "ACCOUNT",
+    target: PageView.ACCOUNT,
   },
   {
     color: "#FFE08E",
     source: CoinGraphic,
     text: "STORE",
+    target: PageView.STORE,
   },
 ];
 
 const pageColors = pages.map(page => page.color);
 
 interface Props {
-  // openPage: ()
+  openPage: (target: PageView) => void,
 }
 
-export default function Menu({ }: Props) {
+export default function Menu({ openPage }: Props) {
   const { darkMode } = useContext(GlobalContext);
   const anim = useRef(new Animated.Value(0)).current;
 
@@ -61,7 +65,7 @@ export default function Menu({ }: Props) {
             key={idx}
             icon={page.source}
             text={page.text}
-            callback={() => { }}
+            callback={() => openPage(page.target)}
             darkMode={darkMode}
           />
         )}

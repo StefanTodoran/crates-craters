@@ -63,8 +63,10 @@ export type Level = OfficialLevel | UserLevel;
 // OTHER MISCELLANEOUS TYPES \\
 
 export enum PageView {
-  HOME,
-  SETTINGS,
+  MENU,
+  LEVELS,
   PLAY,
   EDIT,
+  ACCOUNT,
+  STORE,
 }

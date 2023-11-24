@@ -3,7 +3,7 @@ import React, { useContext } from "react";
 
 import { graphics } from "../Theme";
 import MenuButton from "../components/MenuButton";
-import { GlobalContext } from "../GlobalContext";
+import GlobalContext from "../GlobalContext";
 import TextStyles, { normalize } from "../TextStyles";
 const win = Dimensions.get("window");
 

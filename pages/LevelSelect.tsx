@@ -12,7 +12,6 @@ interface Props {
 
   playLevel?: string, // The uuid of the level currently being played (if a level is being played). 
   editorLevel?: string, // The uuid of level currently being edited (if a level is being edited). 
-  currentGame?: Game, // The current game object, if a game is in progress.
 
   elementHeight: number, // The card component size, used for pre scroll.
   storeElementHeightCallback: (height: number) => void, // Sets the element size, so this doesn't have to be recalculated every time we want to display the component.
@@ -24,7 +23,6 @@ function LevelSelectBase({
   // editorLevelCallback, 
   playLevel,
   editorLevel,
-  currentGame,
   elementHeight,
   storeElementHeightCallback
 }: Props) {
@@ -36,8 +34,6 @@ function LevelSelectBase({
     viewCallback(PageView.PLAY);
   }, [playLevel]);
 
-  const resumeIndex = (!currentGame) ? -1 : playLevel;
-  const editIndex = resumeIndex === -1 ? editorLevel : -1;
   const scrollIndex = 0;
   // const scrollIndex = (currentGame && !currentGame.playtest && resumeIndex > 0) ? resumeIndex :
   //   (editIndex > 0) ? editIndex : 0;
@@ -58,7 +54,7 @@ function LevelSelectBase({
         />
       </View>}
 
-      {elementHeight &&
+      {elementHeight !== 0 &&
         <FlatList
           ref={scrollRef}
           style={{ overflow: "hidden" }}
@@ -75,11 +71,10 @@ function LevelSelectBase({
             <LevelCard
               viewCallback={viewCallback}
               // editCallback={editorLevelCallback}
-              playCallback={index === resumeIndex && !currentGame?.won ? undefined : openLevel}
+              playCallback={item.uuid === playLevel ? undefined : openLevel}
               levelIndex={index}
               level={levels[index]}
               darkMode={darkMode}
-              // scrollIndex={scrollIndex}
             />
           }
           keyExtractor={item => item.uuid}
