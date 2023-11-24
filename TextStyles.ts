@@ -1,11 +1,11 @@
-import { StyleSheet, Dimensions, Platform, PixelRatio } from "react-native";
+import { StyleSheet, Dimensions, Platform, PixelRatio, ViewStyle, ImageStyle, TextStyle } from "react-native";
 import { colors } from "./Theme";
 
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
+const { width: SCREEN_WIDTH, height: _SCREEN_HEIGHT } = Dimensions.get("window");
 const SAMSUNG_S8_WIDTH = 384;
 const scale = SCREEN_WIDTH / SAMSUNG_S8_WIDTH;
 
-export function normalize(size) {
+export function normalize(size: number) {
   const newSize = size * scale;
   if (Platform.OS === "ios") {
     return Math.round(PixelRatio.roundToNearestPixel(newSize)) - 4;
@@ -14,9 +14,19 @@ export function normalize(size) {
   }
 }
 
-export default StyleSheet.create({
+type Style = ViewStyle | ImageStyle | TextStyle; 
+
+interface TextStyles {
+  paragraph: (darkMode: boolean) => Style;
+  bold: (darkMode: boolean) => Style;
+  subtitle: (darkMode: boolean) => Style;
+}
+
+// @ts-expect-error
+export default StyleSheet.create<TextStyles>({
   paragraph: (darkMode) => ({
-    color: (darkMode) ? colors.MAIN_PURPLE : colors.DARK_PURPLE,
+    color: (darkMode) ? colors.OFF_WHITE : colors.TEXT_COLOR,
+    // color: (darkMode) ? colors.MAIN_PURPLE : colors.DARK_PURPLE,
     fontFamily: "Montserrat-Regular",
     fontWeight: "normal",
     fontSize: normalize(16),

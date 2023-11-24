@@ -3,11 +3,18 @@ import React, { useContext, useEffect, useRef, useState } from "react";
 
 import { colors, graphics, nextTheme } from "../Theme";
 import MenuButton from "../components/MenuButton";
-import SliderBar from '../components/SliderBar';
-import { GlobalContext } from "../GlobalContext";
+import SliderBar from "../components/SliderBar";
+import GlobalContext from "../GlobalContext";
 import TextStyles, { normalize } from "../TextStyles";
 
-export default function Settings({ pageCallback, darkModeCallback, audioModeCallback, setThemeCallback, setSensitivityCallback, setTapDelayCallback }) {
+export default function Settings({ 
+  pageCallback, 
+  darkModeCallback, 
+  audioModeCallback, 
+  setThemeCallback, 
+  setSensitivityCallback, 
+  setTapDelayCallback,
+}) {
   const { darkMode, dragSensitivity, doubleTapDelay, playAudio } = useContext(GlobalContext);
 
   const [newDragSens, setNewDragSens] = useState(dragSensitivity);

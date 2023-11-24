@@ -18,10 +18,10 @@ const pages = [
     target: PageView.LEVELS,
   },
   {
-    color: "#BBE6BC",
-    source: DoorGraphic,
-    text: "ACCOUNT",
-    target: PageView.ACCOUNT,
+    color: "#FCB5B5",
+    source: CrateGraphic,
+    text: "EDITOR",
+    target: PageView.EDIT,
   },
   {
     color: "#FFE08E",
@@ -29,9 +29,27 @@ const pages = [
     text: "STORE",
     target: PageView.STORE,
   },
+  {
+    color: "#BBE6BC",
+    source: DoorGraphic,
+    text: "SETTINGS",
+    target: PageView.SETTINGS,
+  },
 ];
 
 const pageColors = pages.map(page => page.color);
+const inputRange = Array.from(Array(pageColors.length).keys());
+
+const activeColor = "#fff";
+const inactiveColor = "#ffffff00";
+function createNodeOutputRange(activeIndex: number) {
+  const outputRange = [];
+  // inputRange.map((_, idx) => outputRange.push(idx === activeIndex ? activeColor : inactiveColor));
+  for (let i = 0; i < inputRange.length; i++) {
+    outputRange.push(i === activeIndex ? activeColor : inactiveColor);
+  }
+  return outputRange;
+}
 
 interface Props {
   openPage: (target: PageView) => void,
@@ -55,7 +73,7 @@ export default function Menu({ openPage }: Props) {
         <Animated.View style={{
           ...styles.background,
           backgroundColor: anim.interpolate({
-            inputRange: [0, 1, 2],
+            inputRange: inputRange,
             outputRange: pageColors,
           }),
         }} />
@@ -72,9 +90,10 @@ export default function Menu({ openPage }: Props) {
       </ScrollView>
 
       <View style={styles.navigation}>
-        <Animated.View style={styles.node(anim, ["#fff", "#ffffff00", "#ffffff00"])} />
-        <Animated.View style={styles.node(anim, ["#ffffff00", "#fff", "#ffffff00"])} />
-        <Animated.View style={styles.node(anim, ["#ffffff00", "#ffffff00", "#fff"])} />
+        <Animated.View style={styles.node(anim, createNodeOutputRange(0))} />
+        <Animated.View style={styles.node(anim, createNodeOutputRange(1))} />
+        <Animated.View style={styles.node(anim, createNodeOutputRange(2))} />
+        <Animated.View style={styles.node(anim, createNodeOutputRange(3))} />
       </View>
     </>
   );
@@ -100,7 +119,7 @@ const styles: any = {
   },
   node: (anim: Animated.Value, outputRange: string[]) => ({
     backgroundColor: anim.interpolate({
-      inputRange: [0, 1, 2],
+      inputRange: inputRange,
       outputRange: outputRange,
     }),
     borderColor: "white",

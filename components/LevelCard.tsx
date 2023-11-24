@@ -1,11 +1,13 @@
-import { Text, View, Dimensions, Image, Animated } from "react-native";
+import { Text, View, Dimensions, Image, Animated, ScaledSize } from "react-native";
 import React, { useEffect, useRef } from "react";
-import { colors, graphics } from "../Theme";
-import TextStyles, { normalize } from "../TextStyles";
 import GameBoard from "./GameBoard";
 import SimpleButton from "./SimpleButton";
+
+import TextStyles, { normalize } from "../TextStyles";
+import { colors, graphics } from "../Theme";
 import { Level, PageView } from "../util/types";
 import { getSpawnPosition } from "../util/logic";
+
 const win = Dimensions.get("window");
 
 interface Props {
@@ -126,13 +128,13 @@ function LevelCardBase({
 const LevelCard = React.memo(LevelCardBase);
 export default LevelCard;
 
-function calcTileSize(boardWidth: number, window: any) {
+function calcTileSize(boardWidth: number, window: ScaledSize) {
   const maxWidth = (window.width * 0.5) / boardWidth;
   return Math.floor(maxWidth);
 }
 
 const styles: any = {
-  container: (anim: any, darkMode: boolean, highlighted: boolean) => ({
+  container: (anim: Animated.Value, darkMode: boolean, highlighted: boolean) => ({
     flexDirection: "column",
     justifyContent: "center",
     alignItems: "center",
@@ -178,15 +180,14 @@ const styles: any = {
     width: normalize(35),
   },
   levelName: (darkMode: boolean) => ({
-    // @ts-expect-error
     ...TextStyles.subtitle(darkMode),
     marginTop: 0,
     marginBottom: 0,
   }),
   designerName: (darkMode: boolean) => ({
-    // @ts-expect-error
     ...TextStyles.paragraph(darkMode),
-    marginTop: 0,
+    color: (darkMode) ? colors.MAIN_PURPLE : colors.DARK_PURPLE,
+    marginTop: -normalize(5),
     marginBottom: 0,
   }),
 };

@@ -1,22 +1,27 @@
-import { Pressable, Text, StyleSheet, Image } from "react-native";
-import React, { useContext, useEffect, useState } from 'react';
-import { Audio } from 'expo-av';
+import { Pressable, Text, Image, ImageSourcePropType } from "react-native";
+import React, { useContext, useEffect, useState } from "react";
+import { Audio } from "expo-av";
 import { colors } from "../Theme";
 import GlobalContext from "../GlobalContext";
 import { normalize } from "../TextStyles";
 
+interface Props {
+  label?: string, // The text to be displayed in the button.
+  onPress?: () => void, // The function to be called on press event.
+  onLongPress?: () => void, // The function to be called on long press event.
+  icon?: ImageSourcePropType, // The image to be displayed in the button.
+  disabled?: boolean, // Whether or not the button can be pressed (changes appearance).
+  allowOverflow?: boolean, // Whether number of lines for the button text should cap at 1.
+  borderColor?: string,
+  backgroundColor?: string,
+  darkModeBackgroundColor?: string,
+  pressedColor?: string,
+  textColor?: string,
+}
+
 /**
  * MenuButton is the basic button type used throughout the project.
  * It has a few simple props.
- * 
- * OPTIONAL:
- * @param {string} label The text to be displayed in the button.
- * @param {any} value The value to be passed to the onPress function.
- * @param {Function} onPress The function to be called on press event.
- * @param {Function} onLongPress The function to be called on long press event.
- * @param {ImageSourcePropType} icon The image to be displayed in the button, optional.
- * @param {boolean} disabled Whether or not the button can be pressed (changes appearance).
- * @param {boolean} allowOverflow Whether number of lines for the button text should cap at 1.
  * 
  * @params borderColor, backgroundColor, darkModeBackgroundColor, pressedColor, textColor
  * Overrides for the various aspects of the button coloring.
@@ -24,7 +29,6 @@ import { normalize } from "../TextStyles";
 export default function MenuButton({
   onPress,
   onLongPress,
-  value,
   label,
   icon,
   disabled,
@@ -34,7 +38,7 @@ export default function MenuButton({
   darkModeBackgroundColor,
   pressedColor,
   textColor,
-}) {
+}: Props) {
   const { darkMode } = useContext(GlobalContext);
   const [pressed, setPressedState] = useState(false);
 
@@ -52,7 +56,7 @@ export default function MenuButton({
   // This ensures that onPress is optional.
   const pressedFn = () => {
     if (!!onPress) {
-      onPress(value);
+      onPress();
       // if (playAudio) { playSound(); }
     }
   }
@@ -62,7 +66,7 @@ export default function MenuButton({
   const longPressedFn = () => {
     setPressedState(true);
     if (!!onLongPress) {
-      onLongPress(value);
+      onLongPress();
       // if (playAudio) { playSound(); }
     }
   }
@@ -78,9 +82,14 @@ export default function MenuButton({
       darkModeBackgroundColor ? darkModeBackgroundColor : colors.MAIN_PURPLE_TRANSPARENT(0.1),
       pressedColor ? pressedColor : colors.MAIN_PURPLE_TRANSPARENT(0.3),
     )}
-      onPress={pressedFn} onLongPress={longPressedFn}
-      onPressIn={() => { setPressedState(!!onPress) }} onPressOut={() => { setPressedState(false) }}
-      disabled={disabled} touchSoundDisabled={false} android_disableSound={false}>
+      onPress={pressedFn}
+      onLongPress={longPressedFn}
+      onPressIn={() => { setPressedState(!!onPress) }} 
+      onPressOut={() => { setPressedState(false) }}
+      disabled={disabled} 
+      // @ts-expect-error
+      touchSoundDisabled={false} 
+      android_disableSound={false}>
 
       {(icon) && <Image style={styles.icon} source={icon} />}
 
@@ -91,8 +100,17 @@ export default function MenuButton({
   );
 }
 
-const styles = StyleSheet.create({
-  body: (hasLabel, isPressed, isDisabled, darkMode, borderColor, bgColor, bgColorDarkMode, pressedColor) => ({
+const styles: any = {
+  body: (
+    hasLabel: boolean,
+    isPressed: boolean,
+    isDisabled: boolean,
+    darkMode: boolean,
+    borderColor: string,
+    bgColor: string,
+    bgColorDarkMode: string,
+    pressedColor: string,
+  ) => ({
     borderWidth: 1,
     width: hasLabel ? "100%" : undefined,
     borderRadius: 10,
@@ -117,6 +135,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontSize: normalize(16),
     marginLeft: 15,
+    // textTransform: "uppercase",
     fontFamily: "Montserrat-Medium",
     fontWeight: "bold",
   },
@@ -124,4 +143,4 @@ const styles = StyleSheet.create({
     height: normalize(30),
     width: normalize(30),
   }
-});
+};

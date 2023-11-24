@@ -5,9 +5,14 @@ import { colors, graphics } from "../Theme";
 import MenuButton from "../components/MenuButton";
 import GlobalContext from "../GlobalContext";
 import TextStyles, { normalize } from "../TextStyles";
+
 const win = Dimensions.get("window");
 
-export default function HowToPlay({ pageCallback }) {
+interface Props {
+  pageCallback: () => void,
+}
+
+export default function HowToPlay({ pageCallback }: Props) {
   const { darkMode } = useContext(GlobalContext);
 
   return (
@@ -82,7 +87,7 @@ export default function HowToPlay({ pageCallback }) {
       </View>
 
       <View style={styles.buttonContainer}>
-        <MenuButton onPress={pageCallback} value={false} label="Go Back" icon={graphics.DOOR_ICON} />
+        <MenuButton onPress={pageCallback} label="Go Back" icon={graphics.DOOR_ICON} />
       </View>
     </ScrollView>
   );

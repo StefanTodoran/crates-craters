@@ -61,7 +61,7 @@ function LevelSelectBase({
           contentContainerStyle={{
             paddingHorizontal: "5%",
             paddingBottom: "4%",
-            paddingTop: "3%",
+            paddingTop: "8%",
             alignItems: "center",
           }}
           overScrollMode="never"

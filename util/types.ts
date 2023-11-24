@@ -67,6 +67,6 @@ export enum PageView {
   LEVELS,
   PLAY,
   EDIT,
-  ACCOUNT,
+  SETTINGS,
   STORE,
 }

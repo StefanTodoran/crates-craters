@@ -40,11 +40,11 @@ const styles: any = {
     maxHeight: win.width * 0.95,
   },
   text: (darkMode: boolean) => ({
-    // @ts-expect-error
     ...TextStyles.paragraph(darkMode),
     textShadowColor: "black",
     textShadowRadius: 2,
     color: "white",
     fontSize: normalize(40),
+    marginBottom: win.height / 6,
   }),
 };
