@@ -1,10 +1,26 @@
-import { Pressable, Text, StyleSheet, Image } from "react-native";
-import React, { useContext, useState } from 'react';
-import { colors } from "../Theme";
+import { Pressable, Text, Image } from "react-native";
+import React, { useContext, useState } from "react";
 import TextStyles, { normalize } from "../TextStyles";
-import { GlobalContext } from "../GlobalContext";
+import GlobalContext from "../GlobalContext";
+import { colors } from "../Theme";
 
-export default function SimpleButton({ onPress, text, icon, disabled, main, wide }) {
+interface Props {
+  onPress: () => void,
+  text: string,
+  icon: string,
+  disabled?: boolean,
+  main?: boolean,
+  wide?: boolean,
+}
+
+export default function SimpleButton({ 
+  onPress,
+  text,
+  icon,
+  disabled,
+  main,
+  wide,
+}: Props) {
   const { darkMode } = useContext(GlobalContext);
   const [pressed, setPressedState] = useState(false);
 
@@ -21,7 +37,10 @@ export default function SimpleButton({ onPress, text, icon, disabled, main, wide
         // so we still capture the click event if disabled.
       }
     }} onPressIn={() => { setPressedState(!disabled) }} onPressOut={() => { setPressedState(false) }}>
+      {/* @ts-ignore */}
       {icon && <Image style={styles.bigIcon} source={icon} />}
+      
+      {/* @ts-ignore */}
       <Text allowFontScaling={false} style={[TextStyles.paragraph(darkMode), {
         marginBottom: 0,
         marginLeft: icon ? normalize(10) : 0,
@@ -32,8 +51,8 @@ export default function SimpleButton({ onPress, text, icon, disabled, main, wide
   );
 }
 
-const styles = StyleSheet.create({
-  simpleButton: (pressed, disabled, icon) => ({
+const styles: any = {
+  simpleButton: (pressed: boolean, disabled: boolean, icon: boolean) => ({
     flexDirection: "row",
     alignItems: "center",
     // justifyContent: "space-between",
@@ -53,4 +72,4 @@ const styles = StyleSheet.create({
     height: normalize(35),
     width: normalize(35),
   },
-});
+};

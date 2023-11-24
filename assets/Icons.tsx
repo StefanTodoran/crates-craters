@@ -1,70 +1,75 @@
 import React from "react"
-import { StyleSheet } from "react-native";
 import Svg, { Path, G, Mask, Defs, LinearGradient, Stop, Circle } from "react-native-svg"
+import { BoardTile, Direction, TileType } from "../util/types";
 
-export function TileIcon({ bgColor, tileSize, tileType }) {
-  let icon;
-  switch (tileType) {
-    case "crate":
-      icon = <CrateIcon tileSize={tileSize} styleProp={styles.tile(bgColor, tileSize)} />;
-      break;
-    case "crater":
-      icon = <CraterIcon tileSize={tileSize} styleProp={styles.tile(bgColor, tileSize)} />;
-      break;
-    case "coin":
-      icon = <CoinIcon tileSize={tileSize} styleProp={styles.tile(bgColor, tileSize)} />;
-      break;
-    case "flag":
-      icon = <FlagIcon tileSize={tileSize} styleProp={styles.tile(bgColor, tileSize)} />;
-      break;
-    case "key":
-      icon = <KeyIcon tileSize={tileSize} styleProp={styles.tile(bgColor, tileSize)} />;
-      break;
-    case "door":
-      icon = <DoorIcon tileSize={tileSize} styleProp={styles.tile(bgColor, tileSize)} />;
-      break;
+interface Props {
+  bgColor: string,
+  tileSize: number,
+  tileData: BoardTile,
+}
 
-    case "one_way_up":
-      icon = <OneWayUpIcon tileSize={tileSize} styleProp={styles.tile(bgColor, tileSize)} />;
+export function TileIcon({ bgColor, tileSize, tileData }: Props) {
+  let Icon;
+
+  switch (tileData.id) {
+    case TileType.CRATE:
+      Icon = CrateIcon;
       break;
-    case "one_way_left":
-      icon = <OneWayLeftIcon tileSize={tileSize} styleProp={styles.tile(bgColor, tileSize)} />;
+    case TileType.CRATER:
+      Icon = CraterIcon;
       break;
-    case "one_way_right":
-      icon = <OneWayRightIcon tileSize={tileSize} styleProp={styles.tile(bgColor, tileSize)} />;
+    case TileType.COIN:
+      Icon = CoinIcon;
       break;
-    case "one_way_down":
-      icon = <OneWayDownIcon tileSize={tileSize} styleProp={styles.tile(bgColor, tileSize)} />;
+    case TileType.FLAG:
+      Icon = FlagIcon;
+      break;
+    case TileType.KEY:
+      Icon = KeyIcon;
+      break;
+    case TileType.DOOR:
+      Icon = DoorIcon;
       break;
 
-    case "bomb":
-      icon = <BombIcon tileSize={tileSize} styleProp={styles.tile(bgColor, tileSize)} />;
-      break;
-    case "explosion":
-      icon = <ExplosionIcon tileSize={tileSize} styleProp={styles.tile(bgColor, tileSize)} />;
-      break;
-    case "little_explosion":
-      icon = <LittleExplosionIcon tileSize={tileSize} styleProp={styles.tile(bgColor, tileSize)} />;
+    case TileType.ONEWAY:
+      if (tileData.orientation === Direction.UP) Icon = OneWayUpIcon;
+      if (tileData.orientation === Direction.RIGHT) Icon = OneWayRightIcon;
+      if (tileData.orientation === Direction.DOWN) Icon = OneWayDownIcon;
+      if (tileData.orientation === Direction.LEFT) Icon = OneWayLeftIcon;
       break;
 
-    case "spawn":
-      icon = <SpawnIcon tileSize={tileSize} styleProp={styles.tile(bgColor, tileSize)} />;
+    case TileType.BOMB:
+      Icon = BombIcon;
+      break;
+    case TileType.EXPLOSION:
+      Icon = ExplosionIcon;
+      break;
+    case TileType.LITTLE_EXPLOSION:
+      Icon = LittleExplosionIcon;
       break;
 
-    default:
+    case TileType.SPAWN:
+      Icon = SpawnIcon;
       break;
   }
 
-  return icon;
+  if (!Icon) return <></>;
+  return <Icon tileSize={tileSize} styleProp={styles.tile(bgColor, tileSize)}/>;
 }
 
-export function CrateIcon({ tileSize, styleProp }) {
+interface IconProps {
+  tileSize: number,
+  styleProp: any,
+}
+
+export function CrateIcon({ tileSize, styleProp }: IconProps) {
   return (
     <Svg
       width={tileSize}
       height={tileSize}
       viewBox="0 0 100 100"
       fill="none"
+      // @ts-expect-error Known issue with react-native-svg: https://github.com/software-mansion/react-native-svg/issues/1638
       xmlns="http://www.w3.org/2000/svg"
       style={styleProp}
     >
@@ -111,13 +116,19 @@ export function CrateIcon({ tileSize, styleProp }) {
   );
 }
 
-export function CraterIcon({ tileSize, styleProp }) {
+interface IconProps {
+  tileSize: number,
+  styleProp: any,
+}
+
+export function CraterIcon({ tileSize, styleProp }: IconProps) {
   return (
     <Svg
       width={tileSize}
       height={tileSize}
       viewBox="0 0 100 100"
       fill="none"
+      // @ts-expect-error Known issue with react-native-svg: https://github.com/software-mansion/react-native-svg/issues/1638
       xmlns="http://www.w3.org/2000/svg"
       style={styleProp}
     >
@@ -208,13 +219,19 @@ export function CraterIcon({ tileSize, styleProp }) {
   );
 }
 
-export function CoinIcon({ tileSize, styleProp }) {
+interface IconProps {
+  tileSize: number,
+  styleProp: any,
+}
+
+export function CoinIcon({ tileSize, styleProp }: IconProps) {
   return (
     <Svg
       width={tileSize}
       height={tileSize}
       viewBox="0 0 100 100"
       fill="none"
+      // @ts-expect-error Known issue with react-native-svg: https://github.com/software-mansion/react-native-svg/issues/1638
       xmlns="http://www.w3.org/2000/svg"
       style={styleProp}
     >
@@ -264,13 +281,19 @@ export function CoinIcon({ tileSize, styleProp }) {
   );
 }
 
-export function FlagIcon({ tileSize, styleProp }) {
+interface IconProps {
+  tileSize: number,
+  styleProp: any,
+}
+
+export function FlagIcon({ tileSize, styleProp }: IconProps) {
   return (
     <Svg
       width={tileSize}
       height={tileSize}
       viewBox="0 0 100 100"
       fill="none"
+      // @ts-expect-error Known issue with react-native-svg: https://github.com/software-mansion/react-native-svg/issues/1638
       xmlns="http://www.w3.org/2000/svg"
       style={styleProp}
     >
@@ -289,13 +312,19 @@ export function FlagIcon({ tileSize, styleProp }) {
   );
 }
 
-export function KeyIcon({ tileSize, styleProp }) {
+interface IconProps {
+  tileSize: number,
+  styleProp: any,
+}
+
+export function KeyIcon({ tileSize, styleProp }: IconProps) {
   return (
     <Svg
       width={tileSize}
       height={tileSize}
       viewBox="0 0 100 100"
       fill="none"
+      // @ts-expect-error Known issue with react-native-svg: https://github.com/software-mansion/react-native-svg/issues/1638
       xmlns="http://www.w3.org/2000/svg"
       style={styleProp}
     >
@@ -330,13 +359,19 @@ export function KeyIcon({ tileSize, styleProp }) {
   );
 }
 
-export function DoorIcon({ tileSize, styleProp }) {
+interface IconProps {
+  tileSize: number,
+  styleProp: any,
+}
+
+export function DoorIcon({ tileSize, styleProp }: IconProps) {
   return (
     <Svg
       width={tileSize}
       height={tileSize}
       viewBox="0 0 100 100"
       fill="none"
+      // @ts-expect-error Known issue with react-native-svg: https://github.com/software-mansion/react-native-svg/issues/1638
       xmlns="http://www.w3.org/2000/svg"
       style={styleProp}
     >
@@ -383,13 +418,19 @@ export function DoorIcon({ tileSize, styleProp }) {
   );
 }
 
-export function OneWayUpIcon({ tileSize, styleProp }) {
+interface IconProps {
+  tileSize: number,
+  styleProp: any,
+}
+
+export function OneWayUpIcon({ tileSize, styleProp }: IconProps) {
   return (
     <Svg
       width={tileSize}
       height={tileSize}
       viewBox="0 0 100 100"
       fill="none"
+      // @ts-expect-error Known issue with react-native-svg: https://github.com/software-mansion/react-native-svg/issues/1638
       xmlns="http://www.w3.org/2000/svg"
       style={styleProp}
     >
@@ -408,13 +449,19 @@ export function OneWayUpIcon({ tileSize, styleProp }) {
   );
 }
 
-export function OneWayLeftIcon({ tileSize, styleProp }) {
+interface IconProps {
+  tileSize: number,
+  styleProp: any,
+}
+
+export function OneWayLeftIcon({ tileSize, styleProp }: IconProps) {
   return (
     <Svg
       width={tileSize}
       height={tileSize}
       viewBox="0 0 100 100"
       fill="none"
+      // @ts-expect-error Known issue with react-native-svg: https://github.com/software-mansion/react-native-svg/issues/1638
       xmlns="http://www.w3.org/2000/svg"
       style={styleProp}
     >
@@ -433,13 +480,19 @@ export function OneWayLeftIcon({ tileSize, styleProp }) {
   );
 }
 
-export function OneWayRightIcon({ tileSize, styleProp }) {
+interface IconProps {
+  tileSize: number,
+  styleProp: any,
+}
+
+export function OneWayRightIcon({ tileSize, styleProp }: IconProps) {
   return (
     <Svg
       width={tileSize}
       height={tileSize}
       viewBox="0 0 100 100"
       fill="none"
+      // @ts-expect-error Known issue with react-native-svg: https://github.com/software-mansion/react-native-svg/issues/1638
       xmlns="http://www.w3.org/2000/svg"
       style={styleProp}
     >
@@ -458,13 +511,19 @@ export function OneWayRightIcon({ tileSize, styleProp }) {
   );
 }
 
-export function OneWayDownIcon({ tileSize, styleProp }) {
+interface IconProps {
+  tileSize: number,
+  styleProp: any,
+}
+
+export function OneWayDownIcon({ tileSize, styleProp }: IconProps) {
   return (
     <Svg
       width={tileSize}
       height={tileSize}
       viewBox="0 0 100 100"
       fill="none"
+      // @ts-expect-error Known issue with react-native-svg: https://github.com/software-mansion/react-native-svg/issues/1638
       xmlns="http://www.w3.org/2000/svg"
       style={styleProp}
     >
@@ -483,13 +542,19 @@ export function OneWayDownIcon({ tileSize, styleProp }) {
   );
 }
 
-export function ExplosionIcon({ tileSize, styleProp }) {
+interface IconProps {
+  tileSize: number,
+  styleProp: any,
+}
+
+export function ExplosionIcon({ tileSize, styleProp }: IconProps) {
   return (
     <Svg
       width={tileSize}
       height={tileSize}
       viewBox="0 0 100 100"
       fill="none"
+      // @ts-expect-error Known issue with react-native-svg: https://github.com/software-mansion/react-native-svg/issues/1638
       xmlns="http://www.w3.org/2000/svg"
       style={styleProp}
     >
@@ -514,13 +579,19 @@ export function ExplosionIcon({ tileSize, styleProp }) {
   );
 }
 
-export function LittleExplosionIcon({ tileSize, styleProp }) {
+interface IconProps {
+  tileSize: number,
+  styleProp: any,
+}
+
+export function LittleExplosionIcon({ tileSize, styleProp }: IconProps) {
   return (
     <Svg
       width={tileSize}
       height={tileSize}
       viewBox="0 0 100 100"
       fill="none"
+      // @ts-expect-error Known issue with react-native-svg: https://github.com/software-mansion/react-native-svg/issues/1638
       xmlns="http://www.w3.org/2000/svg"
       style={styleProp}
     >
@@ -545,13 +616,19 @@ export function LittleExplosionIcon({ tileSize, styleProp }) {
   );
 }
 
-export function BombIcon({ tileSize, styleProp }) {
+interface IconProps {
+  tileSize: number,
+  styleProp: any,
+}
+
+export function BombIcon({ tileSize, styleProp }: IconProps) {
   return (
     <Svg
       width={tileSize}
       height={tileSize}
       viewBox="0 0 100 100"
       fill="none"
+      // @ts-expect-error Known issue with react-native-svg: https://github.com/software-mansion/react-native-svg/issues/1638
       xmlns="http://www.w3.org/2000/svg"
       style={styleProp}
     >
@@ -596,13 +673,19 @@ export function BombIcon({ tileSize, styleProp }) {
   );
 }
 
-export function SpawnIcon({ tileSize, styleProp }) {
+interface IconProps {
+  tileSize: number,
+  styleProp: any,
+}
+
+export function SpawnIcon({ tileSize, styleProp }: IconProps) {
   return (
     <Svg
       width={tileSize}
       height={tileSize}
       viewBox="0 0 100 100"
       fill="none"
+      // @ts-expect-error Known issue with react-native-svg: https://github.com/software-mansion/react-native-svg/issues/1638
       xmlns="http://www.w3.org/2000/svg"
       style={styleProp}
     >
@@ -625,13 +708,13 @@ export function SpawnIcon({ tileSize, styleProp }) {
   );
 }
 
-const styles = StyleSheet.create({
-  tile: (bgColor, size) => ({
+const styles: any = {
+  tile: (bgColor: string, size: number) => ({
     width: size,
     height: size,
     backgroundColor: bgColor,
   }),
-  entityContainer: (size) => ({
+  entityContainer: (size: number) => ({
     position: "absolute",
     width: size,
     height: size,
@@ -640,10 +723,10 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   }),
-  entity: (fontSize) => ({
+  entity: (fontSize: number) => ({
     fontFamily: "Montserrat-Regular",
     fontWeight: "normal",
     color: "white",
     fontSize: fontSize
   }),
-});
+};

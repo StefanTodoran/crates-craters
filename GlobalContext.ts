@@ -1,9 +1,7 @@
 import { createContext } from "react";
-export const GlobalContext = createContext({});
+import { Level } from "./util/types";
 
 /**
- * < GlobalContext >
- * 
  * @param {boolean} darkMode
  * A true/false value representing whether the app is in dark mode. Should be used for modal backgrounds,
  * text colors, etc.
@@ -17,5 +15,24 @@ export const GlobalContext = createContext({});
  * 
  * @param {number} playAudio
  * A boolean representing whether the app should play sound effects or not.
- * 
  */
+interface Settings {
+  darkMode: boolean,
+  dragSensitivity: number,
+  doubleTapDelay: number,
+  playAudio: boolean,
+}
+
+export const defaultSettings: Settings = {
+  darkMode: false,
+  dragSensitivity: 60,
+  doubleTapDelay: 250,
+  playAudio: true,
+}
+
+type GlobalContext = Settings & {
+  levels: Level[],
+}
+
+const GC = createContext<GlobalContext>({ ...defaultSettings, levels: [] });
+export default GC;

@@ -1,11 +1,15 @@
-export default class Queue {
+export default class Queue<T> {
+  private elements: Record<number, T>;
+  private head: number;
+  private tail: number;
+
   constructor() {
     this.elements = {};
     this.head = 0;
     this.tail = 0;
   }
 
-  enqueue(element) {
+  enqueue(element: T) {
     this.elements[this.tail] = element;
     this.tail++;
   }

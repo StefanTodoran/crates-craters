@@ -166,3 +166,4 @@ Built with JavaScript and React Native, Crates and Craters is a single player pu
 * Better way to do local level storage (read from file?)
 * Design and add many, many more levels, perhaps with new tile types
 * Create a proper tutorial? as opposed to simply an easy level
+* Research expo bare workflow to potentially integrate native code like MMKV
