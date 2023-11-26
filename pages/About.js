@@ -47,7 +47,7 @@ export default function About({ pageCallback }) {
 
 const styles = StyleSheet.create({
   buttonsContainer: {
-    paddingHorizontal: win.width * 0.215, // 0.225 - 0.05
+    paddingHorizontal: win.width * 0.2, // 0.225 - 0.05
     marginBottom: normalize(32),
   },
   row: {

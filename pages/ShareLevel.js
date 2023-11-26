@@ -1,15 +1,15 @@
-import { Text, StyleSheet, Dimensions, View, Animated, ScrollView } from "react-native";
+import { Text, StyleSheet, View, Animated, ScrollView } from "react-native";
 import React, { useContext, useEffect, useRef, useState } from "react";
-import SvgQRCode from 'react-native-qrcode-svg';
-import { BarCodeScanner } from 'expo-barcode-scanner';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import SvgQRCode from "react-native-qrcode-svg";
+import { BarCodeScanner } from "expo-barcode-scanner";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import { colors, graphics } from "../Theme";
 import MenuButton from "../components/MenuButton";
 import { GlobalContext } from "../GlobalContext";
-import { countCustomLevels, levels } from '../Game';
-import Selector from '../components/Selector';
-import TextStyles from "../TextStyles";
+import { countCustomLevels, levels } from "../Game";
+import Selector from "../components/Selector";
+import TextStyles, { sizeFromWidthPercent } from "../TextStyles";
 
 export default function ShareLevel({ pageCallback }) {
   const { darkMode } = useContext(GlobalContext);
@@ -237,18 +237,10 @@ function printLevel(levelObj) {
   }
 }
 
-// Returns a list [height, width] of the size for an element based
-// on the image's size and the desired width percent to be occupied.
-const win = Dimensions.get("window");
-function sizeFromWidthPercent(percent, img_height, img_width) {
-  const ratio = win.width * percent / img_width;
-  return [win.width * percent, ratio * img_height];
-}
-
 const styles = StyleSheet.create({
   banner: {
-    width: sizeFromWidthPercent(0.8, 146, 600)[0],
-    height: sizeFromWidthPercent(0.8, 146, 600)[1],
+    width: sizeFromWidthPercent(0.8, 146, 600).width,
+    height: sizeFromWidthPercent(0.8, 146, 600).height,
     zIndex: 1,
   },
   buttonsContainer: {

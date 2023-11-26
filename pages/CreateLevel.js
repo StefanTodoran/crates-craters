@@ -13,7 +13,7 @@ import { GlobalContext } from "../GlobalContext";
 import SliderBar from '../components/SliderBar';
 import { ScrollView } from "react-native";
 import SimpleButton from '../components/SimpleButton';
-import TextStyles, { normalize } from "../TextStyles";
+import TextStyles, { normalize, sizeFromWidthPercent } from "../TextStyles";
 const win = Dimensions.get("window");
 
 /**
@@ -322,13 +322,6 @@ export default function CreateLevel({ viewCallback, playLevelCallback, editorLev
   );
 }
 
-// Returns a list [height, width] of the size for an element based
-// on the image's size and the desired width percent to be occupied.
-function sizeFromWidthPercent(percent, img_height, img_width) {
-  const ratio = win.width * percent / img_width;
-  return [win.width * percent, ratio * img_height];
-}
-
 const styles = StyleSheet.create({
   container: {
     paddingTop: StatusBar.currentHeight + 15,
@@ -394,11 +387,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
   }),
   toolsBanner: {
-    width: sizeFromWidthPercent(0.45, 141, 300)[0],
-    height: sizeFromWidthPercent(0.45, 141, 300)[1],
+    width: sizeFromWidthPercent(0.45, 141, 300).width,
+    height: sizeFromWidthPercent(0.45, 141, 300).height,
   },
   optionsBanner: {
-    width: sizeFromWidthPercent(0.55, 145, 365)[0],
-    height: sizeFromWidthPercent(0.55, 145, 365)[1],
+    width: sizeFromWidthPercent(0.55, 145, 365).width,
+    height: sizeFromWidthPercent(0.55, 145, 365).height,
   },
 });

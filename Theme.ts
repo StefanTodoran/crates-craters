@@ -17,7 +17,6 @@ const mainGraphics = {
   PLAYER_OUTLINED: require("./assets/main_theme/player_outlined.png"),
   PLAYER_OUTLINED_DARK: require("./assets/main_theme/player_outlined_dark.png"),
 
-  HELP_ICON: require("./assets/main_theme/help_icon.png"),
   THEME_ICON: require("./assets/main_theme/theme_icon.png"),
   NIGHT_MODE_ICON: require("./assets/main_theme/night_icon.png"),
   HAMMER_ICON: require("./assets/main_theme/hammer_icon.png"),
@@ -37,9 +36,7 @@ const mainGraphics = {
   KEY_ICON: require("./assets/main_theme/key_icon.png"),
   FLAG_ICON: require("./assets/main_theme/flag_icon.png"),
 
-  TITLE_BANNER: require("./assets/main_theme/banner.png"),
   WIN_BANNER: require("./assets/main_theme/win_banner.png"),
-
   LOGO: require("./assets/main_theme/logo.png"),
 };
 
@@ -53,6 +50,7 @@ const mainColors = {
   NEAR_BLACK: "#15101A",
 
   MAIN_BLUE: "#97C2FE",
+  MAIN_GREEN: "#AADFAB",
   DIM_GRAY: "#8A858D",
 
   MAIN_BLUE_TRANSPARENT(opacity: number) { return `rgba(129, 181, 254, ${opacity})`; },
@@ -79,7 +77,6 @@ const mainColors = {
 //   PLAYER_OUTLINED: require("./assets/pirate_theme/player_outlined.png"),
 //   PLAYER_OUTLINED_DARK: require("./assets/pirate_theme/player_outlined_dark.png"),
 
-//   HELP_ICON: require("./assets/main_theme/help_icon.png"),
 //   THEME_ICON: require("./assets/main_theme/theme_icon.png"),
 //   NIGHT_MODE_ICON: require("./assets/main_theme/night_icon.png"),
 //   HAMMER_ICON: require("./assets/main_theme/hammer_icon.png"),
@@ -99,9 +96,7 @@ const mainColors = {
 //   KEY_ICON: require("./assets/main_theme/key_icon.png"),
 //   FLAG_ICON: require("./assets/main_theme/flag_icon.png"),
 
-//   TITLE_BANNER: require("./assets/main_theme/banner.png"),
 //   WIN_BANNER: require("./assets/main_theme/win_banner.png"),
-
 //   LOGO: require("./assets/main_theme/logo.png"),
 // };
 

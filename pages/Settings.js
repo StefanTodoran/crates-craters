@@ -86,8 +86,8 @@ const win = Dimensions.get("window");
 
 const styles = StyleSheet.create({
   buttonsContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     width: win.width * 0.55,
     marginBottom: normalize(32),
   },

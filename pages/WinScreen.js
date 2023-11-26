@@ -3,6 +3,7 @@ import React, { useContext, useEffect, useRef } from "react";
 import { Audio } from 'expo-av';
 import { colors, graphics } from "../Theme";
 import { GlobalContext } from "../GlobalContext";
+import { sizeFromWidthPercent } from "../TextStyles";
 const win = Dimensions.get("window");
 
 export default function WinScreen() {
@@ -81,13 +82,6 @@ export default function WinScreen() {
   );
 }
 
-// Returns a list [height, width] of the size for an element based
-// on the image's size and the desired width percent to be occupied.
-function sizeFromWidthPercent(percent, img_height, img_width) {
-  const ratio = win.width * percent / img_width;
-  return [win.width * percent, ratio * img_height];
-}
-
 const styles = StyleSheet.create({
   modal: {
     position: "absolute",
@@ -99,8 +93,8 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   banner: {
-    width: sizeFromWidthPercent(0.8, 145, 600)[0],
-    height: sizeFromWidthPercent(0.8, 145, 600)[1],
+    width: sizeFromWidthPercent(0.8, 145, 600).width,
+    height: sizeFromWidthPercent(0.8, 145, 600).height,
   },
   confetti: (anim, velX, velY, rotate) => ({
     position: "absolute",

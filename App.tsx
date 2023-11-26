@@ -2,18 +2,19 @@ import { StatusBar } from "expo-status-bar";
 import { useFonts } from "expo-font";
 import * as NavigationBar from "expo-navigation-bar";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Dimensions, Image, Animated, BackHandler, SafeAreaView, StatusBar as RNStatusBar, View } from "react-native";
+import { Dimensions, Animated, BackHandler, SafeAreaView, StatusBar as RNStatusBar, View } from "react-native";
 
 import { getSavedSettings, parseCompressedBoardData, setData } from "./util/loader";
 import { Level, PageView } from "./util/types";
 import GlobalContext from "./GlobalContext";
-import { colors, graphics } from "./Theme";
+import { colors } from "./Theme";
 import { Game } from "./util/logic";
 
 import Menu from "./components/Menu";
 import AccountPage from "./pages/AccountSettings";
 import LevelSelect from "./pages/LevelSelect";
-import IconButton from "./components/IconButton";
+import HomeButton from "./components/HomeButton";
+import Banner from "./components/Banner";
 // import PlayLevel from "./pages/PlayLevel";
 // import CreateLevel from "./pages/CreateLevel";
 
@@ -202,10 +203,10 @@ export default function App() {
           pointerEvents={view === PageView.MENU ? "none" : "auto"}
         >
           <Animated.View style={styles.header(pageAnim)}>
-            <Image style={styles.banner} source={graphics.TITLE_BANNER} />
+            <Banner widthPercent={90}/>
 
             <View style={styles.menuButton}>
-              <IconButton onPress={() => { switchView(PageView.MENU) }} />
+              <HomeButton color={colors.DARK_PURPLE} onPress={() => { switchView(PageView.MENU) }} />
             </View>
           </Animated.View>
 
@@ -239,18 +240,7 @@ export default function App() {
   );
 }
 
-// Returns a list [height, width] of the size for an element based
-// on the image's size and the desired width percent to be occupied.
-function sizeFromWidthPercent(percent: any, height: number, width: number) {
-  const ratio = win.width * percent / width;
-  return [win.width * percent, ratio * height];
-}
-
 const styles: any = {
-  banner: {
-    width: sizeFromWidthPercent(0.9, 141, 681)[0],
-    height: sizeFromWidthPercent(0.9, 141, 681)[1],
-  },
   page: {
     flex: 1,
     alignItems: "center",

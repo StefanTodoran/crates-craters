@@ -4,12 +4,13 @@ import MenuPage from "./MenuPage";
 import GlobalContext from "../GlobalContext";
 
 import CrateGraphic from "../assets/crates.png";
+import BombGraphic from "../assets/bomb.png";
 import DoorGraphic from "../assets/door_n_keys.png";
 import CoinGraphic from "../assets/coin_stack.png";
 import { normalize } from "../TextStyles";
 import { PageView } from "../util/types";
-const win = Dimensions.get("window");
 
+const win = Dimensions.get("window");
 const pages = [
   {
     color: "#CCB7E5",
@@ -19,7 +20,7 @@ const pages = [
   },
   {
     color: "#FCB5B5",
-    source: CrateGraphic,
+    source: BombGraphic,
     text: "EDITOR",
     target: PageView.EDIT,
   },

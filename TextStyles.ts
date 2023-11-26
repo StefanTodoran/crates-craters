@@ -1,7 +1,7 @@
 import { StyleSheet, Dimensions, Platform, PixelRatio, ViewStyle, ImageStyle, TextStyle } from "react-native";
 import { colors } from "./Theme";
 
-const { width: SCREEN_WIDTH, height: _SCREEN_HEIGHT } = Dimensions.get("window");
+const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const SAMSUNG_S8_WIDTH = 384;
 const scale = SCREEN_WIDTH / SAMSUNG_S8_WIDTH;
 
@@ -12,6 +12,15 @@ export function normalize(size: number) {
   } else {
     return Math.round(PixelRatio.roundToNearestPixel(newSize)) - 2;
   }
+}
+
+export function sizeFromWidthPercent(percent: number, width: number, height: number) {
+  const fraction = percent / 100;
+  const ratio = SCREEN_WIDTH * fraction / width;
+  return {
+    width: Math.round(SCREEN_WIDTH * fraction), 
+    height: Math.round(ratio * height),
+  };
 }
 
 type Style = ViewStyle | ImageStyle | TextStyle; 

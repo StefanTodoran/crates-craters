@@ -1,13 +1,18 @@
-import { Animated } from "react-native";
+import { Animated, View } from "react-native";
 import React, { useContext, useRef, useState } from "react";
 
 import GlobalContext from "../GlobalContext";
-import { colors, graphics } from "../Theme";
 import { PageView } from "../util/types";
+import { colors } from "../Theme";
 import About from "./About";
 import Settings from "./Settings";
 import HowToPlay from "./HowToPlay";
-import MenuButton from "../components/MenuButton";
+import IconButton from "../components/IconButton";
+
+import GuideIcon from "../assets/main_theme/help.png";
+import SettingsIcon from "../assets/main_theme/settings.png";
+import AboutIcon from "../assets/main_theme/about.png";
+import { normalize } from "../TextStyles";
 
 enum ModalPage {
   NONE,
@@ -54,7 +59,7 @@ export default function HomePage({
       });
     }
   }
-  
+
   const closeModal = () => setmodalState(ModalPage.NONE);
   let content = <></>;
 
@@ -81,10 +86,26 @@ export default function HomePage({
 
   return (
     <>
-      <MenuButton onPress={() => setmodalState(ModalPage.HOWTO)} label="How to Play" icon={graphics.HELP_ICON} />
-      <MenuButton onPress={() => setmodalState(ModalPage.SETTINGS)} label="App Settings" icon={graphics.OPTIONS_ICON} />
-      <MenuButton onPress={() => setmodalState(ModalPage.ABOUT)} label="About the App" icon={graphics.PLAYER} />
-      <MenuButton onPress={() => viewCallback(PageView.MENU)} label="Go Back" icon={graphics.DOOR_ICON} />
+      <View style={styles.menu}>
+        <IconButton
+          color={colors.MAIN_GREEN}
+          label={"Guide"}
+          icon={GuideIcon}
+          onPress={() => setmodalState(ModalPage.HOWTO)}
+        />
+        <IconButton
+          color={colors.MAIN_GREEN}
+          label={"Settings"}
+          icon={SettingsIcon}
+          onPress={() => setmodalState(ModalPage.SETTINGS)}
+        />
+        <IconButton
+          color={colors.MAIN_GREEN}
+          label={"About"}
+          icon={AboutIcon}
+          onPress={() => setmodalState(ModalPage.ABOUT)}
+        />
+      </View>
 
       {modalState !== ModalPage.NONE &&
         <Animated.View style={styles.modal(darkMode, anim)}>
@@ -96,6 +117,10 @@ export default function HomePage({
 }
 
 const styles: any = {
+  menu: {
+    flexDirection: "row",
+    gap: normalize(20),
+  },
   modal: (darkMode: boolean, animState: Animated.Value) => ({
     position: "absolute",
     top: 0,
