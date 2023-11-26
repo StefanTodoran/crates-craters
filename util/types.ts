@@ -66,7 +66,8 @@ export enum PageView {
   MENU,
   LEVELS,
   PLAY,
-  EDIT,
+  EDIT, // Edit page
+  EDITOR, // Actual editor
   SETTINGS,
   STORE,
 }

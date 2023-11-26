@@ -13,8 +13,7 @@ import { Game } from "./util/logic";
 import Menu from "./components/Menu";
 import AccountPage from "./pages/AccountSettings";
 import LevelSelect from "./pages/LevelSelect";
-import HomeButton from "./components/HomeButton";
-import Banner from "./components/Banner";
+import Header from "./components/Header";
 // import PlayLevel from "./pages/PlayLevel";
 // import CreateLevel from "./pages/CreateLevel";
 
@@ -203,11 +202,7 @@ export default function App() {
           pointerEvents={view === PageView.MENU ? "none" : "auto"}
         >
           <Animated.View style={styles.header(pageAnim)}>
-            <Banner widthPercent={90}/>
-
-            <View style={styles.menuButton}>
-              <HomeButton color={colors.DARK_PURPLE} onPress={() => { switchView(PageView.MENU) }} />
-            </View>
+            <Header pageView={view} returnHome={() => { switchView(PageView.MENU) }}/>
           </Animated.View>
 
           <View style={styles.page}>
@@ -256,7 +251,7 @@ const styles: any = {
     width: win.width,
     zIndex: 1,
     borderBottomWidth: 1,
-    borderColor: colors.MAIN_PURPLE_TRANSPARENT(0.3),
+    borderColor: colors.LIGHT_GRAY,
     opacity: animState,
     // transform: [{
     //   translateY: animState.interpolate({
@@ -287,9 +282,4 @@ const styles: any = {
       }),
     }],
   }),
-  menuButton: {
-    position: "absolute",
-    top: RNStatusBar.currentHeight!,
-    right: "3%",
-  },
 };

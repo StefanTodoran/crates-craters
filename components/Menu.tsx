@@ -9,36 +9,41 @@ import DoorGraphic from "../assets/door_n_keys.png";
 import CoinGraphic from "../assets/coin_stack.png";
 import { normalize } from "../TextStyles";
 import { PageView } from "../util/types";
+import { PageTheme } from "./Header";
 
 const win = Dimensions.get("window");
-const pages = [
+export const menuPages = [
   {
     color: "#CCB7E5",
+    banner: PageTheme.PURPLE,
     source: CrateGraphic,
     text: "LEVELS",
     target: PageView.LEVELS,
   },
   {
     color: "#FCB5B5",
+    banner: PageTheme.RED,
     source: BombGraphic,
     text: "EDITOR",
     target: PageView.EDIT,
   },
   {
     color: "#FFE08E",
+    banner: PageTheme.YELLOW,
     source: CoinGraphic,
     text: "STORE",
     target: PageView.STORE,
   },
   {
     color: "#BBE6BC",
+    banner: PageTheme.GREEN,
     source: DoorGraphic,
     text: "SETTINGS",
     target: PageView.SETTINGS,
   },
 ];
 
-const pageColors = pages.map(page => page.color);
+const pageColors = menuPages.map(page => page.color);
 const inputRange = Array.from(Array(pageColors.length).keys());
 
 const activeColor = "#fff";
@@ -79,7 +84,7 @@ export default function Menu({ openPage }: Props) {
           }),
         }} />
 
-        {pages.map((page, idx) =>
+        {menuPages.map((page, idx) =>
           <MenuPage
             key={idx}
             icon={page.source}
