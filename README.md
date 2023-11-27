@@ -39,10 +39,10 @@ Built with JavaScript and React Native, Crates and Craters is a single player pu
       </picture>
     </td>
     <td style="padding-left: 10%;">
-      <h2 style="display: flex; align-items: center;">
+      <!-- <h2 style="display: flex; align-items: center;">
         How To Play
         <img src="assets/main_theme/help_icon.png" style="height: 1em; margin-left: 0.3em;"/>
-      </h2>
+      </h2> -->
       <p>
         The objective of the game is to collect all of the coins and reach the flag. The map is a grid of square tiles, where the player can move vertically and horizontally one tile at a time. The player can walk on any empty floor tile or tiles occupied by coins or keys to collect those items.
         <br><br>

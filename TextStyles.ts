@@ -18,17 +18,17 @@ export function sizeFromWidthPercent(percent: number, width: number, height: num
   const fraction = percent / 100;
   const ratio = SCREEN_WIDTH * fraction / width;
   return {
-    width: Math.round(SCREEN_WIDTH * fraction), 
+    width: Math.round(SCREEN_WIDTH * fraction),
     height: Math.round(ratio * height),
   };
 }
 
-type Style = ViewStyle | ImageStyle | TextStyle; 
+type Style = ViewStyle | ImageStyle | TextStyle;
 
 interface TextStyles {
   paragraph: (darkMode: boolean) => Style;
   bold: (darkMode: boolean) => Style;
-  subtitle: (darkMode: boolean) => Style;
+  subtitle: (darkMode: boolean, colorOverride?: string) => Style;
 }
 
 // @ts-expect-error
@@ -51,8 +51,8 @@ export default StyleSheet.create<TextStyles>({
     letterSpacing: 0.5,
   }),
 
-  subtitle: (darkMode) => ({
-    color: (darkMode) ? colors.MAIN_PURPLE : colors.DARK_PURPLE,
+  subtitle: (darkMode, colorOverride) => ({
+    color: (colorOverride) ? colorOverride : ((darkMode) ? colors.MAIN_PURPLE : colors.DARK_PURPLE),
     fontFamily: "Montserrat-Medium",
     fontWeight: "bold",
     textTransform: "uppercase",

@@ -145,7 +145,8 @@ const styles: any = {
     borderRadius: normalize(10),
     marginVertical: normalize(10),
     borderColor: colors.DARK_PURPLE,
-    backgroundColor: darkMode ? colors.MAIN_PURPLE_TRANSPARENT(0.1) : colors.OFF_WHITE,
+    // backgroundColor: darkMode ? colors.NEAR_BLACK : colors.OFF_WHITE,
+    backgroundColor: darkMode ? colors.MAIN_PURPLE_TRANSPARENT(0.15) : colors.OFF_WHITE,
     opacity: anim,
     transform: [{
       scale: anim.interpolate({

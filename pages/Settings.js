@@ -7,12 +7,11 @@ import SliderBar from "../components/SliderBar";
 import GlobalContext from "../GlobalContext";
 import TextStyles, { normalize } from "../TextStyles";
 
-export default function Settings({ 
-  pageCallback, 
-  darkModeCallback, 
-  audioModeCallback, 
-  setThemeCallback, 
-  setSensitivityCallback, 
+export default function Settings({
+  darkModeCallback,
+  audioModeCallback,
+  setThemeCallback,
+  setSensitivityCallback,
   setTapDelayCallback,
 }) {
   const { darkMode, dragSensitivity, doubleTapDelay, playAudio } = useContext(GlobalContext);
@@ -31,7 +30,7 @@ export default function Settings({
       // update. But we also can't return this function in this 
       // useEffect or this slow function would happen every time state 
       // changes, defeating the whole purpose.
-      
+
       setSensitivityCallback(newDragSens);
       setTapDelayCallback(newTapDelay);
     }
@@ -43,37 +42,62 @@ export default function Settings({
     }
   }, []);
 
+  const MenuButtonRecolor = {
+    borderColor: colors.MAIN_GREEN,
+    textColor: colors.MAIN_GREEN,
+    backgroundColor: colors.GREEN_OFF_WHITE,
+    darkModeBackgroundColor: colors.MAIN_GREEN_TRANSPARENT(0.1),
+    pressedColor: colors.MAIN_GREEN_TRANSPARENT(0.3),
+  }
+
   return (
     <ScrollView style={styles.scrollContainer} contentContainerStyle={{
-      height: "100%",
+      paddingHorizontal: win.width * 0.05,
+      paddingTop: win.height * 0.015,
+      paddingBottom: win.height * 0.025,
       justifyContent: "center",
       alignItems: "center",
+      height: "100%",
     }} overScrollMode="never" showsVerticalScrollIndicator={false}>
       <View style={styles.buttonsContainer}>
-        <Text style={[TextStyles.subtitle(darkMode), { width: "100%", marginBottom: 0 }]}>
+        <Text style={[TextStyles.subtitle(darkMode), { color: colors.MAIN_GREEN, width: "100%", marginBottom: 0 }]}>
           Settings
         </Text>
 
-        <MenuButton onPress={darkModeCallback} value={null} label="Toggle Dark Mode" icon={graphics.NIGHT_MODE_ICON} />
+        <MenuButton
+          onPress={darkModeCallback}
+          label="Toggle Dark Mode"
+          icon={graphics.NIGHT_MODE_ICON}
+          {...MenuButtonRecolor}
+        />
         <MenuButton onPress={() => {
-          const newTheme = nextTheme();
-          setThemeCallback(newTheme);
-        }} value={null} label="Change App Theme" icon={graphics.THEME_ICON} disabled={true}/>
+          // const newTheme = nextTheme();
+          // setThemeCallback(newTheme);
+        }}
+          label="Change App Theme"
+          icon={graphics.THEME_ICON}
+          disabled={true}
+          {...MenuButtonRecolor}
+        />
 
         <View style={{ height: 15 }} />
         <SliderBar label="Drag Sensitivity" value={newDragSens} units={"%"}
           minValue={10} maxValue={200} changeCallback={setNewDragSens}
-          mainColor={darkMode ? colors.MAIN_PURPLE : colors.DARK_PURPLE}
-          knobColor={darkMode ? colors.NEAR_BLACK : colors.OFF_WHITE}
+          mainColor={colors.MAIN_GREEN}
+          knobColor={darkMode ? "#000" : "#fff"}
         />
         <SliderBar label="Double Tap Delay" value={newTapDelay} units={"ms"}
           minValue={100} maxValue={500} changeCallback={setNewTapDelay}
-          mainColor={darkMode ? colors.MAIN_PURPLE : colors.DARK_PURPLE}
-          knobColor={darkMode ? colors.NEAR_BLACK : colors.OFF_WHITE}
+          mainColor={colors.MAIN_GREEN}
+          knobColor={darkMode ? "#000" : "#fff"}
         />
 
-        <MenuButton onPress={audioModeCallback} value={null} label="Toggle Sounds" icon={playAudio ? graphics.AUDIO_ON_ICON : graphics.AUDIO_OFF_ICON} />
-        <MenuButton onPress={pageCallback} value={false} label="Go Back" icon={graphics.DOOR_ICON} />
+        <MenuButton
+          onPress={audioModeCallback}
+          label="Toggle Sounds"
+          icon={playAudio ? graphics.AUDIO_ON_ICON : graphics.AUDIO_OFF_ICON}
+          {...MenuButtonRecolor}
+        />
       </View>
     </ScrollView>
   );

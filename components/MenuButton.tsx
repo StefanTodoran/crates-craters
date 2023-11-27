@@ -53,7 +53,7 @@ export default function MenuButton({
   //   return sound ? () => { sound.unloadAsync(); } : undefined;
   // }, [sound]);
 
-  // This ensures that onPress is optional.
+  // This ensures that onPress is optional. TODO: does this actually do anything?
   const pressedFn = () => {
     if (!!onPress) {
       onPress();

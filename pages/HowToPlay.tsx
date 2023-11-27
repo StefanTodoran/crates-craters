@@ -2,26 +2,20 @@ import { View, Text, StyleSheet, Image, Dimensions, ScrollView } from "react-nat
 import React, { useContext } from "react";
 
 import { colors, graphics } from "../Theme";
-import MenuButton from "../components/MenuButton";
 import GlobalContext from "../GlobalContext";
 import TextStyles, { normalize } from "../TextStyles";
-
 const win = Dimensions.get("window");
 
-interface Props {
-  pageCallback: () => void,
-}
-
-export default function HowToPlay({ pageCallback }: Props) {
+export default function HowToPlay() {
   const { darkMode } = useContext(GlobalContext);
 
   return (
     <ScrollView style={styles.scrollContainer} contentContainerStyle={{
       paddingHorizontal: win.width * 0.05,
       paddingTop: win.height * 0.015,
-      paddingBottom: win.height * 0.05,
+      paddingBottom: win.height * 0.025,
     }} overScrollMode="never" showsVerticalScrollIndicator={false}>
-      <Text style={TextStyles.subtitle(darkMode)}>
+      <Text style={TextStyles.subtitle(darkMode, colors.MAIN_GREEN)}>
         Controls
       </Text>
       <Text style={TextStyles.paragraph(darkMode)}>
@@ -30,7 +24,7 @@ export default function HowToPlay({ pageCallback }: Props) {
         any crates) double tap on that tile to save some time and skip to that position.
       </Text>
 
-      <Text style={TextStyles.subtitle(darkMode)}>
+      <Text style={TextStyles.subtitle(darkMode, colors.MAIN_GREEN)}>
         Objective
       </Text>
       <Text style={TextStyles.paragraph(darkMode)}>
@@ -44,7 +38,7 @@ export default function HowToPlay({ pageCallback }: Props) {
         This is the ONLY requirement. You do not need to collect all keys, open all doors, or detonate all bombs.
       </Text>
 
-      <Text style={TextStyles.subtitle(darkMode)}>
+      <Text style={TextStyles.subtitle(darkMode, colors.MAIN_GREEN)}>
         Obstacles
       </Text>
       <Text style={TextStyles.paragraph(darkMode)}>
@@ -86,24 +80,14 @@ export default function HowToPlay({ pageCallback }: Props) {
         <Image style={styles.icon} source={graphics.BOMB} />
         <Image style={styles.icon} source={graphics.EXPLOSION} />
       </View>
-
-      <View style={styles.buttonContainer}>
-        <MenuButton onPress={pageCallback} label="Go Back" icon={graphics.DOOR_ICON} />
-      </View>
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  buttonContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: win.width * 0.225,
-    marginBottom: normalize(32),
-  },
   row: {
-    flexDirection: 'row',
-    justifyContent: 'center',
+    flexDirection: "row",
+    justifyContent: "center",
     marginBottom: normalize(16),
   },
   icon: {

@@ -54,11 +54,13 @@ const mainColors = {
 
   MAIN_BLUE: "#97C2FE",
   MAIN_GREEN: "#AADFAB",
+  GREEN_OFF_WHITE: "#FAFFFA",
   // MAIN_RED
   // MAIN_YELLOW
 
   MAIN_BLUE_TRANSPARENT(opacity: number) { return `rgba(129, 181, 254, ${opacity})`; },
   MAIN_PURPLE_TRANSPARENT(opacity: number) { return `rgba(204, 183, 229, ${opacity})`; },
+  MAIN_GREEN_TRANSPARENT(opacity: number) { return `rgba(184, 229, 185, ${opacity})`; },
   NEAR_BLACK_TRANSPARENT(opacity: number) { return `rgba(21, 16, 26, ${opacity})`; },
   OFF_WHITE_TRANSPARENT(opacity: number) { return `rgba(254, 250, 255, ${opacity})`; },
 };

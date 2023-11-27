@@ -157,7 +157,7 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    NavigationBar.setBackgroundColorAsync(!darkMode ? "white" : colors.NEAR_BLACK);
+    NavigationBar.setBackgroundColorAsync(darkMode ? "black" : "white");
   }, [darkMode]);
 
   const [currentGame, setGameState] = useState<Game>(); // Stores the game state of the level being played.
@@ -193,7 +193,7 @@ export default function App() {
   if (!fontsLoaded) return <></>;
   return (
     <GlobalContext.Provider value={{ darkMode, dragSensitivity, doubleTapDelay, playAudio, levels }}>
-      <SafeAreaView style={{ flex: 1, backgroundColor: (darkMode) ? colors.NEAR_BLACK : "white" }}>
+      <SafeAreaView style={{ flex: 1 }}>
 
         <Menu openPage={switchView} />
 
@@ -241,7 +241,7 @@ const styles: any = {
     alignItems: "center",
     justifyContent: "center",
     width: win.width,
-    paddingHorizontal: win.width * 0.225,
+    // paddingHorizontal: win.width * 0.225,
   },
   header: (animState: Animated.Value) => ({
     paddingTop: RNStatusBar.currentHeight,
@@ -249,7 +249,6 @@ const styles: any = {
     justifyContent: "center",
     paddingBottom: "2%",
     width: win.width,
-    zIndex: 1,
     borderBottomWidth: 1,
     borderColor: colors.LIGHT_GRAY,
     opacity: animState,
@@ -269,7 +268,7 @@ const styles: any = {
     // paddingTop: RNStatusBar.currentHeight,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: (darkMode) ? colors.NEAR_BLACK : "white",
+    backgroundColor: (darkMode) ? "black" : "white",
     opacity: animState,
     borderRadius: animState.interpolate({
       inputRange: [0, 0.75, 1],

@@ -25,38 +25,27 @@ export interface PageThemeColors {
   NEAR_BLACK: string,
 }
 
-const pageThemeColors: PageThemeColors[] = [
+import PurpleBanner from "../assets/purple_banner.png";
+import RedBanner from "../assets/red_banner.png";
+import YellowBanner from "../assets/yellow_banner.png";
+import GreenBanner from "../assets/green_banner.png";
+
+const pageThemeData = [
   { // Purple
-    OFF_WHITE: "#FEFAFF",
-    LIGHT_COLOR: "#F9F0FC",
-    MAIN_COLOR: "#CCB7E5",
-    MIDDLE_COLOR: "#BEA9DF",
-    DARK_COLOR: "#B19CD8",
-    NEAR_BLACK: "#15101A",
+    color: "#BEA9DF",
+    banner: PurpleBanner,
   },
-  { // Orange
-    OFF_WHITE: "#FFFDFC",
-    LIGHT_COLOR: "#FFF2F0",
-    MAIN_COLOR: "#F7B69B",
-    MIDDLE_COLOR: "#F9A784",
-    DARK_COLOR: "#FB976C",
-    NEAR_BLACK: "#170F0D", //"#0E0A09",
+  { // Red
+    color: "#FA8484",
+    banner: RedBanner,
   },
-  { // Orange
-    OFF_WHITE: "#FFFDFC",
-    LIGHT_COLOR: "#FFF2F0",
-    MAIN_COLOR: "#F7B69B",
-    MIDDLE_COLOR: "#F9A784",
-    DARK_COLOR: "#FB976C",
-    NEAR_BLACK: "#170F0D",
+  { // Yellow    
+    color: "#f9d385",
+    banner: YellowBanner,
   },
   { // Green
-    OFF_WHITE: "#fafffa",
-    LIGHT_COLOR: "#eefcee",
-    MAIN_COLOR: "#b8e5b9",
-    MIDDLE_COLOR: "#9BD99D",
-    DARK_COLOR: "#8AD092",
-    NEAR_BLACK: "#0E160E",
+    color: "#9BD99D",
+    banner: GreenBanner,
   },
 ];
 
@@ -78,16 +67,16 @@ export function pageViewToPageTheme(pageView: PageView) {
 
 export default function Header({ pageView, returnHome }: Props) {
   const pageTheme = pageViewToPageTheme(pageView);
-  const themeColors = pageThemeColors[pageTheme];
+  const theme = pageThemeData[pageTheme];
 
   if (pageTheme === PageTheme.NONE) return <></>;
   return (
     <>
-      <Banner useTheme={themeColors} widthPercent={90} />
+      <Banner bannerImage={theme.banner} widthPercent={90} />
 
       <View style={styles.menuButton}>
         <HomeButton
-          color={themeColors.DARK_COLOR}
+          color={theme.color}
           onPress={returnHome}
         />
       </View>
