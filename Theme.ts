@@ -40,29 +40,75 @@ const mainGraphics = {
   LOGO: require("./assets/main_theme/logo.png"),
 };
 
-const mainColors = {
+export interface Theme {
+  OFF_WHITE: string,
+  LIGHT_COLOR: string,
+  MAIN_COLOR: string,
+  MIDDLE_COLOR: string,
+  DARK_COLOR: string,
+  NEAR_BLACK: string,
+  MAIN_TRANSPARENT: (opacity: number) => string,
+}
+
+export const purpleTheme: Theme = {
   OFF_WHITE: "#FEFAFF",
-  LIGHT_PURPLE: "#F9F0FC",
-  MAIN_PURPLE: "#CCB7E5",
-  MIDDLE_PURPLE: "#BEA9DF",
-  DARK_PURPLE: "#B19CD8",
+  LIGHT_COLOR: "#F9F0FC",
+  MAIN_COLOR: "#CCB7E5",
+  MIDDLE_COLOR: "#BEA9DF",
+  DARK_COLOR: "#B19CD8",
   NEAR_BLACK: "#15101A",
+  MAIN_TRANSPARENT: (opacity: number) => `rgba(204, 183, 229, ${opacity})`,
+}
+
+const blueTheme: Theme = {
+  OFF_WHITE: "#FCFDFF",
+  LIGHT_COLOR: "#EFF6FF",
+  MAIN_COLOR: "#97C2FE",
+  MIDDLE_COLOR: "#81B5FE",
+  DARK_COLOR: "#6AA7FD",
+  NEAR_BLACK: "#101219",
+  MAIN_TRANSPARENT: (opacity: number) => `rgba(129, 181, 254, ${opacity})`,
+}
+
+const greenTheme: Theme = {
+  OFF_WHITE: "#FAFFFA",
+  LIGHT_COLOR: "#EEFCEE",
+  MAIN_COLOR: "#B8E5B9",
+  MIDDLE_COLOR: "#9BD99D",
+  DARK_COLOR: "#8AD092",
+  NEAR_BLACK: "#0E160E",
+  MAIN_TRANSPARENT: (opacity: number) => `rgba(184, 229, 185, ${opacity})`,
+}
+
+const redTheme: Theme = {
+  OFF_WHITE: "#FFFCFC",
+  LIGHT_COLOR: "#FFF0F0",
+  MAIN_COLOR: "#F79C9C",
+  MIDDLE_COLOR: "#FA8484",
+  DARK_COLOR: "#FA6B6B",
+  NEAR_BLACK: "#170D0D",
+  MAIN_TRANSPARENT: (opacity: number) => `rgba(247, 156, 156, ${opacity})`,
+}
+
+const mainColors = {
+  OFF_WHITE: purpleTheme.OFF_WHITE,
+  LIGHT_PURPLE: purpleTheme.LIGHT_COLOR,
+  MAIN_PURPLE: purpleTheme.MAIN_COLOR,
+  MIDDLE_PURPLE: purpleTheme.MIDDLE_COLOR,
+  DARK_PURPLE: purpleTheme.DARK_COLOR,
+  NEAR_BLACK: purpleTheme.NEAR_BLACK,
 
   TEXT_COLOR: "#493F59",
   DIM_GRAY: "#8A858D",
   LIGHT_GRAY: "#8A858D33",
 
-  MAIN_BLUE: "#97C2FE",
-  MAIN_GREEN: "#AADFAB",
-  GREEN_OFF_WHITE: "#FAFFFA",
-  // MAIN_RED
-  // MAIN_YELLOW
+  BLUE_THEME: blueTheme,
+  GREEN_THEME: greenTheme,
+  RED_THEME: redTheme,
 
-  MAIN_BLUE_TRANSPARENT(opacity: number) { return `rgba(129, 181, 254, ${opacity})`; },
-  MAIN_PURPLE_TRANSPARENT(opacity: number) { return `rgba(204, 183, 229, ${opacity})`; },
-  MAIN_GREEN_TRANSPARENT(opacity: number) { return `rgba(184, 229, 185, ${opacity})`; },
-  NEAR_BLACK_TRANSPARENT(opacity: number) { return `rgba(21, 16, 26, ${opacity})`; },
-  OFF_WHITE_TRANSPARENT(opacity: number) { return `rgba(254, 250, 255, ${opacity})`; },
+  MAIN_PURPLE_TRANSPARENT: purpleTheme.MAIN_TRANSPARENT,
+  NEAR_BLACK_TRANSPARENT: (opacity: number) => `rgba(21, 16, 26, ${opacity})`,
+  OFF_WHITE_TRANSPARENT: (opacity: number) => `rgba(254, 250, 255, ${opacity})`,
 };
 
 // EXPORTING

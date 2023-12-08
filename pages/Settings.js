@@ -43,11 +43,11 @@ export default function Settings({
   }, []);
 
   const MenuButtonRecolor = {
-    borderColor: colors.MAIN_GREEN,
-    textColor: colors.MAIN_GREEN,
-    backgroundColor: colors.GREEN_OFF_WHITE,
-    darkModeBackgroundColor: colors.MAIN_GREEN_TRANSPARENT(0.1),
-    pressedColor: colors.MAIN_GREEN_TRANSPARENT(0.3),
+    borderColor: colors.GREEN_THEME.MAIN_COLOR,
+    textColor: colors.GREEN_THEME.MAIN_COLOR,
+    backgroundColor: colors.GREEN_THEME.OFF_WHITE,
+    darkModeBackgroundColor: colors.GREEN_THEME.MAIN_TRANSPARENT(0.1),
+    pressedColor: colors.GREEN_THEME.MAIN_TRANSPARENT(0.3),
   }
 
   return (
@@ -60,7 +60,7 @@ export default function Settings({
       height: "100%",
     }} overScrollMode="never" showsVerticalScrollIndicator={false}>
       <View style={styles.buttonsContainer}>
-        <Text style={[TextStyles.subtitle(darkMode), { color: colors.MAIN_GREEN, width: "100%", marginBottom: 0 }]}>
+        <Text style={[TextStyles.subtitle(darkMode), { color: colors.GREEN_THEME.MAIN_COLOR, width: "100%", marginBottom: 0 }]}>
           Settings
         </Text>
 
@@ -83,12 +83,12 @@ export default function Settings({
         <View style={{ height: 15 }} />
         <SliderBar label="Drag Sensitivity" value={newDragSens} units={"%"}
           minValue={10} maxValue={200} changeCallback={setNewDragSens}
-          mainColor={colors.MAIN_GREEN}
+          mainColor={colors.GREEN_THEME.MAIN_COLOR}
           knobColor={darkMode ? "#000" : "#fff"}
         />
         <SliderBar label="Double Tap Delay" value={newTapDelay} units={"ms"}
           minValue={100} maxValue={500} changeCallback={setNewTapDelay}
-          mainColor={colors.MAIN_GREEN}
+          mainColor={colors.GREEN_THEME.MAIN_COLOR}
           knobColor={darkMode ? "#000" : "#fff"}
         />
 

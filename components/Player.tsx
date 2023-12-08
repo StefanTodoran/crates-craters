@@ -1,10 +1,22 @@
 import { StyleSheet, Image, Animated } from "react-native";
 import React, { useRef, useEffect } from "react";
-
-import { tileAt } from '../Game';
+import { Direction, TileType } from "../util/types";
+import { Game, tileAt } from "../util/logic";
 import { colors, graphics } from "../Theme";
 
-export default function Player({ game, touch, darkMode, tileSize }) {
+interface Props {
+  game: Game,
+  touch: { x: number, y: number },
+  darkMode: boolean,
+  tileSize: number,
+}
+
+export default function Player({
+  game,
+  touch,
+  darkMode,
+  tileSize,
+}: Props) {
   const optionsAnim = useRef(new Animated.Value(0)).current;
   useEffect(() => {
     Animated.loop(
@@ -32,14 +44,16 @@ export default function Player({ game, touch, darkMode, tileSize }) {
         const yPos = game.player.y + y;
 
         const tile = tileAt(yPos, xPos, game.board);
-        let selectable = !(["outside", "crater", "wall"].includes(tile));
-        selectable = (tile === "door" && game.keys === 0) ? false : selectable;
-        selectable = (tile === "flag" && game.coins !== game.maxCoins) ? false : selectable;
-
-        selectable = (tile === "one_way_left" && xPos > game.player.x) ? false : selectable;
-        selectable = (tile === "one_way_right" && xPos < game.player.x) ? false : selectable;
-        selectable = (tile === "one_way_up" && yPos > game.player.y) ? false : selectable;
-        selectable = (tile === "one_way_down" && yPos < game.player.y) ? false : selectable;
+        let selectable = ![TileType.OUTSIDE, TileType.CRATER, TileType.WALL].includes(tile.id);
+        selectable = (tile.id === TileType.DOOR && game.keys === 0) ? false : selectable;
+        selectable = (tile.id === TileType.COIN && game.coins !== game.maxCoins) ? false : selectable;
+        
+        if (tile.id === TileType.ONEWAY) {
+          selectable = (tile.orientation === Direction.LEFT  && xPos > game.player.x) ? false : selectable;
+          selectable = (tile.orientation === Direction.RIGHT && xPos < game.player.x) ? false : selectable;
+          selectable = (tile.orientation === Direction.UP    && yPos > game.player.y) ? false : selectable;
+          selectable = (tile.orientation === Direction.DOWN  && yPos < game.player.y) ? false : selectable;
+        }
 
         if (selectable) {
           const optionStyle = styles.optionTile(xPos, yPos, tileSize, optionsAnim, darkMode);
@@ -69,26 +83,28 @@ export default function Player({ game, touch, darkMode, tileSize }) {
   );
 }
 
-const styles = StyleSheet.create({
-  tile: (bgColor, size) => ({
+const styles = StyleSheet.create<any>({
+  tile: (bgColor: string, size: number) => ({
     width: size,
     height: size,
     backgroundColor: bgColor,
   }),
-  // player: (xPos, yPos, tileSize, magX, magY, dirX, dirY) => ({
-  //   position: "absolute",
-  //   left: xPos * tileSize,
-  //   top: yPos * tileSize,
-  //   transform: [
-  //     {
-  //       translateY: magY > tileSize ? dirY * tileSize : dirY * magY
-  //     },
-  //     {
-  //       translateX: magX > tileSize ? dirX * tileSize : dirX * magX
-  //     },
-  //   ],
-  // }),
-  player: (xPos, yPos, tileSize, touchX, touchY) => ({
+  /*
+    player: (xPos, yPos, tileSize, magX, magY, dirX, dirY) => ({
+      position: "absolute",
+      left: xPos * tileSize,
+      top: yPos * tileSize,
+      transform: [
+        {
+          translateY: magY > tileSize ? dirY * tileSize : dirY * magY
+        },
+        {
+          translateX: magX > tileSize ? dirX * tileSize : dirX * magX
+        },
+      ],
+    }),
+  */
+  player: (xPos: number, yPos: number, tileSize: number, touchX: number, touchY: number) => ({
     position: "absolute",
     left: xPos * tileSize,
     top: yPos * tileSize,
@@ -101,7 +117,7 @@ const styles = StyleSheet.create({
       },
     ],
   }),
-  optionTile: (xPos, yPos, size, anim, darkMode) => ({
+  optionTile: (xPos: number, yPos: number, size: number, anim: Animated.Value, darkMode: boolean) => ({
     position: "absolute",
     left: xPos * size,
     top: yPos * size,

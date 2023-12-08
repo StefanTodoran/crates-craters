@@ -1,13 +1,12 @@
 import { FlatList, View } from "react-native";
-import React, { useCallback, useContext, useEffect, useRef, useState } from "react";
+import React, { useCallback, useContext, useRef } from "react";
 import LevelCard from "../components/LevelCard";
-import { Game } from "../util/logic";
 import GlobalContext from "../GlobalContext";
 import { PageView } from "../util/types";
 
 interface Props {
   viewCallback: (newView: PageView) => void, // Sets the current view of the application. 
-  // playLevelCallback: () => void // Sets the current play level in the parent state so it can be passed to the PlayLevel component. 
+  playLevelCallback: (uuid: string) => void // Sets the current play level in the parent state so it can be passed to the PlayLevel component. 
   // editorLevelCallback: () => void // Sets the current editor level in the parent state so it can be passed to the CreateLevel component. 
 
   playLevel?: string, // The uuid of the level currently being played (if a level is being played). 
@@ -19,10 +18,10 @@ interface Props {
 
 function LevelSelectBase({
   viewCallback,
-  // playLevelCallback, 
+  playLevelCallback,
   // editorLevelCallback, 
   playLevel,
-  editorLevel,
+  // editorLevel,
   elementHeight,
   storeElementHeightCallback
 }: Props) {
@@ -30,7 +29,7 @@ function LevelSelectBase({
   const scrollRef = useRef<any>();
 
   const openLevel = useCallback((playLevel: string) => {
-    // playLevelCallback(playLevel);
+    playLevelCallback(playLevel);
     viewCallback(PageView.PLAY);
   }, [playLevel]);
 
@@ -41,13 +40,16 @@ function LevelSelectBase({
   return (
     <>
       {/* This component exists just to calculate the height of level cards. */}
-      {!elementHeight && <View onLayout={(event) => {
-        let { x, y, width, height } = event.nativeEvent.layout;
-        storeElementHeightCallback(height);
-      }} style={{ opacity: 0 }}>
+      {!elementHeight && <View
+        onLayout={(event) => {
+          let { height } = event.nativeEvent.layout;
+          storeElementHeightCallback(height);
+        }}
+        style={{ opacity: 0 }}
+      >
         <LevelCard
-          viewCallback={viewCallback}
           playCallback={openLevel}
+          resumeCallback={() => viewCallback(PageView.PLAY)}
           levelIndex={0}
           level={levels[0]}
           darkMode={darkMode}
@@ -60,8 +62,7 @@ function LevelSelectBase({
           style={{ overflow: "hidden" }}
           contentContainerStyle={{
             paddingHorizontal: "5%",
-            paddingBottom: "4%",
-            paddingTop: "8%",
+            paddingVertical: "5%",
             alignItems: "center",
           }}
           overScrollMode="never"
@@ -69,16 +70,16 @@ function LevelSelectBase({
           data={levels}
           renderItem={({ item, index }) =>
             <LevelCard
-              viewCallback={viewCallback}
-              // editCallback={editorLevelCallback}
               playCallback={item.uuid === playLevel ? undefined : openLevel}
+              resumeCallback={() => viewCallback(PageView.PLAY)}
+              // editCallback={editorLevelCallback}
               levelIndex={index}
               level={levels[index]}
               darkMode={darkMode}
             />
           }
           keyExtractor={item => item.uuid}
-          getItemLayout={(data, index) => (
+          getItemLayout={(_data, index) => (
             { length: elementHeight, offset: elementHeight * index, index }
           )}
           onLayout={() => {

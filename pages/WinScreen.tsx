@@ -1,17 +1,17 @@
-import { StyleSheet, Dimensions, Image, Animated } from "react-native";
+import { StyleSheet, Image, Animated } from "react-native";
 import React, { useContext, useEffect, useRef } from "react";
-import { Audio } from 'expo-av';
+import { Audio } from "expo-av";
 import { colors, graphics } from "../Theme";
-import { GlobalContext } from "../GlobalContext";
+import GlobalContext from "../GlobalContext";
 import { sizeFromWidthPercent } from "../TextStyles";
-const win = Dimensions.get("window");
 
 export default function WinScreen() {
-  const { darkMode, dragSensitivity, doubleTapDelay, playAudio } = useContext(GlobalContext);
+  const { darkMode, playAudio } = useContext(GlobalContext);
 
   useEffect(() => {
+    let sound: Audio.Sound;
     async function playSound() {
-      const { sound } = await Audio.Sound.createAsync(require('../assets/audio/victory.wav'));
+      sound = (await Audio.Sound.createAsync(require('../assets/audio/victory.wav'))).sound;
       await sound.playAsync();
     }
 
@@ -19,7 +19,7 @@ export default function WinScreen() {
     if (playAudio) playSound();
 
     return function unmountCleanUp() {
-      if (sound) { sound.unloadAsync(); }
+      if (sound) sound.unloadAsync();
     }
   }, []);
 
@@ -45,9 +45,8 @@ export default function WinScreen() {
     }).start();
   }, []);
 
-  function randomInt(max) {
-    return Math.floor(Math.random() * max);
-  }
+  function randomInt(max: number) { return Math.floor(Math.random() * max); }
+
   function randomIcon() {
     const chance = randomInt(7);
     if (chance === 0) { return graphics.FLAG }
@@ -66,7 +65,31 @@ export default function WinScreen() {
 
     confetti.push(<Animated.Image
       key={`confetti<${i}>`} source={icon}
-      style={styles.confetti(confettiAnim, velX, velY, rotate)}
+      style={[
+        styles.confetti,
+        {
+          transform: [
+            {
+              translateY: confettiAnim.interpolate({
+                inputRange: [0, 1],
+                outputRange: [0, velY],
+              })
+            },
+            {
+              translateX: confettiAnim.interpolate({
+                inputRange: [0, 1],
+                outputRange: [0, velX],
+              })
+            },
+            {
+              rotate: confettiAnim.interpolate({
+                inputRange: [0, 1],
+                outputRange: ["0deg", `${rotate}deg`],
+              })
+            },
+          ]
+        },
+      ]}
     />);
   }
 
@@ -93,34 +116,13 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   banner: {
-    width: sizeFromWidthPercent(0.8, 145, 600).width,
-    height: sizeFromWidthPercent(0.8, 145, 600).height,
+    width: sizeFromWidthPercent(80, 600, 145).width,
+    height: sizeFromWidthPercent(80, 600, 145).height,
   },
-  confetti: (anim, velX, velY, rotate) => ({
+  confetti: {
     position: "absolute",
     height: 28,
     width: 28,
     opacity: 0.25,
-
-    transform: [
-      {
-        translateY: anim.interpolate({
-          inputRange: [0, 1],
-          outputRange: [0, velY],
-        })
-      },
-      {
-        translateX: anim.interpolate({
-          inputRange: [0, 1],
-          outputRange: [0, velX],
-        })
-      },
-      {
-        rotate: anim.interpolate({
-          inputRange: [0, 1],
-          outputRange: ["0deg", `${rotate}deg`],
-        })
-      },
-    ],
-  }),
+  },
 });

@@ -1,4 +1,4 @@
-import { Text, View, Dimensions, Image, Animated, ScaledSize } from "react-native";
+import { Text, View, Dimensions, Image, Animated, ScaledSize, StyleSheet } from "react-native";
 import React, { useEffect, useRef } from "react";
 import GameBoard from "./GameBoard";
 import SimpleButton from "./SimpleButton";
@@ -11,8 +11,8 @@ import { getSpawnPosition } from "../util/logic";
 const win = Dimensions.get("window");
 
 interface Props {
-  viewCallback: (newView: PageView) => void,
-  playCallback?: (uuid: string) => void,
+  playCallback?: (uuid: string) => void, // The callback used to initiate the current level for playing. If not provided, the level is currently being played.
+  resumeCallback?: () => void, // Used to resume play if this level is currently being played.
   editCallback?: (uuid: string) => void,
   level: Level,
   levelIndex: number,
@@ -20,8 +20,8 @@ interface Props {
 }
 
 function LevelCardBase({
-  viewCallback,
   playCallback,
+  resumeCallback,
   editCallback,
   level,
   levelIndex,
@@ -59,46 +59,40 @@ function LevelCardBase({
     // }, (levelIndex - scrollIndex) * 100);
   }, []);
 
+  let attributionText;
+  if (level.official) attributionText = "Standard Level";
+  if (!level.official) attributionText = `Designed by "${level.designer}"`;
+
   return (
     <Animated.View style={styles.container(anim, darkMode, !playCallback)}>
 
       <View style={styles.row}>
-        <View style={{ flexDirection: "row", justifyContent: "flex-start" }}>
+        <View style={styles.levelLabel}>
           {/* Icon & Number */}
           <View style={{ justifyContent: "center", alignItems: "center" }}>
             <Image style={styles.bigIcon} source={level.official ? graphics.CRATE : graphics.CRATER} />
-            <Text allowFontScaling={false} style={styles.number()}>{levelIndex + 1}</Text>
+            <Text allowFontScaling={false} style={styles.number}>{levelIndex + 1}</Text>
           </View>
 
           {/* Name & Designer */}
           <View style={{ flexDirection: "column", justifyContent: "center", marginLeft: normalize(10) }}>
-            <Text allowFontScaling={false} style={styles.levelName(darkMode)} numberOfLines={1}>{level.name}</Text>
-            {!level.official &&
-              <Text
-                allowFontScaling={false}
-                style={styles.designerName(darkMode)}
-                numberOfLines={1}
-              >
-                Designed by "{level.designer}"
-              </Text>
-            }
-            {level.official &&
-              <Text allowFontScaling={false}
-                style={styles.designerName(darkMode)}
-              >
-                Standard Level
-              </Text>
-            }
-
-            {/* {!(level.official || specialLevel) &&
-              <Text allowFontScaling={false} style={styles.designerName(darkMode)} numberOfLines={1}>Designed by "{level.designer}"</Text>}
-            {level.official && <Text allowFontScaling={false} style={styles.designerName(darkMode)}>Standard Level</Text>}
-            {specialLevel && <Text allowFontScaling={false} style={styles.designerName(darkMode)}>Empty Canvas</Text>} */}
+            <Text
+              allowFontScaling={false}
+              style={[TextStyles.subtitle(darkMode), styles.levelName]}
+              numberOfLines={1}
+            >{level.name}</Text>
+            <Text
+              allowFontScaling={false}
+              style={[TextStyles.paragraph(darkMode), styles.designerName]}
+              numberOfLines={1}
+            >{attributionText}</Text>
           </View>
         </View>
 
-        {!playCallback && <Image style={styles.icon} source={graphics.PLAYER} />}
-        {playCallback && level.completed && <Image style={styles.icon} source={graphics.FLAG_ICON} />}
+        <View style={{ flexDirection: "row" }}>
+          {!playCallback && <Image style={styles.icon} source={graphics.PLAYER} />}
+          {level.completed && <Image style={styles.icon} source={graphics.FLAG_ICON} />}
+        </View>
       </View>
 
       <View style={styles.row}>
@@ -109,15 +103,24 @@ function LevelCardBase({
         />
 
         <View style={{ flexDirection: "column", flex: 0.9 }}>
-          {playCallback && <SimpleButton onPress={() => { }} text={"Play"} icon={graphics.PLAY_ICON} />}
+          {playCallback && <SimpleButton
+            text={"Play"}
+            icon={graphics.PLAY_ICON}
+            main={true}
+            onPress={() => playCallback(level.uuid)}
+          />}
 
-          {/* {playCallback && <SimpleButton onPress={() => { playCallback(levelIndex) }} text={"Play"} icon={graphics.PLAY_ICON} />}
-          {!playCallback && <SimpleButton onPress={() => { viewCallback("play") }} text={"Resume"} icon={graphics.KEY_ICON} main={true} />} */}
+          {!playCallback && <SimpleButton
+            text={"Resume"}
+            icon={graphics.KEY_ICON}
+            main={true}
+            onPress={resumeCallback}
+          />}
 
           <SimpleButton text={"Edit"} icon={graphics.HAMMER_ICON} onPress={() => {
             // editCallback(levelIndex);
             // viewCallback("edit");
-          }} disabled={level.official} />
+          }} />
         </View>
       </View>
 
@@ -133,7 +136,7 @@ function calcTileSize(boardWidth: number, window: ScaledSize) {
   return Math.floor(maxWidth);
 }
 
-const styles: any = {
+const styles = StyleSheet.create<any>({
   container: (anim: Animated.Value, darkMode: boolean, highlighted: boolean) => ({
     flexDirection: "column",
     justifyContent: "center",
@@ -146,7 +149,7 @@ const styles: any = {
     marginVertical: normalize(10),
     borderColor: colors.DARK_PURPLE,
     // backgroundColor: darkMode ? colors.NEAR_BLACK : colors.OFF_WHITE,
-    backgroundColor: darkMode ? colors.MAIN_PURPLE_TRANSPARENT(0.15) : colors.OFF_WHITE,
+    backgroundColor: highlighted ? colors.MAIN_PURPLE_TRANSPARENT(0.25) : (darkMode ? colors.MAIN_PURPLE_TRANSPARENT(0.15) : colors.OFF_WHITE),
     opacity: anim,
     transform: [{
       scale: anim.interpolate({
@@ -163,7 +166,11 @@ const styles: any = {
     // paddingHorizontal: normalize(15),
     paddingVertical: normalize(10),
   },
-  number: () => ({
+  levelLabel: {
+    flexDirection: "row",
+    justifyContent: "flex-start",
+  },
+  number: {
     position: "absolute",
     width: "100%",
     textAlign: "center",
@@ -171,7 +178,7 @@ const styles: any = {
     color: colors.OFF_WHITE,
     fontFamily: "Montserrat-Medium",
     fontWeight: "bold",
-  }),
+  },
   icon: {
     height: normalize(25),
     width: normalize(25),
@@ -180,15 +187,12 @@ const styles: any = {
     height: normalize(35),
     width: normalize(35),
   },
-  levelName: (darkMode: boolean) => ({
-    ...TextStyles.subtitle(darkMode),
+  levelName: {
     marginTop: 0,
     marginBottom: 0,
-  }),
-  designerName: (darkMode: boolean) => ({
-    ...TextStyles.paragraph(darkMode),
-    color: (darkMode) ? colors.MAIN_PURPLE : colors.DARK_PURPLE,
+  },
+  designerName: {
     marginTop: -normalize(5),
     marginBottom: 0,
-  }),
-};
+  },
+});

@@ -1,5 +1,6 @@
-import { View, Dimensions, Image, Pressable, Text, Platform } from "react-native";
-import React from "react";
+import { View, Dimensions, Image, Pressable, Text, Platform, StyleSheet } from "react-native";
+import React, { useContext } from "react";
+import GlobalContext from "../GlobalContext";
 
 import { colors } from "../Theme";
 import { TileIcon } from "../assets/Icons";
@@ -23,6 +24,8 @@ export default function GameBoard({
   rowCorrect,
   children,
 }: Props) {
+  const { darkMode } = useContext(GlobalContext);
+
   const boardHeight = board.length;
   const boardWidth = board[0].length;
   const tileSize = overrideTileSize ? overrideTileSize : calcTileSize(boardWidth, boardHeight, win);
@@ -59,8 +62,8 @@ export default function GameBoard({
     if (board[i][j].id === TileType.WALL) {
       // Wall tiles are just Views with border and background. We apply
       // the border based on adjacent walls.
-      const borderColor = oddTile ? colors.MAIN_BLUE_TRANSPARENT(0.65) : colors.MAIN_BLUE_TRANSPARENT(0.8);
-      const fillColor = oddTile ? colors.MAIN_BLUE_TRANSPARENT(0.5) : colors.MAIN_BLUE_TRANSPARENT(0.65);
+      const borderColor = oddTile ? colors.BLUE_THEME.MAIN_TRANSPARENT(0.65) : colors.BLUE_THEME.MAIN_TRANSPARENT(0.8);
+      const fillColor = oddTile ? colors.BLUE_THEME.MAIN_TRANSPARENT(0.5) : colors.BLUE_THEME.MAIN_TRANSPARENT(0.65);
 
       const borders = {
         borderTopWidth: i > 0 && board[i - 1][j].id === TileType.WALL ? 0 : 5,
@@ -86,7 +89,7 @@ export default function GameBoard({
     // Regular tiles are sized like wall tiles but are Image elements. All
     // tiles have png sources so the checkered background colors can show through.
     const icon = getIconSrc(board[i][j]);
-    const bgColor = oddTile ? colors.MAIN_BLUE_TRANSPARENT(0.03) : colors.MAIN_BLUE_TRANSPARENT(0.14);
+    const bgColor = oddTile ? colors.BLUE_THEME.MAIN_TRANSPARENT(0.03) : colors.BLUE_THEME.MAIN_TRANSPARENT(0.14);
 
     if (board[i][j].id === TileType.EMPTY && !tileCallback) {
       return <View key={`tile<${i},${j}>`} style={styles.tile(bgColor, tileSize)} />;
@@ -154,7 +157,13 @@ export default function GameBoard({
   }
 
   return (
-    <View style={styles.board(colors.MAIN_BLUE)}>
+    <View style={[
+      styles.board,
+      {
+        borderColor: colors.BLUE_THEME.MAIN_COLOR,
+        backgroundColor: (darkMode) ? "#000" : "#fff",
+      }
+    ]}>
       {buildUpBoard()}
       {children}
     </View>
@@ -163,14 +172,13 @@ export default function GameBoard({
 
 function isEven(num: number) { return num % 2 === 0; }
 
-const styles: any = {
-  board: (borderColor: string) => ({
+const styles = StyleSheet.create<any>({
+  board: {
     position: "relative",
     borderWidth: 1,
-    borderColor: borderColor,
     borderRadius: 5,
     overflow: "hidden",
-  }),
+  },
   wallTile: (bgColor: string, borderColor: string, size: number) => ({
     width: size,
     height: size,
@@ -199,4 +207,4 @@ const styles: any = {
     color: "white",
     fontSize: fontSize
   }),
-};
+});

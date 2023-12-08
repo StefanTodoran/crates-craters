@@ -1,4 +1,4 @@
-import { Pressable, Text, Image, ImageSourcePropType } from "react-native";
+import { Pressable, Text, Image, ImageSourcePropType, StyleSheet } from "react-native";
 import React, { useState } from "react";
 import { normalize } from "../TextStyles";
 
@@ -52,16 +52,17 @@ export default function IconButton({
   );
 }
 
-const styles: any = {
+const styles = StyleSheet.create<any>({
   body: (isPressed: boolean, isDisabled: boolean) => ({
-    marginTop: 15,
-    marginHorizontal: 5,
+    marginTop: normalize(15),
+    marginBottom: normalize(7.5),
+    marginHorizontal: normalize(7.5),
     flexDirection: "column",
     alignItems: "center",
     justifyContent: "center",
     opacity: (isDisabled) ? 0.5 : 1,
     transform: [{
-      scale: isPressed ? 0.98 : 1,
+      scale: isPressed ? 0.95 : 1,
     }],
   }),
   label: {
@@ -74,4 +75,4 @@ const styles: any = {
     height: normalize(30),
     width: normalize(30),
   }
-};
+});

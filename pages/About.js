@@ -11,11 +11,11 @@ export default function About() {
   const { darkMode } = useContext(GlobalContext);
 
   const MenuButtonRecolor = {
-    borderColor: colors.MAIN_GREEN,
-    textColor: colors.MAIN_GREEN,
+    borderColor: colors.GREEN_THEME.MAIN_COLOR,
+    textColor: colors.GREEN_THEME.MAIN_COLOR,
     backgroundColor: colors.GREEN_OFF_WHITE,
-    darkModeBackgroundColor: colors.MAIN_GREEN_TRANSPARENT(0.1),
-    pressedColor: colors.MAIN_GREEN_TRANSPARENT(0.3),
+    darkModeBackgroundColor: colors.GREEN_THEME.MAIN_TRANSPARENT(0.1),
+    pressedColor: colors.GREEN_THEME.MAIN_TRANSPARENT(0.3),
   }
 
   return (
@@ -26,7 +26,7 @@ export default function About() {
       justifyContent: "center",
       height: "100%",
     }} overScrollMode="never" showsVerticalScrollIndicator={false}>
-      <Text style={TextStyles.subtitle(darkMode, colors.MAIN_GREEN)}>
+      <Text style={TextStyles.subtitle(darkMode, colors.GREEN_THEME.MAIN_COLOR)}>
         Attribution
       </Text>
 

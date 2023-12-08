@@ -1,4 +1,4 @@
-import { StyleSheet, Dimensions, Platform, PixelRatio, ViewStyle, ImageStyle, TextStyle } from "react-native";
+import { StyleSheet, Dimensions, Platform, PixelRatio } from "react-native";
 import { colors } from "./Theme";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
@@ -23,26 +23,20 @@ export function sizeFromWidthPercent(percent: number, width: number, height: num
   };
 }
 
-type Style = ViewStyle | ImageStyle | TextStyle;
-
-interface TextStyles {
-  paragraph: (darkMode: boolean) => Style;
-  bold: (darkMode: boolean) => Style;
-  subtitle: (darkMode: boolean, colorOverride?: string) => Style;
-}
-
-// @ts-expect-error
-export default StyleSheet.create<TextStyles>({
-  paragraph: (darkMode) => ({
+export default StyleSheet.create<any>({
+  paragraph: (darkMode: boolean) => ({
     color: (darkMode) ? colors.OFF_WHITE : colors.TEXT_COLOR,
-    // color: (darkMode) ? colors.MAIN_PURPLE : colors.DARK_PURPLE,
     fontFamily: "Montserrat-Regular",
     fontWeight: "normal",
     fontSize: normalize(16),
     marginBottom: normalize(10),
   }),
+  
+  colored: (darkMode: boolean) => ({
+    color: (darkMode) ? colors.MAIN_PURPLE : colors.DARK_PURPLE,
+  }),
 
-  bold: (darkMode) => ({
+  bold: (darkMode: boolean) => ({
     color: (darkMode) ? colors.MAIN_PURPLE : colors.DARK_PURPLE,
     fontFamily: "Montserrat-Medium",
     fontWeight: "bold",
@@ -51,7 +45,7 @@ export default StyleSheet.create<TextStyles>({
     letterSpacing: 0.5,
   }),
 
-  subtitle: (darkMode, colorOverride) => ({
+  subtitle: (darkMode: boolean, colorOverride?: string) => ({
     color: (colorOverride) ? colorOverride : ((darkMode) ? colors.MAIN_PURPLE : colors.DARK_PURPLE),
     fontFamily: "Montserrat-Medium",
     fontWeight: "bold",

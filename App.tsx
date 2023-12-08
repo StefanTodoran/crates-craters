@@ -2,18 +2,19 @@ import { StatusBar } from "expo-status-bar";
 import { useFonts } from "expo-font";
 import * as NavigationBar from "expo-navigation-bar";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Dimensions, Animated, BackHandler, SafeAreaView, StatusBar as RNStatusBar, View } from "react-native";
+import { Dimensions, Animated, BackHandler, SafeAreaView, StatusBar as RNStatusBar, View, StyleSheet } from "react-native";
 
 import { getSavedSettings, parseCompressedBoardData, setData } from "./util/loader";
 import { Level, PageView } from "./util/types";
 import GlobalContext from "./GlobalContext";
 import { colors } from "./Theme";
-import { Game } from "./util/logic";
+import { Game, initializeGameObj } from "./util/logic";
 
 import Menu from "./components/Menu";
 import AccountPage from "./pages/AccountSettings";
 import LevelSelect from "./pages/LevelSelect";
 import Header from "./components/Header";
+import PlayLevel from "./pages/PlayLevel";
 // import PlayLevel from "./pages/PlayLevel";
 // import CreateLevel from "./pages/CreateLevel";
 
@@ -24,36 +25,43 @@ const rawLevels = [ // TODO: replace with fetching from firebase
     uuid: "1",
     name: "Introductions",
     board: "1,1,1,1,1,1,1,1/1,0,0,4,0,0,0,5/1,7,0,4,0,0,0,5/1,0,6,4,0,0,0,5/1,1,1,1,1,1,0,1/1,0,3,0,0,0,4,1/1,0,0,0,4,0,5,1/1,0,0,0,0,6,0,1/1,5,0,4,0,0,0,1/1,5,1,1,1,1,1,1/1,0,0,5,1,0,0,0/1,0,0,4,2,0,8,0/1,0,6,0,1,0,0,0/1,1,1,1,1,1,1,1",
+    completed: true,
   },
   {
     uuid: "2",
     name: "Easy Peasy",
     board: "1,1,1,1,1,1,1,1/1,0,0,0,4,7,0,1/1,6,1,1,5,4,0,1/1,0,0,0,4,5,4,1/1,0,4,0,6,4,0,1/1,3,1,0,0,4,5,1/1,1,1,1,1,1,2,1/1,0,0,0,0,1,0,1/1,0,8,0,0,12.3,0,1/1,0,0,0,0,12.3,0,1/1,1,1,1,12.0,0,4,1/1,0,6,5,0,4,0,1/1,0,0,0,4,0,0,1/1,1,1,1,1,1,1,1",
+    completed: true,
   },
   {
     uuid: "3",
     name: "Having a Blast",
     board: "1,1,1,1,1,1,1,1/0,0,1,0,0,5,4,5/0,0,2,4,7,9.25,5,0/6,0,1,0,12.0,0,0,0/0,0,1,5,0,0,0,4/4,0,1,0,4,0,0,5/0,4,1,0,0,0,4,1/0,0,1,1,4,4,4,1/0,0,5,1,4,6,3,1/0,0,0,1,1,12.0,12.0,1/0,0,0,5,6,0,0,1/0,0,4,1,0,8,0,1/5,4,5,1,0,0,0,1/1,1,1,1,1,1,1,1",
+    completed: false,
   },
   {
     uuid: "4",
     name: "Rooms",
     board: "0,0,2,0,1,1,1,3/0,0,1,0,1,0,0,5/4,4,1,0,2,0,4,0/5,5,1,0,1,6,0,4/4,0,1,0,1,1,1,1/0,0,1,0,1,4,4,0/8,1,0,4,5,1,1,0/1,1,5,7,0,1,1,5/1,3,4,4,4,0,1,1/1,1,0,0,0,0,1,1/1,1,4,4,0,0,1,6/0,0,0,0,4,5,1,5/1,1,1,1,2,1,1,4/1,1,1,3,0,0,0,0",
+    completed: false,
   },
   {
     uuid: "5",
     name: "Choices",
     board: "0,0,0,6,1,0,0,0/0,4,0,1,0,0,3,5/4,0,4,1,0,4,4,0/0,4,0,1,0,4,5,0/0,6,0,1,4,4,0,0/0,0,0,2,0,0,0,5/1,1,1,1,0,0,1,0/0,0,6,5,4,1,0,0/1,1,0,4,7,4,0,0/0,0,0,0,4,0,0,0/0,0,0,1,0,1,0,0/0,0,0,1,8,1,5,4/4,4,0,0,1,0,0,6/6,0,5,0,0,0,0,0",
+    completed: false,
   },
   {
     uuid: "6",
     name: "Running Laps",
     board: "0,0,0,1,0,1,1,0/0,7,0,0,4,0,8,0/0,0,0,1,0,0,1,5/0,0,0,1,3,0,1,1/0,4,4,1,5,1,4,4/0,4,0,1,0,0,0,4/4,0,0,1,0,6,0,0/1,0,1,1,0,0,5,0/0,0,0,0,0,5,4,0/0,0,0,0,0,0,0,0/1,2,1,0,6,0,0,0/0,0,5,0,0,1,1,4/0,6,5,0,0,1,6,0/6,0,1,0,0,4,0,0",
+    completed: false,
   },
   {
     uuid: "7",
     name: "Warzone",
     board: "5,4,5,5,0,4,0,12.3/4,1,6,5,1,12.0,4,5/5,3,5,0,1,6,12.1,0/4,4,0,0,0,4,1,4/0,1,5,0,12.0,0,1,6/6,8,5,9.25,5,2,9.75,5/2,5,1,12.0,1,0,4,0/0,0,4,7,5,12.3,9.5,4/5,4,0,4,3,9.50,2,4/1,5,0,0,12.0,0,12.0,12.3/6,4,1,12.2,4,0,1,12.0/3,0,4,0,4,0,1,6/4,5,4,4,5,0,5,4/5,4,9.10,4,0,5,0,4",
+    completed: false,
   },
 ];
 
@@ -81,15 +89,18 @@ export default function App() {
 
   const [view, setView] = useState(PageView.MENU);
   const switchView = useCallback((newView: PageView) => {
-    if (newView === PageView.MENU) {
-      setAnimTo(0, () => {
-        setView(newView);
-      });
-    } else {
+    if (newView === PageView.MENU) { // PAGE -> MENU
+      setAnimTo(0, () => setView(newView));
+    } else if (view === PageView.MENU) {// MENU -> PAGE
       setView(newView);
       setAnimTo(1);
+    } else { // PAGE -> PAGE
+      setAnimTo(0, () => {
+        setView(newView);
+        setAnimTo(1);
+      });
     }
-  }, []);
+  }, [view]);
 
   const [levels, setLevels] = useState<Level[]>([]);
   useEffect(() => {
@@ -100,7 +111,7 @@ export default function App() {
         name: rawLevel.name,
         board: parseCompressedBoardData(rawLevel.board),
         official: true,
-        completed: false,
+        completed: rawLevel.completed,
       });
     });
     setLevels(newLevels);
@@ -157,16 +168,22 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    NavigationBar.setBackgroundColorAsync(darkMode ? "black" : "white");
+    NavigationBar.setBackgroundColorAsync(darkMode ? "#000" : "#fff");
   }, [darkMode]);
 
+  const [playLevel, setPlayLevel] = useState<Level>(); // Stores the level currently being played.
   const [currentGame, setGameState] = useState<Game>(); // Stores the game state of the level being played.
   const [editorLevel, setEditorLevel] = useState<Level>(); // Stores the level object being edited.
 
-  // const changePlayLevel = useCallback((lvl: number) => {
-  //   setPlayLevel(lvl);
-  //   setGameState(null);
-  // }, []);
+  const changePlayLevel = useCallback((uuid: string) => {
+    const requestedLevel = levels.find(level => level.uuid === uuid);
+    if (!requestedLevel) throw new Error(`Level with uuid ${uuid} does not exit!`);
+    setPlayLevel(requestedLevel);
+    setGameState(initializeGameObj(requestedLevel));
+  }, [levels]);
+  const getNextLevel = useCallback((uuid: string) => {
+    // TODO: implement me!
+  }, []);
   // const changeEditorLevel = useCallback((lvl: number) => {
   //   setEditorLevel(lvl);
   //   setEditorLevel(cloneLevelObj(lvl));
@@ -201,25 +218,36 @@ export default function App() {
           style={styles.modal(pageAnim, darkMode)}
           pointerEvents={view === PageView.MENU ? "none" : "auto"}
         >
-          <Animated.View style={styles.header(pageAnim)}>
-            <Header pageView={view} returnHome={() => { switchView(PageView.MENU) }}/>
-          </Animated.View>
+          {![PageView.PLAY, PageView.EDITOR].includes(view) && <Animated.View style={styles.header(pageAnim)}>
+            <Header pageView={view} returnHome={() => switchView(PageView.MENU)} />
+          </Animated.View>}
 
           <View style={styles.page}>
             {view === PageView.LEVELS &&
               <LevelSelect
                 viewCallback={switchView}
-                // playLevelCallback={changePlayLevel}
+                playLevelCallback={changePlayLevel}
                 // editorLevelCallback={changeEditorLevel}
-                playLevel={currentGame?.uuid}
+                playLevel={!currentGame?.won ? currentGame?.uuid : undefined}
                 editorLevel={editorLevel?.uuid}
                 elementHeight={levelElementHeight}
                 storeElementHeightCallback={setElementHeight}
               />
             }
+
+            {view === PageView.PLAY &&
+              <PlayLevel
+                viewCallback={switchView}
+                nextLevelCallback={getNextLevel}
+                gameStateCallback={setGameState}
+                level={playLevel!}
+                game={currentGame!}
+                playtest={false}
+              />
+            }
+
             {view === PageView.SETTINGS &&
               <AccountPage
-                viewCallback={switchView}
                 darkModeCallback={toggleDarkMode}
                 audioModeCallback={toggleAudioMode}
                 setSensitivityCallback={setSensitivity}
@@ -235,7 +263,7 @@ export default function App() {
   );
 }
 
-const styles: any = {
+const styles = StyleSheet.create<any>({
   page: {
     flex: 1,
     alignItems: "center",
@@ -268,7 +296,7 @@ const styles: any = {
     // paddingTop: RNStatusBar.currentHeight,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: (darkMode) ? "black" : "white",
+    backgroundColor: darkMode ? "black" : "white",
     opacity: animState,
     borderRadius: animState.interpolate({
       inputRange: [0, 0.75, 1],
@@ -281,4 +309,4 @@ const styles: any = {
       }),
     }],
   }),
-};
+});

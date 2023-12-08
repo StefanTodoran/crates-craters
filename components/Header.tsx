@@ -1,4 +1,4 @@
-import { View, StatusBar } from "react-native";
+import { View, StatusBar, StyleSheet } from "react-native";
 import Banner from "./Banner";
 import HomeButton from "./HomeButton";
 import { PageView } from "../util/types";
@@ -16,21 +16,12 @@ export enum PageTheme {
   NONE,
 }
 
-export interface PageThemeColors {
-  OFF_WHITE: string,
-  LIGHT_COLOR: string,
-  MAIN_COLOR: string,
-  MIDDLE_COLOR: string,
-  DARK_COLOR: string,
-  NEAR_BLACK: string,
-}
-
 import PurpleBanner from "../assets/purple_banner.png";
 import RedBanner from "../assets/red_banner.png";
 import YellowBanner from "../assets/yellow_banner.png";
 import GreenBanner from "../assets/green_banner.png";
 
-const pageThemeData = [
+const pageThemeData = [ // TODO: use colors from Theme.ts to avoid duplication!
   { // Purple
     color: "#BEA9DF",
     banner: PurpleBanner,
@@ -84,10 +75,10 @@ export default function Header({ pageView, returnHome }: Props) {
   );
 }
 
-const styles: any = {
+const styles = StyleSheet.create<any>({
   menuButton: {
     position: "absolute",
     top: StatusBar.currentHeight!,
     right: "3%",
   },
-};
+});

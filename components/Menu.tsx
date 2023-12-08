@@ -1,5 +1,5 @@
 import { useContext, useRef } from "react";
-import { Animated, Dimensions, ScrollView, View } from "react-native";
+import { Animated, Dimensions, ScrollView, StyleSheet, View } from "react-native";
 import MenuPage from "./MenuPage";
 import GlobalContext from "../GlobalContext";
 
@@ -105,7 +105,7 @@ export default function Menu({ openPage }: Props) {
   );
 }
 
-const styles: any = {
+const styles = StyleSheet.create<any>({
   background: {
     position: "absolute",
     top: 0,
@@ -135,4 +135,4 @@ const styles: any = {
     height: normalize(10),
     width: normalize(10),
   }),
-};
+});

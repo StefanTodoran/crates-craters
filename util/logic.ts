@@ -51,7 +51,7 @@ export function validTile(yPos: number, xPos: number, board: Board) {
 export function canWalkTile(yPos: number, xPos: number, game: Game, extra?: TileType[], direction?: Direction) {
   if (validTile(yPos, xPos, game.board)) {
     let walkable = [TileType.EMPTY, TileType.SPAWN];
-    if (extra) walkable.concat(extra);
+    if (extra) walkable = walkable.concat(extra);
 
     const targetTile = tileAt(yPos, xPos, game.board);
     if (targetTile.id === TileType.FLAG && game.coins === game.maxCoins) {
@@ -61,7 +61,7 @@ export function canWalkTile(yPos: number, xPos: number, game: Game, extra?: Tile
     let canWalk = walkable.includes(targetTile.id);
     if (
       canWalk &&
-      !!direction &&
+      direction !== undefined &&
       targetTile.id === TileType.ONEWAY &&
       !canWalkOneWay(direction, targetTile)
     ) {
@@ -224,17 +224,18 @@ export function doGameMove(game: Game, move: Direction): Game {
   if (move === Direction.UP) {
     moveTo.y -= 1;
     oneFurther.y -= 2;
-  } else if (Direction.DOWN) {
+  } else if (move === Direction.DOWN) {
     moveTo.y += 1;
     oneFurther.y += 2;
-  } else if (Direction.LEFT) {
+  } else if (move === Direction.LEFT) {
     moveTo.x -= 1;
     oneFurther.x -= 2;
-  } else if (Direction.RIGHT) {
+  } else if (move === Direction.RIGHT) {
     moveTo.x += 1;
     oneFurther.x += 2;
   }
-
+  
+  next.soundEvent = undefined; // Clear the previous sound event.
   if (!validTile(moveTo.y, moveTo.x, next.board)) {
     // The user attempted to move outside the board.
     return game;
@@ -266,6 +267,7 @@ export function doGameMove(game: Game, move: Direction): Game {
   // and clear the tile on the new board object.
   if (moveToTile.id === TileType.COIN) {
     next.coins += 1;
+    next.board[moveTo.y][moveTo.x] = emptyTile;
   }
   if (moveToTile.id === TileType.KEY) {
     next.keys += 1;
@@ -299,7 +301,7 @@ export function doGameMove(game: Game, move: Direction): Game {
     next.soundEvent = SoundEvent.PUSH;
   }
 
-  const moved = attemptMove(moveTo.y, moveTo.x, next, [TileType.ONEWAY], move);
+  const moved = attemptMove(moveTo.y, moveTo.x, next, move);
   if (moved) {
     // Tile entity logic handling. If we haven't moved, we shouldn't
     // decrease bomb fuse (invalid moves shouldn't count as a timestep).
@@ -330,8 +332,8 @@ export function doGameMove(game: Game, move: Direction): Game {
   return next;
 }
 
-function attemptMove(yPos: number, xPos: number, next: Game, walkable?: TileType[], direction?: Direction) {
-  if (canWalkTile(yPos, xPos, next, walkable, direction)) {
+function attemptMove(yPos: number, xPos: number, next: Game, direction?: Direction) {
+  if (canWalkTile(yPos, xPos, next, [TileType.ONEWAY], direction)) {
     next.player.x = xPos;
     next.player.y = yPos;
     return true;

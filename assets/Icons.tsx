@@ -1,4 +1,5 @@
 import React from "react"
+import { StyleSheet } from "react-native";
 import Svg, { Path, G, Mask, Defs, LinearGradient, Stop, Circle } from "react-native-svg"
 import { BoardTile, Direction, TileType } from "../util/types";
 
@@ -708,7 +709,7 @@ export function SpawnIcon({ tileSize, styleProp }: IconProps) {
   );
 }
 
-const styles: any = {
+const styles = StyleSheet.create<any>({
   tile: (bgColor: string, size: number) => ({
     width: size,
     height: size,
@@ -729,4 +730,4 @@ const styles: any = {
     color: "white",
     fontSize: fontSize
   }),
-};
+});

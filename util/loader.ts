@@ -70,6 +70,7 @@ export async function getData(key: string) {
 
 export async function markLevelCompleted(uuid: string) {
   const level = await getData(uuid) as Level;
+  if (!level) return; // TODO: remove this, the case should not exit but we aren't storing levels to local storage yet!
   level.completed = true;
   setData(uuid, level);
 }

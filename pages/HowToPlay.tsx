@@ -15,7 +15,7 @@ export default function HowToPlay() {
       paddingTop: win.height * 0.015,
       paddingBottom: win.height * 0.025,
     }} overScrollMode="never" showsVerticalScrollIndicator={false}>
-      <Text style={TextStyles.subtitle(darkMode, colors.MAIN_GREEN)}>
+      <Text style={TextStyles.subtitle(darkMode, colors.GREEN_THEME.MAIN_COLOR)}>
         Controls
       </Text>
       <Text style={TextStyles.paragraph(darkMode)}>
@@ -24,7 +24,7 @@ export default function HowToPlay() {
         any crates) double tap on that tile to save some time and skip to that position.
       </Text>
 
-      <Text style={TextStyles.subtitle(darkMode, colors.MAIN_GREEN)}>
+      <Text style={TextStyles.subtitle(darkMode, colors.GREEN_THEME.MAIN_COLOR)}>
         Objective
       </Text>
       <Text style={TextStyles.paragraph(darkMode)}>
@@ -38,7 +38,7 @@ export default function HowToPlay() {
         This is the ONLY requirement. You do not need to collect all keys, open all doors, or detonate all bombs.
       </Text>
 
-      <Text style={TextStyles.subtitle(darkMode, colors.MAIN_GREEN)}>
+      <Text style={TextStyles.subtitle(darkMode, colors.GREEN_THEME.MAIN_COLOR)}>
         Obstacles
       </Text>
       <Text style={TextStyles.paragraph(darkMode)}>

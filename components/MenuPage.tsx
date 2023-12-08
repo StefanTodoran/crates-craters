@@ -1,4 +1,4 @@
-import { Text, Image, ImageURISource, Dimensions, Pressable } from "react-native";
+import { Text, Image, ImageURISource, Dimensions, Pressable, StyleSheet } from "react-native";
 import TextStyles, { normalize } from "../TextStyles";
 
 const win = Dimensions.get("window");
@@ -28,7 +28,7 @@ export default function MenuPage({
   );
 }
 
-const styles: any = {
+const styles = StyleSheet.create<any>({
   body: {
     height: win.height,
     width: win.width,
@@ -41,10 +41,10 @@ const styles: any = {
   },
   text: (darkMode: boolean) => ({
     ...TextStyles.paragraph(darkMode),
-    textShadowColor: "black",
+    textShadowColor: "#000",
     textShadowRadius: 2,
     color: "white",
     fontSize: normalize(40),
     marginBottom: win.height / 6,
   }),
-};
+});

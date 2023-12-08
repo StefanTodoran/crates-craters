@@ -1,20 +1,38 @@
-import { View, StyleSheet, Dimensions, PanResponder, Animated, SafeAreaView, StatusBar, Pressable, Text } from "react-native";
-import React, { useState, useRef, useEffect, useContext, useMemo } from 'react';
+import { View, StyleSheet, Dimensions, PanResponder, Animated, SafeAreaView, StatusBar, Text, GestureResponderEvent, PanResponderGestureState } from "react-native";
+import React, { useState, useRef, useEffect, useContext, useMemo } from "react";
+import TextStyles, { normalize } from "../TextStyles";
+import GlobalContext from "../GlobalContext";
+import { Sound } from "expo-av/build/Audio";
+import { Audio } from "expo-av";
 
+import SimpleButton from "../components/SimpleButton";
 import MenuButton from "../components/MenuButton";
-import GameBoard from '../components/GameBoard';
-import Inventory from '../components/Inventory';
-import Player from '../components/Player';
+import GameBoard from "../components/GameBoard";
+import Inventory from "../components/Inventory";
+import Player from "../components/Player";
 
-import { doGameMove, initializeGameObj, calcTileSize, canMoveTo, levels, setCompleted } from '../Game';
 import { colors, graphics } from "../Theme";
-import WinScreen from './WinScreen';
+import WinScreen from "./WinScreen";
+import { Direction, Level, PageView } from "../util/types";
+import { Game, SoundEvent, canMoveTo, doGameMove, initializeGameObj } from "../util/logic";
+import { markLevelCompleted } from "../util/loader";
+import { calcTileSize } from "../util/board";
 const win = Dimensions.get("window");
 
-import { Audio } from 'expo-av';
-import { GlobalContext } from "../GlobalContext";
-import SimpleButton from '../components/SimpleButton';
-import TextStyles, { normalize } from "../TextStyles";
+interface Props {
+  viewCallback: (newView: PageView) => void, // Sets the current view of the application. 
+  nextLevelCallback: (uuid: string) => void, // Request the parent update the level to the next level. 
+  gameStateCallback: (newState: Game) => void, // Updates the state of the game, stored in the parent for resumeability.
+
+  level: Level, // The level currently being played. 
+  game: Game, // The current game state.
+  playtest: boolean, // Whether or not the play screen has been opened from the level creation menu. If so the navigation buttons should show return to level creation, not levels.
+}
+
+interface Position {
+  x: number,
+  y: number,
+}
 
 /**
  * This component handles a wide variety of tasks related to level playing. It
@@ -28,47 +46,25 @@ import TextStyles, { normalize } from "../TextStyles";
  * that state.
  * 
  * Game sounds are also handled in this component.
- * 
- * @param {Function} viewCallback
- * Takes a string and sets the view state in the parent.
- * 
- * @param {Function} levelCallback
- * Takes an integer and updates the parent's play level state as well as clearing current game state.
- * 
- * @param {Function} gameStateCallback
- * Takes a game object, stores it in the parent for resumeability. Should have this format:
- * {
- *   board: number[][],
- *   player: {x: number, y: number},
- *   maxCoins: number,
- *   coins: number,
- *   keys: number,
- *   won: boolean,
- * }
- * 
- * @param {number} level
- * Which level number to load the level data from (since on first mount the component
- * does not recieve anything in its game prop, see below) 
- * 
- * @param {Object} game
- * Object of the form descirbed above in gameStateCallback, representing the state of the
- * game the player is currently playing.
- * 
- * @param {boolean} test
- * Whether or not the play screen has been opened from the level creation menu. If it has, this
- * is a playtest run and the navigation buttons should show return to level creation, not levels.
  */
-export default function PlayLevel({ viewCallback, levelCallback, gameStateCallback, level, game, test }) {
+export default function PlayLevel({
+  viewCallback,
+  nextLevelCallback,
+  gameStateCallback,
+  level,
+  game,
+  playtest,
+}: Props) {
   const { darkMode, dragSensitivity, doubleTapDelay, playAudio } = useContext(GlobalContext);
 
   // Set up for sounds, most of this is just copied from the very
   // limited expo-av documentation so don't mess with it.
-  const [moveSound, setMoveSound] = useState();
-  const [pushSound, setPushSound] = useState();
-  const [fillSound, setFillSound] = useState();
-  const [coinSound, setCoinSound] = useState();
-  const [doorSound, setDoorSound] = useState();
-  const [boomSound, setBoomSound] = useState();
+  const [moveSound, setMoveSound] = useState<Sound>();
+  const [pushSound, setPushSound] = useState<Sound>();
+  const [fillSound, setFillSound] = useState<Sound>();
+  const [coinSound, setCoinSound] = useState<Sound>();
+  const [doorSound, setDoorSound] = useState<Sound>();
+  const [boomSound, setBoomSound] = useState<Sound>();
 
   async function playMoveSound() {
     const { sound } = await Audio.Sound.createAsync(require('../assets/audio/move.wav'));
@@ -127,26 +123,16 @@ export default function PlayLevel({ viewCallback, levelCallback, gameStateCallba
   const [gesture, setGesture] = useState([false, false, false, false]); // up, down, left, right
 
   useEffect(() => {
-    // If there is already a game object we wish to resume. We have to wrap
-    // this in a useEffect so we don't update the parent state in the middle of a render.
-    // We don't just have parent init the gameObj since we want to abstract that away from App.js
-
-    if (game === null) {
-      gameStateCallback(initializeGameObj(level));
-    } else {
-      handleGesture();
-      panResponderEnabled.current = !game.won;
-      if (game.won) {
-        setCompleted(level);
-      }
-    }
+    handleGesture();
+    panResponderEnabled.current = !game.won;
+    if (game.won) markLevelCompleted(game.uuid);
   }, [gesture, game]);
 
   // More player input state, we use these to keep track of double taps. We need to know
   // the previous tap time so we can determine if the two taps happened fast enough, and
   // we keep track of position show it is only a double tap if its the same square twice.
-  const [prevTouchTime, setPrevTouchTime] = useState(null);
-  const [prevTouchPos, setPrevTouchPos] = useState(null);
+  const [prevTouchTime, setPrevTouchTime] = useState(Date.now());
+  const [prevTouchPos, setPrevTouchPos] = useState<Position>();
   const [touchPos, setTouchPos] = useState({ y: -1, x: -1 });
   const pressAnim = useRef(new Animated.Value(0)).current;
 
@@ -161,26 +147,26 @@ export default function PlayLevel({ viewCallback, levelCallback, gameStateCallba
 
     let new_state;
     if (up) {
-      new_state = doGameMove(game, "up");
+      new_state = doGameMove(game, Direction.UP);
     } else if (down) {
-      new_state = doGameMove(game, "down");
+      new_state = doGameMove(game, Direction.DOWN);
     } else if (left) {
-      new_state = doGameMove(game, "left");
-    } else if (right) {
-      new_state = doGameMove(game, "right");
+      new_state = doGameMove(game, Direction.LEFT);
+    } else { // if (right) {
+      new_state = doGameMove(game, Direction.RIGHT);
     }
 
     if (playAudio) {
       let playedSound = false;
-      if (new_state.soundEvent === "explosion") {
+      if (new_state.soundEvent === SoundEvent.EXPLOSION) {
         playExplosionSound();
         playedSound = true;
       }
-      if (new_state.soundEvent === "push") {
+      if (new_state.soundEvent === SoundEvent.PUSH) {
         playPushSound();
         playedSound = true;
       }
-      if (new_state.soundEvent === "fill") {
+      if (new_state.soundEvent === SoundEvent.FILL) {
         playFillSound();
         playedSound = true;
       }
@@ -192,7 +178,6 @@ export default function PlayLevel({ viewCallback, levelCallback, gameStateCallba
         playDoorSound();
         playedSound = true;
       }
-
       if (!playedSound && !new_state.won) {
         playMoveSound();
       }
@@ -202,7 +187,7 @@ export default function PlayLevel({ viewCallback, levelCallback, gameStateCallba
     gameStateCallback(new_state);
   }
 
-  function onGestureMove(evt, gestureState) {
+  function onGestureMove(_evt: GestureResponderEvent, gestureState: PanResponderGestureState) {
     const sensitivity = dragSensitivity / 100; // dragSens is given as a number representing a percent e.g. 60
     let dragY = Math.abs(gestureState.dy) * sensitivity;
     let dragX = Math.abs(gestureState.dx) * sensitivity;
@@ -220,7 +205,7 @@ export default function PlayLevel({ viewCallback, levelCallback, gameStateCallba
     // });
   }
 
-  function onEndGesture(evt, gestureState) {
+  function onEndGesture(_evt: GestureResponderEvent, gestureState: PanResponderGestureState) {
     const distance = win.width / 10;
     const vertDist = gestureState.dy; const horizDist = gestureState.dx;
 
@@ -245,7 +230,7 @@ export default function PlayLevel({ viewCallback, levelCallback, gameStateCallba
     // We don't want fast succesive swipe gestures to trigger the
     // double tap jump to position input.
     if (up || down || left || right) {
-      setPrevTouchPos(null);
+      setPrevTouchPos(undefined);
     }
 
     // By updating state, the component will be rerendered and
@@ -259,14 +244,14 @@ export default function PlayLevel({ viewCallback, levelCallback, gameStateCallba
   const panResponder = useMemo(
     () => PanResponder.create({
       // Ask to be the responder:
-      onStartShouldSetPanResponder: (evt, gestureState) => panResponderEnabled.current,
-      onStartShouldSetPanResponderCapture: (evt, gestureState) => panResponderEnabled.current,
-      onMoveShouldSetPanResponder: (evt, gestureState) => panResponderEnabled.current,
-      onMoveShouldSetPanResponderCapture: (evt, gestureState) => panResponderEnabled.current,
-      onPanResponderTerminationRequest: (evt, gestureState) => panResponderEnabled.current,
-      onShouldBlockNativeResponder: (evt, gestureState) => panResponderEnabled.current,
+      onStartShouldSetPanResponder: () => panResponderEnabled.current,
+      onStartShouldSetPanResponderCapture: () => panResponderEnabled.current,
+      onMoveShouldSetPanResponder: () => panResponderEnabled.current,
+      onMoveShouldSetPanResponderCapture: () => panResponderEnabled.current,
+      onPanResponderTerminationRequest: () => panResponderEnabled.current,
+      onShouldBlockNativeResponder: () => panResponderEnabled.current,
 
-      onPanResponderGrant: function (evt, gestureState) { // The gesture has started!
+      onPanResponderGrant: function (_evt, gestureState) { // The gesture has started!
         // setTouchMove({ magY: 0, dirY: 0, magX: 0, dirX: 0 });
         setTouchMove({ y: 0, x: 0 });
 
@@ -277,7 +262,7 @@ export default function PlayLevel({ viewCallback, levelCallback, gameStateCallba
           prevTouchPos.x === pressX && prevTouchPos.y === pressY) {
 
           setTouchPos({ x: pressX, y: pressY });
-          setPrevTouchPos(null);
+          setPrevTouchPos(undefined);
 
           Animated.timing(pressAnim, {
             toValue: 1,
@@ -318,7 +303,7 @@ export default function PlayLevel({ viewCallback, levelCallback, gameStateCallba
 
   const [modalOpen, setModalOpen] = useState(false);
   const anim = useRef(new Animated.Value(0)).current;
-  const setAnimTo = (animState, callback) => {
+  const setAnimTo = (animState: number, callback?: () => void) => {
     // MAKE SURE 0 <= animState <= 1
     Animated.timing(anim, {
       toValue: animState,
@@ -357,42 +342,66 @@ export default function PlayLevel({ viewCallback, levelCallback, gameStateCallba
         {/* PAUSE MENU COMPONENTS */}
         {modalOpen && <Animated.View style={styles.modal(anim, darkMode)}>
           <Text style={styles.subtitle(darkMode)}>Menu</Text>
-          <MenuButton onPress={restartLevel} label="Restart Level" icon={graphics.HELP_ICON} />
-          <MenuButton onPress={viewCallback} value={"home"} label="To Level Select" icon={graphics.DOOR_ICON} />
+          <MenuButton
+            label="Restart Level"
+            icon={graphics.BOMB}
+            theme={colors.RED_THEME}
+            onPress={restartLevel}
+            />
+          <MenuButton
+            label="Undo Move"
+            icon={graphics.ONE_WAY_LEFT}
+            theme={colors.BLUE_THEME}
+            onPress={restartLevel}
+            />
+          <MenuButton
+            label="Level Select"
+            icon={graphics.DOOR_ICON}
+            onPress={() => viewCallback(PageView.LEVELS)}
+            />
+          <MenuButton
+            label="Resume Game"
+            icon={graphics.KEY}
+            theme={colors.GREEN_THEME}
+            onPress={toggleModal}
+          />
         </Animated.View>}
-        <View style={{ flexDirection: "row", height: normalize(50) }}>
+        <Animated.View style={{ flexDirection: "row", height: normalize(50), opacity: anim.interpolate({ inputRange: [0, 1], outputRange: [1, 0] }) }}>
           {!game.won && <SimpleButton onPress={toggleModal} text="Pause Menu" />}
-          {game.won && <SimpleButton onPress={() => { viewCallback("home"); }} text="Back" />}
-          {game.won && <View style={{ width: normalize(15) }} />}
-          {game.won && !test && <SimpleButton onPress={() => { levelCallback(level + 1) }} text="Next Level" main={true} wide={true}/>}
-        </View>
+
+          {game.won && <>
+            <SimpleButton onPress={() => viewCallback(PageView.LEVELS)} text="Back" />
+            <View style={{ width: normalize(15) }} />
+            {!playtest && <SimpleButton onPress={() => nextLevelCallback(level.uuid)} text="Next Level" main={true} wide={true} />}
+          </>}
+        </Animated.View>
       </SafeAreaView>}
     </>
   );
 }
 
 // Boolean to integer, returns 0 or 1 for false or true respectively.
-function bti(bool) {
+function bti(bool: boolean) {
   return bool === true ? 1 : 0;
 }
 
-function pressToIndex(touchPos, tileSize) {
+function pressToIndex(touchPos: number, tileSize: number) {
   const correction = -10;
   return Math.floor((touchPos + correction) / tileSize);
 }
 
-const styles = StyleSheet.create({
-  subtitle: (darkMode) => ({
+const styles = StyleSheet.create<any>({
+  subtitle: (darkMode: boolean) => ({
     ...TextStyles.subtitle(darkMode),
     marginBottom: -normalize(5),
   }),
   container: {
-    paddingTop: StatusBar.currentHeight + 15,
+    paddingTop: StatusBar.currentHeight! + 15,
     // paddingBottom: win.height * 0.05,
     alignItems: "center",
     justifyContent: "space-evenly",
   },
-  modal: (anim, darkMode) => ({
+  modal: (anim: Animated.Value, darkMode: boolean) => ({
     position: "absolute",
     top: 0,
     left: 0,
@@ -405,7 +414,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: win.width * 0.225,
     opacity: anim,
   }),
-  indicator: (xPos, yPos, size, anim, darkMode) => ({
+  indicator: (xPos: number, yPos: number, size: number, anim: Animated.Value, darkMode: boolean) => ({
     position: "absolute",
     left: xPos * size,
     top: yPos * size,
