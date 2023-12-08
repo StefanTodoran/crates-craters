@@ -1,5 +1,5 @@
 import Queue from "../components/Queue";
-import { OneWayTile, Direction, TileType, Board, SimpleTile, Level } from "./types";
+import { OneWayTile, Direction, TileType, Board, SimpleTile, Level, BoardTile } from "./types";
 
 export enum SoundEvent {
   EXPLOSION,
@@ -93,7 +93,7 @@ export function tileAt(yPos: number, xPos: number, board: Board) {
  * Queries the target position with bounds checking, returning
  * the special outside tile type if the query is out of bounds.
  */
-export function boundTileAt(yPos: number, xPos: number, board: Board) {
+export function boundTileAt(yPos: number, xPos: number, board: Board): BoardTile {
   if (validTile(yPos, xPos, board)) {
     return board[yPos][xPos];
   }
@@ -315,10 +315,10 @@ export function doGameMove(game: Game, move: Direction): Game {
 
           if (tile.fuse === 0) {
             const littleExplosion: SimpleTile = { id: TileType.LITTLE_EXPLOSION };
-            if (tileAt(i - 1, j, next.board).id === TileType.CRATE) { next.board[i - 1][j] = littleExplosion; }
-            if (tileAt(i + 1, j, next.board).id === TileType.CRATE) { next.board[i + 1][j] = littleExplosion; }
-            if (tileAt(i, j - 1, next.board).id === TileType.CRATE) { next.board[i][j - 1] = littleExplosion; }
-            if (tileAt(i, j + 1, next.board).id === TileType.CRATE) { next.board[i][j + 1] = littleExplosion; }
+            if (boundTileAt(i - 1, j, next.board).id === TileType.CRATE) { next.board[i - 1][j] = littleExplosion; }
+            if (boundTileAt(i + 1, j, next.board).id === TileType.CRATE) { next.board[i + 1][j] = littleExplosion; }
+            if (boundTileAt(i, j - 1, next.board).id === TileType.CRATE) { next.board[i][j - 1] = littleExplosion; }
+            if (boundTileAt(i, j + 1, next.board).id === TileType.CRATE) { next.board[i][j + 1] = littleExplosion; }
             
             next.board[i][j] = { id: TileType.EXPLOSION };
             next.soundEvent = SoundEvent.EXPLOSION;

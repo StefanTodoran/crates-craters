@@ -42,14 +42,6 @@ export default function Settings({
     }
   }, []);
 
-  const MenuButtonRecolor = {
-    borderColor: colors.GREEN_THEME.MAIN_COLOR,
-    textColor: colors.GREEN_THEME.MAIN_COLOR,
-    backgroundColor: colors.GREEN_THEME.OFF_WHITE,
-    darkModeBackgroundColor: colors.GREEN_THEME.MAIN_TRANSPARENT(0.1),
-    pressedColor: colors.GREEN_THEME.MAIN_TRANSPARENT(0.3),
-  }
-
   return (
     <ScrollView style={styles.scrollContainer} contentContainerStyle={{
       paddingHorizontal: win.width * 0.05,
@@ -68,7 +60,7 @@ export default function Settings({
           onPress={darkModeCallback}
           label="Toggle Dark Mode"
           icon={graphics.NIGHT_MODE_ICON}
-          {...MenuButtonRecolor}
+          theme={colors.GREEN_THEME}
         />
         <MenuButton onPress={() => {
           // const newTheme = nextTheme();
@@ -77,7 +69,7 @@ export default function Settings({
           label="Change App Theme"
           icon={graphics.THEME_ICON}
           disabled={true}
-          {...MenuButtonRecolor}
+          theme={colors.GREEN_THEME}
         />
 
         <View style={{ height: 15 }} />
@@ -96,7 +88,7 @@ export default function Settings({
           onPress={audioModeCallback}
           label="Toggle Sounds"
           icon={playAudio ? graphics.AUDIO_ON_ICON : graphics.AUDIO_OFF_ICON}
-          {...MenuButtonRecolor}
+          theme={colors.GREEN_THEME}
         />
       </View>
     </ScrollView>

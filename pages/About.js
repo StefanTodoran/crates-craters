@@ -10,14 +10,6 @@ const win = Dimensions.get("window");
 export default function About() {
   const { darkMode } = useContext(GlobalContext);
 
-  const MenuButtonRecolor = {
-    borderColor: colors.GREEN_THEME.MAIN_COLOR,
-    textColor: colors.GREEN_THEME.MAIN_COLOR,
-    backgroundColor: colors.GREEN_OFF_WHITE,
-    darkModeBackgroundColor: colors.GREEN_THEME.MAIN_TRANSPARENT(0.1),
-    pressedColor: colors.GREEN_THEME.MAIN_TRANSPARENT(0.3),
-  }
-
   return (
     <ScrollView style={styles.scrollContainer} contentContainerStyle={{
       paddingHorizontal: win.width * 0.05,
@@ -49,13 +41,13 @@ export default function About() {
           onPress={() => { Linking.openURL("https://todoran.dev/") }}
           label="Stefan Todoran"
           icon={graphics.LOGO}
-          {...MenuButtonRecolor}
+          theme={colors.GREEN_THEME}
           />
         <MenuButton
           onPress={() => { Linking.openURL("https://www.paypal.com/donate/?business=5EGAWXCBNDGHC&no_recurring=0&item_name=Help+support+the+future+development+of+Crates+%26+Craters%21+If+you+have+any+suggestions+for+the+game%2C+please+reach+out+to+me%21&currency_code=USD") }}
           label="Support C&C"
           icon={graphics.SUPPORT_ICON}
-          {...MenuButtonRecolor}
+          theme={colors.GREEN_THEME}
         />
       </View>
     </ScrollView>

@@ -20,7 +20,8 @@
     "alwaysStrict": true,
     "noImplicitReturns": true,
     "allowUnreachableCode": false,
-    "removeComments": true
+    "removeComments": true,
+    "checkJs": true,
   },
   "exclude": [
     "node_modules"

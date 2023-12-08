@@ -1,7 +1,7 @@
 import { StyleSheet, Image, Animated } from "react-native";
 import React, { useRef, useEffect } from "react";
 import { Direction, TileType } from "../util/types";
-import { Game, tileAt } from "../util/logic";
+import { Game, boundTileAt } from "../util/logic";
 import { colors, graphics } from "../Theme";
 
 interface Props {
@@ -43,7 +43,7 @@ export default function Player({
         const xPos = game.player.x + x;
         const yPos = game.player.y + y;
 
-        const tile = tileAt(yPos, xPos, game.board);
+        const tile = boundTileAt(yPos, xPos, game.board);
         let selectable = ![TileType.OUTSIDE, TileType.CRATER, TileType.WALL].includes(tile.id);
         selectable = (tile.id === TileType.DOOR && game.keys === 0) ? false : selectable;
         selectable = (tile.id === TileType.COIN && game.coins !== game.maxCoins) ? false : selectable;
