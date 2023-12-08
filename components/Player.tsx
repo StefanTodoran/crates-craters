@@ -46,7 +46,6 @@ export default function Player({
         const tile = boundTileAt(yPos, xPos, game.board);
         let selectable = ![TileType.OUTSIDE, TileType.CRATER, TileType.WALL].includes(tile.id);
         selectable = (tile.id === TileType.DOOR && game.keys === 0) ? false : selectable;
-        selectable = (tile.id === TileType.COIN && game.coins !== game.maxCoins) ? false : selectable;
         
         if (tile.id === TileType.ONEWAY) {
           selectable = (tile.orientation === Direction.LEFT  && xPos > game.player.x) ? false : selectable;

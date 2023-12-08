@@ -1,7 +1,7 @@
 import { StyleSheet, Text, Dimensions, View, ScrollView } from "react-native";
 import React, { useContext, useEffect, useRef, useState } from "react";
 
-import { colors, graphics, nextTheme } from "../Theme";
+import { colors, graphics } from "../Theme";
 import MenuButton from "../components/MenuButton";
 import SliderBar from "../components/SliderBar";
 import GlobalContext from "../GlobalContext";
@@ -52,7 +52,7 @@ export default function Settings({
       height: "100%",
     }} overScrollMode="never" showsVerticalScrollIndicator={false}>
       <View style={styles.buttonsContainer}>
-        <Text style={[TextStyles.subtitle(darkMode), { color: colors.GREEN_THEME.MAIN_COLOR, width: "100%", marginBottom: 0 }]}>
+        <Text style={[TextStyles.subtitle(darkMode, colors.GREEN_THEME.MAIN_COLOR), { width: "100%", marginBottom: 0 }]}>
           Settings
         </Text>
 
@@ -75,12 +75,12 @@ export default function Settings({
         <View style={{ height: 15 }} />
         <SliderBar label="Drag Sensitivity" value={newDragSens} units={"%"}
           minValue={10} maxValue={200} changeCallback={setNewDragSens}
-          mainColor={colors.GREEN_THEME.MAIN_COLOR}
+          mainColor={colors.GREEN_THEME.DARK_COLOR}
           knobColor={darkMode ? "#000" : "#fff"}
         />
         <SliderBar label="Double Tap Delay" value={newTapDelay} units={"ms"}
           minValue={100} maxValue={500} changeCallback={setNewTapDelay}
-          mainColor={colors.GREEN_THEME.MAIN_COLOR}
+          mainColor={colors.GREEN_THEME.DARK_COLOR}
           knobColor={darkMode ? "#000" : "#fff"}
         />
 

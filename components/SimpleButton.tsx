@@ -2,15 +2,16 @@ import { Pressable, Text, Image, StyleSheet, ImageSourcePropType } from "react-n
 import React, { useContext, useState } from "react";
 import TextStyles, { normalize } from "../TextStyles";
 import GlobalContext from "../GlobalContext";
-import { colors } from "../Theme";
+import { Theme, purpleTheme } from "../Theme";
 
 interface Props {
-  onPress?: () => void,
   text: string,
+  onPress?: () => void,
   icon?: ImageSourcePropType,
   disabled?: boolean,
   main?: boolean,
   wide?: boolean,
+  theme?: Theme,
 }
 
 export default function SimpleButton({
@@ -20,22 +21,24 @@ export default function SimpleButton({
   disabled,
   main,
   wide,
+  theme,
 }: Props) {
   const { darkMode } = useContext(GlobalContext);
   const [pressed, setPressedState] = useState(false);
+  const useTheme = theme || purpleTheme;
 
   return (
     <Pressable
       style={[
         styles.simpleButton,
         {
-          borderColor: colors.MAIN_PURPLE,
+          borderColor: useTheme.MAIN_COLOR,
           backgroundColor: darkMode ? "#000" : "#fff",
           paddingHorizontal: icon ? normalize(5) : normalize(25),
           transform: [{ scale: pressed ? 0.98 : 1 }],
           opacity: pressed ? 0.75 : (disabled ? 0.5 : 1),
         },
-        main && { backgroundColor: colors.MAIN_PURPLE },
+        main && { backgroundColor: useTheme.MAIN_COLOR },
         wide && { paddingHorizontal: normalize(50) },
       ]}
       onPress={() => {
@@ -53,7 +56,7 @@ export default function SimpleButton({
           {
             marginBottom: 0,
             marginLeft: icon ? normalize(10) : 0,
-            color: main ? "#fff" : colors.MAIN_PURPLE,
+            color: main ? "#fff" : useTheme.MAIN_COLOR,
             fontSize: normalize(15),
           }
         ]}>{text}</Text>

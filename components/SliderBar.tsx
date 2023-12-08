@@ -1,9 +1,20 @@
-import { View, Animated, Text, StyleSheet, Dimensions, PanResponder } from "react-native";
+import { View, Animated, Text, StyleSheet, Dimensions, PanResponder, PanResponderGestureState, GestureResponderEvent } from "react-native";
 import React, { useEffect, useState } from "react";
 import { normalize } from "../TextStyles";
 
 const win = Dimensions.get("window");
 const barWidth = win.width / 2;
+
+interface Props {
+  label: string,
+  units: string,
+  value: number,
+  minValue: number, 
+  maxValue: number,
+  changeCallback: (newValue: number) => void,
+  mainColor?: string,
+  knobColor?: string,
+}
 
 /**
  * InputLine is an augmentation of the basic TextInput that has
@@ -29,7 +40,7 @@ export default function SliderBar({
   changeCallback,
   mainColor,
   knobColor,
-}) {
+}: Props) {
   const [pressed, setPressed] = useState(false);
   const [movedAmount, setMovedAmount] = useState(value);
 
@@ -39,7 +50,7 @@ export default function SliderBar({
     return offset;
   }
 
-  function onGestureMove(evt, gestureState) {
+  function onGestureMove(_evt: GestureResponderEvent, gestureState: PanResponderGestureState) {
     setMovedAmount(gestureState.vx);
   }
 
@@ -76,7 +87,7 @@ export default function SliderBar({
         <Text allowFontScaling={false} style={styles.text(mainColor)}>{label}</Text>
         <Text allowFontScaling={false} style={styles.text(mainColor)}>{value}{units}</Text>
       </View>
-      <View style={styles.bar(mainColor)}>
+      <View style={[styles.bar, { backgroundColor: mainColor }]}>
         <Animated.View style={styles.slider(
           calcOffsetFromValue(),
           pressed,
@@ -88,27 +99,26 @@ export default function SliderBar({
   );
 }
 
-const styles = StyleSheet.create({
+const styles = StyleSheet.create<any>({
   container: {
     position: "relative",
     width: barWidth,
     paddingTop: 5,
     paddingBottom: 15,
   },
-  bar: (color) => ({
+  bar: {
     width: "100%",
     height: 3,
     borderRadius: 3,
-    backgroundColor: color,
-  }),
-  text: (color) => ({
+  },
+  text: (color: string) => ({
     marginBottom: 10,
     color: color,
     fontFamily: "Montserrat-Regular",
     fontWeight: "normal",
     fontSize: normalize(15),
   }),
-  slider: (xPos, pressed, color, fillColor) => ({
+  slider: (xPos: number, pressed: boolean, color: string, fillColor: string) => ({
     position: "absolute",
     top: (pressed) ? -9 : -6,
     left: xPos - ((pressed) ? 9 : 6),

@@ -15,6 +15,8 @@ import AccountPage from "./pages/AccountSettings";
 import LevelSelect from "./pages/LevelSelect";
 import Header from "./components/Header";
 import PlayLevel from "./pages/PlayLevel";
+import StorePage from "./pages/StorePage";
+import EditorPage from "./pages/EditorPage";
 // import PlayLevel from "./pages/PlayLevel";
 // import CreateLevel from "./pages/CreateLevel";
 
@@ -26,42 +28,105 @@ const rawLevels = [ // TODO: replace with fetching from firebase
     name: "Introductions",
     board: "1,1,1,1,1,1,1,1/1,0,0,4,0,0,0,5/1,7,0,4,0,0,0,5/1,0,6,4,0,0,0,5/1,1,1,1,1,1,0,1/1,0,3,0,0,0,4,1/1,0,0,0,4,0,5,1/1,0,0,0,0,6,0,1/1,5,0,4,0,0,0,1/1,5,1,1,1,1,1,1/1,0,0,5,1,0,0,0/1,0,0,4,2,0,8,0/1,0,6,0,1,0,0,0/1,1,1,1,1,1,1,1",
     completed: true,
+    official: true,
   },
   {
     uuid: "2",
     name: "Easy Peasy",
     board: "1,1,1,1,1,1,1,1/1,0,0,0,4,7,0,1/1,6,1,1,5,4,0,1/1,0,0,0,4,5,4,1/1,0,4,0,6,4,0,1/1,3,1,0,0,4,5,1/1,1,1,1,1,1,2,1/1,0,0,0,0,1,0,1/1,0,8,0,0,12.3,0,1/1,0,0,0,0,12.3,0,1/1,1,1,1,12.0,0,4,1/1,0,6,5,0,4,0,1/1,0,0,0,4,0,0,1/1,1,1,1,1,1,1,1",
     completed: true,
+    official: true,
   },
   {
     uuid: "3",
     name: "Having a Blast",
     board: "1,1,1,1,1,1,1,1/0,0,1,0,0,5,4,5/0,0,2,4,7,9.25,5,0/6,0,1,0,12.0,0,0,0/0,0,1,5,0,0,0,4/4,0,1,0,4,0,0,5/0,4,1,0,0,0,4,1/0,0,1,1,4,4,4,1/0,0,5,1,4,6,3,1/0,0,0,1,1,12.0,12.0,1/0,0,0,5,6,0,0,1/0,0,4,1,0,8,0,1/5,4,5,1,0,0,0,1/1,1,1,1,1,1,1,1",
     completed: false,
+    official: true,
   },
   {
     uuid: "4",
     name: "Rooms",
     board: "0,0,2,0,1,1,1,3/0,0,1,0,1,0,0,5/4,4,1,0,2,0,4,0/5,5,1,0,1,6,0,4/4,0,1,0,1,1,1,1/0,0,1,0,1,4,4,0/8,1,0,4,5,1,1,0/1,1,5,7,0,1,1,5/1,3,4,4,4,0,1,1/1,1,0,0,0,0,1,1/1,1,4,4,0,0,1,6/0,0,0,0,4,5,1,5/1,1,1,1,2,1,1,4/1,1,1,3,0,0,0,0",
     completed: false,
+    official: true,
   },
   {
     uuid: "5",
     name: "Choices",
     board: "0,0,0,6,1,0,0,0/0,4,0,1,0,0,3,5/4,0,4,1,0,4,4,0/0,4,0,1,0,4,5,0/0,6,0,1,4,4,0,0/0,0,0,2,0,0,0,5/1,1,1,1,0,0,1,0/0,0,6,5,4,1,0,0/1,1,0,4,7,4,0,0/0,0,0,0,4,0,0,0/0,0,0,1,0,1,0,0/0,0,0,1,8,1,5,4/4,4,0,0,1,0,0,6/6,0,5,0,0,0,0,0",
     completed: false,
+    official: true,
   },
   {
     uuid: "6",
     name: "Running Laps",
     board: "0,0,0,1,0,1,1,0/0,7,0,0,4,0,8,0/0,0,0,1,0,0,1,5/0,0,0,1,3,0,1,1/0,4,4,1,5,1,4,4/0,4,0,1,0,0,0,4/4,0,0,1,0,6,0,0/1,0,1,1,0,0,5,0/0,0,0,0,0,5,4,0/0,0,0,0,0,0,0,0/1,2,1,0,6,0,0,0/0,0,5,0,0,1,1,4/0,6,5,0,0,1,6,0/6,0,1,0,0,4,0,0",
     completed: false,
+    official: true,
   },
   {
     uuid: "7",
     name: "Warzone",
     board: "5,4,5,5,0,4,0,12.3/4,1,6,5,1,12.0,4,5/5,3,5,0,1,6,12.1,0/4,4,0,0,0,4,1,4/0,1,5,0,12.0,0,1,6/6,8,5,9.25,5,2,9.75,5/2,5,1,12.0,1,0,4,0/0,0,4,7,5,12.3,9.5,4/5,4,0,4,3,9.50,2,4/1,5,0,0,12.0,0,12.0,12.3/6,4,1,12.2,4,0,1,12.0/3,0,4,0,4,0,1,6/4,5,4,4,5,0,5,4/5,4,9.10,4,0,5,0,4",
     completed: false,
+    official: true,
+  },
+  {
+    uuid: "1",
+    name: "Custom Introductions",
+    board: "1,1,1,1,1,1,1,1/1,0,0,4,0,0,0,5/1,7,0,4,0,0,0,5/1,0,6,4,0,0,0,5/1,1,1,1,1,1,0,1/1,0,3,0,0,0,4,1/1,0,0,0,4,0,5,1/1,0,0,0,0,6,0,1/1,5,0,4,0,0,0,1/1,5,1,1,1,1,1,1/1,0,0,5,1,0,0,0/1,0,0,4,2,0,8,0/1,0,6,0,1,0,0,0/1,1,1,1,1,1,1,1",
+    completed: true,
+    official: false,
+    designer: "hello",
+  },
+  {
+    uuid: "2",
+    name: "Custom Easy Peasy",
+    board: "1,1,1,1,1,1,1,1/1,0,0,0,4,7,0,1/1,6,1,1,5,4,0,1/1,0,0,0,4,5,4,1/1,0,4,0,6,4,0,1/1,3,1,0,0,4,5,1/1,1,1,1,1,1,2,1/1,0,0,0,0,1,0,1/1,0,8,0,0,12.3,0,1/1,0,0,0,0,12.3,0,1/1,1,1,1,12.0,0,4,1/1,0,6,5,0,4,0,1/1,0,0,0,4,0,0,1/1,1,1,1,1,1,1,1",
+    completed: true,
+    official: false,
+    designer: "hello",
+  },
+  {
+    uuid: "3",
+    name: "Custom Having a Blast",
+    board: "1,1,1,1,1,1,1,1/0,0,1,0,0,5,4,5/0,0,2,4,7,9.25,5,0/6,0,1,0,12.0,0,0,0/0,0,1,5,0,0,0,4/4,0,1,0,4,0,0,5/0,4,1,0,0,0,4,1/0,0,1,1,4,4,4,1/0,0,5,1,4,6,3,1/0,0,0,1,1,12.0,12.0,1/0,0,0,5,6,0,0,1/0,0,4,1,0,8,0,1/5,4,5,1,0,0,0,1/1,1,1,1,1,1,1,1",
+    completed: false,
+    official: false,
+    designer: "hello",
+  },
+  {
+    uuid: "4",
+    name: "Custom Rooms",
+    board: "0,0,2,0,1,1,1,3/0,0,1,0,1,0,0,5/4,4,1,0,2,0,4,0/5,5,1,0,1,6,0,4/4,0,1,0,1,1,1,1/0,0,1,0,1,4,4,0/8,1,0,4,5,1,1,0/1,1,5,7,0,1,1,5/1,3,4,4,4,0,1,1/1,1,0,0,0,0,1,1/1,1,4,4,0,0,1,6/0,0,0,0,4,5,1,5/1,1,1,1,2,1,1,4/1,1,1,3,0,0,0,0",
+    completed: false,
+    official: false,
+    designer: "hello",
+  },
+  {
+    uuid: "5",
+    name: "Custom Choices",
+    board: "0,0,0,6,1,0,0,0/0,4,0,1,0,0,3,5/4,0,4,1,0,4,4,0/0,4,0,1,0,4,5,0/0,6,0,1,4,4,0,0/0,0,0,2,0,0,0,5/1,1,1,1,0,0,1,0/0,0,6,5,4,1,0,0/1,1,0,4,7,4,0,0/0,0,0,0,4,0,0,0/0,0,0,1,0,1,0,0/0,0,0,1,8,1,5,4/4,4,0,0,1,0,0,6/6,0,5,0,0,0,0,0",
+    completed: false,
+    official: false,
+    designer: "hello",
+  },
+  {
+    uuid: "6",
+    name: "Custom Running Laps",
+    board: "0,0,0,1,0,1,1,0/0,7,0,0,4,0,8,0/0,0,0,1,0,0,1,5/0,0,0,1,3,0,1,1/0,4,4,1,5,1,4,4/0,4,0,1,0,0,0,4/4,0,0,1,0,6,0,0/1,0,1,1,0,0,5,0/0,0,0,0,0,5,4,0/0,0,0,0,0,0,0,0/1,2,1,0,6,0,0,0/0,0,5,0,0,1,1,4/0,6,5,0,0,1,6,0/6,0,1,0,0,4,0,0",
+    completed: false,
+    official: false,
+    designer: "hello",
+  },
+  {
+    uuid: "7",
+    name: "Custom Warzone",
+    board: "5,4,5,5,0,4,0,12.3/4,1,6,5,1,12.0,4,5/5,3,5,0,1,6,12.1,0/4,4,0,0,0,4,1,4/0,1,5,0,12.0,0,1,6/6,8,5,9.25,5,2,9.75,5/2,5,1,12.0,1,0,4,0/0,0,4,7,5,12.3,9.5,4/5,4,0,4,3,9.50,2,4/1,5,0,0,12.0,0,12.0,12.3/6,4,1,12.2,4,0,1,12.0/3,0,4,0,4,0,1,6/4,5,4,4,5,0,5,4/5,4,9.10,4,0,5,0,4",
+    completed: false,
+    official: false,
+    designer: "hello",
   },
 ];
 
@@ -110,8 +175,9 @@ export default function App() {
         uuid: rawLevel.uuid,
         name: rawLevel.name,
         board: parseCompressedBoardData(rawLevel.board),
-        official: true,
+        official: rawLevel.official,
         completed: rawLevel.completed,
+        designer: "hello",
       });
     });
     setLevels(newLevels);
@@ -171,23 +237,25 @@ export default function App() {
     NavigationBar.setBackgroundColorAsync(darkMode ? "#000" : "#fff");
   }, [darkMode]);
 
-  const [playLevel, setPlayLevel] = useState<Level>(); // Stores the level currently being played.
-  const [currentGame, setGameState] = useState<Game>(); // Stores the game state of the level being played.
+  const [playLevel, setPlayLevel] = useState<number>(-1);  // Stores the index of level currently being played.
+  const [currentGame, setGameState] = useState<Game>();    // Stores the game state of the level being played.
   const [editorLevel, setEditorLevel] = useState<Level>(); // Stores the level object being edited.
 
-  const changePlayLevel = useCallback((uuid: string) => {
-    const requestedLevel = levels.find(level => level.uuid === uuid);
-    if (!requestedLevel) throw new Error(`Level with uuid ${uuid} does not exit!`);
-    setPlayLevel(requestedLevel);
-    setGameState(initializeGameObj(requestedLevel));
+  const changePlayLevel = useCallback((index: number) => {
+    setPlayLevel(index);
+    const newGame = initializeGameObj(levels[index]);
+    setGameState(newGame);
   }, [levels]);
-  const getNextLevel = useCallback((uuid: string) => {
-    // TODO: implement me!
-  }, []);
-  // const changeEditorLevel = useCallback((lvl: number) => {
-  //   setEditorLevel(lvl);
-  //   setEditorLevel(cloneLevelObj(lvl));
-  // }, []);
+
+  const getNextLevel = useCallback(() => {
+    const nextIndex = levels.findIndex(level => level.uuid = levels[playLevel].uuid);
+    const nextLevel = levels[nextIndex + 1];
+
+    if (nextLevel) {
+      setPlayLevel(nextIndex);
+      setGameState(initializeGameObj(nextLevel));
+    }
+  }, [levels]);
 
   useEffect(() => { // TODO: update this method?
     const backAction = () => {
@@ -227,23 +295,45 @@ export default function App() {
               <LevelSelect
                 viewCallback={switchView}
                 playLevelCallback={changePlayLevel}
-                // editorLevelCallback={changeEditorLevel}
-                playLevel={!currentGame?.won ? currentGame?.uuid : undefined}
-                editorLevel={editorLevel?.uuid}
+                // editorLevelCallback={setEditorLevel}
+                levels={levels.filter(level => level.official)}
+                playLevel={!currentGame?.won ? playLevel : -1}
+                // editorLevel={editorLevel?.uuid}
                 elementHeight={levelElementHeight}
                 storeElementHeightCallback={setElementHeight}
-              />
-            }
+                mode={PageView.LEVELS}
+                />
+              }
 
             {view === PageView.PLAY &&
               <PlayLevel
-                viewCallback={switchView}
-                nextLevelCallback={getNextLevel}
-                gameStateCallback={setGameState}
-                level={playLevel!}
-                game={currentGame!}
-                playtest={false}
+              viewCallback={switchView}
+              nextLevelCallback={getNextLevel}
+              gameStateCallback={setGameState}
+              level={levels[playLevel]}
+              game={currentGame!}
+              playtest={false}
               />
+            }
+
+            {view === PageView.EDIT &&
+              <EditorPage>
+                <LevelSelect
+                  viewCallback={switchView}
+                  playLevelCallback={changePlayLevel}
+                  editorLevelCallback={setEditorLevel}
+                  levels={levels.filter(level => !level.official)} // TODO: and level.designer === the current user
+                  playLevel={!currentGame?.won ? playLevel : -1}
+                  // editorLevel={editorLevel?.uuid}
+                  elementHeight={levelElementHeight}
+                  storeElementHeightCallback={setElementHeight}
+                  mode={PageView.EDIT}
+                />
+              </EditorPage>
+            }
+
+            {view === PageView.STORE &&
+              <StorePage />
             }
 
             {view === PageView.SETTINGS &&

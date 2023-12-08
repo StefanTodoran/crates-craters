@@ -16,6 +16,7 @@ const mainGraphics = {
   PLAYER: require("./assets/main_theme/player.png"),
   PLAYER_OUTLINED: require("./assets/main_theme/player_outlined.png"),
   PLAYER_OUTLINED_DARK: require("./assets/main_theme/player_outlined_dark.png"),
+  METAL_CRATE: require("./assets/main_theme/metal_crate.png"),
 
   THEME_ICON: require("./assets/main_theme/theme_icon.png"),
   NIGHT_MODE_ICON: require("./assets/main_theme/night_icon.png"),
@@ -80,6 +81,16 @@ const greenTheme: Theme = {
   MAIN_TRANSPARENT: (opacity: number) => `rgba(184, 229, 185, ${opacity})`,
 }
 
+const yellowTheme: Theme = {
+  OFF_WHITE: "#FFFFFC",
+  LIGHT_COLOR: "#FFFCF0",
+  MAIN_COLOR: "#F7DC9C",
+  MIDDLE_COLOR: "#F9D385",
+  DARK_COLOR: "#FBC86A",
+  NEAR_BLACK: "#17150D",
+  MAIN_TRANSPARENT: (opacity: number) => `rgba(247, 220, 156, ${opacity})`,
+}
+
 const redTheme: Theme = {
   OFF_WHITE: "#FFFCFC",
   LIGHT_COLOR: "#FFF0F0",
@@ -100,11 +111,12 @@ const mainColors = {
 
   TEXT_COLOR: "#493F59",
   DIM_GRAY: "#8A858D",
-  LIGHT_GRAY: "#8A858D33",
+  LIGHT_GRAY: "#8A858D44",
 
   BLUE_THEME: blueTheme,
   GREEN_THEME: greenTheme,
   RED_THEME: redTheme,
+  YELLOW_THEME: yellowTheme,
 
   MAIN_PURPLE_TRANSPARENT: purpleTheme.MAIN_TRANSPARENT,
   NEAR_BLACK_TRANSPARENT: (opacity: number) => `rgba(21, 16, 26, ${opacity})`,
@@ -112,6 +124,5 @@ const mainColors = {
 };
 
 // EXPORTING
-export let theme = "main";
 export let colors = mainColors;
 export let graphics = mainGraphics;

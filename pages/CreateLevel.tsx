@@ -1,56 +1,48 @@
-import { View, StyleSheet, Dimensions, Animated, Image, Text, Keyboard, Platform, StatusBar, SafeAreaView } from "react-native";
-import React, { useState, useRef, useEffect, useContext } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Audio } from 'expo-av';
+import { View, ScrollView, StyleSheet, Dimensions, Animated, Text, StatusBar, SafeAreaView } from "react-native";
+import React, { useState, useRef, useEffect, useContext } from "react";
+import { Sound } from "expo-av/build/Audio";
+import { Audio } from "expo-av";
 
+import SimpleButton from "../components/SimpleButton";
 import MenuButton from "../components/MenuButton";
-import GameBoard from '../components/GameBoard';
+import GameBoard from "../components/GameBoard";
+import SliderBar from "../components/SliderBar";
+import InputLine from "../components/InputLine";
 
-import { cloneBoard, getSpawnPos, createLevelObj, identifier, levels, importStoredLevels, formatTileEntityData, storeData, getData, cloneLevelObj } from '../Game';
-import { colors, graphics } from "../Theme";
-import InputLine from '../components/InputLine';
-import { GlobalContext } from "../GlobalContext";
-import SliderBar from '../components/SliderBar';
-import { ScrollView } from "react-native";
-import SimpleButton from '../components/SimpleButton';
 import TextStyles, { normalize, sizeFromWidthPercent } from "../TextStyles";
+import { colors, graphics } from "../Theme";
+import GlobalContext from "../GlobalContext";
+import { BoardTile, Level, PageView, TileType } from "../util/types";
+import { cloneBoard, getSpawnPosition, validTile } from "../util/logic";
 const win = Dimensions.get("window");
 
-/**
- * @param {Function} viewCallback
- * Takes a string and sets the current application view.
- * 
- * @param {Function} playLevelCallback
- * Takes an integer and sets the play level in the parent. Also clears parent's game state.
- * 
- * @param {Function} editorLevelCallback
- * Takes an integer and sets the editor level in the parent. Also loads the appropriate editor level object.
- * 
- * @param {Object} level
- * An object representing the current level being edited. Same format as data stored in AsyncStorage.
- * {
- *   "name": string,
- *   "designer": string,
- *   "board": number[][],
- *   "created": string,
- *   "completed": boolean,
- * }
- * 
- * @param {Function} storeLevelCallback
- * Callback used to update the above level object.
- */
-export default function CreateLevel({ viewCallback, playLevelCallback, editorLevelCallback, levelIndex, levelObj, storeLevelCallback, playTestCallback }) {
-  const { darkMode, dragSensitivity, doubleTapDelay, playAudio } = useContext(GlobalContext);
+interface Props {
+  viewCallback: (newView: PageView) => void, // Sets the current view of the application. 
+  level: Level, // The level currently being edited. The uuid must not change.
+  levelCallback: (newState: Level) => void, // Updates the level (usually board changes).
 
-  const special = levelObj.designer === "special";
-  const [levelName, setLevelName] = useState(levelObj.name);
+  playtestLevel: () => void,
+  storeChanges: () => void,
+}
+
+export default function CreateLevel({
+  viewCallback,
+  level,
+  levelCallback,
+  playtestLevel,
+  storeChanges,
+}: Props) {
+  const { darkMode, playAudio, levels } = useContext(GlobalContext);
+
+  const special = level.designer === "special"; // TODO: this no longer exists, we will need to change this
+  const [levelName, setLevelName] = useState(level.name);
   const [levelDesigner, setLevelDesigner] = useState("");
 
   // ===================
   // SOUND RELATED SETUP
   // ===================
-  const [successSound, setSuccessSound] = useState();
-  const [errorSound, setErrorSound] = useState();
+  const [successSound, setSuccessSound] = useState<Sound>();
+  const [errorSound, setErrorSound] = useState<Sound>();
 
   async function playSuccessSound() {
     const { sound } = await Audio.Sound.createAsync(require('../assets/audio/push.wav'));
@@ -73,7 +65,7 @@ export default function CreateLevel({ viewCallback, playLevelCallback, editorLev
   // END SOUND SETUP
   // ===============
 
-  const [currentTool, selectTool] = useState("wall");
+  const [currentTool, selectTool] = useState<BoardTile>({ id: TileType.WALL});
   const [toolsModalOpen, setToolsModalState] = useState(special);
 
   const fadeToolsAnim = useRef(new Animated.Value(special ? 1 : 0)).current;
@@ -98,53 +90,36 @@ export default function CreateLevel({ viewCallback, playLevelCallback, editorLev
     });
   }
 
-  function changeTile(y, x, type) {
-    const newBoard = cloneBoard(levelObj.board);
-
+  function changeTile(y: number, x: number) {
+    const newBoard = cloneBoard(level.board);
+    const tileType = level.board[y][x].id;
+  
     // Clear current spawn position, if it exists. We
     // cannot allow multiple spawn locations!
-    if (currentTool === "spawn") {
-      const spawnPos = getSpawnPos(levelObj.board);
-      if (!(isNaN(spawnPos.y) || isNaN(spawnPos.x))) {
-        newBoard[spawnPos.y][spawnPos.x] = 0;
+    if (currentTool.id === TileType.SPAWN) {
+      const spawnPos = getSpawnPosition(level.board);
+      if (validTile(spawnPos.y, spawnPos.x, level.board)) {
+        newBoard[spawnPos.y][spawnPos.x] = { id: 0 }; // Clear the old spawn position.
       }
     }
-
-    if (type === "empty") {
-      if (currentTool === "bomb") {
-        // We need special handling for tile entities.
-        newBoard[y][x] = formatTileEntityData({
-          type: "bomb",
-          fuse: fuseTimer,
-        });
-      } else {
-        // Normal non-entity tile logic.
-        newBoard[y][x] = identifier[currentTool];
-      }
-
+  
+    if (tileType === TileType.EMPTY) {
+      newBoard[y][x] = currentTool;
       if (playAudio) playSuccessSound();
-    } else if (type !== "spawn") { // never allow deletion of spawn tile, or we can error on play attempt
-      newBoard[y][x] = 0; // empty
-
+    } else if (tileType !== TileType.SPAWN) { // Never allow deletion of spawn tile, only replacement to somewhere else.
+      newBoard[y][x] = { id: 0 };
       if (playAudio) playErrorSound();
     }
-
-    storeLevelCallback({
-      name: levelObj.name,
-      designer: levelObj.designer,
-      created: levelObj.created,
+  
+    levelCallback({
+      ...level,
       board: newBoard,
     });
   }
 
-  function changeTool(tool) {
+  function changeTool(tool: BoardTile) {
     selectTool(tool);
     toggleToolsModal();
-  }
-
-  function testLevel() {
-    playLevelCallback(levelIndex);
-    playTestCallback();
   }
 
   const validNameAndDesigner = (levelDesigner !== "default" && levelDesigner !== "special" && levelDesigner !== "" && levelName !== "");
@@ -154,47 +129,15 @@ export default function CreateLevel({ viewCallback, playLevelCallback, editorLev
   }
 
   async function createNewLevel() {
-    const newLevel = cloneLevelObj(levelIndex);
-    newLevel.name = levelName;
-    newLevel.designer = levelDesigner;
+    // const newLevel = cloneLevelObj(levelIndex);
+    // newLevel.name = levelName;
+    // newLevel.designer = levelDesigner;
 
-    const success = await saveLevelToStorage(newLevel, levelName);
-    if (success) {
-      editorLevelCallback(levels.findIndex(lvl => lvl.name === levelName));
-    }
+    // const success = await saveLevelToStorage(newLevel, levelName);
+    // if (success) {
+    //   editorLevelCallback(levels.findIndex(lvl => lvl.name === levelName));
+    // }
   }
-
-  // ==================
-  // LOCAL DATA STORAGE
-  // ==================
-  async function saveLevelToStorage(targetLevelObject, targetLevelName) {
-    if (targetLevelObject.designer === "special" || targetLevelObject.designer === "default") {
-      return false;
-    }
-
-    const success = await storeData(targetLevelObject, targetLevelName);
-    await importStoredLevels(); // Causes Game.js module to register the change
-    playLevelCallback(-1); // Clears in progress level
-
-    return success;
-  }
-
-  async function deleteLevelFromStorage() {
-    if (levelObj.designer === "special" || levelObj.designer === "default") {
-      return;
-    }
-
-    await AsyncStorage.removeItem(levelObj.name);
-    await importStoredLevels();
-
-    // A bit of a hack, this clears the parent's game state, so if there
-    // was a game in progress on the level being deleted, it gets cleared.
-    playLevelCallback(-1);
-    viewCallback("home");
-  }
-  // ================
-  // END DATA STORAGE
-  // ================
 
   const [fuseTimer, setFuseTimer] = useState(15);
   return (
@@ -310,7 +253,7 @@ export default function CreateLevel({ viewCallback, playLevelCallback, editorLev
         {/* END MODAL */}
 
         <View style={styles.buttonsRow}>
-          <SimpleButton onPress={() => { toggleToolsModal(); }} text="Tools & Options" main={true}/>
+          <SimpleButton onPress={() => { toggleToolsModal(); }} text="Tools & Options" main={true} />
           <View style={{ width: normalize(15) }} />
           <SimpleButton onPress={() => {
             saveLevelToStorage(levelObj, levelObj.name);

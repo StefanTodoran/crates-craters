@@ -23,7 +23,10 @@ export default function MenuPage({
         style={styles.icon}
         source={icon}
       />
-      <Text style={styles.text(darkMode)}>{text}</Text>
+      <Text style={[
+        TextStyles.paragraph(darkMode),
+        styles.text,
+      ]}>{text}</Text>
     </Pressable>
   );
 }
@@ -39,12 +42,12 @@ const styles = StyleSheet.create<any>({
     maxWidth: win.width * 0.95,
     maxHeight: win.width * 0.95,
   },
-  text: (darkMode: boolean) => ({
-    ...TextStyles.paragraph(darkMode),
+  text: {
     textShadowColor: "#000",
-    textShadowRadius: 2,
+    textShadowRadius: 3,
+    textShadowOffset: { width: 0, height: 1 },
     color: "white",
     fontSize: normalize(40),
     marginBottom: win.height / 6,
-  }),
+  },
 });

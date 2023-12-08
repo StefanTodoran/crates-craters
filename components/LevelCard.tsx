@@ -4,19 +4,21 @@ import GameBoard from "./GameBoard";
 import SimpleButton from "./SimpleButton";
 
 import TextStyles, { normalize } from "../TextStyles";
-import { colors, graphics } from "../Theme";
-import { Level, PageView } from "../util/types";
+import { Theme, graphics } from "../Theme";
 import { getSpawnPosition } from "../util/logic";
+import { Level, PageView } from "../util/types";
 
 const win = Dimensions.get("window");
 
 interface Props {
-  playCallback?: (uuid: string) => void, // The callback used to initiate the current level for playing. If not provided, the level is currently being played.
+  playCallback?: (index: number) => void, // The callback used to initiate the current level for playing. If not provided, the level is currently being played.
   resumeCallback?: () => void, // Used to resume play if this level is currently being played.
-  editCallback?: (uuid: string) => void,
+  editCallback?: (index: number) => void,
   level: Level,
   levelIndex: number,
   darkMode: boolean,
+  theme: Theme,
+  mode: PageView.LEVELS | PageView.EDIT,
 }
 
 function LevelCardBase({
@@ -26,6 +28,8 @@ function LevelCardBase({
   level,
   levelIndex,
   darkMode,
+  theme,
+  mode,
 }: Props) {
   const tileSize = calcTileSize(level.board[0].length, win);
   const playerPos = getSpawnPosition(level.board);
@@ -64,13 +68,31 @@ function LevelCardBase({
   if (!level.official) attributionText = `Designed by "${level.designer}"`;
 
   return (
-    <Animated.View style={styles.container(anim, darkMode, !playCallback)}>
+    <Animated.View style={[
+      styles.container,
+      {
+        borderColor: theme.DARK_COLOR,
+        borderWidth: !playCallback ? 2 : 1,
+        paddingHorizontal: !playCallback ? normalize(15) - 2 : normalize(15),
+        backgroundColor: !playCallback ? theme.MAIN_TRANSPARENT(0.25) : (darkMode ? theme.MAIN_TRANSPARENT(0.15) : theme.OFF_WHITE),
+        opacity: anim,
+        transform: [{
+          scale: anim.interpolate({
+            inputRange: [0, 1],
+            outputRange: [0.9, 1],
+          }),
+        }],
+      },
+    ]}>
 
       <View style={styles.row}>
         <View style={styles.levelLabel}>
           {/* Icon & Number */}
           <View style={{ justifyContent: "center", alignItems: "center" }}>
-            <Image style={styles.bigIcon} source={level.official ? graphics.CRATE : graphics.CRATER} />
+            <Image
+              style={styles.bigIcon}
+              source={mode === PageView.EDIT ? graphics.METAL_CRATE : level.official ? graphics.CRATE : graphics.CRATER}
+            />
             <Text allowFontScaling={false} style={styles.number}>{levelIndex + 1}</Text>
           </View>
 
@@ -78,7 +100,7 @@ function LevelCardBase({
           <View style={{ flexDirection: "column", justifyContent: "center", marginLeft: normalize(10) }}>
             <Text
               allowFontScaling={false}
-              style={[TextStyles.subtitle(darkMode), styles.levelName]}
+              style={[TextStyles.subtitle(darkMode, theme.DARK_COLOR), styles.levelName]}
               numberOfLines={1}
             >{level.name}</Text>
             <Text
@@ -89,10 +111,10 @@ function LevelCardBase({
           </View>
         </View>
 
-        <View style={{ flexDirection: "row" }}>
+        {mode === PageView.LEVELS && <View style={{ flexDirection: "row" }}>
           {!playCallback && <Image style={styles.icon} source={graphics.PLAYER} />}
           {level.completed && <Image style={styles.icon} source={graphics.FLAG_ICON} />}
-        </View>
+        </View>}
       </View>
 
       <View style={styles.row}>
@@ -107,20 +129,36 @@ function LevelCardBase({
             text={"Play"}
             icon={graphics.PLAY_ICON}
             main={true}
-            onPress={() => playCallback(level.uuid)}
+            theme={theme}
+            onPress={() => playCallback(levelIndex)}
           />}
 
-          {!playCallback && <SimpleButton
+          {resumeCallback && <SimpleButton
             text={"Resume"}
             icon={graphics.KEY_ICON}
             main={true}
+            theme={theme}
             onPress={resumeCallback}
           />}
 
-          <SimpleButton text={"Edit"} icon={graphics.HAMMER_ICON} onPress={() => {
-            // editCallback(levelIndex);
-            // viewCallback("edit");
-          }} />
+          {!editCallback && <SimpleButton
+            text={"Stats"}
+            icon={graphics.SHARE_ICON}
+            disabled={true}
+            onPress={() => {
+              // TODO: implement this page, then go to it
+            }}
+          />}
+
+          {editCallback && <SimpleButton
+            text={"Edit"}
+            icon={graphics.HAMMER_ICON}
+            theme={theme}
+            onPress={() => {
+              // editCallback(levelIndex);
+              // viewCallback("edit");
+            }}
+          />}
         </View>
       </View>
 
@@ -136,28 +174,16 @@ function calcTileSize(boardWidth: number, window: ScaledSize) {
   return Math.floor(maxWidth);
 }
 
-const styles = StyleSheet.create<any>({
-  container: (anim: Animated.Value, darkMode: boolean, highlighted: boolean) => ({
+const styles = StyleSheet.create({
+  container: {
     flexDirection: "column",
     justifyContent: "center",
     alignItems: "center",
     width: win.width * 0.9,
-    borderWidth: highlighted ? 2 : 1,
-    paddingHorizontal: highlighted ? normalize(15) - 2 : normalize(15),
     paddingBottom: normalize(5),
     borderRadius: normalize(10),
     marginVertical: normalize(10),
-    borderColor: colors.DARK_PURPLE,
-    // backgroundColor: darkMode ? colors.NEAR_BLACK : colors.OFF_WHITE,
-    backgroundColor: highlighted ? colors.MAIN_PURPLE_TRANSPARENT(0.25) : (darkMode ? colors.MAIN_PURPLE_TRANSPARENT(0.15) : colors.OFF_WHITE),
-    opacity: anim,
-    transform: [{
-      scale: anim.interpolate({
-        inputRange: [0, 1],
-        outputRange: [0.9, 1],
-      }),
-    }],
-  }),
+  },
   row: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -175,7 +201,7 @@ const styles = StyleSheet.create<any>({
     width: "100%",
     textAlign: "center",
     fontSize: normalize(15),
-    color: colors.OFF_WHITE,
+    color: "#fff",
     fontFamily: "Montserrat-Medium",
     fontWeight: "bold",
   },

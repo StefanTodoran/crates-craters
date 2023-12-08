@@ -2,40 +2,54 @@ import { FlatList, View } from "react-native";
 import React, { useCallback, useContext, useRef } from "react";
 import LevelCard from "../components/LevelCard";
 import GlobalContext from "../GlobalContext";
-import { PageView } from "../util/types";
+import { Level, PageView } from "../util/types";
+import { colors, purpleTheme } from "../Theme";
 
 interface Props {
   viewCallback: (newView: PageView) => void, // Sets the current view of the application. 
-  playLevelCallback: (uuid: string) => void // Sets the current play level in the parent state so it can be passed to the PlayLevel component. 
-  // editorLevelCallback: () => void // Sets the current editor level in the parent state so it can be passed to the CreateLevel component. 
+  playLevelCallback: (index: number) => void // Sets the current play level in the parent state so it can be passed to the PlayLevel component. 
+  editorLevelCallback?: (newState: Level) => void // Sets the current editor level in the parent state so it can be passed to the CreateLevel component. 
 
-  playLevel?: string, // The uuid of the level currently being played (if a level is being played). 
-  editorLevel?: string, // The uuid of level currently being edited (if a level is being edited). 
+  levels: Level[],
+  playLevel: number, // The index in levels of the level currently being played (if a level is being played). 
+  // editorLevel?: string, // The uuid of level currently being edited (if a level is being edited). 
 
   elementHeight: number, // The card component size, used for pre scroll.
   storeElementHeightCallback: (height: number) => void, // Sets the element size, so this doesn't have to be recalculated every time we want to display the component.
+
+  mode: PageView.LEVELS | PageView.EDIT,
 }
 
 function LevelSelectBase({
   viewCallback,
   playLevelCallback,
-  // editorLevelCallback, 
+  editorLevelCallback,
+  levels,
   playLevel,
-  // editorLevel,
   elementHeight,
-  storeElementHeightCallback
+  storeElementHeightCallback,
+  mode,
 }: Props) {
-  const { levels, darkMode } = useContext(GlobalContext);
-  const scrollRef = useRef<any>();
-
-  const openLevel = useCallback((playLevel: string) => {
-    playLevelCallback(playLevel);
+  const { darkMode } = useContext(GlobalContext);
+  const useTheme = mode === PageView.LEVELS ? purpleTheme : colors.RED_THEME;
+  
+  const openLevel = useCallback((levelIndex: number) => {
+    playLevelCallback(levelIndex);
     viewCallback(PageView.PLAY);
-  }, [playLevel]);
+  }, []);
 
-  const scrollIndex = 0;
-  // const scrollIndex = (currentGame && !currentGame.playtest && resumeIndex > 0) ? resumeIndex :
-  //   (editIndex > 0) ? editIndex : 0;
+  const resumeLevel = useCallback(() => {
+    viewCallback(PageView.PLAY);
+  }, []);
+
+  const editLevel = useCallback((levelIndex: number) => {
+    editorLevelCallback!(levels[levelIndex]);
+    viewCallback(PageView.EDIT);
+  }, []);
+  
+  const scrollRef = useRef<any>();
+  const resumeUUID = levels[playLevel]?.uuid;
+  let scrollIndex = Math.max(0, levels.findIndex(level => level.uuid === resumeUUID));
 
   return (
     <>
@@ -44,6 +58,7 @@ function LevelSelectBase({
         onLayout={(event) => {
           let { height } = event.nativeEvent.layout;
           storeElementHeightCallback(height);
+          console.log("storeElementHeightCallback");
         }}
         style={{ opacity: 0 }}
       >
@@ -53,6 +68,8 @@ function LevelSelectBase({
           levelIndex={0}
           level={levels[0]}
           darkMode={darkMode}
+          theme={useTheme}
+          mode={mode}
         />
       </View>}
 
@@ -70,12 +87,14 @@ function LevelSelectBase({
           data={levels}
           renderItem={({ item, index }) =>
             <LevelCard
-              playCallback={item.uuid === playLevel ? undefined : openLevel}
-              resumeCallback={() => viewCallback(PageView.PLAY)}
-              // editCallback={editorLevelCallback}
+              playCallback={item.uuid === resumeUUID ? undefined : openLevel}
+              resumeCallback={item.uuid === resumeUUID ? resumeLevel : undefined}
+              editCallback={editorLevelCallback ? editLevel : undefined}
               levelIndex={index}
               level={levels[index]}
               darkMode={darkMode}
+              theme={useTheme}
+              mode={mode}
             />
           }
           keyExtractor={item => item.uuid}
@@ -83,9 +102,7 @@ function LevelSelectBase({
             { length: elementHeight, offset: elementHeight * index, index }
           )}
           onLayout={() => {
-            if (scrollIndex) {
-              scrollRef.current.scrollToIndex({ index: scrollIndex, animated: false });
-            }
+            if (scrollIndex) scrollRef.current.scrollToIndex({ index: scrollIndex, animated: false });
           }}
         />
       }

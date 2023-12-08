@@ -22,6 +22,7 @@ import { db } from "./firebase";
 export interface OfficialLevel {
   name: string,
   board: string,
+  order: number,
 }
 
 export interface UserLevel {

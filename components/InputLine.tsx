@@ -1,18 +1,24 @@
-import { View, Animated, Text, StyleSheet, TextInput } from "react-native";
+import { View, Animated, StyleSheet, TextInput } from "react-native";
 import React, { useRef, useEffect, useState } from "react";
 import { colors } from "../Theme";
+
+interface Props {
+  label: string,
+  value: string,
+  onChange: (newValue: string) => void,
+  darkMode: boolean,
+}
 
 /**
  * InputLine is an augmentation of the basic TextInput that has
  * a fancy animation for the label.
- * 
- * REQUIRED:
- * @param {string} label The label to fill the TextInput when empty and slide up when typing.
- * @param {any} value The value of the TextInput.
- * @param {Function} changeCallback The callback to use when the value inside is changed.
- * @param {boolean} darkMode Whether or not darkMode is enabled.
  */
-export default function InputLine({ label, value, changeCallback, darkMode }) {
+export default function InputLine({
+  label,
+  value,
+  onChange,
+  darkMode,
+}: Props) {
   const [focused, setFocus] = useState(false);
   const anim = useRef(new Animated.Value(0)).current;
 
@@ -33,17 +39,27 @@ export default function InputLine({ label, value, changeCallback, darkMode }) {
       <Animated.Text style={styles.label(anim)} allowFontScaling={false}>
         {label}
       </Animated.Text>
-      <Animated.View style={styles.inputContainer(anim)}>
+      <Animated.View style={{
+        transform: [{
+          translateY: anim.interpolate({
+            inputRange: [0, 1],
+            outputRange: [0, 5],
+          }),
+        }],
+      }}>
         <TextInput
-          style={styles.input(darkMode)}
+          style={[
+            styles.input,
+            { color: (darkMode) ? colors.MAIN_PURPLE : colors.DARK_PURPLE },
+          ]}
           onChangeText={(newVal) => {
             setFocus(true);
             // Matches and removes any non-alphanumeric characters (except space)
             const filtered = newVal.replace(/[^a-z0-9 ]/gi, '');
-            changeCallback(filtered);
+            onChange(filtered);
           }}
-          onFocus={() => { setFocus(true); }}
-          onBlur={() => { setFocus(false); }}
+          onFocus={() => setFocus(true)}
+          onBlur={() => setFocus(false)}
           value={value}
           selectionColor={colors.MAIN_PURPLE}
           cursorColor={colors.MAIN_PURPLE}
@@ -55,13 +71,13 @@ export default function InputLine({ label, value, changeCallback, darkMode }) {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = StyleSheet.create<any>({
   container: {
     position: "relative",
     paddingVertical: 10,
     borderBottomWidth: 1,
   },
-  label: (anim) => ({
+  label: (anim: Animated.Value) => ({
     position: "absolute",
     top: "50%",
     left: 0,
@@ -82,18 +98,9 @@ const styles = StyleSheet.create({
       outputRange: [14, 10],
     }),
   }),
-  inputContainer: (anim) => ({
-    transform: [{
-      translateY: anim.interpolate({
-        inputRange: [0, 1],
-        outputRange: [0, 5],
-      }),
-    }],
-  }),
-  input: (darkMode) => ({
-    color: (darkMode) ? colors.MAIN_PURPLE : colors.DARK_PURPLE,
+  input: {
     width: "100%",
     fontFamily: "Montserrat-Regular",
     fontWeight: "normal",
-  }),
+  },
 });
