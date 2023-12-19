@@ -147,7 +147,7 @@ export function compressBoardData(board: Board): string {
   return result;
 }
 
-// const test: Board[] = [
+// const test: Board[] = [ // 8 x 14
 //   [
 //     [{ id: 0 }, { id: 0 }, { id: 0 }, { id: 0 }, { id: 0 }, { id: 0 }, { id: 0 }, { id: 0 }],
 //     [{ id: 0 }, { id: 7 }, { id: 0 }, { id: 0 }, { id: 0 }, { id: 0 }, { id: 0 }, { id: 0 }],

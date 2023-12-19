@@ -1,6 +1,6 @@
 import { Pressable, Text, Image, ImageSourcePropType, StyleSheet } from "react-native";
 import React, { useContext, useState } from "react";
-import { Theme, colors, purpleTheme } from "../Theme";
+import { Theme, purpleTheme } from "../Theme";
 import GlobalContext from "../GlobalContext";
 import { normalize } from "../TextStyles";
 // import { Audio } from "expo-av";

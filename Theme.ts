@@ -21,6 +21,7 @@ const mainGraphics = {
   THEME_ICON: require("./assets/main_theme/theme_icon.png"),
   NIGHT_MODE_ICON: require("./assets/main_theme/night_icon.png"),
   HAMMER_ICON: require("./assets/main_theme/hammer_icon.png"),
+  HAMMER_ICON_RED: require("./assets/main_theme/hammer_icon_red.png"),
   WALL_ICON: require("./assets/main_theme/wall_icon.png"),
   SAVE_ICON: require("./assets/main_theme/save_icon.png"),
   LOAD_ICON: require("./assets/main_theme/load_icon.png"),
@@ -111,7 +112,6 @@ const mainColors = {
 
   TEXT_COLOR: "#493F59",
   DIM_GRAY: "#8A858D",
-  LIGHT_GRAY: "#8A858D44",
 
   BLUE_THEME: blueTheme,
   GREEN_THEME: greenTheme,
@@ -121,6 +121,7 @@ const mainColors = {
   MAIN_PURPLE_TRANSPARENT: purpleTheme.MAIN_TRANSPARENT,
   NEAR_BLACK_TRANSPARENT: (opacity: number) => `rgba(21, 16, 26, ${opacity})`,
   OFF_WHITE_TRANSPARENT: (opacity: number) => `rgba(254, 250, 255, ${opacity})`,
+  DIM_GRAY_TRANSPARENT: (opacity: number) => `rgba(138, 133, 141, ${opacity})`,
 };
 
 // EXPORTING

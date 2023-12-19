@@ -46,6 +46,7 @@ interface LevelBase {
   completed: boolean,
   official: boolean,
   designer?: string,
+  created?: Date,
 }
 
 interface OfficialLevel extends LevelBase {
@@ -55,9 +56,32 @@ interface OfficialLevel extends LevelBase {
 interface UserLevel extends LevelBase {
   official: false,
   designer: string,
+  created: Date,
 }
 
 export type Level = OfficialLevel | UserLevel;
+
+export function createBlankBoard() {
+  const blankBoard: Board = [];
+  for (let i = 0; i < 14; i++) {
+    const row = [];
+    for (let j = 0; j < 8; j++) {
+      row.push({ id: 0 });
+    }
+    blankBoard.push(row);
+  }
+  blankBoard[1][1] = { id: TileType.SPAWN };
+  blankBoard[2][6] = { id: TileType.FLAG };
+  return blankBoard;
+}
+
+export const BlankCanvas: Level = {
+  uuid: "Blank Canvas",
+  name: "Blank Canvas",
+  board: createBlankBoard(),
+  completed: false,
+  official: true,
+};
 
 // ========================= \\
 // OTHER MISCELLANEOUS TYPES \\
@@ -70,4 +94,10 @@ export enum PageView {
   EDITOR, // Actual editor
   SETTINGS,
   STORE,
+}
+
+export enum EditorView {
+  LIST,
+  CREATE,
+  EDIT,
 }

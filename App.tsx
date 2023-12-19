@@ -178,6 +178,7 @@ export default function App() {
         official: rawLevel.official,
         completed: rawLevel.completed,
         designer: "hello",
+        created: new Date(),
       });
     });
     setLevels(newLevels);
@@ -239,11 +240,13 @@ export default function App() {
 
   const [playLevel, setPlayLevel] = useState<number>(-1);  // Stores the index of level currently being played.
   const [currentGame, setGameState] = useState<Game>();    // Stores the game state of the level being played.
+  const [editorIndex, setEditorIndex] = useState<string>(); // Stores the index of the level to be edited.
   const [editorLevel, setEditorLevel] = useState<Level>(); // Stores the level object being edited.
 
-  const changePlayLevel = useCallback((index: number) => {
-    setPlayLevel(index);
-    const newGame = initializeGameObj(levels[index]);
+  const changePlayLevel = useCallback((uuid: string) => {
+    const levelIndex = levels.findIndex(level => level.uuid === uuid);
+    setPlayLevel(levelIndex);
+    const newGame = initializeGameObj(levels[levelIndex]);
     setGameState(newGame);
   }, [levels]);
 
@@ -295,41 +298,38 @@ export default function App() {
               <LevelSelect
                 viewCallback={switchView}
                 playLevelCallback={changePlayLevel}
-                // editorLevelCallback={setEditorLevel}
+                editorLevelCallback={setEditorLevel}
                 levels={levels.filter(level => level.official)}
                 playLevel={!currentGame?.won ? playLevel : -1}
-                // editorLevel={editorLevel?.uuid}
+                editorLevel={editorLevel}
                 elementHeight={levelElementHeight}
                 storeElementHeightCallback={setElementHeight}
                 mode={PageView.LEVELS}
-                />
-              }
+              />
+            }
 
             {view === PageView.PLAY &&
               <PlayLevel
-              viewCallback={switchView}
-              nextLevelCallback={getNextLevel}
-              gameStateCallback={setGameState}
-              level={levels[playLevel]}
-              game={currentGame!}
-              playtest={false}
+                viewCallback={switchView}
+                nextLevelCallback={getNextLevel}
+                gameStateCallback={setGameState}
+                level={levels[playLevel]}
+                game={currentGame!}
+                playtest={false}
               />
             }
 
             {view === PageView.EDIT &&
-              <EditorPage>
-                <LevelSelect
-                  viewCallback={switchView}
-                  playLevelCallback={changePlayLevel}
-                  editorLevelCallback={setEditorLevel}
-                  levels={levels.filter(level => !level.official)} // TODO: and level.designer === the current user
-                  playLevel={!currentGame?.won ? playLevel : -1}
-                  // editorLevel={editorLevel?.uuid}
-                  elementHeight={levelElementHeight}
-                  storeElementHeightCallback={setElementHeight}
-                  mode={PageView.EDIT}
-                />
-              </EditorPage>
+              <EditorPage
+                viewCallback={switchView}
+                playLevelCallback={changePlayLevel}
+                editorLevelCallback={setEditorLevel}
+                levels={levels.filter(level => !level.official)} // TODO: and level.designer === the current user
+                playLevel={!currentGame?.won ? playLevel : -1}
+                editorLevel={editorLevel}
+                elementHeight={levelElementHeight}
+                storeElementHeightCallback={setElementHeight}
+              />
             }
 
             {view === PageView.STORE &&
@@ -368,7 +368,7 @@ const styles = StyleSheet.create<any>({
     paddingBottom: "2%",
     width: win.width,
     borderBottomWidth: 1,
-    borderColor: colors.LIGHT_GRAY,
+    borderColor: colors.DIM_GRAY_TRANSPARENT(0.2),
     opacity: animState,
     // transform: [{
     //   translateY: animState.interpolate({

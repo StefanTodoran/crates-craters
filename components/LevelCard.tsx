@@ -4,21 +4,22 @@ import GameBoard from "./GameBoard";
 import SimpleButton from "./SimpleButton";
 
 import TextStyles, { normalize } from "../TextStyles";
-import { Theme, graphics } from "../Theme";
+import { colors, graphics, purpleTheme } from "../Theme";
 import { getSpawnPosition } from "../util/logic";
 import { Level, PageView } from "../util/types";
 
 const win = Dimensions.get("window");
 
-interface Props {
-  playCallback?: (index: number) => void, // The callback used to initiate the current level for playing. If not provided, the level is currently being played.
+interface LevelCardBaseProps {
+  playCallback?: () => void, // The callback used to initiate the current level for playing.
   resumeCallback?: () => void, // Used to resume play if this level is currently being played.
-  editCallback?: (index: number) => void,
+  editCallback?: () => void,
   level: Level,
   levelIndex: number,
   darkMode: boolean,
-  theme: Theme,
+  children?: React.ReactNode,
   mode: PageView.LEVELS | PageView.EDIT,
+  overrideAttribution?: boolean,
 }
 
 function LevelCardBase({
@@ -28,9 +29,11 @@ function LevelCardBase({
   level,
   levelIndex,
   darkMode,
-  theme,
+  children,
   mode,
-}: Props) {
+  overrideAttribution,
+}: LevelCardBaseProps) {
+  const useTheme = mode === PageView.LEVELS ? purpleTheme : colors.RED_THEME;
   const tileSize = calcTileSize(level.board[0].length, win);
   const playerPos = getSpawnPosition(level.board);
 
@@ -66,15 +69,16 @@ function LevelCardBase({
   let attributionText;
   if (level.official) attributionText = "Standard Level";
   if (!level.official) attributionText = `Designed by "${level.designer}"`;
+  if (overrideAttribution) attributionText = "Let your creativity shine!";
 
   return (
     <Animated.View style={[
       styles.container,
       {
-        borderColor: theme.DARK_COLOR,
-        borderWidth: !playCallback ? 2 : 1,
-        paddingHorizontal: !playCallback ? normalize(15) - 2 : normalize(15),
-        backgroundColor: !playCallback ? theme.MAIN_TRANSPARENT(0.25) : (darkMode ? theme.MAIN_TRANSPARENT(0.15) : theme.OFF_WHITE),
+        borderColor: useTheme.DARK_COLOR,
+        borderWidth: resumeCallback ? 2 : 1,
+        paddingHorizontal: resumeCallback ? normalize(15) - 2 : normalize(15),
+        backgroundColor: resumeCallback ? useTheme.MAIN_TRANSPARENT(0.25) : (darkMode ? useTheme.MAIN_TRANSPARENT(0.15) : useTheme.OFF_WHITE),
         opacity: anim,
         transform: [{
           scale: anim.interpolate({
@@ -100,7 +104,7 @@ function LevelCardBase({
           <View style={{ flexDirection: "column", justifyContent: "center", marginLeft: normalize(10) }}>
             <Text
               allowFontScaling={false}
-              style={[TextStyles.subtitle(darkMode, theme.DARK_COLOR), styles.levelName]}
+              style={[TextStyles.subtitle(darkMode, useTheme.DARK_COLOR), styles.levelName]}
               numberOfLines={1}
             >{level.name}</Text>
             <Text
@@ -112,7 +116,7 @@ function LevelCardBase({
         </View>
 
         {mode === PageView.LEVELS && <View style={{ flexDirection: "row" }}>
-          {!playCallback && <Image style={styles.icon} source={graphics.PLAYER} />}
+          {resumeCallback && <Image style={styles.icon} source={graphics.PLAYER} />}
           {level.completed && <Image style={styles.icon} source={graphics.FLAG_ICON} />}
         </View>}
       </View>
@@ -125,44 +129,71 @@ function LevelCardBase({
         />
 
         <View style={{ flexDirection: "column", flex: 0.9 }}>
-          {playCallback && <SimpleButton
-            text={"Play"}
-            icon={graphics.PLAY_ICON}
-            main={true}
-            theme={theme}
-            onPress={() => playCallback(levelIndex)}
-          />}
-
-          {resumeCallback && <SimpleButton
-            text={"Resume"}
-            icon={graphics.KEY_ICON}
-            main={true}
-            theme={theme}
-            onPress={resumeCallback}
-          />}
-
-          {!editCallback && <SimpleButton
-            text={"Stats"}
-            icon={graphics.SHARE_ICON}
-            disabled={true}
-            onPress={() => {
-              // TODO: implement this page, then go to it
-            }}
-          />}
-
-          {editCallback && <SimpleButton
-            text={"Edit"}
-            icon={graphics.HAMMER_ICON}
-            theme={theme}
-            onPress={() => {
-              // editCallback(levelIndex);
-              // viewCallback("edit");
-            }}
-          />}
+          {
+            children ||
+            <LevelCardButtons
+              playCallback={playCallback}
+              resumeCallback={resumeCallback}
+              editCallback={editCallback}
+              mode={mode}
+            />
+          }
         </View>
       </View>
 
     </Animated.View>
+  );
+}
+
+interface LevelCardButtonsProps {
+  playCallback?: () => void, // The callback used to initiate the current level for playing. If not provided, the level is currently being played.
+  resumeCallback?: () => void, // Used to resume play if this level is currently being played.
+  editCallback?: () => void,
+  mode: PageView.LEVELS | PageView.EDIT,
+}
+
+export function LevelCardButtons({
+  playCallback,
+  resumeCallback,
+  editCallback,
+  mode,
+}: LevelCardButtonsProps) {
+  const useTheme = mode === PageView.LEVELS ? purpleTheme : colors.RED_THEME;
+
+  return (
+    <>
+      {playCallback && <SimpleButton
+        text={mode === PageView.EDIT ? "Test" : "Play"}
+        icon={graphics.PLAY_ICON}
+        main={true}
+        theme={useTheme}
+        onPress={playCallback}
+      />}
+
+      {resumeCallback && <SimpleButton
+        text={"Resume"}
+        icon={graphics.KEY_ICON}
+        main={true}
+        theme={useTheme}
+        onPress={resumeCallback}
+      />}
+
+      {!editCallback && <SimpleButton
+        text={"Stats"}
+        icon={graphics.SHARE_ICON}
+        disabled={true}
+        onPress={() => {
+          // TODO: implement this page, then go to it
+        }}
+      />}
+
+      {editCallback && <SimpleButton
+        text={"Edit"}
+        icon={mode === PageView.EDIT ? graphics.HAMMER_ICON_RED : graphics.HAMMER_ICON}
+        theme={useTheme}
+        onPress={editCallback}
+      />}
+    </>
   );
 }
 

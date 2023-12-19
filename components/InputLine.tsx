@@ -32,10 +32,7 @@ export default function InputLine({
   }, [value, focused]); // so that on unmount the animation "state" isn't lost
 
   return (
-    <View style={{
-      ...styles.container,
-      borderBottomColor: colors.MAIN_PURPLE,
-    }}>
+    <View style={styles.container}>
       <Animated.Text style={styles.label(anim)} allowFontScaling={false}>
         {label}
       </Animated.Text>
@@ -50,7 +47,7 @@ export default function InputLine({
         <TextInput
           style={[
             styles.input,
-            { color: (darkMode) ? colors.MAIN_PURPLE : colors.DARK_PURPLE },
+            { color: (darkMode) ? "#fff" : "#000" },
           ]}
           onChangeText={(newVal) => {
             setFocus(true);
@@ -61,8 +58,8 @@ export default function InputLine({
           onFocus={() => setFocus(true)}
           onBlur={() => setFocus(false)}
           value={value}
-          selectionColor={colors.MAIN_PURPLE}
-          cursorColor={colors.MAIN_PURPLE}
+          selectionColor={colors.DIM_GRAY}
+          cursorColor={colors.DIM_GRAY}
           maxLength={18}
           allowFontScaling={false}
         />
@@ -74,18 +71,21 @@ export default function InputLine({
 const styles = StyleSheet.create<any>({
   container: {
     position: "relative",
-    paddingVertical: 10,
+    paddingTop: 12.5,
+    paddingBottom: 7.5,
     borderBottomWidth: 1,
+    borderColor: colors.DIM_GRAY_TRANSPARENT(0.3),
+    marginBottom: 7.5,
   },
   label: (anim: Animated.Value) => ({
     position: "absolute",
-    top: "50%",
+    top: "60%",
     left: 0,
     fontFamily: "Montserrat-Regular",
     fontWeight: "normal",
     color: anim.interpolate({
       inputRange: [0, 1],
-      outputRange: [colors.MAIN_PURPLE_TRANSPARENT(0.5), colors.MAIN_PURPLE_TRANSPARENT(0.8)],
+      outputRange: [colors.DIM_GRAY_TRANSPARENT(0.5), colors.DIM_GRAY_TRANSPARENT(0.8)],
     }),
     transform: [{
       translateY: anim.interpolate({

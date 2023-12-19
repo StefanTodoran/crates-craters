@@ -1,5 +1,5 @@
-import { Pressable, Text, Image, ImageSourcePropType, StyleSheet } from "react-native";
-import React, { useState } from "react";
+import { Pressable, ImageSourcePropType, StyleSheet, Animated } from "react-native";
+import React, { useEffect, useRef, useState } from "react";
 import { normalize } from "../TextStyles";
 
 interface Props {
@@ -7,28 +7,42 @@ interface Props {
   color: string,
   label?: string, // The text to be displayed in the button.
   onPress?: () => void, // The function to be called on press event.
+  active?: boolean,
   disabled?: boolean, // Whether or not the button can be pressed (changes appearance).
 }
 
-/**
- * MenuButton is the basic button type used throughout the project.
- * It has a few simple props.
- * 
- * @params borderColor, backgroundColor, darkModeBackgroundColor, pressedColor, textColor
- * Overrides for the various aspects of the button coloring.
- */
 export default function IconButton({
   icon,
   color,
   label,
   onPress,
+  active,
   disabled,
 }: Props) {
   const [pressed, setPressedState] = useState(false);
 
+  const anim = useRef(new Animated.Value(0)).current;
+  const setAnimTo = (animState: number, callback?: () => void) => {
+    Animated.timing(anim, {
+      toValue: animState,
+      duration: 150,
+      useNativeDriver: true
+    }).start(callback);
+  }
+
+  useEffect(() => {
+    setAnimTo(active ? 1 : 0);
+  }, [active]);
+
   return (
     <Pressable
-      style={styles.body(pressed, disabled)}
+      style={{
+        ...styles.body,
+        opacity: (disabled) ? 0.5 : 1,
+        transform: [{
+          scale: pressed ? 0.95 : 1,
+        }],
+      }}
       onPress={onPress}
       onPressIn={() => { setPressedState(!!onPress) }}
       onPressOut={() => { setPressedState(false) }}
@@ -37,39 +51,54 @@ export default function IconButton({
       touchSoundDisabled={false}
       android_disableSound={false}>
 
-      {icon && <Image style={styles.icon} source={icon} />}
+      {icon && <Animated.Image
+        style={{
+          ...styles.icon,
+          transform: [{
+            translateY: anim.interpolate({
+              inputRange: [0, 1],
+              outputRange: [10, 0],
+            }),
+          }],
+        }}
+        source={icon}
+      />}
 
       {!!label &&
-        <Text
+        <Animated.Text
           allowFontScaling={false}
           style={{
-            ...styles.label, color: color,
+            ...styles.label,
+            color: color,
+            opacity: anim,
+            transform: [{
+              translateY: anim.interpolate({
+                inputRange: [0, 1],
+                outputRange: [10, 0],
+              }),
+            }],
           }}>
           {label}
-        </Text>
+        </Animated.Text>
       }
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create<any>({
-  body: (isPressed: boolean, isDisabled: boolean) => ({
+  body: {
     marginTop: normalize(15),
     marginBottom: normalize(7.5),
     marginHorizontal: normalize(7.5),
     flexDirection: "column",
     alignItems: "center",
     justifyContent: "center",
-    opacity: (isDisabled) ? 0.5 : 1,
-    transform: [{
-      scale: isPressed ? 0.95 : 1,
-    }],
-  }),
+  },
   label: {
     textAlign: "center",
     fontSize: normalize(18),
-    fontFamily: "Montserrat-Medium",
-    fontWeight: "bold",
+    fontFamily: "Montserrat-Regular",
+    fontWeight: "normal",
   },
   icon: {
     height: normalize(30),
