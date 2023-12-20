@@ -1,6 +1,7 @@
 import { FlatList, View } from "react-native";
 import React, { useCallback, useContext, useRef } from "react";
 import { Level, PageView } from "../util/types";
+import { eventEmitter } from "../util/events";
 import GlobalContext from "../GlobalContext";
 import LevelCard from "../components/LevelCard";
 
@@ -41,7 +42,8 @@ function LevelSelectBase({
 
   const editLevel = useCallback((levelIndex: number) => {
     editorLevelCallback!(levels[levelIndex].uuid);
-    viewCallback(PageView.EDIT);
+    // viewCallback(PageView.EDIT);
+    eventEmitter.emit("doPageChange", { detail: 1 });
   }, []);
 
   const scrollRef = useRef<any>();
@@ -83,9 +85,12 @@ function LevelSelectBase({
             const playCallback = () => openLevel(index);
             const editCallback = () => editLevel(index);
 
+            let showResumeOption = item.uuid === scrollTo;
+            if (mode === PageView.EDIT) showResumeOption = false;
+
             return <LevelCard
-              playCallback={item.uuid === scrollTo ? undefined : playCallback}
-              resumeCallback={item.uuid === scrollTo ? resumeLevel : undefined}
+              playCallback={showResumeOption ? undefined : playCallback}
+              resumeCallback={showResumeOption ? resumeLevel : undefined}
               editCallback={editorLevelCallback ? editCallback : undefined}
               levelIndex={index}
               level={levels[index]}

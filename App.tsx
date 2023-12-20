@@ -327,7 +327,7 @@ export default function App() {
                 playLevelCallback={changePlayLevel}
                 editorLevelCallback={startEditingLevel}
                 levels={levels.filter(level => !level.official)} // TODO: and level.designer === the current user
-                scrollTo={!currentGame?.won ? editorLevel?.uuid : undefined}
+                editorLevel={editorLevel}
                 elementHeight={levelElementHeight}
                 storeElementHeightCallback={setElementHeight}
               />

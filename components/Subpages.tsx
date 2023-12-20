@@ -1,9 +1,9 @@
-import { Animated, View, StyleSheet, ImageURISource, AppState } from "react-native";
+import { Animated, View, StyleSheet, ImageURISource } from "react-native";
 import React, { useEffect, useRef, useState } from "react";
 import { colors } from "../Theme";
 import { normalize } from "../TextStyles";
-import IconButton from "./IconButton";
 import { eventEmitter } from "../util/events";
+import IconButton from "./IconButton";
 
 interface SubpageTab {
   label: string,

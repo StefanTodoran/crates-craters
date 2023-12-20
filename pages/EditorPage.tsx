@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Level, PageView } from "../util/types";
 import { colors } from "../Theme";
 
@@ -16,8 +16,7 @@ interface Props {
   playLevelCallback: (uuid: string) => void,
   editorLevelCallback?: (uuid: string) => void,
   levels: Level[],
-  scrollTo?: string,
-  editorLevel?: string,
+  editorLevel?: Level,
   elementHeight: number,
   storeElementHeightCallback: (height: number) => void,
 }
@@ -27,11 +26,15 @@ export default function EditorPage({
   playLevelCallback,
   editorLevelCallback,
   levels,
-  scrollTo,
+  editorLevel,
   elementHeight,
   storeElementHeightCallback,
 }: Props) {
   const [level, setLevel] = useState<Level>();
+
+  useEffect(() => {
+    setLevel(editorLevel);
+  }, [editorLevel]);
 
   const pageComponents = [
     <LevelSelect
@@ -39,7 +42,7 @@ export default function EditorPage({
       playLevelCallback={playLevelCallback}
       editorLevelCallback={editorLevelCallback}
       levels={levels}
-      scrollTo={scrollTo}
+      scrollTo={editorLevel?.uuid}
       elementHeight={elementHeight}
       storeElementHeightCallback={storeElementHeightCallback}
       mode={PageView.EDIT}
