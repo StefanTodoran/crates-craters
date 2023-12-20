@@ -1,8 +1,9 @@
-import { Animated, View, StyleSheet, ImageURISource } from "react-native";
-import React, { useRef, useState } from "react";
+import { Animated, View, StyleSheet, ImageURISource, AppState } from "react-native";
+import React, { useEffect, useRef, useState } from "react";
 import { colors } from "../Theme";
 import { normalize } from "../TextStyles";
 import IconButton from "./IconButton";
+import { eventEmitter } from "../util/events";
 
 interface SubpageTab {
   label: string,
@@ -33,6 +34,12 @@ export default function Subpages({ pageTabs, pageComponents }: Props) {
       setAnimTo(1);
     });
   }
+
+  useEffect(() => {
+    const handleChangeRequest = (event: CustomEvent) => updatePageState(event.detail);
+    const listener = eventEmitter.addListener("doPageChange", handleChangeRequest);
+    return () => listener.remove();
+  }, [currentPage, setPage]);
 
   return (
     <>

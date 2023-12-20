@@ -1,24 +1,21 @@
 import { FlatList, View } from "react-native";
 import React, { useCallback, useContext, useRef } from "react";
-import LevelCard from "../components/LevelCard";
+import { Level, PageView } from "../util/types";
 import GlobalContext from "../GlobalContext";
-import { colors, graphics, purpleTheme } from "../Theme";
-import { BlankCanvas, Level, PageView } from "../util/types";
-import SimpleButton from "../components/SimpleButton";
+import LevelCard from "../components/LevelCard";
 
 interface Props {
   viewCallback: (newView: PageView) => void, // Sets the current view of the application.
   playLevelCallback: (uuid: string) => void, // Sets the current play level in the parent state so it can be passed to the PlayLevel component and played.
-  editorLevelCallback?: (uuid: string) => void, // Sets the current editor level in the parent state so it can be passed to the EditLevel component and edited.
+  editorLevelCallback?: (uuid: string) => void, // Requests to start editing a certain level by uuid.
 
   levels: Level[],
-  playLevel: number, // The index in levels of the level currently being played (if a level is being played). 
+  scrollTo?: string, // The index in levels of the level currently being played (if a level is being played). 
 
   elementHeight: number, // The card component size, used for pre scroll.
   storeElementHeightCallback: (height: number) => void, // Sets the element size, so this doesn't have to be recalculated every time we want to display the component.
 
   mode: PageView.LEVELS | PageView.EDIT,
-  createLevelCallback?: () => void, // Used to prompt the parent to bring up the level creation screen.
 }
 
 function LevelSelectBase({
@@ -26,17 +23,12 @@ function LevelSelectBase({
   playLevelCallback,
   editorLevelCallback,
   levels,
-  playLevel,
+  scrollTo,
   elementHeight,
   storeElementHeightCallback,
-  createLevelCallback,
   mode,
 }: Props) {
   const { darkMode } = useContext(GlobalContext);
-  const useTheme = mode === PageView.LEVELS ? purpleTheme : colors.RED_THEME;
-
-  let displayLevels = [...levels];
-  if (mode === PageView.EDIT) displayLevels = [{ uuid: "create" } as Level, ...levels];
 
   const openLevel = useCallback((levelIndex: number) => {
     playLevelCallback(levels[levelIndex].uuid);
@@ -53,8 +45,7 @@ function LevelSelectBase({
   }, []);
 
   const scrollRef = useRef<any>();
-  const resumeUUID = levels[playLevel]?.uuid;
-  let scrollIndex = Math.max(0, levels.findIndex(level => level.uuid === resumeUUID));
+  let scrollIndex = Math.max(0, levels.findIndex(level => level.uuid === scrollTo));
 
   return (
     <>
@@ -87,39 +78,17 @@ function LevelSelectBase({
           }}
           overScrollMode="never"
           showsVerticalScrollIndicator={false}
-          data={displayLevels}
+          data={levels}
           renderItem={({ item, index }) => {
-            if (item.uuid === "create") {
-              return <LevelCard
-                playCallback={undefined}
-                resumeCallback={undefined}
-                editCallback={undefined}
-                levelIndex={index - 1}
-                level={BlankCanvas}
-                darkMode={darkMode}
-                mode={mode}
-                overrideAttribution={true}
-              >
-                <SimpleButton
-                  text={"Create"}
-                  icon={graphics.OPTIONS_ICON}
-                  theme={useTheme}
-                  onPress={createLevelCallback}
-                />
-              </LevelCard>;
-            }
-
-            const adjustedIndex = (mode === PageView.EDIT) ? index - 1 : index;
-
-            const playCallback = () => openLevel(adjustedIndex);
-            const editCallback = () => editLevel(adjustedIndex);
+            const playCallback = () => openLevel(index);
+            const editCallback = () => editLevel(index);
 
             return <LevelCard
-              playCallback={item.uuid === resumeUUID ? undefined : playCallback}
-              resumeCallback={item.uuid === resumeUUID ? resumeLevel : undefined}
+              playCallback={item.uuid === scrollTo ? undefined : playCallback}
+              resumeCallback={item.uuid === scrollTo ? resumeLevel : undefined}
               editCallback={editorLevelCallback ? editCallback : undefined}
-              levelIndex={adjustedIndex}
-              level={displayLevels[index]}
+              levelIndex={index}
+              level={levels[index]}
               darkMode={darkMode}
               mode={mode}
             />

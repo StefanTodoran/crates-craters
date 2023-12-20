@@ -52,7 +52,7 @@ export default function InputLine({
           onChangeText={(newVal) => {
             setFocus(true);
             // Matches and removes any non-alphanumeric characters (except space)
-            const filtered = newVal.replace(/[^a-z0-9 ]/gi, '');
+            const filtered = newVal.replace(/[^a-z0-9 ]/gi, "");
             onChange(filtered);
           }}
           onFocus={() => setFocus(true)}

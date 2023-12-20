@@ -73,15 +73,15 @@ const rawLevels = [ // TODO: replace with fetching from firebase
     official: true,
   },
   {
-    uuid: "1",
+    uuid: "8",
     name: "Custom Introductions",
-    board: "1,1,1,1,1,1,1,1/1,0,0,4,0,0,0,5/1,7,0,4,0,0,0,5/1,0,6,4,0,0,0,5/1,1,1,1,1,1,0,1/1,0,3,0,0,0,4,1/1,0,0,0,4,0,5,1/1,0,0,0,0,6,0,1/1,5,0,4,0,0,0,1/1,5,1,1,1,1,1,1/1,0,0,5,1,0,0,0/1,0,0,4,2,0,8,0/1,0,6,0,1,0,0,0/1,1,1,1,1,1,1,1",
+    board: "1,2,1,2,1,1,1,1/1,0,0,4,0,0,0,5/1,7,0,4,0,0,0,5/1,0,6,4,0,0,0,5/1,1,1,1,1,1,0,1/1,0,3,0,0,0,4,1/1,0,0,0,4,0,5,1/1,0,0,0,0,6,0,1/1,5,0,4,0,0,0,1/1,5,1,1,1,1,1,1/1,0,0,5,1,0,0,0/1,0,0,4,2,0,8,0/1,0,6,0,1,0,0,0/1,1,1,1,1,1,1,1",
     completed: true,
     official: false,
     designer: "hello",
   },
   {
-    uuid: "2",
+    uuid: "9",
     name: "Custom Easy Peasy",
     board: "1,1,1,1,1,1,1,1/1,0,0,0,4,7,0,1/1,6,1,1,5,4,0,1/1,0,0,0,4,5,4,1/1,0,4,0,6,4,0,1/1,3,1,0,0,4,5,1/1,1,1,1,1,1,2,1/1,0,0,0,0,1,0,1/1,0,8,0,0,12.3,0,1/1,0,0,0,0,12.3,0,1/1,1,1,1,12.0,0,4,1/1,0,6,5,0,4,0,1/1,0,0,0,4,0,0,1/1,1,1,1,1,1,1,1",
     completed: true,
@@ -89,7 +89,7 @@ const rawLevels = [ // TODO: replace with fetching from firebase
     designer: "hello",
   },
   {
-    uuid: "3",
+    uuid: "10",
     name: "Custom Having a Blast",
     board: "1,1,1,1,1,1,1,1/0,0,1,0,0,5,4,5/0,0,2,4,7,9.25,5,0/6,0,1,0,12.0,0,0,0/0,0,1,5,0,0,0,4/4,0,1,0,4,0,0,5/0,4,1,0,0,0,4,1/0,0,1,1,4,4,4,1/0,0,5,1,4,6,3,1/0,0,0,1,1,12.0,12.0,1/0,0,0,5,6,0,0,1/0,0,4,1,0,8,0,1/5,4,5,1,0,0,0,1/1,1,1,1,1,1,1,1",
     completed: false,
@@ -97,7 +97,7 @@ const rawLevels = [ // TODO: replace with fetching from firebase
     designer: "hello",
   },
   {
-    uuid: "4",
+    uuid: "11",
     name: "Custom Rooms",
     board: "0,0,2,0,1,1,1,3/0,0,1,0,1,0,0,5/4,4,1,0,2,0,4,0/5,5,1,0,1,6,0,4/4,0,1,0,1,1,1,1/0,0,1,0,1,4,4,0/8,1,0,4,5,1,1,0/1,1,5,7,0,1,1,5/1,3,4,4,4,0,1,1/1,1,0,0,0,0,1,1/1,1,4,4,0,0,1,6/0,0,0,0,4,5,1,5/1,1,1,1,2,1,1,4/1,1,1,3,0,0,0,0",
     completed: false,
@@ -105,7 +105,7 @@ const rawLevels = [ // TODO: replace with fetching from firebase
     designer: "hello",
   },
   {
-    uuid: "5",
+    uuid: "12",
     name: "Custom Choices",
     board: "0,0,0,6,1,0,0,0/0,4,0,1,0,0,3,5/4,0,4,1,0,4,4,0/0,4,0,1,0,4,5,0/0,6,0,1,4,4,0,0/0,0,0,2,0,0,0,5/1,1,1,1,0,0,1,0/0,0,6,5,4,1,0,0/1,1,0,4,7,4,0,0/0,0,0,0,4,0,0,0/0,0,0,1,0,1,0,0/0,0,0,1,8,1,5,4/4,4,0,0,1,0,0,6/6,0,5,0,0,0,0,0",
     completed: false,
@@ -113,7 +113,7 @@ const rawLevels = [ // TODO: replace with fetching from firebase
     designer: "hello",
   },
   {
-    uuid: "6",
+    uuid: "13",
     name: "Custom Running Laps",
     board: "0,0,0,1,0,1,1,0/0,7,0,0,4,0,8,0/0,0,0,1,0,0,1,5/0,0,0,1,3,0,1,1/0,4,4,1,5,1,4,4/0,4,0,1,0,0,0,4/4,0,0,1,0,6,0,0/1,0,1,1,0,0,5,0/0,0,0,0,0,5,4,0/0,0,0,0,0,0,0,0/1,2,1,0,6,0,0,0/0,0,5,0,0,1,1,4/0,6,5,0,0,1,6,0/6,0,1,0,0,4,0,0",
     completed: false,
@@ -121,7 +121,7 @@ const rawLevels = [ // TODO: replace with fetching from firebase
     designer: "hello",
   },
   {
-    uuid: "7",
+    uuid: "14",
     name: "Custom Warzone",
     board: "5,4,5,5,0,4,0,12.3/4,1,6,5,1,12.0,4,5/5,3,5,0,1,6,12.1,0/4,4,0,0,0,4,1,4/0,1,5,0,12.0,0,1,6/6,8,5,9.25,5,2,9.75,5/2,5,1,12.0,1,0,4,0/0,0,4,7,5,12.3,9.5,4/5,4,0,4,3,9.50,2,4/1,5,0,0,12.0,0,12.0,12.3/6,4,1,12.2,4,0,1,12.0/3,0,4,0,4,0,1,6/4,5,4,4,5,0,5,4/5,4,9.10,4,0,5,0,4",
     completed: false,
@@ -238,26 +238,31 @@ export default function App() {
     NavigationBar.setBackgroundColorAsync(darkMode ? "#000" : "#fff");
   }, [darkMode]);
 
-  const [playLevel, setPlayLevel] = useState<number>(-1);  // Stores the index of level currently being played.
-  const [currentGame, setGameState] = useState<Game>();    // Stores the game state of the level being played.
-  const [editorIndex, setEditorIndex] = useState<string>(); // Stores the index of the level to be edited.
-  const [editorLevel, setEditorLevel] = useState<Level>(); // Stores the level object being edited.
+  const [playLevel, setPlayLevel] = useState<Level>();     // The level currently being played.
+  const [currentGame, setGameState] = useState<Game>();     // The game state of the level being played.
+  const [editorLevel, setEditorLevel] = useState<Level>();  // The level object being edited.
 
   const changePlayLevel = useCallback((uuid: string) => {
     const levelIndex = levels.findIndex(level => level.uuid === uuid);
-    setPlayLevel(levelIndex);
+    const levelObject = levels[levelIndex];
+    setPlayLevel(levelObject);
     const newGame = initializeGameObj(levels[levelIndex]);
     setGameState(newGame);
   }, [levels]);
 
   const getNextLevel = useCallback(() => {
-    const nextIndex = levels.findIndex(level => level.uuid = levels[playLevel].uuid);
+    const nextIndex = levels.findIndex(level => level.uuid === playLevel!.uuid);
     const nextLevel = levels[nextIndex + 1];
 
     if (nextLevel) {
-      setPlayLevel(nextIndex);
+      setPlayLevel(nextLevel);
       setGameState(initializeGameObj(nextLevel));
     }
+  }, [levels]);
+
+  const startEditingLevel = useCallback((uuid: string) => {
+    const levelIndex = levels.findIndex(level => level.uuid === uuid);
+    setEditorLevel(levels[levelIndex]);
   }, [levels]);
 
   useEffect(() => { // TODO: update this method?
@@ -268,9 +273,7 @@ export default function App() {
       return true;
     }
 
-    // const backAction = () => view !== PageView.MENU;
     BackHandler.addEventListener("hardwareBackPress", backAction);
-
     return () => BackHandler.removeEventListener("hardwareBackPress", backAction);
   }, [view]);
 
@@ -298,10 +301,9 @@ export default function App() {
               <LevelSelect
                 viewCallback={switchView}
                 playLevelCallback={changePlayLevel}
-                editorLevelCallback={setEditorLevel}
+                editorLevelCallback={startEditingLevel}
                 levels={levels.filter(level => level.official)}
-                playLevel={!currentGame?.won ? playLevel : -1}
-                editorLevel={editorLevel}
+                scrollTo={!currentGame?.won ? playLevel?.uuid : undefined}
                 elementHeight={levelElementHeight}
                 storeElementHeightCallback={setElementHeight}
                 mode={PageView.LEVELS}
@@ -313,7 +315,7 @@ export default function App() {
                 viewCallback={switchView}
                 nextLevelCallback={getNextLevel}
                 gameStateCallback={setGameState}
-                level={levels[playLevel]}
+                level={playLevel!}
                 game={currentGame!}
                 playtest={false}
               />
@@ -323,10 +325,9 @@ export default function App() {
               <EditorPage
                 viewCallback={switchView}
                 playLevelCallback={changePlayLevel}
-                editorLevelCallback={setEditorLevel}
+                editorLevelCallback={startEditingLevel}
                 levels={levels.filter(level => !level.official)} // TODO: and level.designer === the current user
-                playLevel={!currentGame?.won ? playLevel : -1}
-                editorLevel={editorLevel}
+                scrollTo={!currentGame?.won ? editorLevel?.uuid : undefined}
                 elementHeight={levelElementHeight}
                 storeElementHeightCallback={setElementHeight}
               />

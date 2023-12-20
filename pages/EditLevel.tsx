@@ -118,6 +118,13 @@ export default function EditLevel({
   }
 
   const [fuseTimer, setFuseTimer] = useState(15);
+
+  if (level === undefined) {
+    return <Text style={[TextStyles.subtitle(darkMode), { color: colors.RED_THEME.MAIN_COLOR }]}>
+      No level being edited
+    </Text>;
+  }
+
   return (
     <SafeAreaView style={styles.container}>
       {level && <GameBoard board={level.board} tileCallback={changeTile}></GameBoard>}
@@ -264,6 +271,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-evenly",
     width: "100%",
+    height: "100%",
   },
   section: {
     flexDirection: "column",

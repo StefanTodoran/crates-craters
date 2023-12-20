@@ -75,14 +75,6 @@ export function createBlankBoard() {
   return blankBoard;
 }
 
-export const BlankCanvas: Level = {
-  uuid: "Blank Canvas",
-  name: "Blank Canvas",
-  board: createBlankBoard(),
-  completed: false,
-  official: true,
-};
-
 // ========================= \\
 // OTHER MISCELLANEOUS TYPES \\
 
