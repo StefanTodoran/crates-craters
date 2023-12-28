@@ -29,7 +29,7 @@ export default function EditLevel({
   viewCallback,
   level,
   levelCallback,
-  playtestLevel,
+  // playtestLevel,
   storeChanges,
 }: Props) {
   const { darkMode, playAudio } = useContext(GlobalContext);
@@ -41,12 +41,12 @@ export default function EditLevel({
   const [errorSound, setErrorSound] = useState<Sound>();
 
   async function playSuccessSound() {
-    const { sound } = await Audio.Sound.createAsync(require('../assets/audio/push.wav'));
+    const { sound } = await Audio.Sound.createAsync(require("../assets/audio/push.wav"));
     setSuccessSound(sound);
     await sound.playAsync();
   }
   async function playErrorSound() {
-    const { sound } = await Audio.Sound.createAsync(require('../assets/audio/fill.wav'));
+    const { sound } = await Audio.Sound.createAsync(require("../assets/audio/fill.wav"));
     setErrorSound(sound);
     await sound.playAsync();
   }

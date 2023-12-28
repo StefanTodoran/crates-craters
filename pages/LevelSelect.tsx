@@ -59,8 +59,7 @@ function LevelSelectBase({
         style={{ opacity: 0 }}
       >
         <LevelCard
-          playCallback={() => openLevel(0)}
-          resumeCallback={() => viewCallback(PageView.PLAY)}
+          playCallback={() => {}}
           levelIndex={0}
           level={levels[0]}
           darkMode={darkMode}
