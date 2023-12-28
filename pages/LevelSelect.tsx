@@ -42,7 +42,6 @@ function LevelSelectBase({
 
   const editLevel = useCallback((levelIndex: number) => {
     editorLevelCallback!(levels[levelIndex].uuid);
-    // viewCallback(PageView.EDIT);
     eventEmitter.emit("doPageChange", { detail: 1 });
   }, []);
 

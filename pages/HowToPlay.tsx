@@ -1,20 +1,16 @@
-import { View, Text, StyleSheet, Image, Dimensions, ScrollView } from "react-native";
+import { View, Text, StyleSheet, Image } from "react-native";
 import React, { useContext } from "react";
 
 import { colors, graphics } from "../Theme";
 import GlobalContext from "../GlobalContext";
 import TextStyles, { normalize } from "../TextStyles";
-const win = Dimensions.get("window");
+import SubpageContainer from "../components/SubpageContainer";
 
 export default function HowToPlay() {
   const { darkMode } = useContext(GlobalContext);
 
   return (
-    <ScrollView style={styles.scrollContainer} contentContainerStyle={{
-      paddingHorizontal: win.width * 0.05,
-      paddingTop: win.height * 0.015,
-      paddingBottom: win.height * 0.025,
-    }} overScrollMode="never" showsVerticalScrollIndicator={false}>
+    <SubpageContainer>
       <Text style={TextStyles.subtitle(darkMode, colors.GREEN_THEME.MAIN_COLOR)}>
         Controls
       </Text>
@@ -80,7 +76,7 @@ export default function HowToPlay() {
         <Image style={styles.icon} source={graphics.BOMB} />
         <Image style={styles.icon} source={graphics.EXPLOSION} />
       </View>
-    </ScrollView>
+    </SubpageContainer>
   );
 }
 
@@ -94,13 +90,4 @@ const styles = StyleSheet.create({
     height: 30,
     width: 30,
   },
-  scrollContainer: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    flex: 1,
-    overflow: "hidden",
-  }
 });

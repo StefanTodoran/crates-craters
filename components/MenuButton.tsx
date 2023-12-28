@@ -103,11 +103,11 @@ export default function MenuButton({
 const styles = StyleSheet.create({
   body: {
     borderWidth: 1,
-    borderRadius: 10,
-    paddingLeft: 15,
-    paddingVertical: 10,
-    marginTop: 15,
-    marginHorizontal: 5,
+    borderRadius: normalize(10),
+    paddingLeft: normalize(15),
+    paddingVertical: normalize(14),
+    marginTop: normalize(15),
+    marginHorizontal: normalize(5),
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
@@ -115,7 +115,7 @@ const styles = StyleSheet.create({
   label: {
     textAlign: "center",
     fontSize: normalize(16),
-    marginLeft: 15,
+    marginLeft: normalize(16),
     // textTransform: "uppercase",
     fontFamily: "Montserrat-Medium",
     fontWeight: "bold",

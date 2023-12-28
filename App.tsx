@@ -11,12 +11,13 @@ import { colors } from "./Theme";
 import { Game, initializeGameObj } from "./util/logic";
 
 import Menu from "./components/Menu";
+import Header from "./components/Header";
 import AccountPage from "./pages/AccountSettings";
 import LevelSelect from "./pages/LevelSelect";
-import Header from "./components/Header";
+import EditorPage from "./pages/EditorPage";
 import PlayLevel from "./pages/PlayLevel";
 import StorePage from "./pages/StorePage";
-import EditorPage from "./pages/EditorPage";
+import EditLevel from "./pages/EditLevel";
 // import PlayLevel from "./pages/PlayLevel";
 // import CreateLevel from "./pages/CreateLevel";
 
@@ -74,7 +75,7 @@ const rawLevels = [ // TODO: replace with fetching from firebase
   },
   {
     uuid: "8",
-    name: "Custom Introductions",
+    name: "Custom Intros",
     board: "1,2,1,2,1,1,1,1/1,0,0,4,0,0,0,5/1,7,0,4,0,0,0,5/1,0,6,4,0,0,0,5/1,1,1,1,1,1,0,1/1,0,3,0,0,0,4,1/1,0,0,0,4,0,5,1/1,0,0,0,0,6,0,1/1,5,0,4,0,0,0,1/1,5,1,1,1,1,1,1/1,0,0,5,1,0,0,0/1,0,0,4,2,0,8,0/1,0,6,0,1,0,0,0/1,1,1,1,1,1,1,1",
     completed: true,
     official: false,
@@ -169,6 +170,8 @@ export default function App() {
 
   const [levels, setLevels] = useState<Level[]>([]);
   useEffect(() => {
+    // TODO: load levels from storage
+    // maybe before that will need to store the dummy data levels to storage
     const newLevels: Level[] = [];
     rawLevels.forEach(rawLevel => {
       newLevels.push({
@@ -301,7 +304,7 @@ export default function App() {
               <LevelSelect
                 viewCallback={switchView}
                 playLevelCallback={changePlayLevel}
-                editorLevelCallback={startEditingLevel}
+                // editorLevelCallback={startEditingLevel}
                 levels={levels.filter(level => level.official)}
                 scrollTo={!currentGame?.won ? playLevel?.uuid : undefined}
                 elementHeight={levelElementHeight}
@@ -325,11 +328,22 @@ export default function App() {
               <EditorPage
                 viewCallback={switchView}
                 playLevelCallback={changePlayLevel}
-                editorLevelCallback={startEditingLevel}
+                startEditingCallback={startEditingLevel}
+                editorLevelCallback={setEditorLevel}
                 levels={levels.filter(level => !level.official)} // TODO: and level.designer === the current user
                 editorLevel={editorLevel}
                 elementHeight={levelElementHeight}
                 storeElementHeightCallback={setElementHeight}
+              />
+            }
+
+            {view === PageView.EDITOR &&
+              <EditLevel
+                viewCallback={switchView}
+                level={editorLevel!}
+                levelCallback={setEditorLevel}
+                playtestLevel={() => { }}
+                storeChanges={() => { }}
               />
             }
 

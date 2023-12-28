@@ -60,7 +60,7 @@ export default function InputLine({
           value={value}
           selectionColor={colors.DIM_GRAY}
           cursorColor={colors.DIM_GRAY}
-          maxLength={18}
+          maxLength={24}
           allowFontScaling={false}
         />
       </Animated.View>

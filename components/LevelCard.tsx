@@ -1,11 +1,10 @@
-import { Text, View, Dimensions, Image, Animated, ScaledSize, StyleSheet } from "react-native";
+import { Text, View, Dimensions, Image, Animated, StyleSheet } from "react-native";
 import React, { useEffect, useRef } from "react";
-import GameBoard from "./GameBoard";
 import SimpleButton from "./SimpleButton";
+import BoardPreview from "./BoardPreview";
 
 import TextStyles, { normalize } from "../TextStyles";
 import { colors, graphics, purpleTheme } from "../Theme";
-import { getSpawnPosition } from "../util/logic";
 import { Level, PageView } from "../util/types";
 
 const win = Dimensions.get("window");
@@ -34,21 +33,6 @@ function LevelCardBase({
   overrideAttribution,
 }: LevelCardBaseProps) {
   const useTheme = mode === PageView.LEVELS ? purpleTheme : colors.RED_THEME;
-  const tileSize = calcTileSize(level.board[0].length, win);
-  const playerPos = getSpawnPosition(level.board);
-
-  const previewSize = 2;
-  let previewTop, previewBottom;
-  if (playerPos.y - previewSize < 0) {
-    previewTop = 0;
-    previewBottom = (previewSize * 2);
-  } else if (playerPos.y + previewSize > level.board.length) {
-    previewTop = level.board.length - (previewSize * 2);
-    previewBottom = level.board.length;
-  } else {
-    previewTop = playerPos.y - previewSize;
-    previewBottom = playerPos.y + previewSize;
-  }
 
   const anim = useRef(new Animated.Value(0)).current;
   const setAnimTo = (animState: number, callback?: () => void) => {
@@ -122,9 +106,10 @@ function LevelCardBase({
       </View>
 
       <View style={styles.row}>
-        <GameBoard
-          board={level.board.slice(previewTop, previewBottom)}
-          overrideTileSize={tileSize}
+        <BoardPreview
+          level={level}
+          previewSize={2}
+          previewWidth={0.5}
           rowCorrect={-0.1}
         />
 
@@ -199,11 +184,6 @@ export function LevelCardButtons({
 
 const LevelCard = React.memo(LevelCardBase);
 export default LevelCard;
-
-function calcTileSize(boardWidth: number, window: ScaledSize) {
-  const maxWidth = (window.width * 0.5) / boardWidth;
-  return Math.floor(maxWidth);
-}
 
 const styles = StyleSheet.create({
   container: {

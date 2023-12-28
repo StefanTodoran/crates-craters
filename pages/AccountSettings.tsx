@@ -11,15 +11,16 @@ import SettingsIcon from "../assets/main_theme/settings.png";
 import AboutIcon from "../assets/main_theme/about.png";
 import ProfileIcon from "../assets/main_theme/profile.png";
 import Subpages from "../components/Subpages";
+import TextStyles from "../TextStyles";
 
 interface Props {
-  darkModeCallback: (darkMode: boolean) => void,
-  audioModeCallback: (playAudio: boolean) => void,
+  darkModeCallback: () => void,
+  audioModeCallback: () => void,
   setSensitivityCallback: (sensitivity: number) => void,
   setTapDelayCallback: (delay: number) => void,
 }
 
-export default function HomePage({
+export default function AccountSettings({
   darkModeCallback,
   audioModeCallback,
   setSensitivityCallback,
@@ -31,12 +32,13 @@ export default function HomePage({
       <Settings
         darkModeCallback={darkModeCallback}
         audioModeCallback={audioModeCallback}
-        setThemeCallback={() => { }}
         setSensitivityCallback={setSensitivityCallback}
         setTapDelayCallback={setTapDelayCallback}
       />,
       <About />,
-      <Text>Profile Page (TODO)</Text>,
+      <Text style={[TextStyles.subtitle(false), { color: colors.GREEN_THEME.MAIN_COLOR }]}>
+        Coming Soon
+      </Text>,
     ];
   }, []);
 

@@ -1,23 +1,18 @@
-import { Text, StyleSheet, Dimensions, Linking, View, ScrollView } from "react-native";
+import { Text, StyleSheet, Dimensions, Linking, View } from "react-native";
 import React, { useContext } from "react";
 
 import { colors, graphics } from "../Theme";
 import MenuButton from "../components/MenuButton";
 import GlobalContext from "../GlobalContext";
 import TextStyles, { normalize } from "../TextStyles";
+import SubpageContainer from "../components/SubpageContainer";
 const win = Dimensions.get("window");
 
 export default function About() {
   const { darkMode } = useContext(GlobalContext);
 
   return (
-    <ScrollView style={styles.scrollContainer} contentContainerStyle={{
-      paddingHorizontal: win.width * 0.05,
-      paddingTop: win.height * 0.015,
-      paddingBottom: win.height * 0.025,
-      justifyContent: "center",
-      height: "100%",
-    }} overScrollMode="never" showsVerticalScrollIndicator={false}>
+    <SubpageContainer center>
       <Text style={TextStyles.subtitle(darkMode, colors.GREEN_THEME.MAIN_COLOR)}>
         Attribution
       </Text>
@@ -42,7 +37,7 @@ export default function About() {
           label="Stefan Todoran"
           icon={graphics.LOGO}
           theme={colors.GREEN_THEME}
-          />
+        />
         <MenuButton
           onPress={() => { Linking.openURL("https://www.paypal.com/donate/?business=5EGAWXCBNDGHC&no_recurring=0&item_name=Help+support+the+future+development+of+Crates+%26+Craters%21+If+you+have+any+suggestions+for+the+game%2C+please+reach+out+to+me%21&currency_code=USD") }}
           label="Support C&C"
@@ -50,7 +45,7 @@ export default function About() {
           theme={colors.GREEN_THEME}
         />
       </View>
-    </ScrollView>
+    </SubpageContainer>
   );
 }
 
@@ -59,19 +54,4 @@ const styles = StyleSheet.create({
     paddingHorizontal: win.width * 0.175, // 0.225 - 0.05
     marginBottom: normalize(32),
   },
-  row: {
-    flexDirection: "row",
-    justifyContent: "center",
-    marginTop: 10,
-    marginBottom: 5,
-  },
-  scrollContainer: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    flex: 1,
-    overflow: "hidden",
-  }
 });

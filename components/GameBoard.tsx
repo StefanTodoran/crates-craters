@@ -160,6 +160,7 @@ export default function GameBoard({
     <View style={[
       styles.board,
       {
+        borderRadius: tileSize / 5,
         borderColor: colors.BLUE_THEME.MAIN_COLOR,
         backgroundColor: (darkMode) ? "#000" : "#fff",
       }
@@ -176,7 +177,7 @@ const styles = StyleSheet.create<any>({
   board: {
     position: "relative",
     borderWidth: 1,
-    borderRadius: 5,
+    // borderRadius: 5,
     overflow: "hidden",
   },
   wallTile: (bgColor: string, borderColor: string, size: number) => ({

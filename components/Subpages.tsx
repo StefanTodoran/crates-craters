@@ -14,9 +14,10 @@ interface SubpageTab {
 interface Props {
   pageTabs: SubpageTab[],
   pageComponents: React.ReactNode[],
+  disabledPages?: boolean[],
 }
 
-export default function Subpages({ pageTabs, pageComponents }: Props) {
+export default function Subpages({ pageTabs, pageComponents, disabledPages }: Props) {
   const anim = useRef(new Animated.Value(1)).current;
   const setAnimTo = (animState: number, callback?: () => void) => {
     Animated.timing(anim, {
@@ -56,6 +57,7 @@ export default function Subpages({ pageTabs, pageComponents }: Props) {
             label={pageTab.label}
             icon={pageTab.icon}
             onPress={() => updatePageState(pageIndex)}
+            disabled={disabledPages && disabledPages[pageIndex]}
           />)}
       </View>
     </>

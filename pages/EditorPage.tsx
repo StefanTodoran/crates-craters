@@ -1,20 +1,21 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import { Level, PageView } from "../util/types";
 import { colors } from "../Theme";
 
 import Subpages from "../components/Subpages";
 import LevelSelect from "./LevelSelect";
-import EditLevel from "./EditLevel";
+import CreateLevel from "./CreateLevel";
 
 import ListIcon from "../assets/main_theme/list.png";
 import EditorIcon from "../assets/main_theme/editor.png";
 import CreateIcon from "../assets/main_theme/create.png";
-import CreateLevel from "./CreateLevel";
+import ManageLevel from "./ManageLevel";
 
 interface Props {
   viewCallback: (newView: PageView) => void,
   playLevelCallback: (uuid: string) => void,
-  editorLevelCallback?: (uuid: string) => void,
+  startEditingCallback: (uuid: string) => void,
+  editorLevelCallback: (newLevel: Level) => void,
   levels: Level[],
   editorLevel?: Level,
   elementHeight: number,
@@ -24,23 +25,18 @@ interface Props {
 export default function EditorPage({
   viewCallback,
   playLevelCallback,
+  startEditingCallback,
   editorLevelCallback,
   levels,
   editorLevel,
   elementHeight,
   storeElementHeightCallback,
 }: Props) {
-  const [level, setLevel] = useState<Level>();
-
-  useEffect(() => {
-    setLevel(editorLevel);
-  }, [editorLevel]);
-
   const pageComponents = [
     <LevelSelect
       viewCallback={viewCallback}
       playLevelCallback={playLevelCallback}
-      editorLevelCallback={editorLevelCallback}
+      editorLevelCallback={startEditingCallback}
       levels={levels}
       scrollTo={editorLevel?.uuid}
       elementHeight={elementHeight}
@@ -48,15 +44,9 @@ export default function EditorPage({
       mode={PageView.EDIT}
     />,
 
-    <EditLevel
-      viewCallback={viewCallback}
-      level={level!}
-      levelCallback={setLevel}
-      playtestLevel={() => { }}
-      storeChanges={() => { }}
-    />,
+    <ManageLevel level={editorLevel!} viewCallback={viewCallback}/>, // The button to switch to this subpage is disabled if editorLevel is undefined.
 
-    <CreateLevel createLevelCallback={setLevel} />,
+    <CreateLevel createLevelCallback={editorLevelCallback} />,
   ];
 
   const pageTabs = useMemo(() => {
@@ -80,6 +70,10 @@ export default function EditorPage({
   }, []);
 
   return (
-    <Subpages pageComponents={pageComponents} pageTabs={pageTabs} />
+    <Subpages
+      pageComponents={pageComponents}
+      pageTabs={pageTabs}
+      disabledPages={[false, !editorLevel, false]}
+    />
   );
 }

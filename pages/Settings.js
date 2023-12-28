@@ -1,16 +1,28 @@
-import { StyleSheet, Text, Dimensions, View, ScrollView } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 import React, { useContext, useEffect, useRef, useState } from "react";
-
 import { colors, graphics } from "../Theme";
+import TextStyles, { normalize } from "../TextStyles";
+import GlobalContext from "../GlobalContext";
+
+import SubpageContainer from "../components/SubpageContainer";
 import MenuButton from "../components/MenuButton";
 import SliderBar from "../components/SliderBar";
-import GlobalContext from "../GlobalContext";
-import TextStyles, { normalize } from "../TextStyles";
 
+/**
+ * @typedef {object} Props
+ * @property {() => void} darkModeCallback
+ * @property {() => void} audioModeCallback
+ * @property {(sensitivity: number) => void} setSensitivityCallback
+ * @property {(delay: number) => void} setTapDelayCallback
+ */
+
+/**
+ * @param {Props} props
+ */
 export default function Settings({
   darkModeCallback,
   audioModeCallback,
-  setThemeCallback,
+  // setThemeCallback,
   setSensitivityCallback,
   setTapDelayCallback,
 }) {
@@ -19,7 +31,7 @@ export default function Settings({
   const [newDragSens, setNewDragSens] = useState(dragSensitivity);
   const [newTapDelay, setNewTapDelay] = useState(doubleTapDelay);
 
-  const updateSettings = useRef(undefined);
+  const updateSettings = useRef(() => {});
 
   useEffect(() => {
     updateSettings.current = () => {
@@ -43,14 +55,7 @@ export default function Settings({
   }, []);
 
   return (
-    <ScrollView style={styles.scrollContainer} contentContainerStyle={{
-      paddingHorizontal: win.width * 0.05,
-      paddingTop: win.height * 0.015,
-      paddingBottom: win.height * 0.025,
-      justifyContent: "center",
-      alignItems: "center",
-      height: "100%",
-    }} overScrollMode="never" showsVerticalScrollIndicator={false}>
+    <SubpageContainer center>
       <View style={styles.buttonsContainer}>
         <Text style={[TextStyles.subtitle(darkMode, colors.GREEN_THEME.MAIN_COLOR), { width: "100%", marginBottom: 0 }]}>
           Settings
@@ -91,29 +96,16 @@ export default function Settings({
           theme={colors.GREEN_THEME}
         />
       </View>
-    </ScrollView>
+    </SubpageContainer>
   );
 }
-
-// Returns a list [height, width] of the size for an element based
-// on the image's size and the desired width percent to be occupied.
-const win = Dimensions.get("window");
-
 
 const styles = StyleSheet.create({
   buttonsContainer: {
     alignItems: "center",
     justifyContent: "center",
-    width: win.width * 0.55,
+    width: "100%",
+    paddingHorizontal: "20%",
     marginBottom: normalize(32),
   },
-  scrollContainer: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    flex: 1,
-    overflow: "hidden",
-  }
 });

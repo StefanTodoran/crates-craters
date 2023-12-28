@@ -13,6 +13,7 @@ import { colors, graphics } from "../Theme";
 import GlobalContext from "../GlobalContext";
 import { BoardTile, Direction, Level, PageView, TileType } from "../util/types";
 import { cloneBoard, getSpawnPosition, validTile } from "../util/logic";
+import { eventEmitter } from "../util/events";
 const win = Dimensions.get("window");
 
 interface Props {
@@ -129,12 +130,31 @@ export default function EditLevel({
     <SafeAreaView style={styles.container}>
       {level && <GameBoard board={level.board} tileCallback={changeTile}></GameBoard>}
 
+      <Animated.View style={[
+        styles.buttonsRow,
+        {
+          opacity: fadeToolsAnim.interpolate({
+            inputRange: [0, 1],
+            outputRange: [1, 0],
+          }),
+        },
+      ]}>
+        <SimpleButton onPress={toggleToolsModal} text="Tools & Options" main={true} />
+        <View style={{ width: normalize(15) }} />
+        <SimpleButton onPress={() => {
+          storeChanges();
+          viewCallback(PageView.EDIT);
+        }} text="Save & Exit" />
+      </Animated.View>
+
       {/* START MODAL */}
-      {toolsModalOpen && <Animated.View style={{
-        ...styles.modal,
-        opacity: fadeToolsAnim,
-        backgroundColor: darkMode ? colors.NEAR_BLACK_TRANSPARENT(0.85) : "rgba(255, 255, 255, 0.85)",
-      }}>
+      {toolsModalOpen && <Animated.View style={[
+        styles.modal,
+        {
+          opacity: fadeToolsAnim,
+          backgroundColor: darkMode ? colors.NEAR_BLACK_TRANSPARENT(0.85) : "rgba(255, 255, 255, 0.85)",
+        },
+      ]}>
         <ScrollView overScrollMode="never" style={{ width: "100%" }}>
 
           <View style={styles.section}>
@@ -244,23 +264,15 @@ export default function EditLevel({
               <MenuButton onLongPress={() => {/* TODO */ }} label="Clear Level      (Long Press)" icon={graphics.HAMMER_ICON} allowOverflow />
             </View>
             <View style={styles.row}>
-              <MenuButton onPress={playtestLevel} label="Playtest" icon={graphics.PLAYER} disabled={true} />
-              <MenuButton onPress={storeChanges} label="Save Level" icon={graphics.SAVE_ICON} />
+              {/* <MenuButton onPress={playtestLevel} label="Playtest" icon={graphics.PLAYER} disabled={true} /> */}
+              <MenuButton onPress={storeChanges} label="Save Changes" icon={graphics.SAVE_ICON} />
+              <MenuButton onPress={toggleToolsModal} label="Close Menu" icon={graphics.DOOR_ICON} />
             </View>
           </View>
 
         </ScrollView>
       </Animated.View>}
       {/* END MODAL */}
-
-      <View style={styles.buttonsRow}>
-        <SimpleButton onPress={() => { toggleToolsModal(); }} text="Tools & Options" main={true} />
-        <View style={{ width: normalize(15) }} />
-        <SimpleButton onPress={() => {
-          storeChanges();
-          viewCallback(PageView.MENU);
-        }} text="Save & Exit" />
-      </View>
     </SafeAreaView>
   );
 }
@@ -301,7 +313,7 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
     right: 0,
-    bottom: normalize(63), // height of buttonsRow, except slightly less for some reason?
+    bottom: 0,
     borderTopWidth: 1,
     borderBottomWidth: 1,
     borderColor: colors.MAIN_PURPLE_TRANSPARENT(0.3),
