@@ -2,14 +2,14 @@ import { useState } from "react";
 import { View, StyleSheet } from "react-native";
 import { colors, graphics } from "../Theme";
 import { eventEmitter } from "../util/events";
-import { Level, createBlankBoard } from "../util/types";
+import { UserLevel, createBlankBoard } from "../util/types";
 
 import InputCard from "../components/InputCard";
 import MenuButton from "../components/MenuButton";
 import SubpageContainer from "../components/SubpageContainer";
 
 interface Props {
-  createLevelCallback: (newLevel: Level) => void,
+  createLevelCallback: (newLevel: UserLevel) => void,
 }
 
 export default function CreateLevel({ createLevelCallback }: Props) {

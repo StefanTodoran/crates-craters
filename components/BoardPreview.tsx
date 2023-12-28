@@ -3,6 +3,7 @@ import { Dimensions } from "react-native";
 import { getSpawnPosition } from "../util/logic";
 import { Level } from "../util/types";
 import GameBoard from "./GameBoard";
+import { calcPreviewTileSize } from "../util/board";
 
 const win = Dimensions.get("window");
 
@@ -19,7 +20,7 @@ export default function BoardPreview({
   previewWidth,
   rowCorrect
 }: Props) {
-  const tileSize = calcTileSize(level.board[0].length, previewWidth);
+  const tileSize = calcPreviewTileSize(level.board[0].length, previewWidth, win);
   const previewCenter = useMemo(() => getSpawnPosition(level.board).y, [level]);
 
   let previewTop, previewBottom;
@@ -41,9 +42,4 @@ export default function BoardPreview({
       rowCorrect={rowCorrect}
     />
   );
-}
-
-function calcTileSize(tilesWidth: number, widthPercent: number) {
-  const maxWidth = (win.width * widthPercent) / tilesWidth;
-  return Math.floor(maxWidth);
 }

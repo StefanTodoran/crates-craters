@@ -9,17 +9,17 @@ import GameBoard from "../components/GameBoard";
 import SliderBar from "../components/SliderBar";
 
 import TextStyles, { normalize, sizeFromWidthPercent } from "../TextStyles";
+import { BoardTile, Direction, PageView, TileType, UserLevel } from "../util/types";
+import { cloneBoard, getSpawnPosition, validTile } from "../util/logic";
 import { colors, graphics } from "../Theme";
 import GlobalContext from "../GlobalContext";
-import { BoardTile, Direction, Level, PageView, TileType } from "../util/types";
-import { cloneBoard, getSpawnPosition, validTile } from "../util/logic";
-import { eventEmitter } from "../util/events";
+
 const win = Dimensions.get("window");
 
 interface Props {
   viewCallback: (newView: PageView) => void, // Sets the current view of the application. 
-  level: Level, // The level currently being edited. The uuid must not change.
-  levelCallback: (newState: Level) => void, // Updates the level (usually board changes).
+  level: UserLevel, // The level currently being edited. The uuid must not change.
+  levelCallback: (newState: UserLevel) => void, // Updates the level (usually board changes).
 
   playtestLevel: () => void,
   storeChanges: () => void,

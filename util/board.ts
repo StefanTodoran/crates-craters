@@ -13,7 +13,12 @@ export function createBlankBoard(w: number, h: number): Board {
   return board;
 }
 
-export function calcTileSize(boardWidth: number, boardHeight: number, window: ScaledSize) {
+export function calcPreviewTileSize(tilesWidth: number, widthPercent: number, window: ScaledSize) {
+  const maxWidth = (window.width * widthPercent) / tilesWidth;
+  return Math.floor(maxWidth);
+}
+
+export function calcBoardTileSize(boardWidth: number, boardHeight: number, window: ScaledSize) {
   const maxWidth = (window.width * 0.9) / boardWidth;
   const maxHeight = (window.height * 0.8) / boardHeight;
   return Math.floor(Math.min(maxWidth, maxHeight));

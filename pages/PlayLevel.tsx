@@ -16,7 +16,7 @@ import WinScreen from "./WinScreen";
 import { Direction, Level, PageView } from "../util/types";
 import { Game, SoundEvent, canMoveTo, doGameMove, initializeGameObj } from "../util/logic";
 import { markLevelCompleted } from "../util/loader";
-import { calcTileSize } from "../util/board";
+import { calcBoardTileSize } from "../util/board";
 const win = Dimensions.get("window");
 
 interface Props {
@@ -240,7 +240,7 @@ export default function PlayLevel({
     setGesture([up, down, left, right]);
   }
 
-  const tileSize = game ? calcTileSize(game.board[0].length, game.board.length, win) : 1;
+  const tileSize = game ? calcBoardTileSize(game.board[0].length, game.board.length, win) : 1;
   const panResponder = useMemo(
     () => PanResponder.create({
       // Ask to be the responder:

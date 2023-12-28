@@ -49,11 +49,11 @@ interface LevelBase {
   created?: Date,
 }
 
-interface OfficialLevel extends LevelBase {
+export interface OfficialLevel extends LevelBase {
   official: true,
 }
 
-interface UserLevel extends LevelBase {
+export interface UserLevel extends LevelBase {
   official: false,
   designer: string,
   created: Date,

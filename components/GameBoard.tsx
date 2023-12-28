@@ -5,7 +5,7 @@ import GlobalContext from "../GlobalContext";
 import { colors } from "../Theme";
 import { TileIcon } from "../assets/Icons";
 import { Board, BombTile, TileType } from "../util/types";
-import { calcTileSize, getIconSrc } from "../util/board";
+import { calcBoardTileSize, getIconSrc } from "../util/board";
 
 const win = Dimensions.get("window");
 
@@ -28,7 +28,7 @@ export default function GameBoard({
 
   const boardHeight = board.length;
   const boardWidth = board[0].length;
-  const tileSize = overrideTileSize ? overrideTileSize : calcTileSize(boardWidth, boardHeight, win);
+  const tileSize = overrideTileSize ? overrideTileSize : calcBoardTileSize(boardWidth, boardHeight, win);
   const useSvg = Platform.OS === "ios";
 
   function buildUpBoard() {
@@ -44,7 +44,7 @@ export default function GameBoard({
       // Not even the slightest clue why but every other row has a tiny 1px gap vertically if we don't
       // add this scuffed litte negative marginTop... React Native boggles the mind sometimes ¯\_(ツ)_/¯
       tilesBoard.push(<View key={`row<${i}>`} style={{
-        flexDirection: 'row',
+        flexDirection: "row",
         margin: 0,
         marginTop: rowCorrect ? rowCorrect : -0.01,
       }}>{row}</View>);

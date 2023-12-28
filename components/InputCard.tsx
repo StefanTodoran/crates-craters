@@ -1,10 +1,11 @@
 import { useContext } from "react";
 import { View, Text, StyleSheet } from "react-native";
-import { colors } from "../Theme";
+import { Theme, colors } from "../Theme";
 
 import InputLine from "./InputLine";
 import GlobalContext from "../GlobalContext";
 import TextStyles, { normalize } from "../TextStyles";
+import SimpleButton from "./SimpleButton";
 
 interface InputField {
   label: string,
@@ -12,25 +13,54 @@ interface InputField {
   update: (value: string) => void,
 }
 
-interface Props {
+interface PropsBase {
   title: string,
   hints?: string[],
   fields?: InputField[],
 }
 
+interface PropsWithoutButton extends PropsBase {
+  buttonText?: never,
+  buttonCallback?: never,
+  buttonDisabled?: never,
+}
+
+interface PropsWithButton extends PropsBase {
+  buttonText: string,
+  buttonCallback: () => void,
+  buttonDisabled?: boolean,
+}
+
+type Props = PropsWithoutButton | PropsWithButton;
+
+// We force this incomplete theme to be of type Theme since SimpleButton only uses MAIN_COLOR.
+const grayTheme: Theme = { MAIN_COLOR: "#8A858D" } as Theme;
+
 export default function InputCard({
   title,
   hints,
   fields,
+  buttonText,
+  buttonCallback,
+  buttonDisabled,
 }: Props) {
   const { darkMode } = useContext(GlobalContext);
 
   return (
-    <>
-      <Text style={[
-        TextStyles.subtitle(darkMode, colors.DIM_GRAY),
-        { textAlign: "center" },
-      ]}>{title}</Text>
+    <View style={styles.container}>
+      <View style={styles.titleContainer}>
+        <Text style={[
+          TextStyles.subtitle(darkMode, "#fff"),
+          { marginTop: normalize(10), marginBottom: normalize(10) },
+        ]}>{title}</Text>
+
+        {buttonText && <SimpleButton
+          text={buttonText}
+          theme={grayTheme}
+          onPress={buttonCallback}
+          disabled={buttonDisabled}
+        />}
+      </View>
 
       <View style={styles.inputContainer}>
         {fields?.map((field, idx) =>
@@ -47,11 +77,19 @@ export default function InputCard({
           {hints.map((hint, idx) => <Text key={idx} style={styles.hint}>{hint}</Text>)}
         </View>}
       </View>
-    </>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  container: {
+    borderColor: colors.DIM_GRAY,
+    borderWidth: 1,
+    borderRadius: normalize(10),
+    overflow: "hidden",
+    marginBottom: normalize(15),
+    // marginVertical: normalize(15),
+  },
   hintsContainer: {
     marginTop: 5,
     marginBottom: 15,
@@ -62,13 +100,19 @@ const styles = StyleSheet.create({
     fontFamily: "Montserrat-Regular",
     fontWeight: "normal",
   },
+  titleContainer: {
+    backgroundColor: colors.DIM_GRAY,
+    borderBottomColor: colors.DIM_GRAY,
+    borderBottomWidth: 1,
+    paddingLeft: normalize(15),
+    paddingRight: normalize(10),
+    paddingVertical: normalize(5),
+    flexDirection: "row",
+    justifyContent: "space-between"
+  },
   inputContainer: {
-    position: "relative",
-    marginBottom: 10,
-    borderColor: colors.DIM_GRAY,
-    borderWidth: 1,
-    borderRadius: 10,
     paddingHorizontal: normalize(15),
+    // position: "relative",
     // paddingBottom: normalize(15),
   },
 });

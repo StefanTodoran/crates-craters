@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { Level, PageView } from "../util/types";
+import { Level, PageView, UserLevel } from "../util/types";
 import { colors } from "../Theme";
 
 import Subpages from "../components/Subpages";
@@ -15,9 +15,9 @@ interface Props {
   viewCallback: (newView: PageView) => void,
   playLevelCallback: (uuid: string) => void,
   startEditingCallback: (uuid: string) => void,
-  editorLevelCallback: (newLevel: Level) => void,
+  editorLevelCallback: (newLevel: UserLevel) => void,
   levels: Level[],
-  editorLevel?: Level,
+  editorLevel?: UserLevel,
   elementHeight: number,
   storeElementHeightCallback: (height: number) => void,
 }

@@ -1,8 +1,8 @@
 import { Pressable, Text, Image, StyleSheet, ImageSourcePropType } from "react-native";
 import React, { useContext, useState } from "react";
 import TextStyles, { normalize } from "../TextStyles";
-import GlobalContext from "../GlobalContext";
 import { Theme, purpleTheme } from "../Theme";
+import GlobalContext from "../GlobalContext";
 
 interface Props {
   text: string,

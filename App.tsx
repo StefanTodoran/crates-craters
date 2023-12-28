@@ -5,7 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Dimensions, Animated, BackHandler, SafeAreaView, StatusBar as RNStatusBar, View, StyleSheet } from "react-native";
 
 import { getSavedSettings, parseCompressedBoardData, setData } from "./util/loader";
-import { Level, PageView } from "./util/types";
+import { Level, PageView, UserLevel } from "./util/types";
 import GlobalContext from "./GlobalContext";
 import { colors } from "./Theme";
 import { Game, initializeGameObj } from "./util/logic";
@@ -243,7 +243,7 @@ export default function App() {
 
   const [playLevel, setPlayLevel] = useState<Level>();     // The level currently being played.
   const [currentGame, setGameState] = useState<Game>();     // The game state of the level being played.
-  const [editorLevel, setEditorLevel] = useState<Level>();  // The level object being edited.
+  const [editorLevel, setEditorLevel] = useState<UserLevel>();  // The level object being edited.
 
   const changePlayLevel = useCallback((uuid: string) => {
     const levelIndex = levels.findIndex(level => level.uuid === uuid);
@@ -265,7 +265,7 @@ export default function App() {
 
   const startEditingLevel = useCallback((uuid: string) => {
     const levelIndex = levels.findIndex(level => level.uuid === uuid);
-    setEditorLevel(levels[levelIndex]);
+    setEditorLevel(levels[levelIndex] as UserLevel);
   }, [levels]);
 
   useEffect(() => { // TODO: update this method?
