@@ -241,16 +241,19 @@ export default function App() {
     NavigationBar.setBackgroundColorAsync(darkMode ? "#000" : "#fff");
   }, [darkMode]);
 
-  const [playLevel, setPlayLevel] = useState<Level>();     // The level currently being played.
-  const [currentGame, setGameState] = useState<Game>();     // The game state of the level being played.
+  const [playLevel, setPlayLevel] = useState<Level>();          // The level currently being played.
+  const [currentGame, setGameState] = useState<Game>();         // The game state of the level being played.
+  const [gameHistory, setGameHistory] = useState<Game[]>();     // The past game states, used for undoing moves.
   const [editorLevel, setEditorLevel] = useState<UserLevel>();  // The level object being edited.
 
   const changePlayLevel = useCallback((uuid: string) => {
     const levelIndex = levels.findIndex(level => level.uuid === uuid);
     const levelObject = levels[levelIndex];
     setPlayLevel(levelObject);
+
     const newGame = initializeGameObj(levels[levelIndex]);
     setGameState(newGame);
+    setGameHistory([]);
   }, [levels]);
 
   const getNextLevel = useCallback(() => {
@@ -260,6 +263,7 @@ export default function App() {
     if (nextLevel) {
       setPlayLevel(nextLevel);
       setGameState(initializeGameObj(nextLevel));
+      setGameHistory([]);
     }
   }, [levels]);
 
@@ -318,8 +322,10 @@ export default function App() {
                 viewCallback={switchView}
                 nextLevelCallback={getNextLevel}
                 gameStateCallback={setGameState}
+                gameHistoryCallback={setGameHistory}
                 level={playLevel!}
                 game={currentGame!}
+                history={gameHistory!}
                 playtest={false}
               />
             }

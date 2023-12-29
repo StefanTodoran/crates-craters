@@ -10,22 +10,26 @@ import MenuButton from "../components/MenuButton";
 import GameBoard from "../components/GameBoard";
 import Inventory from "../components/Inventory";
 import Player from "../components/Player";
-
-import { colors, graphics } from "../Theme";
 import WinScreen from "./WinScreen";
-import { Direction, Level, PageView } from "../util/types";
+
 import { Game, SoundEvent, canMoveTo, doGameMove, initializeGameObj } from "../util/logic";
+import { aStarSearch, compoundHeuristic } from "../util/search";
+import { Direction, Level, PageView } from "../util/types";
 import { markLevelCompleted } from "../util/loader";
 import { calcBoardTileSize } from "../util/board";
+import { colors, graphics } from "../Theme";
+
 const win = Dimensions.get("window");
 
 interface Props {
   viewCallback: (newView: PageView) => void, // Sets the current view of the application. 
   nextLevelCallback: (uuid: string) => void, // Request the parent update the level to the next level. 
   gameStateCallback: (newState: Game) => void, // Updates the state of the game, stored in the parent for resumeability.
+  gameHistoryCallback: (newHistory: Game[]) => void, // Updates the history of the state of the game, stored in the parent for resumeability.
 
   level: Level, // The level currently being played. 
   game: Game, // The current game state.
+  history: Game[],
   playtest: boolean, // Whether or not the play screen has been opened from the level creation menu. If so the navigation buttons should show return to level creation, not levels.
 }
 
@@ -51,11 +55,18 @@ export default function PlayLevel({
   viewCallback,
   nextLevelCallback,
   gameStateCallback,
+  gameHistoryCallback,
   level,
   game,
+  history,
   playtest,
 }: Props) {
   const { darkMode, dragSensitivity, doubleTapDelay, playAudio } = useContext(GlobalContext);
+
+  function updateGameState(newState: Game) {
+    gameStateCallback(newState);
+    gameHistoryCallback([...history, game]);
+  }
 
   // Set up for sounds, most of this is just copied from the very
   // limited expo-av documentation so don't mess with it.
@@ -67,32 +78,32 @@ export default function PlayLevel({
   const [boomSound, setBoomSound] = useState<Sound>();
 
   async function playMoveSound() {
-    const { sound } = await Audio.Sound.createAsync(require('../assets/audio/move.wav'));
+    const { sound } = await Audio.Sound.createAsync(require("../assets/audio/move.wav"));
     setMoveSound(sound);
     await sound.playAsync();
   }
   async function playPushSound() {
-    const { sound } = await Audio.Sound.createAsync(require('../assets/audio/push.wav'));
+    const { sound } = await Audio.Sound.createAsync(require("../assets/audio/push.wav"));
     setPushSound(sound);
     await sound.playAsync();
   }
   async function playFillSound() {
-    const { sound } = await Audio.Sound.createAsync(require('../assets/audio/fill.wav'));
+    const { sound } = await Audio.Sound.createAsync(require("../assets/audio/fill.wav"));
     setFillSound(sound);
     await sound.playAsync();
   }
   async function playCoinSound() {
-    const { sound } = await Audio.Sound.createAsync(require('../assets/audio/coin.wav'));
+    const { sound } = await Audio.Sound.createAsync(require("../assets/audio/coin.wav"));
     setCoinSound(sound);
     await sound.playAsync();
   }
   async function playDoorSound() {
-    const { sound } = await Audio.Sound.createAsync(require('../assets/audio/door.wav'));
+    const { sound } = await Audio.Sound.createAsync(require("../assets/audio/door.wav"));
     setDoorSound(sound);
     await sound.playAsync();
   }
   async function playExplosionSound() {
-    const { sound } = await Audio.Sound.createAsync(require('../assets/audio/explosion.wav'));
+    const { sound } = await Audio.Sound.createAsync(require("../assets/audio/explosion.wav"));
     setBoomSound(sound);
     await sound.playAsync();
   }
@@ -184,7 +195,7 @@ export default function PlayLevel({
     }
 
     setGesture([false, false, false, false]);
-    gameStateCallback(new_state);
+    updateGameState(new_state);
   }
 
   function onGestureMove(_evt: GestureResponderEvent, gestureState: PanResponderGestureState) {
@@ -282,7 +293,8 @@ export default function PlayLevel({
               for (let i = 0; i < path.length; i++) {
                 current = doGameMove(current, path[i]);
               }
-              gameStateCallback(current);
+              
+              updateGameState(current);
               if (playAudio) playMoveSound();
             }
           }, 750);
@@ -314,7 +326,16 @@ export default function PlayLevel({
 
   function restartLevel() {
     gameStateCallback(initializeGameObj(level));
+    gameHistoryCallback([]);
     toggleModal();
+  }
+
+  function undoMove() {
+    const newHistory = [...history];
+    const prevState = newHistory.pop() as Game;
+
+    gameStateCallback(prevState);
+    gameHistoryCallback(newHistory);
   }
 
   function toggleModal() {
@@ -347,24 +368,33 @@ export default function PlayLevel({
             icon={graphics.BOMB}
             theme={colors.RED_THEME}
             onPress={restartLevel}
-            />
+          />
           <MenuButton
             label="Undo Move"
             icon={graphics.ONE_WAY_LEFT}
             theme={colors.BLUE_THEME}
-            onPress={restartLevel}
-            />
+            onPress={undoMove}
+            disabled={history.length === 0}
+          />
           <MenuButton
             label="Level Select"
             icon={graphics.DOOR_ICON}
             onPress={() => viewCallback(PageView.LEVELS)}
-            />
+          />
           <MenuButton
             label="Resume Game"
             icon={graphics.KEY}
             theme={colors.GREEN_THEME}
             onPress={toggleModal}
           />
+          {/* <MenuButton
+            label="Get Hint"
+            icon={graphics.PLAYER}
+            // theme={colors.GREEN_THEME}
+            onPress={() => {
+              const path = aStarSearch(game, compoundHeuristic);
+            }}
+          /> */}
         </Animated.View>}
         <Animated.View style={{ flexDirection: "row", height: normalize(50), opacity: anim.interpolate({ inputRange: [0, 1], outputRange: [1, 0] }) }}>
           {!game.won && <SimpleButton onPress={toggleModal} text="Pause Menu" />}

@@ -1,4 +1,4 @@
-import Queue from "../components/Queue";
+import Queue from "./Queue";
 import { OneWayTile, Direction, TileType, Board, SimpleTile, Level, BoardTile } from "./types";
 
 export enum SoundEvent {
@@ -7,13 +7,18 @@ export enum SoundEvent {
   FILL,
 }
 
+export interface Position {
+  x: number,
+  y: number,
+}
+
 export interface Game {
   uuid: string,
   name: string,
   board: Board,
   // official: boolean,
 
-  player: { x: number, y: number }
+  player: Position,
   maxCoins: number, // The number of coins needed to complete the level.
   coins: number,
   keys: number,
@@ -103,9 +108,9 @@ export function boundTileAt(yPos: number, xPos: number, board: Board): BoardTile
 /**
  * Returns the player spawn position in the given level.
  * @param {Board} board The board[][] you wish to search. 
- * @returns Returns a position of the form {y: number, x: number}
+ * @returns {Position} Returns a position of the form {y: number, x: number}
  */
-export function getSpawnPosition(board: Board) {
+export function getSpawnPosition(board: Board): Position {
   const dimensions = [board.length, board[0].length];
 
   for (let i = 0; i < dimensions[0]; i++) {
@@ -146,9 +151,6 @@ const crateTile: SimpleTile = { id: TileType.CRATE };
  * If there is no such path, returns false. If there is, returns a list of string
  * instructions for reaching the destination.
  * 
- * @param {GameObj} game_obj The current game state object, used for player position and board state
- * @param {number} tileX The X index of the destination tile 
- * @param {number} tileY The Y index of the destination tile
  * @returns A path to the destination position, or null if there is no valid path.
  */
 export function canMoveTo(game: Game, tileX: number, tileY: number): Direction[] | null {
@@ -347,7 +349,6 @@ function winCondition(next: Game) {
 
 /**
  * Creates a new game object for the given level.
- * @param uuid The unique identifier of level to be cloned for the initial board.
  * @returns A Game object properly set up for game start.
  */
 export function initializeGameObj(level: Level): Game {

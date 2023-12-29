@@ -18,17 +18,18 @@
     "expo-navigation-bar": "~2.1.1",
     "expo-status-bar": "~1.4.2",
     "firebase": "^10.6.0",
+    "heapify": "^0.6.0",
     "react": "18.2.0",
     "react-native": "0.71.14",
     "react-native-svg": "13.4.0"
   },
   "devDependencies": {
-    "expo-dev-client": "~2.2.1",
-    "@types/react": "~18.0.27",
     "@babel/core": "^7.12.9",
     "@types/firebase": "^3.2.1",
+    "@types/react": "~18.0.27",
     "eas-cli": "^3.7.2",
     "expo-cli": "^6.3.2",
+    "expo-dev-client": "~2.2.1",
     "typescript": "^4.9.4"
   },
   "private": true,
