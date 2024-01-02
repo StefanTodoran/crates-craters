@@ -22,9 +22,13 @@
     "allowUnreachableCode": false,
     "removeComments": true,
     "checkJs": true,
+
+    "paths": {
+      "@firebase/auth": ["./node_modules/@firebase/auth/dist/index.rn.d.ts"],
+    },
   },
-  "exclude": [
-    "node_modules"
-  ],
+  // "exclude": [
+  //   "node_modules"
+  // ],
   "extends": "expo/tsconfig.base"
 }

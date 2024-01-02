@@ -16,22 +16,70 @@ import {
 } from "firebase/firestore";
 import { db } from "./firebase";
 
+import { getData, metadataKeys, multiStoreLevels, parseCompressedBoardData, setData } from "./loader";
+import { OfficialLevel } from "./types";
+
 // ======================== \\
 // DOCUMENT TYPE INTERFACES \\
 
-export interface OfficialLevel {
+interface MetadataDocument {
+  officialLevelsUpdated: Timestamp,
+}
+
+export interface OfficialLevelDocument {
+  id: string,
   name: string,
   board: string,
   order: number,
 }
 
-export interface UserLevel {
+export interface UserLevelDocument {
+  id: string,
   name: string,
   board: string,
   user: string,
   created: Timestamp,
   likes: number,
   downloads: number,
+}
+
+// ==================== \\
+// HIGH LEVEL FUNCTIONS \\
+
+export async function checkForOfficialLevelUpdates() {
+  console.log("Checking for updates...");
+  const metadata: MetadataDocument = await getSpecificEntry("metadata", "metadata");
+  const updated: Timestamp = await getData(metadataKeys.lastUpdatedOfficialLevels);
+  
+  if (!updated || !metadata || updated.seconds !== metadata.officialLevelsUpdated.seconds) {
+    console.log("Official level updates found!");
+    const levels = await getOfficialLevels();
+    multiStoreLevels(levels);
+    setData(metadataKeys.lastUpdatedOfficialLevels, metadata.officialLevelsUpdated);
+  }
+}
+
+export async function getOfficialLevels() {
+  const rawLevels: OfficialLevelDocument[] = await getAllEntries("officialLevels");
+  const parsedLevels: OfficialLevel[] = [];
+
+  for (let i = 0; i < rawLevels.length; i++) {
+    const rawLevel = rawLevels[i];
+    const existingLevel: OfficialLevel = await getData(rawLevel.id);
+    
+    const updatedLevel: OfficialLevel = {
+      uuid: rawLevel.id,
+      name: rawLevel.name,
+      board: parseCompressedBoardData(rawLevel.board),
+      completed: existingLevel?.completed,
+      official: true,
+      order: rawLevel.order,
+    };
+
+    parsedLevels.push(updatedLevel);
+  }
+
+  return parsedLevels;
 }
 
 // ========================== \\

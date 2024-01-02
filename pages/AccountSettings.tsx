@@ -1,4 +1,4 @@
-import { Text } from "react-native";
+import { Text, View } from "react-native";
 import React, { useMemo } from "react";
 import { colors } from "../Theme";
 
@@ -12,6 +12,8 @@ import AboutIcon from "../assets/main_theme/about.png";
 import ProfileIcon from "../assets/main_theme/profile.png";
 import Subpages from "../components/Subpages";
 import TextStyles from "../TextStyles";
+import MenuButton from "../components/MenuButton";
+import { clearStorage } from "../util/loader";
 
 interface Props {
   darkModeCallback: () => void,
@@ -36,9 +38,13 @@ export default function AccountSettings({
         setTapDelayCallback={setTapDelayCallback}
       />,
       <About />,
-      <Text style={[TextStyles.subtitle(false), { color: colors.GREEN_THEME.MAIN_COLOR }]}>
-        Coming Soon
-      </Text>,
+      <View>
+        <Text style={[TextStyles.subtitle(false), { color: colors.GREEN_THEME.MAIN_COLOR }]}>
+          Coming Soon
+        </Text>
+
+        <MenuButton label="Clear Storage" onPress={clearStorage}/>
+      </View>,
     ];
   }, []);
 
@@ -68,6 +74,6 @@ export default function AccountSettings({
   }, []);
 
   return (
-    <Subpages pageComponents={pageComponents} pageTabs={pageTabs}/>
+    <Subpages pageComponents={pageComponents} pageTabs={pageTabs} />
   );
 }

@@ -7,6 +7,7 @@ import { UserLevel, createBlankBoard } from "../util/types";
 import InputCard from "../components/InputCard";
 import MenuButton from "../components/MenuButton";
 import SubpageContainer from "../components/SubpageContainer";
+import { generateUUID } from "../util/loader";
 
 interface Props {
   createLevelCallback: (newLevel: UserLevel) => void,
@@ -49,7 +50,7 @@ export default function CreateLevel({ createLevelCallback }: Props) {
           onPress={() => {
             createLevelCallback({
               name: levelTitle,
-              uuid: new Date().getTime().toString(),
+              uuid: generateUUID(),
               board: createBlankBoard(),
               completed: false,
               official: false,

@@ -37,9 +37,16 @@ function cloneGameObj(game: Game): Game {
 
 export function cloneBoard(board: Board) {
   const newBoard = [];
+
   for (let i = 0; i < board.length; i++) {
-    newBoard[i] = [...board[i]];
+    const newRow = [];
+    for (let j = 0; j < board[i].length; j++) {
+      const newTile = { ...board[i][j] };
+      newRow.push(newTile);
+    }
+    newBoard[i] = newRow;
   }
+
   return newBoard;
 }
 
@@ -236,7 +243,7 @@ export function doGameMove(game: Game, move: Direction): Game {
     moveTo.x += 1;
     oneFurther.x += 2;
   }
-  
+
   next.soundEvent = undefined; // Clear the previous sound event.
   if (!validTile(moveTo.y, moveTo.x, next.board)) {
     // The user attempted to move outside the board.
@@ -321,7 +328,7 @@ export function doGameMove(game: Game, move: Direction): Game {
             if (boundTileAt(i + 1, j, next.board).id === TileType.CRATE) { next.board[i + 1][j] = littleExplosion; }
             if (boundTileAt(i, j - 1, next.board).id === TileType.CRATE) { next.board[i][j - 1] = littleExplosion; }
             if (boundTileAt(i, j + 1, next.board).id === TileType.CRATE) { next.board[i][j + 1] = littleExplosion; }
-            
+
             next.board[i][j] = { id: TileType.EXPLOSION };
             next.soundEvent = SoundEvent.EXPLOSION;
           }

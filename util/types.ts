@@ -51,6 +51,7 @@ interface LevelBase {
 
 export interface OfficialLevel extends LevelBase {
   official: true,
+  order: number,
 }
 
 export interface UserLevel extends LevelBase {

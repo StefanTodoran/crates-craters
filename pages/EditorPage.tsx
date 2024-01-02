@@ -15,7 +15,7 @@ interface Props {
   viewCallback: (newView: PageView) => void,
   playLevelCallback: (uuid: string) => void,
   startEditingCallback: (uuid: string) => void,
-  editorLevelCallback: (newLevel: UserLevel) => void,
+  createNewLevelCallback: (newLevel: UserLevel) => void,
   levels: Level[],
   editorLevel?: UserLevel,
   elementHeight: number,
@@ -26,7 +26,7 @@ export default function EditorPage({
   viewCallback,
   playLevelCallback,
   startEditingCallback,
-  editorLevelCallback,
+  createNewLevelCallback,
   levels,
   editorLevel,
   elementHeight,
@@ -46,7 +46,7 @@ export default function EditorPage({
 
     <ManageLevel level={editorLevel!} viewCallback={viewCallback}/>, // The button to switch to this subpage is disabled if editorLevel is undefined.
 
-    <CreateLevel createLevelCallback={editorLevelCallback} />,
+    <CreateLevel createLevelCallback={createNewLevelCallback} />,
   ];
 
   const pageTabs = useMemo(() => {
