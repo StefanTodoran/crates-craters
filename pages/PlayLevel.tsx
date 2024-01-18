@@ -387,14 +387,14 @@ export default function PlayLevel({
             theme={colors.GREEN_THEME}
             onPress={toggleModal}
           />
-          {/* <MenuButton
+          <MenuButton
             label="Get Hint"
             icon={graphics.PLAYER}
             // theme={colors.GREEN_THEME}
             onPress={() => {
               const path = aStarSearch(game, compoundHeuristic);
             }}
-          /> */}
+          />
         </Animated.View>}
         <Animated.View style={{ flexDirection: "row", height: normalize(50), opacity: anim.interpolate({ inputRange: [0, 1], outputRange: [1, 0] }) }}>
           {!game.won && <SimpleButton onPress={toggleModal} text="Pause Menu" />}

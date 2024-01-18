@@ -33,7 +33,7 @@ export interface BombTile {
 }
 
 export interface SimpleTile {
-  id: Exclude<TileType, TileType.ONEWAY | TileType.BOMB>
+  id: Exclude<TileType, TileType.ONEWAY | TileType.BOMB>,
 }
 
 export type BoardTile = SimpleTile | OneWayTile | BombTile;

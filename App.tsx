@@ -63,7 +63,7 @@ export default function App() {
 
   useEffect(() => {
     // TODO: REMOVE ME!
-    debugDump();
+    // debugDump();
   }, [view]);
   
   const [levels, setLevels] = useState<Level[]>([]);
