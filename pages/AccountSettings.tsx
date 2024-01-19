@@ -12,8 +12,6 @@ import AboutIcon from "../assets/main_theme/about.png";
 import ProfileIcon from "../assets/main_theme/profile.png";
 import Subpages from "../components/Subpages";
 import TextStyles from "../TextStyles";
-import MenuButton from "../components/MenuButton";
-import { clearStorage } from "../util/loader";
 
 interface Props {
   darkModeCallback: () => void,
@@ -42,8 +40,6 @@ export default function AccountSettings({
         <Text style={[TextStyles.subtitle(false), { color: colors.GREEN_THEME.MAIN_COLOR }]}>
           Coming Soon
         </Text>
-
-        <MenuButton label="Clear Storage" onPress={clearStorage}/>
       </View>,
     ];
   }, []);

@@ -4,7 +4,6 @@ import { Level, PageView } from "../util/types";
 import { eventEmitter } from "../util/events";
 import GlobalContext from "../GlobalContext";
 import LevelCard from "../components/LevelCard";
-import { checkForOfficialLevelUpdates } from "../util/database";
 
 interface Props {
   viewCallback: (newView: PageView) => void, // Sets the current view of the application.
@@ -81,9 +80,9 @@ function LevelSelectBase({
           overScrollMode="never"
           showsVerticalScrollIndicator={false}
           data={levels}
-          // refreshing={false}
-          // onRefresh={mode === PageView.LEVELS ? checkForOfficialLevelUpdates : undefined}
-          // For refresh we need to remember to update App.tsx state, not just AsyncStorage!
+          // refreshing={refreshing}
+          // onRefresh={() => {}}
+          // onRefresh={mode === PageView.LEVELS ? doRefresh : undefined}
           renderItem={({ item, index }) => {
             const playCallback = () => openLevel(index);
             const editCallback = () => editLevel(index);

@@ -49,23 +49,28 @@ export interface UserLevelDocument {
 export async function checkForOfficialLevelUpdates() {
   console.log("Checking for updates...");
   const metadata: MetadataDocument = await getSpecificEntry("metadata", "metadata");
-  const updated: Timestamp = await getData(metadataKeys.lastUpdatedOfficialLevels);
+  const updated: Timestamp = getData(metadataKeys.lastUpdatedOfficialLevels);
   
+  if (updated) {
+    const printable = new Timestamp(updated.seconds, updated.nanoseconds).toDate().toDateString();
+    console.log(`Last updated: ${printable}`);
+  }
+
   if (!updated || !metadata || updated.seconds !== metadata.officialLevelsUpdated.seconds) {
-    console.log("Official level updates found!");
-    const levels = await getOfficialLevels();
+    console.log("Official level updates available!");
+    const levels = await fetchOfficialLevelsFromServer();
     multiStoreLevels(levels);
     setData(metadataKeys.lastUpdatedOfficialLevels, metadata.officialLevelsUpdated);
   }
 }
 
-export async function getOfficialLevels() {
+export async function fetchOfficialLevelsFromServer() {
   const rawLevels: OfficialLevelDocument[] = await getAllEntries("officialLevels");
   const parsedLevels: OfficialLevel[] = [];
 
   for (let i = 0; i < rawLevels.length; i++) {
     const rawLevel = rawLevels[i];
-    const existingLevel: OfficialLevel = await getData(rawLevel.id);
+    const existingLevel: OfficialLevel = getData(rawLevel.id);
     
     const updatedLevel: OfficialLevel = {
       uuid: rawLevel.id,

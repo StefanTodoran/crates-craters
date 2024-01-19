@@ -17,17 +17,15 @@ export function getSavedSettings() {
   return settings;
 }
 
-export function importStoredLevels() {
+export function getStoredLevels() {
   const olKeys: string[] = getData(metadataKeys.officialLevelKeys) || [];
   const clKeys: string[] = getData(metadataKeys.customLevelKeys) || [];
   const keys = [...olKeys, ...clKeys];
 
-  const data = multiGetData(keys);
   const levels: Level[] = [];
-
-  Object.keys(data).forEach(key => {
-    const value = data[key];
-    levels.push(value);
+  keys.forEach(key => {
+    const level = getData(key) as Level;
+    levels.push(level);
   });
 
   levels.sort((a, b) => {
@@ -44,7 +42,7 @@ export function setData(key: string, value: any) {
     storage.set(key, jsonValue);
     return true;
   } catch (err) {
-    console.error("Error saving to AsyncStorage:", err);
+    console.error("Error completing setData command:", err);
     return false;
   }
 }
@@ -84,7 +82,7 @@ export function multiStoreLevels(levels: Level[]) {
     storage.set(metadataKeys.officialLevelKeys, keys);
     return true;
   } catch (err) {
-    console.error("Error saving to AsyncStorage:", err);
+    console.error("Error completing multiStoreLevels command:", err);
     return false;
   }
 }
@@ -94,7 +92,7 @@ export function getData(key: string) {
   try {
     rawValue = storage.getString(key);
   } catch (err) {
-    console.error("Error reading from AsyncStorage:", err);
+    console.error("Error completing getData command:", err);
     return undefined;
   }
 
@@ -106,7 +104,7 @@ export function multiGetData(keys: string[]) {
   try {
     rawValues = keys.map(key => storage.getString(key));
   } catch (err) {
-    console.error("Error reading from AsyncStorage:", err);
+    console.error("Error completing multiGetData command:", err);
     return {};
   }
 
@@ -203,7 +201,7 @@ export function generateUUID() {
   return (new Date().getTime().toString() + Math.random()).replace(".", "");
 }
 
-const test: Board[] = [ // 8 x 14
+const allLevels: Board[] = [ // 8 x 14
   [
     [{ id: 0 }, { id: 0 }, { id: 0 }, { id: 0 }, { id: 0 }, { id: 0 }, { id: 0 }, { id: 0 }],
     [{ id: 0 }, { id: 7 }, { id: 0 }, { id: 0 }, { id: 0 }, { id: 0 }, { id: 0 }, { id: 0 }],
@@ -543,7 +541,7 @@ const test: Board[] = [ // 8 x 14
 ];
 
 let i = 0;
-test.forEach(lvl => {
+allLevels.forEach(lvl => {
   // console.log(lvl);
   console.log(`\n\n${i}\n`);
   console.log(compressBoardData(lvl));

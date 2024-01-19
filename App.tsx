@@ -4,7 +4,7 @@ import * as NavigationBar from "expo-navigation-bar";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Dimensions, Animated, BackHandler, SafeAreaView, StatusBar as RNStatusBar, View, StyleSheet } from "react-native";
 
-import { createLevel, getSavedSettings, importStoredLevels, setData } from "./util/loader";
+import { createLevel, getData, getSavedSettings, getStoredLevels, setData } from "./util/loader";
 import { checkForOfficialLevelUpdates } from "./util/database";
 import { Level, PageView, UserLevel } from "./util/types";
 import { Game, initializeGameObj } from "./util/logic";
@@ -63,7 +63,9 @@ export default function App() {
   
   const [levels, setLevels] = useState<Level[]>([]);
   useEffect(() => {
-    checkForOfficialLevelUpdates().then(importStoredLevels).then(setLevels);
+    checkForOfficialLevelUpdates().then(() => {
+      setLevels(getStoredLevels());
+    });
   }, []);
 
   // We can't just await data from storage to set the default app state values,
@@ -126,38 +128,37 @@ export default function App() {
   const [editorLevel, setEditorLevel] = useState<UserLevel>();  // The level object being edited.
 
   const changePlayLevel = useCallback((uuid: string) => {
-    const levelIndex = levels.findIndex(level => level.uuid === uuid);
-    const levelObject = levels[levelIndex];
+    const levelObject = getData(uuid);
     setPlayLevel(levelObject);
 
-    const newGame = initializeGameObj(levels[levelIndex]);
+    const newGame = initializeGameObj(levelObject);
     setGameState(newGame);
     setGameHistory([]);
-  }, [levels]);
+  }, []);
 
   const getNextLevel = useCallback(() => {
-    const nextIndex = levels.findIndex(level => level.uuid === playLevel!.uuid);
-    const nextLevel = levels[nextIndex + 1];
+    const nextIndex = levels.findIndex(level => level.uuid === playLevel!.uuid) + 1;
+    const nextLevel = levels[nextIndex];
 
     if (nextLevel) {
       setPlayLevel(nextLevel);
       setGameState(initializeGameObj(nextLevel));
       setGameHistory([]);
     }
-  }, [playLevel, levels]);
+  }, [levels, playLevel]);
 
   const startEditingLevel = useCallback((uuid: string) => {
-    const levelIndex = levels.findIndex(level => level.uuid === uuid);
-    setEditorLevel(levels[levelIndex] as UserLevel);
-  }, [levels]);
+    const levelObject = getData(uuid);
+    setEditorLevel(levelObject);
+  }, []);
 
   const createNewLevel = useCallback((level: UserLevel) => {
     setEditorLevel(level);
     createLevel(level);
     
-    const importedLevels = importStoredLevels();
-    setLevels(importedLevels);
-  }, [levels]);
+    const levels = getStoredLevels();
+    setLevels(levels);
+  }, []);
 
   useEffect(() => { // TODO: update this method?
     const backAction = () => {
@@ -177,7 +178,7 @@ export default function App() {
 
   if (!fontsLoaded) return <></>;
   return (
-    <GlobalContext.Provider value={{ darkMode, dragSensitivity, doubleTapDelay, playAudio, levels }}>
+    <GlobalContext.Provider value={{ darkMode, dragSensitivity, doubleTapDelay, playAudio }}>
       <SafeAreaView style={{ flex: 1 }}>
 
         <Menu openPage={switchView} />
@@ -196,7 +197,7 @@ export default function App() {
                 viewCallback={switchView}
                 playLevelCallback={changePlayLevel}
                 // editorLevelCallback={startEditingLevel}
-                levels={levels.filter(level => level.official)}
+                levels={levels.filter(ref => ref.official)}
                 scrollTo={!currentGame?.won ? playLevel?.uuid : undefined}
                 elementHeight={levelElementHeight}
                 storeElementHeightCallback={setElementHeight}
@@ -223,7 +224,7 @@ export default function App() {
                 playLevelCallback={changePlayLevel}
                 startEditingCallback={startEditingLevel}
                 createNewLevelCallback={createNewLevel}
-                levels={levels.filter(level => !level.official)} // TODO: and level.designer === the current user
+                levels={levels.filter(ref => !ref.official)} // TODO: and level.designer === the current user
                 editorLevel={editorLevel}
                 elementHeight={levelElementHeight}
                 storeElementHeightCallback={setElementHeight}
