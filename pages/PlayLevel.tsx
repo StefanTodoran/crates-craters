@@ -136,7 +136,7 @@ export default function PlayLevel({
   useEffect(() => {
     handleGesture();
     panResponderEnabled.current = !game.won;
-    if (game.won) markLevelCompleted(game.uuid);
+    if (game.won && !level.completed) markLevelCompleted(game.uuid);
   }, [gesture, game]);
 
   // More player input state, we use these to keep track of double taps. We need to know

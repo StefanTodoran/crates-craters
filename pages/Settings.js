@@ -1,5 +1,5 @@
 import { StyleSheet, Text, View } from "react-native";
-import React, { useContext, useEffect, useRef, useState } from "react";
+import React, { useContext, useState } from "react";
 import { colors, graphics } from "../Theme";
 import TextStyles, { normalize } from "../TextStyles";
 import GlobalContext from "../GlobalContext";
@@ -7,6 +7,7 @@ import GlobalContext from "../GlobalContext";
 import SubpageContainer from "../components/SubpageContainer";
 import MenuButton from "../components/MenuButton";
 import SliderBar from "../components/SliderBar";
+import { useOnUnmount } from "../util/hooks";
 
 /**
  * @typedef {object} Props
@@ -31,28 +32,14 @@ export default function Settings({
   const [newDragSens, setNewDragSens] = useState(dragSensitivity);
   const [newTapDelay, setNewTapDelay] = useState(doubleTapDelay);
 
-  const updateSettings = useRef(() => {});
+  function updateSettings() {
+    // We don't update useContext directly since it is quite slow,
+    // instead we batch changes on component unmount.
+    setSensitivityCallback(newDragSens);
+    setTapDelayCallback(newTapDelay);
+  }
 
-  useEffect(() => {
-    updateSettings.current = () => {
-      // Anything in here is fired on component unmount.
-      // We don't update useContext directly since it is quite slow.
-      // The reason we don't just return this cleanup function in the
-      // useEffect below is that newDragSens and newTapDelay wouldn't 
-      // update. But we also can't return this function in this 
-      // useEffect or this slow function would happen every time state 
-      // changes, defeating the whole purpose.
-
-      setSensitivityCallback(newDragSens);
-      setTapDelayCallback(newTapDelay);
-    }
-  }, [newDragSens, newTapDelay]);
-
-  useEffect(() => {
-    return () => {
-      updateSettings.current();
-    }
-  }, []);
+  useOnUnmount(updateSettings, [newDragSens, newTapDelay]);
 
   return (
     <SubpageContainer center>

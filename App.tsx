@@ -4,10 +4,11 @@ import * as NavigationBar from "expo-navigation-bar";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Dimensions, Animated, BackHandler, SafeAreaView, StatusBar as RNStatusBar, View, StyleSheet } from "react-native";
 
-import { createLevel, getData, getSavedSettings, getStoredLevels, setData } from "./util/loader";
+import { createLevel, getData, getSavedSettings, getStoredLevels, setData, updateLevel } from "./util/loader";
 import { checkForOfficialLevelUpdates } from "./util/database";
 import { Level, PageView, UserLevel } from "./util/types";
 import { Game, initializeGameObj } from "./util/logic";
+import { eventEmitter } from "./util/events";
 import GlobalContext from "./GlobalContext";
 import { colors } from "./Theme";
 
@@ -62,10 +63,28 @@ export default function App() {
   }, [view]);
   
   const [levels, setLevels] = useState<Level[]>([]);
+  const syncLevelStateWithStorage = useRef((_uuid?: string) => {});
+
   useEffect(() => {
-    checkForOfficialLevelUpdates().then(() => {
-      setLevels(getStoredLevels());
-    });
+    syncLevelStateWithStorage.current = (uuid?: string) => {
+      if (uuid) {
+        console.log(`Syncing level ${uuid} with MMKV storage.`);
+        const updatedLevel = getData(uuid);
+        const levelIndex = levels.findIndex(level => level.uuid === updatedLevel.uuid);
+        levels[levelIndex] = updatedLevel;
+      } else {
+        console.log("Syncing level state with MMKV storage.");
+        setLevels(getStoredLevels());
+      }
+    }
+  }, [levels, setLevels]);
+
+  useEffect(() => {
+    checkForOfficialLevelUpdates().then(() => syncLevelStateWithStorage.current());
+    
+    const handleSyncRequest = (event: CustomEvent) => syncLevelStateWithStorage.current(event.detail);
+    const listener = eventEmitter.addListener("doStateStorageSync", handleSyncRequest);
+    return () => listener.remove();
   }, []);
 
   // We can't just await data from storage to set the default app state values,
@@ -92,8 +111,8 @@ export default function App() {
   // the setting writing useEffect will trigger on first render).
   const didReadSettings = useRef(false);
 
-  async function readSettingsFromStorage() {
-    const settings = await getSavedSettings();
+  function readSettingsFromStorage() {
+    const settings = getSavedSettings();
 
     setDarkMode(settings.darkMode);
     setAudioMode(settings.playAudio);
@@ -237,7 +256,7 @@ export default function App() {
                 level={editorLevel!}
                 levelCallback={setEditorLevel}
                 playtestLevel={() => { }}
-                storeChanges={() => { }}
+                storeChanges={() => updateLevel(editorLevel!)}
               />
             }
 

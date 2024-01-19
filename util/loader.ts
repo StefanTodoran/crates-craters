@@ -1,6 +1,7 @@
 import { Board, BoardTile, BombTile, Level, OfficialLevel, OneWayTile, TileType, UserLevel } from "./types";
 import { defaultSettings } from "../GlobalContext";
 import { MMKV } from "react-native-mmkv";
+import { eventEmitter } from "./events";
 
 export const storage = new MMKV();
 const settingsKeys = Object.keys(defaultSettings);
@@ -53,6 +54,7 @@ export function createLevel(level: UserLevel) {
   const customLevelKeys = getData(metadataKeys.customLevelKeys) || [];
   customLevelKeys.push(level.uuid);
   setData(metadataKeys.customLevelKeys, customLevelKeys);
+  eventEmitter.emit("doStateStorageSync", { detail: level.uuid });
 }
 
 export function updateLevel(updatedLevel: UserLevel) {
@@ -60,7 +62,7 @@ export function updateLevel(updatedLevel: UserLevel) {
 
   if (!existingLevel) {
     console.error("Attempted to update non-existent level: " + updatedLevel.uuid);
-    return false;
+    return;
   }
 
   const level: Level = {
@@ -69,7 +71,8 @@ export function updateLevel(updatedLevel: UserLevel) {
     completed: false,
   };
 
-  return setData(level.uuid, level);
+  setData(level.uuid, level);
+  eventEmitter.emit("doStateStorageSync", { detail: level.uuid });
 }
 
 export function multiStoreLevels(levels: Level[]) {
@@ -120,9 +123,9 @@ export function multiGetData(keys: string[]) {
 
 export function markLevelCompleted(uuid: string) {
   const level = getData(uuid) as Level;
-  if (!level) return; // TODO: remove this, the case should not exit but we aren't storing levels to local storage yet!
   level.completed = true;
   setData(uuid, level);
+  eventEmitter.emit("doStateStorageSync", { detail: uuid });
 }
 
 const split = {
@@ -540,13 +543,13 @@ const allLevels: Board[] = [ // 8 x 14
   ],
 ];
 
-let i = 0;
-allLevels.forEach(lvl => {
-  // console.log(lvl);
-  console.log(`\n\n${i}\n`);
-  console.log(compressBoardData(lvl));
-  i++;
-});
+// let i = 0;
+// allLevels.forEach(lvl => {
+//   // console.log(lvl);
+//   console.log(`\n\n${i}\n`);
+//   console.log(compressBoardData(lvl));
+//   i++;
+// });
 
 // LEVEL IDEAS:
 // Pesky Coin (coins blocking crates)
