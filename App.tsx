@@ -4,7 +4,7 @@ import * as NavigationBar from "expo-navigation-bar";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Dimensions, Animated, BackHandler, SafeAreaView, StatusBar as RNStatusBar, View, StyleSheet } from "react-native";
 
-import { createLevel, debugDump, getSavedSettings, importStoredLevels, parseCompressedBoardData, setData } from "./util/loader";
+import { createLevel, getSavedSettings, importStoredLevels, setData } from "./util/loader";
 import { checkForOfficialLevelUpdates } from "./util/database";
 import { Level, PageView, UserLevel } from "./util/types";
 import { Game, initializeGameObj } from "./util/logic";
@@ -59,11 +59,6 @@ export default function App() {
         setAnimTo(1);
       });
     }
-  }, [view]);
-
-  useEffect(() => {
-    // TODO: REMOVE ME!
-    // debugDump();
   }, [view]);
   
   const [levels, setLevels] = useState<Level[]>([]);
@@ -159,7 +154,9 @@ export default function App() {
   const createNewLevel = useCallback((level: UserLevel) => {
     setEditorLevel(level);
     createLevel(level);
-    importStoredLevels().then(setLevels);
+    
+    const importedLevels = importStoredLevels();
+    setLevels(importedLevels);
   }, [levels]);
 
   useEffect(() => { // TODO: update this method?

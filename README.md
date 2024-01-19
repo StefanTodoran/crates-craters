@@ -167,3 +167,5 @@ Built with JavaScript and React Native, Crates and Craters is a single player pu
 * Design and add many, many more levels, perhaps with new tile types
 * Create a proper tutorial? as opposed to simply an easy level
 * Research expo bare workflow to potentially integrate native code like MMKV
+
+<!-- [![runs with Expo Go](https://img.shields.io/badge/Runs%20with%20Expo%20Go-000.svg?style=flat-square&logo=EXPO&labelColor=f3f3f3&logoColor=000)](https://expo.dev/client) -->

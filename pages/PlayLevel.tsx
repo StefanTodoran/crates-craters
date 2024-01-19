@@ -13,7 +13,7 @@ import Player from "../components/Player";
 import WinScreen from "./WinScreen";
 
 import { Game, SoundEvent, canMoveTo, doGameMove, initializeGameObj } from "../util/logic";
-import { aStarSearch, compoundHeuristic } from "../util/search";
+// import { aStarSearch, compoundHeuristic } from "../util/search";
 import { Direction, Level, PageView } from "../util/types";
 import { markLevelCompleted } from "../util/loader";
 import { calcBoardTileSize } from "../util/board";
@@ -392,7 +392,7 @@ export default function PlayLevel({
             icon={graphics.PLAYER}
             // theme={colors.GREEN_THEME}
             onPress={() => {
-              const path = aStarSearch(game, compoundHeuristic);
+              // const path = aStarSearch(game, compoundHeuristic);
             }}
           />
         </Animated.View>}

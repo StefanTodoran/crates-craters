@@ -1,6 +1,6 @@
 import { MinQueue } from "heapify";
 import { Game, Position, boundTileAt, doGameMove } from "./logic";
-import { Board, BoardTile, Direction, TileType } from "./types";
+import { Board, Direction, TileType } from "./types";
 import TrueSet from "./TrueSet";
 
 /**
@@ -218,19 +218,19 @@ function keysDoorsHeuristic(state: BaseGameState) {
  * does NOT guarantee that the game state is winnable.
  */
 function deadEndHeuristic(state: BaseGameState): boolean {
-  let winnable = true;
   const mustReachTiles = [TileType.COIN, TileType.FLAG];
 
   const dimensions = [state.board.length, state.board[0].length];
   for (let i = 0; i < dimensions[0]; i++) {
     for (let j = 0; j < dimensions[1]; j++) {
       if (mustReachTiles.includes(state.board[i][j].id)) {
-        //
+        const checkPosition = { y: i, x: j };
+        if (!isTileReachable(state.board, checkPosition)) return false;
       }
     }
   }
 
-  return winnable;
+  return true;
 }
 
 function isTileReachable(board: Board, tile: Position) {

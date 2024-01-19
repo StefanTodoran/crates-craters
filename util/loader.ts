@@ -1,7 +1,8 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Board, BoardTile, BombTile, Level, OfficialLevel, OneWayTile, TileType, UserLevel } from "./types";
 import { defaultSettings } from "../GlobalContext";
+import { MMKV } from "react-native-mmkv";
 
+export const storage = new MMKV();
 const settingsKeys = Object.keys(defaultSettings);
 
 export enum metadataKeys {
@@ -10,32 +11,18 @@ export enum metadataKeys {
   customLevelKeys = "customLevelKeys",
 }
 
-export async function debugDump() {
-  // TODO: Remove this function!
-  const keys = await AsyncStorage.getAllKeys();
-  console.log("AsyncStorage keys:\n", keys, "\n");
-  
-  const items = await AsyncStorage.multiGet(keys);
-  items.forEach(pair => console.log(`\n${pair[0]}:\n`, pair[1]));
-}
-
-export async function clearStorage() {
-  // TODO: Remove this function!
-  AsyncStorage.clear();
-}
-
-export async function getSavedSettings() {
-  const savedValues = await multiGetData(settingsKeys);
+export function getSavedSettings() {
+  const savedValues = multiGetData(settingsKeys);
   const settings = { ...defaultSettings, ...savedValues };
   return settings;
 }
 
-export async function importStoredLevels() {
-  const olKeys: string[] = await getData(metadataKeys.officialLevelKeys) || [];
-  const clKeys: string[] = await getData(metadataKeys.customLevelKeys) || [];
+export function importStoredLevels() {
+  const olKeys: string[] = getData(metadataKeys.officialLevelKeys) || [];
+  const clKeys: string[] = getData(metadataKeys.customLevelKeys) || [];
   const keys = [...olKeys, ...clKeys];
 
-  const data = await multiGetData(keys);
+  const data = multiGetData(keys);
   const levels: Level[] = [];
 
   Object.keys(data).forEach(key => {
@@ -51,10 +38,10 @@ export async function importStoredLevels() {
   return levels;
 }
 
-export async function setData(key: string, value: any) {
+export function setData(key: string, value: any) {
   const jsonValue = JSON.stringify(value);
   try {
-    await AsyncStorage.setItem(key, jsonValue);
+    storage.set(key, jsonValue);
     return true;
   } catch (err) {
     console.error("Error saving to AsyncStorage:", err);
@@ -62,16 +49,16 @@ export async function setData(key: string, value: any) {
   }
 }
 
-export async function createLevel(level: UserLevel) {
+export function createLevel(level: UserLevel) {
   setData(level.uuid, level);
-  // TODO: Create standard function with error handling for adding a value to an AsyncStorage list.
-  const customLevelKeys = (await getData(metadataKeys.customLevelKeys)) || [];
+  // TODO: Create standard function with error handling for adding a value to a local storage list.
+  const customLevelKeys = getData(metadataKeys.customLevelKeys) || [];
   customLevelKeys.push(level.uuid);
   setData(metadataKeys.customLevelKeys, customLevelKeys);
 }
 
-export async function updateLevel(updatedLevel: UserLevel) {
-  const existingLevel: Level = await getData(updatedLevel.uuid);
+export function updateLevel(updatedLevel: UserLevel) {
+  const existingLevel: Level = getData(updatedLevel.uuid);
 
   if (!existingLevel) {
     console.error("Attempted to update non-existent level: " + updatedLevel.uuid);
@@ -87,13 +74,14 @@ export async function updateLevel(updatedLevel: UserLevel) {
   return setData(level.uuid, level);
 }
 
-export async function multiStoreLevels(levels: Level[]) {
-  const pairs: [string, string][] = levels.map(level => [level.uuid, JSON.stringify(level)]);
+export function multiStoreLevels(levels: Level[]) {
   const keys = JSON.stringify(levels.map(level => level.uuid));
 
   try {
-    await AsyncStorage.multiSet(pairs);
-    await AsyncStorage.setItem(metadataKeys.officialLevelKeys, keys)
+    levels.forEach(level => {
+      storage.set(level.uuid, JSON.stringify(level));
+    });
+    storage.set(metadataKeys.officialLevelKeys, keys);
     return true;
   } catch (err) {
     console.error("Error saving to AsyncStorage:", err);
@@ -101,10 +89,10 @@ export async function multiStoreLevels(levels: Level[]) {
   }
 }
 
-export async function getData(key: string) {
+export function getData(key: string) {
   let rawValue;
   try {
-    rawValue = await AsyncStorage.getItem(key);
+    rawValue = storage.getString(key);
   } catch (err) {
     console.error("Error reading from AsyncStorage:", err);
     return undefined;
@@ -113,26 +101,27 @@ export async function getData(key: string) {
   return rawValue ? JSON.parse(rawValue) : undefined;
 }
 
-export async function multiGetData(keys: string[]) {
-  let rawKVPairs;
+export function multiGetData(keys: string[]) {
+  let rawValues: any[];
   try {
-    rawKVPairs = await AsyncStorage.multiGet(keys);
+    rawValues = keys.map(key => storage.getString(key));
   } catch (err) {
     console.error("Error reading from AsyncStorage:", err);
     return {};
   }
 
   const parsedData: { [key: string]: any } = {};
-  rawKVPairs.forEach(pair => {
-    const parsedValue = pair[1] ? JSON.parse(pair[1]) : undefined;
-    if (pair[1]) parsedData[pair[0]] = parsedValue;
+  keys.forEach((key, idx) => {
+    if (rawValues[idx]) {
+      parsedData[key] = JSON.parse(rawValues[idx]);
+    }
   });
 
   return parsedData;
 }
 
-export async function markLevelCompleted(uuid: string) {
-  const level = await getData(uuid) as Level;
+export function markLevelCompleted(uuid: string) {
+  const level = getData(uuid) as Level;
   if (!level) return; // TODO: remove this, the case should not exit but we aren't storing levels to local storage yet!
   level.completed = true;
   setData(uuid, level);
