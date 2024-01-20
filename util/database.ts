@@ -18,6 +18,7 @@ import { db } from "./firebase";
 
 import { getData, metadataKeys, multiStoreLevels, parseCompressedBoardData, setData } from "./loader";
 import { OfficialLevel } from "./types";
+import { eventEmitter } from "./events";
 
 // ======================== \\
 // DOCUMENT TYPE INTERFACES \\
@@ -64,7 +65,13 @@ export async function checkForOfficialLevelUpdates() {
   }
 }
 
-export async function fetchOfficialLevelsFromServer() {
+export async function refreshLevelsFromServer() {
+  const levels = await fetchOfficialLevelsFromServer();
+  multiStoreLevels(levels);
+  eventEmitter.emit("doStateStorageSync");
+}
+
+async function fetchOfficialLevelsFromServer() {
   const rawLevels: OfficialLevelDocument[] = await getAllEntries("officialLevels");
   const parsedLevels: OfficialLevel[] = [];
 

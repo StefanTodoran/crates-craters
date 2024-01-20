@@ -85,7 +85,7 @@ export default function App() {
   useEffect(() => {
     checkForOfficialLevelUpdates().then(() => syncLevelStateWithStorage.current());
     
-    const handleSyncRequest = (event: CustomEvent) => syncLevelStateWithStorage.current(event.detail);
+    const handleSyncRequest = (event: CustomEvent) => syncLevelStateWithStorage.current(event?.detail);
     const listener = eventEmitter.addListener("doStateStorageSync", handleSyncRequest);
     return () => listener.remove();
   }, []);

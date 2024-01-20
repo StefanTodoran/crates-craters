@@ -1,9 +1,10 @@
 import { FlatList, View } from "react-native";
-import React, { useCallback, useContext, useRef } from "react";
+import React, { useCallback, useContext, useRef, useState } from "react";
 import { Level, PageView } from "../util/types";
 import { eventEmitter } from "../util/events";
 import GlobalContext from "../GlobalContext";
 import LevelCard from "../components/LevelCard";
+import { refreshLevelsFromServer } from "../util/database";
 
 interface Props {
   viewCallback: (newView: PageView) => void, // Sets the current view of the application.
@@ -30,6 +31,11 @@ function LevelSelectBase({
   mode,
 }: Props) {
   const { darkMode } = useContext(GlobalContext);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const doRefresh = useCallback(() => {
+    refreshLevelsFromServer().then(() => setRefreshing(false));
+  }, []);
 
   const openLevel = useCallback((levelIndex: number) => {
     playLevelCallback(levels[levelIndex].uuid);
@@ -80,9 +86,8 @@ function LevelSelectBase({
           overScrollMode="never"
           showsVerticalScrollIndicator={false}
           data={levels}
-          // refreshing={refreshing}
-          // onRefresh={() => {}}
-          // onRefresh={mode === PageView.LEVELS ? doRefresh : undefined}
+          refreshing={refreshing}
+          onRefresh={mode === PageView.LEVELS ? doRefresh : undefined}
           renderItem={({ item, index }) => {
             const playCallback = () => openLevel(index);
             const editCallback = () => editLevel(index);
