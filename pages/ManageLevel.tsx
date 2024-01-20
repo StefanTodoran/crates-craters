@@ -44,7 +44,7 @@ export default function ManageLevel({
     <SubpageContainer center>
       <InputCard
         title={level.name}
-        hints={[`Created ${level.created.toDateString()}`]}
+        hints={[`Created ${new Date(level.created).toDateString()}`]}
         fields={[
           {
             label: "Level Title",

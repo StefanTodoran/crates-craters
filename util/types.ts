@@ -46,7 +46,7 @@ interface LevelBase {
   completed: boolean,
   official: boolean,
   designer?: string,
-  created?: Date,
+  created?: string, // new Date().toISOString()
 }
 
 export interface OfficialLevel extends LevelBase {
@@ -57,7 +57,7 @@ export interface OfficialLevel extends LevelBase {
 export interface UserLevel extends LevelBase {
   official: false,
   designer: string,
-  created: Date,
+  created: string, // new Date().toISOString()
 }
 
 export type Level = OfficialLevel | UserLevel;

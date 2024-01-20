@@ -33,7 +33,7 @@ export function getStoredLevels() {
     if (!Object.hasOwn(a, "order") || !Object.hasOwn(b, "order")) return 0;
     else return (a as OfficialLevel).order - (b as OfficialLevel).order;
   });
-  
+
   return levels;
 }
 
@@ -543,11 +543,35 @@ const allLevels: Board[] = [ // 8 x 14
   ],
 ];
 
+const allNames = [
+  "Blank Canvas",
+  "Tutorial",
+  "Easy Peasy",
+  "Having a Blast",
+  "Rooms",
+  "Choices",
+  "Running Laps",
+  "The Hallway",
+  "Trickster",
+  "Bust the Wall?",
+  "Deja Vu",
+  "Race the Clock",
+  "Marathon",
+  "No Way Home",
+  "Prison",
+  "The Wall",
+  "Buzzer Beater",
+  "Stupid Door",
+  "Pain",
+  "Doubling Up",
+  "Warzone",
+]
+
 // let i = 0;
 // allLevels.forEach(lvl => {
 //   // console.log(lvl);
-//   console.log(`\n\n${i}\n`);
-//   console.log(compressBoardData(lvl));
+//   console.log(`\n\n${i}: ${allNames[i]}\n`);
+//   console.log(compressBoardData(lvl) + "[END]");
 //   i++;
 // });
 

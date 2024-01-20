@@ -293,7 +293,7 @@ export default function PlayLevel({
               for (let i = 0; i < path.length; i++) {
                 current = doGameMove(current, path[i]);
               }
-              
+
               updateGameState(current);
               if (playAudio) playMoveSound();
             }
@@ -377,9 +377,9 @@ export default function PlayLevel({
             disabled={history.length === 0}
           />
           <MenuButton
-            label="Level Select"
-            icon={graphics.DOOR_ICON}
-            onPress={() => viewCallback(PageView.LEVELS)}
+            label={playtest ? "Continue Editing" : "Level Select"}
+            icon={playtest ? graphics.HAMMER_ICON : graphics.DOOR_ICON}
+            onPress={() => viewCallback(playtest ? PageView.EDITOR : PageView.LEVELS)}
           />
           <MenuButton
             label="Resume Game"
@@ -389,8 +389,8 @@ export default function PlayLevel({
           />
           {/* <MenuButton
             label="Get Hint"
-            icon={graphics.PLAYER}
-            // theme={colors.GREEN_THEME}
+            icon={graphics.SUPPORT_ICON}
+            theme={colors.GREEN_THEME}
             onPress={() => {
               const path = aStarSearch(game, compoundHeuristic);
             }}
@@ -400,8 +400,10 @@ export default function PlayLevel({
           {!game.won && <SimpleButton onPress={toggleModal} text="Pause Menu" />}
 
           {game.won && <>
-            <SimpleButton onPress={() => viewCallback(PageView.LEVELS)} text="Back" />
+            <SimpleButton onPress={() => viewCallback(playtest ? PageView.EDIT : PageView.LEVELS)} text="Back" />
             <View style={{ width: normalize(15) }} />
+
+            {playtest && <SimpleButton onPress={() => viewCallback(PageView.EDITOR)} text="Keep Editing" main={true} wide={true} />}
             {!playtest && <SimpleButton onPress={() => nextLevelCallback(level.uuid)} text="Next Level" main={true} wide={true} />}
           </>}
         </Animated.View>

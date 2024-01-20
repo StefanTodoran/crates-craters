@@ -20,8 +20,6 @@ import EditorPage from "./pages/EditorPage";
 import PlayLevel from "./pages/PlayLevel";
 import StorePage from "./pages/StorePage";
 import EditLevel from "./pages/EditLevel";
-// import PlayLevel from "./pages/PlayLevel";
-// import CreateLevel from "./pages/CreateLevel";
 
 const win = Dimensions.get("window");
 
@@ -39,7 +37,7 @@ export default function App() {
 
   const pageAnim = useRef(new Animated.Value(0)).current;
   const setAnimTo = (animState: number, callback?: () => void) => {
-    // MAKE SURE 0 <= animState <= 1
+    // Make sure than 0 <= animState <= 1, interpolated styles assume on this.
     Animated.timing(pageAnim, {
       toValue: animState,
       duration: 300,
@@ -49,6 +47,11 @@ export default function App() {
 
   const [view, setView] = useState(PageView.MENU);
   const switchView = useCallback((newView: PageView) => {
+    // To playtest a level, the child component must call beginPlaytesting(),
+    // which will change the view to the play view. Therefore we need to clear
+    // it for the child once the user leaves the play view.
+    if (newView !== PageView.PLAY) setPlaytesting(false);
+
     if (newView === PageView.MENU) { // PAGE -> MENU
       setAnimTo(0, () => setView(newView));
     } else if (view === PageView.MENU) {// MENU -> PAGE
@@ -141,10 +144,11 @@ export default function App() {
     NavigationBar.setBackgroundColorAsync(darkMode ? "#000" : "#fff");
   }, [darkMode]);
 
-  const [playLevel, setPlayLevel] = useState<Level>();          // The level currently being played.
-  const [currentGame, setGameState] = useState<Game>();         // The game state of the level being played.
-  const [gameHistory, setGameHistory] = useState<Game[]>();     // The past game states, used for undoing moves.
-  const [editorLevel, setEditorLevel] = useState<UserLevel>();  // The level object being edited.
+  const [playLevel, setPlayLevel] = useState<Level>();             // The level currently being played.
+  const [currentGame, setGameState] = useState<Game>();            // The game state of the level being played.
+  const [gameHistory, setGameHistory] = useState<Game[]>();        // The past game states, used for undoing moves.
+  const [editorLevel, setEditorLevel] = useState<UserLevel>();     // The level object being edited.
+  const [playtesting, setPlaytesting] = useState<boolean>(false);  // Whether playtestingmode is requested.
 
   const changePlayLevel = useCallback((uuid: string) => {
     const levelObject = getData(uuid);
@@ -177,6 +181,12 @@ export default function App() {
     
     const levels = getStoredLevels();
     setLevels(levels);
+  }, []);
+
+  const beginPlaytesting = useCallback((uuid: string) => {
+    changePlayLevel(uuid);
+    setPlaytesting(true);
+    switchView(PageView.PLAY);
   }, []);
 
   useEffect(() => { // TODO: update this method?
@@ -233,14 +243,14 @@ export default function App() {
                 level={playLevel!}
                 game={currentGame!}
                 history={gameHistory!}
-                playtest={false}
+                playtest={playtesting}
               />
             }
 
             {view === PageView.EDIT &&
               <EditorPage
                 viewCallback={switchView}
-                playLevelCallback={changePlayLevel}
+                playLevelCallback={beginPlaytesting}
                 startEditingCallback={startEditingLevel}
                 createNewLevelCallback={createNewLevel}
                 levels={levels.filter(ref => !ref.official)} // TODO: and level.designer === the current user
@@ -255,8 +265,8 @@ export default function App() {
                 viewCallback={switchView}
                 level={editorLevel!}
                 levelCallback={setEditorLevel}
-                playtestLevel={() => { }}
-                storeChanges={() => updateLevel(editorLevel!)}
+                playtestLevel={() => beginPlaytesting(editorLevel!.uuid)}
+                storeChanges={updateLevel}
               />
             }
 

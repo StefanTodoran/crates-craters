@@ -22,14 +22,14 @@ interface Props {
   levelCallback: (newState: UserLevel) => void, // Updates the level (usually board changes).
 
   playtestLevel: () => void,
-  storeChanges: () => void,
+  storeChanges: (newState: UserLevel) => void,
 }
 
 export default function EditLevel({
   viewCallback,
   level,
   levelCallback,
-  // playtestLevel,
+  playtestLevel,
   storeChanges,
 }: Props) {
   const { darkMode, playAudio } = useContext(GlobalContext);
@@ -142,7 +142,7 @@ export default function EditLevel({
         <SimpleButton onPress={toggleToolsModal} text="Tools & Options" main={true} />
         <View style={{ width: normalize(15) }} />
         <SimpleButton onPress={() => {
-          storeChanges();
+          storeChanges(level);
           viewCallback(PageView.EDIT);
         }} text="Save & Exit" />
       </Animated.View>
@@ -264,8 +264,11 @@ export default function EditLevel({
               <MenuButton onLongPress={() => {/* TODO */ }} label="Clear Level      (Long Press)" icon={graphics.HAMMER_ICON} allowOverflow />
             </View>
             <View style={styles.row}>
-              {/* <MenuButton onPress={playtestLevel} label="Playtest" icon={graphics.PLAYER} disabled={true} /> */}
-              <MenuButton onPress={storeChanges} label="Save Changes" icon={graphics.SAVE_ICON} />
+              <MenuButton onPress={playtestLevel} label="Playtest" icon={graphics.PLAYER} />
+              <MenuButton onPress={playtestLevel} label="Playtest" icon={graphics.PLAYER} />
+            </View>
+            <View style={styles.row}>
+              <MenuButton onPress={() => storeChanges(level)} label="Save Changes" icon={graphics.SAVE_ICON} />
               <MenuButton onPress={toggleToolsModal} label="Close Menu" icon={graphics.DOOR_ICON} />
             </View>
           </View>
