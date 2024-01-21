@@ -38,6 +38,8 @@ interface Position {
   y: number,
 }
 
+type Gesture = [boolean, boolean, boolean, boolean]; // up, down, left, right
+
 /**
  * This component handles a wide variety of tasks related to level playing. It
  * controls the PanResponder that handles input gestures, including both swipe
@@ -131,13 +133,11 @@ export default function PlayLevel({
   // preview of moves, gesture is used for actually completing those moves on release.
   // const [touchMove, setTouchMove] = useState({ magY: 0, dirY: 0, magX: 0, dirX: 0 });
   const [touchMove, setTouchMove] = useState({ y: 0, x: 0 });
-  const [gesture, setGesture] = useState([false, false, false, false]); // up, down, left, right
 
   useEffect(() => {
-    handleGesture();
     panResponderEnabled.current = !game.won;
     if (game.won && !level.completed) markLevelCompleted(game.uuid);
-  }, [gesture, game]);
+  }, [game]);
 
   // More player input state, we use these to keep track of double taps. We need to know
   // the previous tap time so we can determine if the two taps happened fast enough, and
@@ -148,56 +148,57 @@ export default function PlayLevel({
   const pressAnim = useRef(new Animated.Value(0)).current;
 
   const panResponderEnabled = useRef(true);
+  const handleGesture = useRef((_gesture: Gesture) => {});
 
-  function handleGesture() {
-    const [up, down, left, right] = gesture;
-    // Exactly one of up, down, left, right must be true!
-    if (bti(up) + bti(down) + bti(left) + bti(right) !== 1) {
-      return;
+  useEffect(() => {
+    handleGesture.current = (gesture: Gesture) => {
+      const [up, down, left, right] = gesture;
+      // Exactly one of up, down, left, right must be true!
+      if (bti(up) + bti(down) + bti(left) + bti(right) !== 1) {
+        return;
+      }
+  
+      let new_state;
+      if (up) {
+        new_state = doGameMove(game, Direction.UP);
+      } else if (down) {
+        new_state = doGameMove(game, Direction.DOWN);
+      } else if (left) {
+        new_state = doGameMove(game, Direction.LEFT);
+      } else { // if (right) {
+        new_state = doGameMove(game, Direction.RIGHT);
+      }
+  
+      if (playAudio) {
+        let playedSound = false;
+        if (new_state.soundEvent === SoundEvent.EXPLOSION) {
+          playExplosionSound();
+          playedSound = true;
+        }
+        if (new_state.soundEvent === SoundEvent.PUSH) {
+          playPushSound();
+          playedSound = true;
+        }
+        if (new_state.soundEvent === SoundEvent.FILL) {
+          playFillSound();
+          playedSound = true;
+        }
+        if (new_state.coins > game.coins || new_state.keys > game.keys) {
+          playCoinSound();
+          playedSound = true;
+        }
+        if (new_state.keys < game.keys) {
+          playDoorSound();
+          playedSound = true;
+        }
+        if (!playedSound && !new_state.won) {
+          playMoveSound();
+        }
+      }
+
+      updateGameState(new_state);
     }
-
-    let new_state;
-    if (up) {
-      new_state = doGameMove(game, Direction.UP);
-    } else if (down) {
-      new_state = doGameMove(game, Direction.DOWN);
-    } else if (left) {
-      new_state = doGameMove(game, Direction.LEFT);
-    } else { // if (right) {
-      new_state = doGameMove(game, Direction.RIGHT);
-    }
-
-    if (playAudio) {
-      let playedSound = false;
-      if (new_state.soundEvent === SoundEvent.EXPLOSION) {
-        playExplosionSound();
-        playedSound = true;
-      }
-      if (new_state.soundEvent === SoundEvent.PUSH) {
-        playPushSound();
-        playedSound = true;
-      }
-      if (new_state.soundEvent === SoundEvent.FILL) {
-        playFillSound();
-        playedSound = true;
-      }
-      if (new_state.coins > game.coins || new_state.keys > game.keys) {
-        playCoinSound();
-        playedSound = true;
-      }
-      if (new_state.keys < game.keys) {
-        playDoorSound();
-        playedSound = true;
-      }
-      if (!playedSound && !new_state.won) {
-        playMoveSound();
-      }
-    }
-
-    setGesture([false, false, false, false]);
-    setTouchMove({ y: 0, x: 0 });
-    updateGameState(new_state);
-  }
+  }, [game]);
 
   function onGestureMove(_evt: GestureResponderEvent, gestureState: PanResponderGestureState) {
     const sensitivity = dragSensitivity / 100; // dragSens is given as a number representing a percent e.g. 60
@@ -245,17 +246,10 @@ export default function PlayLevel({
       setPrevTouchPos(undefined);
     }
 
-    // By updating state, the component will be rerendered and
-    // the useEffect at the top will happen, calling handleGesture.
-    // We can't just call handleGesture directly because this function
-    // is not update and only bound to the PanResponder once on mount.
-    setGesture([up, down, left, right]);
+    handleGesture.current([up, down, left, right]);
 
-    // We don't clear the touchMove state here otherwise there will be
-    // a few frames where the player is centered on the old space again
-    // before the game move actually goes through.
+    setTouchMove({ y: 0, x: 0 });
     // setTouchMove({ magY: 0, dirY: 0, magX: 0, dirX: 0 });
-    // setTouchMove({ y: 0, x: 0 });
   }
 
   const tileSize = game ? calcBoardTileSize(game.board[0].length, game.board.length, win) : 1;
