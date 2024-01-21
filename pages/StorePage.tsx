@@ -21,8 +21,7 @@ export default function ({ }: Props) {
       </Text>
 
       <View style={styles.row}>
-        {/* <Text allowFontScaling={false} style={styles.coinsText}>{balance}</Text> */}
-        <Text allowFontScaling={false} style={styles.coinsText}>231</Text>
+        <Text allowFontScaling={false} style={[TextStyles.paragraph(darkMode), styles.coinsText]}>{balance}</Text>
         <Image style={styles.icon} source={graphics.COIN} />
       </View>
     </>
@@ -39,7 +38,7 @@ const styles = StyleSheet.create({
     width: normalize(40),
   },
   coinsText: {
-    color: colors.DIM_GRAY,
+    marginBottom: 0,
     fontSize: normalize(25),
     fontFamily: "Montserrat-Regular",
     fontWeight: "normal",

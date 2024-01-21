@@ -9,7 +9,7 @@ import GameBoard from "../components/GameBoard";
 import SliderBar from "../components/SliderBar";
 
 import TextStyles, { normalize, sizeFromWidthPercent } from "../TextStyles";
-import { BoardTile, Direction, PageView, TileType, UserLevel } from "../util/types";
+import { BoardTile, Direction, PageView, TileType, UserLevel, createBlankBoard } from "../util/types";
 import { cloneBoard, getSpawnPosition, validTile } from "../util/logic";
 import { colors, graphics } from "../Theme";
 import GlobalContext from "../GlobalContext";
@@ -116,6 +116,14 @@ export default function EditLevel({
   function changeTool(tool: BoardTile) {
     selectTool(tool);
     toggleToolsModal();
+  }
+
+  function clearBoard() {
+    const newBoard = createBlankBoard();
+    levelCallback({
+      ...level,
+      board: newBoard,
+    });
   }
 
   const [fuseTimer, setFuseTimer] = useState(15);
@@ -260,16 +268,27 @@ export default function EditLevel({
           <View style={styles.section}>
             <Text style={[TextStyles.subtitle(darkMode), styles.subtitle]}>Options</Text>
             <View style={styles.row}>
-              <MenuButton onLongPress={() => {/* TODO */ }} label="Delete Level     (Long Press)" icon={graphics.DELETE_ICON} allowOverflow />
-              <MenuButton onLongPress={() => {/* TODO */ }} label="Clear Level      (Long Press)" icon={graphics.HAMMER_ICON} allowOverflow />
+              <MenuButton
+                onLongPress={clearBoard}
+                icon={graphics.DELETE_ICON}
+                theme={colors.RED_THEME}
+                label="Clear Board     (Long Press)"
+                allowOverflow
+              />
+              <MenuButton onPress={playtestLevel} label="Playtest" icon={graphics.PLAYER} />
             </View>
             <View style={styles.row}>
-              <MenuButton onPress={playtestLevel} label="Playtest" icon={graphics.PLAYER} />
-              <MenuButton onPress={playtestLevel} label="Playtest" icon={graphics.PLAYER} />
-            </View>
-            <View style={styles.row}>
-              <MenuButton onPress={() => storeChanges(level)} label="Save Changes" icon={graphics.SAVE_ICON} />
-              <MenuButton onPress={toggleToolsModal} label="Close Menu" icon={graphics.DOOR_ICON} />
+              <MenuButton
+                onPress={() => storeChanges(level)}
+                label="Save Changes"
+                icon={graphics.SAVE_ICON}
+                theme={colors.GREEN_THEME}
+              />
+              <MenuButton
+                onPress={toggleToolsModal}
+                label="Close Menu"
+                icon={graphics.DOOR_ICON}
+              />
             </View>
           </View>
 
@@ -317,8 +336,8 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    borderTopWidth: 1,
-    borderBottomWidth: 1,
+    // borderTopWidth: 1,
+    // borderBottomWidth: 1,
     borderColor: colors.MAIN_PURPLE_TRANSPARENT(0.3),
     alignItems: "center",
     justifyContent: "center",

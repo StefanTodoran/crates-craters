@@ -136,7 +136,7 @@ export default function PlayLevel({
 
   useEffect(() => {
     panResponderEnabled.current = !game.won;
-    if (game.won && !level.completed) markLevelCompleted(game.uuid);
+    if (game.won && !level.completed && level.official) markLevelCompleted(game.uuid);
   }, [game]);
 
   // More player input state, we use these to keep track of double taps. We need to know

@@ -38,9 +38,8 @@ export interface UserLevelDocument {
   id: string,
   name: string,
   board: string,
-  user: string,
-  created: Timestamp,
-  likes: number,
+  designer: string,
+  shared: Timestamp,
   downloads: number,
 }
 

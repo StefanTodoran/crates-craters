@@ -53,6 +53,11 @@ export default function App() {
     // it for the child once the user leaves the play view.
     if (newView !== PageView.PLAY) setPlaytesting(false);
 
+    if (view === PageView.PLAY && newView === PageView.EDITOR) {
+      // If we are coming from PageView.PLAY, playLevel must not be undefined.
+      startEditingLevel(playLevel!.uuid); 
+    }
+
     if (newView === PageView.MENU) { // PAGE -> MENU
       setAnimTo(0, () => setView(newView));
     } else if (view === PageView.MENU) {// MENU -> PAGE
@@ -75,6 +80,9 @@ export default function App() {
         const updatedLevel = getData(uuid);
         const levelIndex = levels.findIndex(level => level.uuid === updatedLevel.uuid);
         levels[levelIndex] = updatedLevel;
+      
+        // Refresh this additional state variable if necessary.
+        if (uuid === editorLevel?.uuid) startEditingLevel(uuid);
       } else {
         setLevels(getStoredLevels());
       }

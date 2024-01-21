@@ -46,6 +46,10 @@ export const menuPages = [
 const pageColors = menuPages.map(page => page.color);
 const inputRange = Array.from(Array(pageColors.length).keys());
 
+function createPageOutputRange(activeIndex: number) {
+  return inputRange.map((_, idx) => idx === activeIndex ? 1 : 0);
+}
+
 const activeColor = "#fff";
 const inactiveColor = "#ffffff00";
 function createNodeOutputRange(activeIndex: number) {
@@ -85,13 +89,20 @@ export default function Menu({ openPage }: Props) {
         }} />
 
         {menuPages.map((page, idx) =>
-          <MenuPage
-            key={idx}
-            icon={page.source}
-            text={page.text}
-            callback={() => openPage(page.target)}
-            darkMode={darkMode}
-          />
+          <Animated.View style={{
+            opacity: anim.interpolate({
+              inputRange: inputRange,
+              outputRange: createPageOutputRange(idx),
+            }),
+          }}>
+            <MenuPage
+              key={idx}
+              icon={page.source}
+              text={page.text}
+              callback={() => openPage(page.target)}
+              darkMode={darkMode}
+            />
+          </Animated.View>
         )}
       </ScrollView>
 

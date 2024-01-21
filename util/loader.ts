@@ -35,7 +35,6 @@ export function setData(key: string, value: any) {
   const jsonValue = JSON.stringify(value);
   try {
     storage.set(key, jsonValue);
-    console.log("Successfully set", key, "<-", jsonValue);
     return true;
   } catch (err) {
     console.error("Error completing setData command:", err);
