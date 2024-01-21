@@ -1,5 +1,5 @@
 import { MinQueue } from "heapify";
-import { Game, Position, boundTileAt, doGameMove } from "./logic";
+import { Game, Position, boundTileAt, countInstancesInBoard, doGameMove } from "./logic";
 import { Board, Direction, TileType } from "./types";
 import TrueSet from "./TrueSet";
 
@@ -150,21 +150,6 @@ export function aStarSearch(start: Game, heuristic: HeuristicFunction): Directio
   return null;
 }
 
-function getTileCount(board: Board, type: TileType): number {
-  const dimensions = [board.length, board[0].length];
-  let count = 0;
-
-  for (let i = 0; i < dimensions[0]; i++) {
-    for (let j = 0; j < dimensions[1]; j++) {
-      if (board[i][j].id === type) {
-        count += 1;
-      }
-    }
-  }
-
-  return count;
-}
-
 function getTilePositions(board: Board, type: TileType): Position[] {
   const dimensions = [board.length, board[0].length];
   const positions = [];
@@ -192,8 +177,8 @@ function coinDistanceHeuristic(state: BaseGameState) {
 }
 
 function cratesCratersHeuristic(state: BaseGameState) {
-  const crates = getTileCount(state.board, TileType.CRATE);
-  const craters = getTileCount(state.board, TileType.CRATE);
+  const crates = countInstancesInBoard(state.board, TileType.CRATE);
+  const craters = countInstancesInBoard(state.board, TileType.CRATE);
 
   return crates + craters;
 }
@@ -280,7 +265,7 @@ export function compoundHeuristic(state: BaseGameState) {
   const stepSize = maxDistance * (state.board.length * state.board[0].length);
 
   const componentHeuristics = [
-    getTileCount(state.board, TileType.COIN),
+    countInstancesInBoard(state.board, TileType.COIN),
     coinDistanceHeuristic(state),
     keysDoorsHeuristic(state),
     cratesCratersHeuristic(state),

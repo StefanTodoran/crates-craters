@@ -71,16 +71,14 @@ export default function App() {
   useEffect(() => {
     syncLevelStateWithStorage.current = (uuid?: string) => {
       if (uuid) {
-        console.log(`Syncing level ${uuid} with MMKV storage.`);
         const updatedLevel = getData(uuid);
         const levelIndex = levels.findIndex(level => level.uuid === updatedLevel.uuid);
         levels[levelIndex] = updatedLevel;
       } else {
-        console.log("Syncing level state with MMKV storage.");
         setLevels(getStoredLevels());
       }
     }
-  }, [levels, setLevels]);
+  }, [levels]);
 
   useEffect(() => {
     checkForOfficialLevelUpdates().then(() => syncLevelStateWithStorage.current());

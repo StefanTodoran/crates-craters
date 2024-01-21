@@ -148,7 +148,7 @@ export function LevelCardButtons({
   return (
     <>
       {playCallback && <SimpleButton
-        text={mode === PageView.EDIT ? "Test" : "Play"}
+        text={mode === PageView.EDIT ? "Playtest" : "Play"}
         icon={graphics.PLAY_ICON}
         main={true}
         theme={useTheme}
@@ -173,7 +173,7 @@ export function LevelCardButtons({
       />}
 
       {editCallback && <SimpleButton
-        text={"Edit"}
+        text={"Manage"}
         icon={mode === PageView.EDIT ? graphics.HAMMER_ICON_RED : graphics.HAMMER_ICON}
         theme={useTheme}
         onPress={editCallback}

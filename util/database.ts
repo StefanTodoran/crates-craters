@@ -48,17 +48,10 @@ export interface UserLevelDocument {
 // HIGH LEVEL FUNCTIONS \\
 
 export async function checkForOfficialLevelUpdates() {
-  console.log("Checking for updates...");
   const metadata: MetadataDocument = await getSpecificEntry("metadata", "metadata");
   const updated: Timestamp = getData(metadataKeys.lastUpdatedOfficialLevels);
-  
-  if (updated) {
-    const printable = new Timestamp(updated.seconds, updated.nanoseconds).toDate().toDateString();
-    console.log(`Last updated: ${printable}`);
-  }
 
   if (!updated || !metadata || updated.seconds !== metadata.officialLevelsUpdated.seconds) {
-    console.log("Official level updates available!");
     const levels = await fetchOfficialLevelsFromServer();
     multiStoreLevels(levels);
     setData(metadataKeys.lastUpdatedOfficialLevels, metadata.officialLevelsUpdated);

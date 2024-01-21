@@ -195,6 +195,7 @@ export default function PlayLevel({
     }
 
     setGesture([false, false, false, false]);
+    setTouchMove({ y: 0, x: 0 });
     updateGameState(new_state);
   }
 
@@ -246,12 +247,21 @@ export default function PlayLevel({
 
     // By updating state, the component will be rerendered and
     // the useEffect at the top will happen, calling handleGesture.
-    // setTouchMove({ magY: 0, dirY: 0, magX: 0, dirX: 0 });
-    setTouchMove({ y: 0, x: 0 });
+    // We can't just call handleGesture directly because this function
+    // is not update and only bound to the PanResponder once on mount.
     setGesture([up, down, left, right]);
+
+    // We don't clear the touchMove state here otherwise there will be
+    // a few frames where the player is centered on the old space again
+    // before the game move actually goes through.
+    // setTouchMove({ magY: 0, dirY: 0, magX: 0, dirX: 0 });
+    // setTouchMove({ y: 0, x: 0 });
   }
 
   const tileSize = game ? calcBoardTileSize(game.board[0].length, game.board.length, win) : 1;
+  const xCorrect = -0.4*tileSize;
+  const yCorrect = -1.6*tileSize;
+
   const panResponder = useMemo(
     () => PanResponder.create({
       // Ask to be the responder:
@@ -266,8 +276,8 @@ export default function PlayLevel({
         // setTouchMove({ magY: 0, dirY: 0, magX: 0, dirX: 0 });
         setTouchMove({ y: 0, x: 0 });
 
-        const pressX = pressToIndex(gestureState.x0, tileSize);
-        const pressY = pressToIndex(gestureState.y0, tileSize) - 1;
+        const pressX = pressToIndex(gestureState.x0, tileSize, xCorrect);
+        const pressY = pressToIndex(gestureState.y0, tileSize, yCorrect);
 
         if (Date.now() - prevTouchTime < doubleTapDelay && prevTouchPos &&
           prevTouchPos.x === pressX && prevTouchPos.y === pressY) {
@@ -298,19 +308,20 @@ export default function PlayLevel({
               if (playAudio) playMoveSound();
             }
           }, 750);
+        } else {
+          setPrevTouchPos({
+            x: pressToIndex(gestureState.x0, tileSize, xCorrect),
+            y: pressToIndex(gestureState.y0, tileSize, yCorrect),
+          });
+          const touchTime = Date.now();
+          setPrevTouchTime(touchTime);
         }
-        setPrevTouchPos({
-          y: pressToIndex(gestureState.y0, tileSize) - 1,
-          x: pressToIndex(gestureState.x0, tileSize)
-        });
-        const touchTime = Date.now();
-        setPrevTouchTime(touchTime);
       },
       onPanResponderMove: onGestureMove,
       onPanResponderRelease: onEndGesture,
       onPanResponderTerminate: onEndGesture,
     }),
-    [prevTouchPos, tileSize, prevTouchTime]
+    [prevTouchPos, tileSize, prevTouchTime] // TODO: Can the value derived from state (tileSize) even be used here?
   );
 
   const [modalOpen, setModalOpen] = useState(false);
@@ -349,20 +360,27 @@ export default function PlayLevel({
 
   return (
     <>
-      {game && <SafeAreaView style={styles.container}>
+      {game && <SafeAreaView style={staticStyles.container}>
         {/* GAMEPLAY COMPONENTS */}
         <View {...panResponder.panHandlers}>
           <GameBoard board={game.board} overrideTileSize={tileSize}>
             <Player game={game} touch={touchMove} darkMode={darkMode} tileSize={tileSize} />
-            {touchPos && <Animated.View style={styles.indicator(touchPos.x, touchPos.y, tileSize, pressAnim, darkMode)} />}
+
+            {touchPos && <Animated.View style={[
+              staticStyles.indicator,
+              dynamicStyles.indicator(touchPos.x, touchPos.y, tileSize, pressAnim, darkMode),
+            ]} />}
           </GameBoard>
           <Inventory coins={game.coins} maxCoins={game.maxCoins} keys={game.keys} />
           {game.won && <WinScreen />}
         </View>
 
         {/* PAUSE MENU COMPONENTS */}
-        {modalOpen && <Animated.View style={styles.modal(anim, darkMode)}>
-          <Text style={styles.subtitle(darkMode)}>Menu</Text>
+        {modalOpen && <Animated.View style={[
+          staticStyles.modal,
+          dynamicStyles.modal(anim, darkMode),
+        ]}>
+          <Text style={dynamicStyles.subtitle(darkMode)}>Menu</Text>
           <MenuButton
             label="Restart Level"
             icon={graphics.BOMB}
@@ -396,12 +414,12 @@ export default function PlayLevel({
             }}
           /> */}
         </Animated.View>}
-        <Animated.View style={{ flexDirection: "row", height: normalize(50), opacity: anim.interpolate({ inputRange: [0, 1], outputRange: [1, 0] }) }}>
+        <Animated.View style={dynamicStyles.buttonsRow(anim)}>
           {!game.won && <SimpleButton onPress={toggleModal} text="Pause Menu" />}
 
           {game.won && <>
             <SimpleButton onPress={() => viewCallback(playtest ? PageView.EDIT : PageView.LEVELS)} text="Back" />
-            <View style={{ width: normalize(15) }} />
+            <View style={staticStyles.buttonGap} />
 
             {playtest && <SimpleButton onPress={() => viewCallback(PageView.EDITOR)} text="Keep Editing" main={true} wide={true} />}
             {!playtest && <SimpleButton onPress={() => nextLevelCallback(level.uuid)} text="Next Level" main={true} wide={true} />}
@@ -417,46 +435,34 @@ function bti(bool: boolean) {
   return bool === true ? 1 : 0;
 }
 
-function pressToIndex(touchPos: number, tileSize: number) {
-  const correction = -10;
+function pressToIndex(touchPos: number, tileSize: number, correction: number) {
   return Math.floor((touchPos + correction) / tileSize);
 }
 
-const styles = StyleSheet.create<any>({
+const dynamicStyles = StyleSheet.create<any>({
   subtitle: (darkMode: boolean) => ({
     ...TextStyles.subtitle(darkMode),
     marginBottom: -normalize(5),
   }),
-  container: {
-    paddingTop: StatusBar.currentHeight! + 15,
-    // paddingBottom: win.height * 0.05,
-    alignItems: "center",
-    justifyContent: "space-evenly",
-  },
+  buttonsRow: (anim: Animated.Value) => ({
+    flexDirection: "row",
+    height: normalize(50),
+    opacity: anim.interpolate({
+      inputRange: [0, 1],
+      outputRange: [1, 0],
+    }),
+  }),
   modal: (anim: Animated.Value, darkMode: boolean) => ({
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    flexDirection: "column",
-    alignItems: "center",
-    justifyContent: "center",
     backgroundColor: darkMode ? colors.NEAR_BLACK_TRANSPARENT(0.85) : "rgba(255, 255, 255, 0.85)",
-    paddingHorizontal: win.width * 0.225,
     opacity: anim,
   }),
   indicator: (xPos: number, yPos: number, size: number, anim: Animated.Value, darkMode: boolean) => ({
-    position: "absolute",
     left: xPos * size,
     top: yPos * size,
     width: size,
     height: size,
     backgroundColor: (darkMode) ? colors.OFF_WHITE_TRANSPARENT(0.2) : colors.NEAR_BLACK_TRANSPARENT(0.1),
     borderColor: (darkMode) ? colors.OFF_WHITE : colors.DIM_GRAY,
-    borderStyle: "solid",
-    borderWidth: 1,
-    borderRadius: 2,
     opacity: anim,
     transform: [{
       scale: anim.interpolate({
@@ -465,4 +471,33 @@ const styles = StyleSheet.create<any>({
       }),
     }],
   }),
+});
+
+const staticStyles = StyleSheet.create({
+  container: {
+    paddingTop: StatusBar.currentHeight! + 15,
+    // paddingBottom: win.height * 0.05,
+    alignItems: "center",
+    justifyContent: "space-evenly",
+  },
+  buttonGap: {
+    width: normalize(15),
+  },
+  modal: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: win.width * 0.225,
+  },
+  indicator: {
+    position: "absolute",
+    borderStyle: "solid",
+    borderWidth: 1,
+    borderRadius: 2,
+  },
 });
