@@ -4,7 +4,8 @@ import * as NavigationBar from "expo-navigation-bar";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Dimensions, Animated, BackHandler, SafeAreaView, StatusBar as RNStatusBar, View, StyleSheet } from "react-native";
 
-import { createLevel, getData, getSavedSettings, getStoredLevels, setData, updateLevel } from "./util/loader";
+import { createLevel, getData, getStoredLevels, updateLevel } from "./util/loader";
+import { useBooleanSetting, useNumberSetting } from "./util/hooks";
 import { checkForOfficialLevelUpdates } from "./util/database";
 import { Level, PageView, UserLevel } from "./util/types";
 import { Game, initializeGameObj } from "./util/logic";
@@ -64,9 +65,9 @@ export default function App() {
       });
     }
   }, [view]);
-  
+
   const [levels, setLevels] = useState<Level[]>([]);
-  const syncLevelStateWithStorage = useRef((_uuid?: string) => {});
+  const syncLevelStateWithStorage = useRef((_uuid?: string) => { });
 
   useEffect(() => {
     syncLevelStateWithStorage.current = (uuid?: string) => {
@@ -82,7 +83,7 @@ export default function App() {
 
   useEffect(() => {
     checkForOfficialLevelUpdates().then(() => syncLevelStateWithStorage.current());
-    
+
     const handleSyncRequest = (event: CustomEvent) => syncLevelStateWithStorage.current(event?.detail);
     const listener = eventEmitter.addListener("doStateStorageSync", handleSyncRequest);
     return () => listener.remove();
@@ -92,53 +93,20 @@ export default function App() {
   // so we will have to just put some default dummy values below and run the
   // update function to replace those values as soon as possible.
 
-  const [darkMode, setDarkMode] = useState(false);
-  const [dragSensitivity, setSensitivity] = useState(60);
-  const [doubleTapDelay, setTapDelay] = useState(250);
-  const [playAudio, setAudioMode] = useState(true);
+  const [darkMode, setDarkMode] = useBooleanSetting("darkMode");
+  const [dragSensitivity, setSensitivity] = useNumberSetting("dragSensitivity");
+  const [doubleTapDelay, setTapDelay] = useNumberSetting("doubleTapDelay");
+  const [playAudio, setAudioMode] = useBooleanSetting("playAudio");
 
-  // These functions are used by children (probably only the settings page)
-  // to modify App's state, and we use them to abstract that away from those
-  // components and because we have the state and AyncStorage here.
+  const toggleDarkMode = () => setDarkMode(!darkMode);
+  const toggleAudioMode = () => setAudioMode(!playAudio);
 
-  const toggleDarkMode = () => {
-    setDarkMode(current => !current);
-  }
-  const toggleAudioMode = () => {
-    setAudioMode(current => !current);
-  }
-
-  // We use this to avoid rewriting the settings on app start (since
-  // the setting writing useEffect will trigger on first render).
-  const didReadSettings = useRef(false);
-
-  function readSettingsFromStorage() {
-    const settings = getSavedSettings();
-
-    setDarkMode(settings.darkMode);
-    setAudioMode(settings.playAudio);
-    setSensitivity(settings.dragSensitivity);
-    setTapDelay(settings.doubleTapDelay);
-
-    didReadSettings.current = true;
-  }
-
-  // Any time an option holding some setting's state is updated,
-  // we should write this to storage so it remains the same next startup.
-  useEffect(() => {
-    if (didReadSettings.current) {
-      setData("isAppDarkMode", darkMode);
-      setData("appAudioMode", playAudio);
-      setData("appDragSensitivity", dragSensitivity);
-      setData("appDoubleTapDelay", doubleTapDelay);
-    }
-  }, [darkMode, playAudio, dragSensitivity, doubleTapDelay]);
+  useEffect(() => setSensitivity(dragSensitivity), [dragSensitivity]);
+  useEffect(() => setTapDelay(doubleTapDelay), [doubleTapDelay]);
+  useEffect(() => setAudioMode(playAudio), [playAudio]);
 
   useEffect(() => {
-    readSettingsFromStorage();
-  }, []);
-
-  useEffect(() => {
+    setDarkMode(darkMode);
     NavigationBar.setBackgroundColorAsync(darkMode ? "#000" : "#fff");
   }, [darkMode]);
 
@@ -176,7 +144,7 @@ export default function App() {
   const createNewLevel = useCallback((level: UserLevel) => {
     setEditorLevel(level);
     createLevel(level);
-    
+
     const levels = getStoredLevels();
     setLevels(levels);
   }, []);

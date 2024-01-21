@@ -447,7 +447,8 @@ const dynamicStyles = StyleSheet.create<any>({
     }),
   }),
   modal: (anim: Animated.Value, darkMode: boolean) => ({
-    backgroundColor: darkMode ? colors.NEAR_BLACK_TRANSPARENT(0.85) : "rgba(255, 255, 255, 0.85)",
+    backgroundColor: darkMode ? "rgba(0, 0, 0, 0.85)" : "rgba(255, 255, 255, 0.85)",
+    // backgroundColor: darkMode ? colors.NEAR_BLACK_TRANSPARENT(0.85) : "rgba(255, 255, 255, 0.85)",
     opacity: anim,
   }),
   indicator: (xPos: number, yPos: number, size: number, anim: Animated.Value, darkMode: boolean) => ({

@@ -1,23 +1,15 @@
 import { Board, BoardTile, BombTile, Level, OfficialLevel, OneWayTile, TileType, UserLevel } from "./types";
-import { defaultSettings } from "../GlobalContext";
+import { countInstancesInBoard } from "./logic";
 import { eventEmitter } from "./events";
 import { MMKV } from "react-native-mmkv";
-import { countInstancesInBoard } from "./logic";
 
 export const storage = new MMKV();
-const settingsKeys = Object.keys(defaultSettings);
 
 export enum metadataKeys {
   lastUpdatedOfficialLevels = "lastUpdatedOfficialLevels",
   officialLevelKeys = "officialLevelKeys",
   customLevelKeys = "customLevelKeys",
   coinBalance = "coinBalance",
-}
-
-export function getSavedSettings() {
-  const savedValues = multiGetData(settingsKeys);
-  const settings = { ...defaultSettings, ...savedValues };
-  return settings;
 }
 
 export function getStoredLevels() {
@@ -43,6 +35,7 @@ export function setData(key: string, value: any) {
   const jsonValue = JSON.stringify(value);
   try {
     storage.set(key, jsonValue);
+    console.log("Successfully set", key, "<-", jsonValue);
     return true;
   } catch (err) {
     console.error("Error completing setData command:", err);
