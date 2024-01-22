@@ -106,15 +106,10 @@ export default function App() {
   const [doubleTapDelay, setTapDelay] = useNumberSetting("doubleTapDelay");
   const [playAudio, setAudioMode] = useBooleanSetting("playAudio");
 
-  const toggleDarkMode = () => setDarkMode(!darkMode);
-  const toggleAudioMode = () => setAudioMode(!playAudio);
-
-  useEffect(() => setSensitivity(dragSensitivity), [dragSensitivity]);
-  useEffect(() => setTapDelay(doubleTapDelay), [doubleTapDelay]);
-  useEffect(() => setAudioMode(playAudio), [playAudio]);
+  const toggleDarkMode = () => setDarkMode(darkMode => !darkMode);
+  const toggleAudioMode = () => setAudioMode(playAudio => !playAudio);
 
   useEffect(() => {
-    setDarkMode(darkMode);
     NavigationBar.setBackgroundColorAsync(darkMode ? "#000" : "#fff");
   }, [darkMode]);
 

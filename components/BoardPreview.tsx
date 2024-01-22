@@ -11,14 +11,14 @@ interface Props {
   level: Level,
   previewSize: number,
   previewWidth: number,
-  rowCorrect?: number,
+  // rowCorrect?: number,
 }
 
 export default function BoardPreview({
   level,
   previewSize,
   previewWidth,
-  rowCorrect
+  // rowCorrect,
 }: Props) {
   const tileSize = calcPreviewTileSize(level.board[0].length, previewWidth, win);
   const previewCenter = useMemo(() => getSpawnPosition(level.board).y, [level]);
@@ -39,7 +39,7 @@ export default function BoardPreview({
     <GameBoard
       board={level.board.slice(previewTop, previewBottom)}
       overrideTileSize={tileSize}
-      rowCorrect={rowCorrect}
+      // rowCorrect={rowCorrect}
     />
   );
 }

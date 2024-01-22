@@ -89,14 +89,13 @@ export default function Menu({ openPage }: Props) {
         }} />
 
         {menuPages.map((page, idx) =>
-          <Animated.View style={{
+          <Animated.View key={idx} style={{
             opacity: anim.interpolate({
               inputRange: inputRange,
               outputRange: createPageOutputRange(idx),
             }),
           }}>
             <MenuPage
-              key={idx}
               icon={page.source}
               text={page.text}
               callback={() => openPage(page.target)}

@@ -193,13 +193,13 @@ export default function EditLevel({
             </View>
             <View style={styles.row}>
               <MenuButton
-                label="Flag"
+                label="Door"
                 icon={graphics.DOOR}
                 onPress={() => changeTool({ id: TileType.DOOR })}
                 theme={colors.GREEN_THEME}
               />
               <MenuButton
-                label="Coin"
+                label="Key"
                 icon={graphics.KEY}
                 onPress={() => changeTool({ id: TileType.KEY })}
                 theme={colors.GREEN_THEME}
