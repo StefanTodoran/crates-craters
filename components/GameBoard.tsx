@@ -1,4 +1,4 @@
-import { View, Dimensions, Image, Pressable, Text, Platform, StyleSheet } from "react-native";
+import { View, Dimensions, Image, Pressable, Text, Platform, StyleSheet, FlatList } from "react-native";
 import React, { useContext } from "react";
 import GlobalContext from "../GlobalContext";
 
@@ -28,30 +28,31 @@ export default function GameBoard({
 
   const boardHeight = board.length;
   const boardWidth = board[0].length;
+
   const tileSize = overrideTileSize ? overrideTileSize : calcBoardTileSize(boardWidth, boardHeight, win);
   const useSvg = Platform.OS === "ios";
 
-  function buildUpBoard() {
-    const tilesBoard = [];
+  // function buildUpBoard() {
+  //   const tilesBoard = [];
 
-    for (let i = 0; i < boardHeight; i++) {
-      const row = [];
+  //   for (let i = 0; i < boardHeight; i++) {
+  //     const row = [];
 
-      for (let j = 0; j < boardWidth; j++) {
-        row.push(getTile(i, j));
-      }
+  //     for (let j = 0; j < boardWidth; j++) {
+  //       row.push(getTile(i, j));
+  //     }
 
-      // Not even the slightest clue why but every other row has a tiny 1px gap vertically if we don't
-      // add this scuffed litte negative marginTop... React Native boggles the mind sometimes ¯\_(ツ)_/¯
-      tilesBoard.push(<View key={`row<${i}>`} style={{
-        flexDirection: "row",
-        margin: 0,
-        // marginTop: rowCorrect ? rowCorrect : -0.01,
-      }}>{row}</View>);
-    }
+  //     // Not even the slightest clue why but every other row has a tiny 1px gap vertically if we don't
+  //     // add this scuffed litte negative marginTop... React Native boggles the mind sometimes ¯\_(ツ)_/¯
+  //     tilesBoard.push(<View key={`row<${i}>`} style={{
+  //       flexDirection: "row",
+  //       margin: 0,
+  //       // marginTop: rowCorrect ? rowCorrect : -0.01,
+  //     }}>{row}</View>);
+  //   }
 
-    return tilesBoard;
-  }
+  //   return tilesBoard;
+  // }
 
   function getTile(i: number, j: number) {
     // We need to know oddTile (board is checkered color-wise) and the tile type
@@ -156,6 +157,13 @@ export default function GameBoard({
     }
   }
 
+  const tileIndices = [];
+  for (let i = 0; i < boardHeight; i++) {
+    for (let j = 0; j < boardWidth; j++) {
+      tileIndices.push([i, j]);
+    }
+  }
+
   return (
     <View style={[
       styles.board,
@@ -165,7 +173,17 @@ export default function GameBoard({
         backgroundColor: (darkMode) ? "#000" : "#fff",
       }
     ]}>
-      {buildUpBoard()}
+      {/* {buildUpBoard()} */}
+      <FlatList
+        data={tileIndices}
+        numColumns={boardWidth}
+        style={{ maxHeight: tileSize * boardHeight }}
+        renderItem={({ item }) => getTile(item[0], item[1])}
+        scrollEnabled={false}
+        overScrollMode="never"
+        showsVerticalScrollIndicator={false}
+        getItemLayout={(_data, index) => ({ length: tileSize, offset: tileSize * index, index })}
+      />
       {children}
     </View>
   );
