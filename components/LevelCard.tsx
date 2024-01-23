@@ -55,6 +55,10 @@ function LevelCardBase({
   if (!level.official) attributionText = `Designed by "${level.designer}"`;
   if (overrideAttribution) attributionText = "Let your creativity shine!";
 
+  let iconSource; // mode === PageView.EDIT is the same as level.official
+  if (level.official) iconSource = level.completed ? graphics.CRATER : graphics.CRATE;
+  else iconSource = graphics.METAL_CRATE;
+
   return (
     <Animated.View style={[
       styles.container,
@@ -79,7 +83,7 @@ function LevelCardBase({
           <View style={{ justifyContent: "center", alignItems: "center" }}>
             <Image
               style={styles.bigIcon}
-              source={mode === PageView.EDIT ? graphics.METAL_CRATE : level.official ? graphics.CRATE : graphics.CRATER}
+              source={iconSource}
             />
             <Text allowFontScaling={false} style={styles.number}>{levelIndex + 1}</Text>
           </View>

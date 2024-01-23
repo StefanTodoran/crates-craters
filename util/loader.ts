@@ -69,6 +69,22 @@ export function updateLevel(updatedLevel: UserLevel) {
   eventEmitter.emit("doStateStorageSync", { detail: level.uuid });
 }
 
+export function deleteLevel(level: UserLevel) {
+  storage.delete(level.uuid);
+  const customLevelKeys: string[] = getData(metadataKeys.customLevelKeys) || [];
+  const levelIndex = customLevelKeys.findIndex(key => key === level.uuid);
+  
+  if (levelIndex !== -1) {
+    customLevelKeys.splice(levelIndex, 1);
+    setData(metadataKeys.customLevelKeys, customLevelKeys);
+    console.log(customLevelKeys);
+  } else {
+    console.error(`Attempted delete of level with uuid ${level.uuid} but no corresponding key was found in "metadataKeys.customLevelKeys"!`)
+  }
+  
+  eventEmitter.emit("doStateStorageSync");
+}
+
 export function multiStoreLevels(levels: Level[]) {
   const keys = JSON.stringify(levels.map(level => level.uuid));
 

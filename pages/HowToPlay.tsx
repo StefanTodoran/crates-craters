@@ -15,9 +15,11 @@ export default function HowToPlay() {
         Controls
       </Text>
       <Text style={TextStyles.paragraph(darkMode)}>
-        Swipe anywhere on the screen to control the player. Swipe in any direction to move one tile in that
-        direction. You cannot move diagonally. If there is a tile you could navigate to (without pushing
-        any crates) double tap on that tile to save some time and skip to that position.
+        Swipe anywhere on the screen to control the player. Swipe in any 
+        direction to move one tile in that direction. You cannot move 
+        diagonally. If there is a tile you could navigate to via only empty 
+        tiles, double tap on that tile to save some time and skip to that 
+        position.
       </Text>
 
       <Text style={TextStyles.subtitle(darkMode, colors.GREEN_THEME.MAIN_COLOR)}>
@@ -47,9 +49,10 @@ export default function HowToPlay() {
       </View>
 
       <Text style={TextStyles.paragraph(darkMode)}>
-        The primary obstacle are crates and craters. You can't walk on either of these
-        tiles. However, if there is either an empty space or a crater behind a crate, you can push
-        it. If you push a crate into a crater, it "fills" the crater, creating a walkable tile.
+        The primary obstacle are crates and craters. You can't walk on either 
+        of these tiles. However, if there is either an empty space or a crater 
+        behind a crate, you can "walk into it" to push it. If you push a crate 
+        into a crater, it "fills" the crater, creating a walkable tile.
       </Text>
       <View style={styles.row}>
         <Image style={styles.icon} source={graphics.CRATE} />
@@ -57,7 +60,7 @@ export default function HowToPlay() {
       </View>
 
       <Text style={TextStyles.paragraph(darkMode)}>
-        The another obstacle are one-way tiles. Only the player can pass through these tiles,
+        Another obstacle are one-way tiles. Only the player can pass through these tiles,
         pushable tiles cannot. The player can enter them from any side except the side the arrow is
         pointing towards.
       </Text>
@@ -69,8 +72,9 @@ export default function HowToPlay() {
       </View>
 
       <Text style={TextStyles.paragraph(darkMode)}>
-        Lastly, we have bombs. These can be pushed just like crates, but cannot fill in craters. After
-        a set number of turns, the fuse expires and the bomb explodes adjacent crates.
+        Lastly there are bombs. These can be pushed just like crates, but 
+        cannot fill in craters. After a set number of turns, the fuse expires 
+        and the bomb explodes adjacent crates.
       </Text>
       <View style={styles.row}>
         <Image style={styles.icon} source={graphics.BOMB} />

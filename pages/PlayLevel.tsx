@@ -315,7 +315,7 @@ export default function PlayLevel({
       onPanResponderRelease: onEndGesture,
       onPanResponderTerminate: onEndGesture,
     }),
-    [prevTouchPos, tileSize, prevTouchTime] // TODO: Can the value derived from state (tileSize) even be used here?
+    [prevTouchPos, tileSize, prevTouchTime] // Since tileSize is a primitive, it can be used in a dependency array.
   );
 
   const [modalOpen, setModalOpen] = useState(false);

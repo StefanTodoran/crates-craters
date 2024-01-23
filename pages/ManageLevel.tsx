@@ -10,7 +10,9 @@ import SubpageContainer from "../components/SubpageContainer";
 import BoardPreview from "../components/BoardPreview";
 import InputCard from "../components/InputCard";
 import MenuButton from "../components/MenuButton";
-import { updateLevel } from "../util/loader";
+import { deleteLevel, updateLevel } from "../util/loader";
+import { eventEmitter } from "../util/events";
+import { useForceRefresh } from "../util/hooks";
 
 const win = Dimensions.get("window");
 
@@ -30,15 +32,16 @@ export default function ManageLevel({
 
   const [levelTitle, setLevelTitle] = useState<string>("");
   const [levelDesigner, setLevelDesigner] = useState<string>("");
+  const [refreshed, forceRefresh] = useForceRefresh();
 
   useEffect(() => {
     if (!level) return;
 
     setLevelTitle(level.name);
     setLevelDesigner(level.designer);
-  }, [level]);
+  }, [level, refreshed]);
 
-  // TODO: either add a save changes button or update automatically in the event of unmount
+  if (!level) return;
 
   const previewWidth = 0.9;
   const tileSize = calcPreviewTileSize(level.board[0].length, previewWidth, win);
@@ -66,8 +69,11 @@ export default function ManageLevel({
             },
           ]}
           buttonText="Save"
-          // @ts-expect-error We just want to update these two properties, which both exist on UserLevel.
-          buttonCallback={() => updateLevel({ uuid: level.uuid, name: levelTitle, designer: levelDesigner})}
+          buttonCallback={() => {
+            // @ts-expect-error We just want to update these two properties, which both exist on UserLevel.
+            updateLevel({ uuid: level.uuid, name: levelTitle, designer: levelDesigner});
+            forceRefresh();
+          }}
           buttonDisabled={levelTitle === level.name && levelDesigner === level.designer}
         />
 
@@ -102,7 +108,10 @@ export default function ManageLevel({
         </View>
         <View style={styles.singleButton}>
           <MenuButton
-            onPress={() => { }}
+            onLongPress={() => {
+              deleteLevel(level);
+              eventEmitter.emit("doPageChange", { detail: 0 });
+            }}
             icon={graphics.DELETE_ICON}
             theme={colors.RED_THEME}
             label={deleteLevelText}

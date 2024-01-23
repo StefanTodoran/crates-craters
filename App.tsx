@@ -195,7 +195,7 @@ export default function App() {
                 viewCallback={switchView}
                 playLevelCallback={changePlayLevel}
                 // editorLevelCallback={startEditingLevel}
-                levels={levels.filter(ref => ref.official)}
+                levels={levels.filter(lvl => lvl.official)}
                 scrollTo={!currentGame?.won ? playLevel?.uuid : undefined}
                 elementHeight={levelElementHeight}
                 storeElementHeightCallback={setElementHeight}
@@ -222,7 +222,7 @@ export default function App() {
                 playLevelCallback={beginPlaytesting}
                 startEditingCallback={startEditingLevel}
                 createNewLevelCallback={createNewLevel}
-                levels={levels.filter(ref => !ref.official)} // TODO: and level.designer === the current user
+                levels={levels.filter(lvl => !lvl.official)} // TODO: and level.designer === the current user
                 editorLevel={editorLevel}
                 elementHeight={levelElementHeight}
                 storeElementHeightCallback={setElementHeight}
