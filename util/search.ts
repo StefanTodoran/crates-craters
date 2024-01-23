@@ -1,5 +1,5 @@
 import { MinQueue } from "heapify";
-import { Game, Position, boundTileAt, countInstancesInBoard, doGameMove } from "./logic";
+import { Game, Position, boundTileAt, canMoveTo, countInstancesInBoard, doGameMove } from "./logic";
 import { Board, Direction, TileType } from "./types";
 import TrueSet from "./TrueSet";
 
@@ -62,7 +62,7 @@ const directions = Object.keys(Direction)
 
 interface SuccessorState {
   game: BaseGameState,
-  direction: Direction,
+  direction: Direction[],
 }
 
 function getGameStateSuccessors(gameState: BaseGameState) {
@@ -74,10 +74,35 @@ function getGameStateSuccessors(gameState: BaseGameState) {
     if (!areGameStatesEqual(gameState, successor)) {
       successors.push({
         game: pruneGameStateObject(successor),
-        direction: direction,
+        direction: [direction],
       });
     }
   });
+
+  const keys = getTilePositions(gameState.board, TileType.KEY);
+  const coins = getTilePositions(gameState.board, TileType.COIN);
+
+  [...keys, ...coins].forEach(position => {
+    const path = canMoveTo(gameState as Game, position.x, position.y);
+
+    if (path) {
+      let successor = gameState as Game;
+      for (let i = 0; i < path.length; i++) {
+        successor = doGameMove(successor, path[i]);
+      }
+
+      successors.push({
+        game: pruneGameStateObject(successor),
+        direction: path,
+      })
+    }
+  });
+
+  for (let i = successors.length - 1; i >= 0; i--) {
+    if (isDeadEnd(successors[i].game)) {
+      successors.splice(i, 1);
+    }
+  }
 
   return successors;
 }
@@ -111,6 +136,8 @@ export function aStarSearch(start: Game, heuristic: HeuristicFunction): Directio
   const visited = new TrueSet();
 
   let count = 0;
+  const maxSearches = 20000;
+
   const states: { [key: number]: SearchNode } = {};
   const frontier = new MinQueue(256);
 
@@ -118,12 +145,19 @@ export function aStarSearch(start: Game, heuristic: HeuristicFunction): Directio
   frontier.push(count, heuristic(start));
   count++;
 
-  while (count < 10000) {
+  let prevCapacity = 256;
+
+  while (count < maxSearches) {
     if (frontier.size === 0) return null;
 
     const currentIndex = frontier.pop()!;
     const currentState = states[currentIndex];
     delete states[currentIndex];
+
+    if (frontier.capacity !== prevCapacity) {
+      prevCapacity = frontier.capacity;
+      console.log("Doubled capacity:", frontier.capacity);
+    }
 
     if (currentState.game.won) {
       const endTime = new Date().getTime();
@@ -138,7 +172,7 @@ export function aStarSearch(start: Game, heuristic: HeuristicFunction): Directio
     const successors = getGameStateSuccessors(currentState.game);
 
     successors.forEach(successor => {
-      const path = [...currentState.path, successor.direction];
+      const path = [...currentState.path, ...successor.direction];
       const nextState = { game: successor.game, path: path };
 
       states[count] = nextState;
@@ -147,6 +181,13 @@ export function aStarSearch(start: Game, heuristic: HeuristicFunction): Directio
     });
   }
 
+  const endTime = new Date().getTime();
+  console.log(`Searched for ${(endTime - startTime) / 1000} seconds.`);
+  console.log(`Unable to find a solution with fewer than ${maxSearches} nodes expanded.`);
+
+  const finalState = states[frontier.pop()!];
+  printBoard(finalState.game.board, finalState.game.player);
+  console.log(finalState.path.map(step => Direction[step]));
   return null;
 }
 
@@ -165,57 +206,25 @@ function getTilePositions(board: Board, type: TileType): Position[] {
   return positions;
 }
 
-function coinDistanceHeuristic(state: BaseGameState) {
-  const coins = getTilePositions(state.board, TileType.COIN);
-
-  let total = 0;
-  coins.forEach(coin => {
-    total += manhattanDistance(state.player, coin);
-  });
-
-  return total;
-}
-
-function cratesCratersHeuristic(state: BaseGameState) {
-  const crates = countInstancesInBoard(state.board, TileType.CRATE);
-  const craters = countInstancesInBoard(state.board, TileType.CRATE);
-
-  return crates + craters;
-}
-
-function keysDoorsHeuristic(state: BaseGameState) {
-  const keys = getTilePositions(state.board, TileType.KEY);
-  const doors = getTilePositions(state.board, TileType.DOOR);
-  const tiles = [...keys, ...doors];
-
-  let total = 0;
-  tiles.forEach(tile => {
-    total += manhattanDistance(state.player, tile);
-  });
-
-  return total;
-}
-
 /**
- * This heuristic function is slightly different from the
- * other heuristics, in that it returns true if the game state
- * is an unwinnable dead end. Note that a false return value
- * does NOT guarantee that the game state is winnable.
+ * Returns true if the game state is an unwinnable dead end. 
+ * Note that a false return value does NOT guarantee that the 
+ * game state is winnable.
  */
-function deadEndHeuristic(state: BaseGameState): boolean {
+function isDeadEnd(state: BaseGameState): boolean {
   const mustReachTiles = [TileType.COIN, TileType.FLAG];
-
   const dimensions = [state.board.length, state.board[0].length];
+
   for (let i = 0; i < dimensions[0]; i++) {
     for (let j = 0; j < dimensions[1]; j++) {
       if (mustReachTiles.includes(state.board[i][j].id)) {
         const checkPosition = { y: i, x: j };
-        if (!isTileReachable(state.board, checkPosition)) return false;
+        if (!isTileReachable(state.board, checkPosition)) return true;
       }
     }
   }
 
-  return true;
+  return false;
 }
 
 function isTileReachable(board: Board, tile: Position) {
@@ -228,6 +237,9 @@ function isTileReachable(board: Board, tile: Position) {
     TileType.CRATER,
     TileType.EXPLOSION,
     TileType.LITTLE_EXPLOSION,
+
+    // TODO: remove this
+    TileType.ONEWAY,
   ];
 
   for (let i = -1; i < 2; i++) {
@@ -253,11 +265,48 @@ function isCrateMoveable(board: Board, tile: Position) {
       if (i === 0 && j === 0) continue;
 
       const adjacentTile = boundTileAt(tile.y + i, tile.x + j, board);
-      if (pushableTargets.includes(adjacentTile.id)) return true;
+      const oppositeTile = boundTileAt(tile.y - i, tile.x - j, board);
+      if (
+        pushableTargets.includes(oppositeTile.id) &&
+        adjacentTile.id === TileType.EMPTY
+      ) return true;
     }
   }
 
   return false;
+}
+
+// HEURISTIC FUNCTIONS
+
+function coinDistanceHeuristic(state: BaseGameState) {
+  const coins = getTilePositions(state.board, TileType.COIN);
+
+  let total = 0;
+  coins.forEach(coin => {
+    total += manhattanDistance(state.player, coin);
+  });
+
+  return total;
+}
+
+function cratesCratersHeuristic(state: BaseGameState) { // TODO: Including craters may make the heuristic inadmissible, particularly with bombs.
+  const crates = countInstancesInBoard(state.board, TileType.CRATE);
+  const craters = countInstancesInBoard(state.board, TileType.CRATE);
+
+  return crates + craters;
+}
+
+function keysDoorsHeuristic(state: BaseGameState) {
+  const keys = getTilePositions(state.board, TileType.KEY);
+  const doors = getTilePositions(state.board, TileType.DOOR);
+  const tiles = [...keys, ...doors];
+
+  let total = 0;
+  tiles.forEach(tile => {
+    total += manhattanDistance(state.player, tile);
+  });
+
+  return total;
 }
 
 export function compoundHeuristic(state: BaseGameState) {
