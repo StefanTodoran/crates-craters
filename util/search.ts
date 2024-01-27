@@ -131,12 +131,13 @@ function printBoard(board: Board, player: Position) {
 
 export function aStarSearch(start: Game, heuristic: HeuristicFunction): Direction[] | null {
   const startTime = new Date().getTime();
+  console.log("\n\nStarting A* search with heuristic function:", heuristic);
 
   const startState = { game: pruneGameStateObject(start), path: [] };
   const visited = new TrueSet();
 
   let count = 0;
-  const maxSearches = 20000;
+  const maxSearches = 100000;
 
   const states: { [key: number]: SearchNode } = {};
   const frontier = new MinQueue(256);
@@ -157,6 +158,7 @@ export function aStarSearch(start: Game, heuristic: HeuristicFunction): Directio
     if (frontier.capacity !== prevCapacity) {
       prevCapacity = frontier.capacity;
       console.log("Doubled capacity:", frontier.capacity);
+      console.log("Current count:", count);
     }
 
     if (currentState.game.won) {
@@ -333,4 +335,19 @@ export function compoundHeuristic(state: BaseGameState) {
   }
 
   return value;
+}
+
+export function basicHeuristic(state: BaseGameState) {
+  const tilesOfInterest = [
+    ...getTilePositions(state.board, TileType.FLAG),
+    ...getTilePositions(state.board, TileType.COIN),
+  ];
+  
+  let maxDistance = 0;
+  tilesOfInterest.forEach(tilePosition => {
+    const distance = manhattanDistance(state.player, tilePosition);
+    maxDistance = Math.max(maxDistance, distance);
+  });
+
+  return maxDistance;
 }

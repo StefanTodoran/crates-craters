@@ -1,3 +1,6 @@
+// ============= \\
+// TILES & BOARD \\
+
 export enum TileType {
   EMPTY,
   WALL,
@@ -39,6 +42,23 @@ export interface SimpleTile {
 export type BoardTile = SimpleTile | OneWayTile | BombTile;
 export type Board = BoardTile[][];
 
+export function createBlankBoard() {
+  const blankBoard: Board = [];
+  for (let i = 0; i < 14; i++) {
+    const row = [];
+    for (let j = 0; j < 8; j++) {
+      row.push({ id: 0 });
+    }
+    blankBoard.push(row);
+  }
+  blankBoard[1][1] = { id: TileType.SPAWN };
+  blankBoard[2][6] = { id: TileType.FLAG };
+  return blankBoard;
+}
+
+// ============= \\
+// LEVEL OBJECTS \\
+
 interface LevelBase {
   uuid: string,
   name: string,
@@ -65,20 +85,40 @@ export interface SharedLevel extends UserLevel {
   downloads: number,
 }
 
-export type Level = OfficialLevel | UserLevel;
+export type Level = OfficialLevel | UserLevel | SharedLevel;
 
-export function createBlankBoard() {
-  const blankBoard: Board = [];
-  for (let i = 0; i < 14; i++) {
-    const row = [];
-    for (let j = 0; j < 8; j++) {
-      row.push({ id: 0 });
-    }
-    blankBoard.push(row);
+enum LevelObjectType {
+  BASE,
+  OFFICIAL,
+  USER,
+  SHARED,
+}
+
+type levelObjectPropSet = { [key: string]: string };
+const levelObjectProps: { [key in LevelObjectType]: levelObjectPropSet} = {
+  [LevelObjectType.BASE]: {
+    "uuid": "string",
+    "name": "string",
+    "board": "object",
+    // TODO: Why isn't completed always set?
+    // "completed": "boolean", 
+    "official": "boolean",
+  },
+  [LevelObjectType.OFFICIAL]: {}, // TODO: Add the appropriate keys here.
+  [LevelObjectType.USER]: {},
+  [LevelObjectType.SHARED]: {},
+}
+
+export function isLevelWellFormed(target: any, check: LevelObjectType = LevelObjectType.BASE): target is Level {
+  if (target === null || target === undefined) return false;
+  
+  const props = levelObjectProps[check];
+  for (const [key, type] of Object.entries(props)) {
+    if (!(key in target)) return false;
+    if (typeof target[key] !== type) return false;
   }
-  blankBoard[1][1] = { id: TileType.SPAWN };
-  blankBoard[2][6] = { id: TileType.FLAG };
-  return blankBoard;
+
+  return true;
 }
 
 // ========================= \\
