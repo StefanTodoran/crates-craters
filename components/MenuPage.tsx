@@ -39,8 +39,8 @@ const styles = StyleSheet.create<any>({
     alignItems: "center",
   },
   icon: {
-    maxWidth: win.width * 0.95,
-    maxHeight: win.width * 0.95,
+    maxWidth: win.width * 0.65,
+    maxHeight: win.width * 0.65,
   },
   text: {
     textShadowColor: "#000",

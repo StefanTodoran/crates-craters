@@ -9,7 +9,7 @@ import GameBoard from "../components/GameBoard";
 import SliderBar from "../components/SliderBar";
 
 import TextStyles, { normalize, sizeFromWidthPercent } from "../TextStyles";
-import { BoardTile, Direction, PageView, TileType, UserLevel } from "../util/types";
+import { BoardTile, Direction, PageView, TileType, UserLevel, createBlankBoard } from "../util/types";
 import { cloneBoard, getSpawnPosition, validTile } from "../util/logic";
 import { colors, graphics } from "../Theme";
 import GlobalContext from "../GlobalContext";
@@ -22,14 +22,14 @@ interface Props {
   levelCallback: (newState: UserLevel) => void, // Updates the level (usually board changes).
 
   playtestLevel: () => void,
-  storeChanges: () => void,
+  storeChanges: (newState: UserLevel) => void,
 }
 
 export default function EditLevel({
   viewCallback,
   level,
   levelCallback,
-  // playtestLevel,
+  playtestLevel,
   storeChanges,
 }: Props) {
   const { darkMode, playAudio } = useContext(GlobalContext);
@@ -85,6 +85,12 @@ export default function EditLevel({
       }
     });
   }
+  
+  const [unsavedChanges, setUnsavedChanges] = useState(false);
+  function saveChanges() {
+    storeChanges(level);
+    setUnsavedChanges(false);
+  }
 
   function changeTile(y: number, x: number) {
     const newBoard = cloneBoard(level.board);
@@ -107,15 +113,25 @@ export default function EditLevel({
       if (playAudio) playErrorSound();
     }
 
+    setUnsavedChanges(true);
     levelCallback({
       ...level,
       board: newBoard,
     });
   }
-
+  
   function changeTool(tool: BoardTile) {
     selectTool(tool);
     toggleToolsModal();
+  }
+  
+  function clearBoard() {
+    const newBoard = createBlankBoard();
+    setUnsavedChanges(true);
+    levelCallback({
+      ...level,
+      board: newBoard,
+    });
   }
 
   const [fuseTimer, setFuseTimer] = useState(15);
@@ -142,7 +158,7 @@ export default function EditLevel({
         <SimpleButton onPress={toggleToolsModal} text="Tools & Options" main={true} />
         <View style={{ width: normalize(15) }} />
         <SimpleButton onPress={() => {
-          storeChanges();
+          saveChanges();
           viewCallback(PageView.EDIT);
         }} text="Save & Exit" />
       </Animated.View>
@@ -178,20 +194,20 @@ export default function EditLevel({
                 onPress={() => changeTool({ id: TileType.WALL })}
               />
               <MenuButton
-                label="Player"
+                label="Spawn"
                 icon={graphics.PLAYER}
                 onPress={() => changeTool({ id: TileType.SPAWN })}
               />
             </View>
             <View style={styles.row}>
               <MenuButton
-                label="Flag"
+                label="Door"
                 icon={graphics.DOOR}
                 onPress={() => changeTool({ id: TileType.DOOR })}
                 theme={colors.GREEN_THEME}
               />
               <MenuButton
-                label="Coin"
+                label="Key"
                 icon={graphics.KEY}
                 onPress={() => changeTool({ id: TileType.KEY })}
                 theme={colors.GREEN_THEME}
@@ -243,7 +259,7 @@ export default function EditLevel({
             <View style={styles.row}>
               <SliderBar label="Fuse Timer" value={fuseTimer} units={" turns"}
                 minValue={1} maxValue={100} changeCallback={setFuseTimer}
-                mainColor={darkMode ? "#F79B9B" : "#FB6C6C"} // TODO: replace this with colors.RED_THEME.___
+                mainColor={darkMode ? "#F79B9B" : "#FB6C6C"} // TODO: replace this with colors.RED_THEME
                 knobColor={darkMode ? "#1E0D0D" : "#FFFAFA"}
               />
             </View>
@@ -260,13 +276,35 @@ export default function EditLevel({
           <View style={styles.section}>
             <Text style={[TextStyles.subtitle(darkMode), styles.subtitle]}>Options</Text>
             <View style={styles.row}>
-              <MenuButton onLongPress={() => {/* TODO */ }} label="Delete Level     (Long Press)" icon={graphics.DELETE_ICON} allowOverflow />
-              <MenuButton onLongPress={() => {/* TODO */ }} label="Clear Level      (Long Press)" icon={graphics.HAMMER_ICON} allowOverflow />
+              <MenuButton
+                onLongPress={clearBoard}
+                icon={graphics.DELETE_ICON}
+                theme={colors.RED_THEME}
+                label="Clear Board     (Long Press)"
+                allowOverflow
+              />
+              <MenuButton
+                onPress={() => {
+                  saveChanges();
+                  playtestLevel();
+                }}
+                label="Playtest"
+                icon={graphics.PLAYER}
+              />
             </View>
             <View style={styles.row}>
-              {/* <MenuButton onPress={playtestLevel} label="Playtest" icon={graphics.PLAYER} disabled={true} /> */}
-              <MenuButton onPress={storeChanges} label="Save Changes" icon={graphics.SAVE_ICON} />
-              <MenuButton onPress={toggleToolsModal} label="Close Menu" icon={graphics.DOOR_ICON} />
+              <MenuButton
+                onPress={saveChanges}
+                label="Save Changes"
+                icon={graphics.SAVE_ICON}
+                theme={colors.GREEN_THEME}
+                disabled={!unsavedChanges}
+              />
+              <MenuButton
+                onPress={toggleToolsModal}
+                label="Close Menu"
+                icon={graphics.DOOR_ICON}
+              />
             </View>
           </View>
 
@@ -314,8 +352,8 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    borderTopWidth: 1,
-    borderBottomWidth: 1,
+    // borderTopWidth: 1,
+    // borderBottomWidth: 1,
     borderColor: colors.MAIN_PURPLE_TRANSPARENT(0.3),
     alignItems: "center",
     justifyContent: "center",

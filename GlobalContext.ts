@@ -1,5 +1,4 @@
 import { createContext } from "react";
-import { Level } from "./util/types";
 
 /**
  * @param {boolean} darkMode
@@ -16,23 +15,19 @@ import { Level } from "./util/types";
  * @param {number} playAudio
  * A boolean representing whether the app should play sound effects or not.
  */
-interface Settings {
+interface GlobalContext {
   darkMode: boolean,
   dragSensitivity: number,
   doubleTapDelay: number,
   playAudio: boolean,
 }
 
-export const defaultSettings: Settings = {
+export const defaultSettings = {
   darkMode: false,
   dragSensitivity: 60,
   doubleTapDelay: 250,
   playAudio: true,
 }
 
-type GlobalContext = Settings & {
-  levels: Level[],
-}
-
-const GC = createContext<GlobalContext>({ ...defaultSettings, levels: [] });
+const GC = createContext<GlobalContext>({ ...defaultSettings });
 export default GC;

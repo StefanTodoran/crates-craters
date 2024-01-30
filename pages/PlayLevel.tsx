@@ -1,4 +1,4 @@
-import { View, StyleSheet, Dimensions, PanResponder, Animated, SafeAreaView, StatusBar, Text, GestureResponderEvent, PanResponderGestureState } from "react-native";
+import { View, StyleSheet, Dimensions, PanResponder, Animated, SafeAreaView, Text, GestureResponderEvent, PanResponderGestureState } from "react-native";
 import React, { useState, useRef, useEffect, useContext, useMemo } from "react";
 import TextStyles, { normalize } from "../TextStyles";
 import GlobalContext from "../GlobalContext";
@@ -13,11 +13,12 @@ import Player from "../components/Player";
 import WinScreen from "./WinScreen";
 
 import { Game, SoundEvent, canMoveTo, doGameMove, initializeGameObj } from "../util/logic";
-import { aStarSearch, compoundHeuristic } from "../util/search";
+// import { aStarSearch, basicHeuristic, compoundHeuristic } from "../util/search";
 import { Direction, Level, PageView } from "../util/types";
 import { markLevelCompleted } from "../util/loader";
 import { calcBoardTileSize } from "../util/board";
 import { colors, graphics } from "../Theme";
+import MoveCounter from "../components/MoveCounter";
 
 const win = Dimensions.get("window");
 
@@ -37,6 +38,8 @@ interface Position {
   x: number,
   y: number,
 }
+
+type Gesture = [boolean, boolean, boolean, boolean]; // up, down, left, right
 
 /**
  * This component handles a wide variety of tasks related to level playing. It
@@ -131,13 +134,11 @@ export default function PlayLevel({
   // preview of moves, gesture is used for actually completing those moves on release.
   // const [touchMove, setTouchMove] = useState({ magY: 0, dirY: 0, magX: 0, dirX: 0 });
   const [touchMove, setTouchMove] = useState({ y: 0, x: 0 });
-  const [gesture, setGesture] = useState([false, false, false, false]); // up, down, left, right
 
   useEffect(() => {
-    handleGesture();
     panResponderEnabled.current = !game.won;
-    if (game.won) markLevelCompleted(game.uuid);
-  }, [gesture, game]);
+    if (game.won) markLevelCompleted(game.uuid, history.length);
+  }, [game]);
 
   // More player input state, we use these to keep track of double taps. We need to know
   // the previous tap time so we can determine if the two taps happened fast enough, and
@@ -148,55 +149,57 @@ export default function PlayLevel({
   const pressAnim = useRef(new Animated.Value(0)).current;
 
   const panResponderEnabled = useRef(true);
+  const handleGesture = useRef((_gesture: Gesture) => { });
 
-  function handleGesture() {
-    const [up, down, left, right] = gesture;
-    // Exactly one of up, down, left, right must be true!
-    if (bti(up) + bti(down) + bti(left) + bti(right) !== 1) {
-      return;
+  useEffect(() => {
+    handleGesture.current = (gesture: Gesture) => {
+      const [up, down, left, right] = gesture;
+      // Exactly one of up, down, left, right must be true!
+      if (bti(up) + bti(down) + bti(left) + bti(right) !== 1) {
+        return;
+      }
+
+      let new_state;
+      if (up) {
+        new_state = doGameMove(game, Direction.UP);
+      } else if (down) {
+        new_state = doGameMove(game, Direction.DOWN);
+      } else if (left) {
+        new_state = doGameMove(game, Direction.LEFT);
+      } else { // if (right) {
+        new_state = doGameMove(game, Direction.RIGHT);
+      }
+
+      if (playAudio) {
+        let playedSound = false;
+        if (new_state.soundEvent === SoundEvent.EXPLOSION) {
+          playExplosionSound();
+          playedSound = true;
+        }
+        if (new_state.soundEvent === SoundEvent.PUSH) {
+          playPushSound();
+          playedSound = true;
+        }
+        if (new_state.soundEvent === SoundEvent.FILL) {
+          playFillSound();
+          playedSound = true;
+        }
+        if (new_state.coins > game.coins || new_state.keys > game.keys) {
+          playCoinSound();
+          playedSound = true;
+        }
+        if (new_state.keys < game.keys) {
+          playDoorSound();
+          playedSound = true;
+        }
+        if (!playedSound && !new_state.won) {
+          playMoveSound();
+        }
+      }
+
+      updateGameState(new_state);
     }
-
-    let new_state;
-    if (up) {
-      new_state = doGameMove(game, Direction.UP);
-    } else if (down) {
-      new_state = doGameMove(game, Direction.DOWN);
-    } else if (left) {
-      new_state = doGameMove(game, Direction.LEFT);
-    } else { // if (right) {
-      new_state = doGameMove(game, Direction.RIGHT);
-    }
-
-    if (playAudio) {
-      let playedSound = false;
-      if (new_state.soundEvent === SoundEvent.EXPLOSION) {
-        playExplosionSound();
-        playedSound = true;
-      }
-      if (new_state.soundEvent === SoundEvent.PUSH) {
-        playPushSound();
-        playedSound = true;
-      }
-      if (new_state.soundEvent === SoundEvent.FILL) {
-        playFillSound();
-        playedSound = true;
-      }
-      if (new_state.coins > game.coins || new_state.keys > game.keys) {
-        playCoinSound();
-        playedSound = true;
-      }
-      if (new_state.keys < game.keys) {
-        playDoorSound();
-        playedSound = true;
-      }
-      if (!playedSound && !new_state.won) {
-        playMoveSound();
-      }
-    }
-
-    setGesture([false, false, false, false]);
-    updateGameState(new_state);
-  }
+  }, [game]);
 
   function onGestureMove(_evt: GestureResponderEvent, gestureState: PanResponderGestureState) {
     const sensitivity = dragSensitivity / 100; // dragSens is given as a number representing a percent e.g. 60
@@ -244,14 +247,16 @@ export default function PlayLevel({
       setPrevTouchPos(undefined);
     }
 
-    // By updating state, the component will be rerendered and
-    // the useEffect at the top will happen, calling handleGesture.
-    // setTouchMove({ magY: 0, dirY: 0, magX: 0, dirX: 0 });
+    handleGesture.current([up, down, left, right]);
+
     setTouchMove({ y: 0, x: 0 });
-    setGesture([up, down, left, right]);
+    // setTouchMove({ magY: 0, dirY: 0, magX: 0, dirX: 0 });
   }
 
   const tileSize = game ? calcBoardTileSize(game.board[0].length, game.board.length, win) : 1;
+  const xCorrect = -0.4 * tileSize;
+  const yCorrect = -1.6 * tileSize;
+
   const panResponder = useMemo(
     () => PanResponder.create({
       // Ask to be the responder:
@@ -266,8 +271,8 @@ export default function PlayLevel({
         // setTouchMove({ magY: 0, dirY: 0, magX: 0, dirX: 0 });
         setTouchMove({ y: 0, x: 0 });
 
-        const pressX = pressToIndex(gestureState.x0, tileSize);
-        const pressY = pressToIndex(gestureState.y0, tileSize) - 1;
+        const pressX = pressToIndex(gestureState.x0, tileSize, xCorrect);
+        const pressY = pressToIndex(gestureState.y0, tileSize, yCorrect);
 
         if (Date.now() - prevTouchTime < doubleTapDelay && prevTouchPos &&
           prevTouchPos.x === pressX && prevTouchPos.y === pressY) {
@@ -293,24 +298,25 @@ export default function PlayLevel({
               for (let i = 0; i < path.length; i++) {
                 current = doGameMove(current, path[i]);
               }
-              
+
               updateGameState(current);
               if (playAudio) playMoveSound();
             }
           }, 750);
+        } else {
+          setPrevTouchPos({
+            x: pressToIndex(gestureState.x0, tileSize, xCorrect),
+            y: pressToIndex(gestureState.y0, tileSize, yCorrect),
+          });
+          const touchTime = Date.now();
+          setPrevTouchTime(touchTime);
         }
-        setPrevTouchPos({
-          y: pressToIndex(gestureState.y0, tileSize) - 1,
-          x: pressToIndex(gestureState.x0, tileSize)
-        });
-        const touchTime = Date.now();
-        setPrevTouchTime(touchTime);
       },
       onPanResponderMove: onGestureMove,
       onPanResponderRelease: onEndGesture,
       onPanResponderTerminate: onEndGesture,
     }),
-    [prevTouchPos, tileSize, prevTouchTime]
+    [prevTouchPos, tileSize, prevTouchTime] // Since tileSize is a primitive, it can be used in a dependency array.
   );
 
   const [modalOpen, setModalOpen] = useState(false);
@@ -349,20 +355,29 @@ export default function PlayLevel({
 
   return (
     <>
-      {game && <SafeAreaView style={styles.container}>
+      {game && <SafeAreaView style={staticStyles.container}>
         {/* GAMEPLAY COMPONENTS */}
         <View {...panResponder.panHandlers}>
+          <MoveCounter moveCount={history.length}/>
+
           <GameBoard board={game.board} overrideTileSize={tileSize}>
             <Player game={game} touch={touchMove} darkMode={darkMode} tileSize={tileSize} />
-            {touchPos && <Animated.View style={styles.indicator(touchPos.x, touchPos.y, tileSize, pressAnim, darkMode)} />}
+
+            {touchPos && <Animated.View style={[
+              staticStyles.indicator,
+              dynamicStyles.indicator(touchPos.x, touchPos.y, tileSize, pressAnim, darkMode),
+            ]} />}
           </GameBoard>
           <Inventory coins={game.coins} maxCoins={game.maxCoins} keys={game.keys} />
           {game.won && <WinScreen />}
         </View>
 
         {/* PAUSE MENU COMPONENTS */}
-        {modalOpen && <Animated.View style={styles.modal(anim, darkMode)}>
-          <Text style={styles.subtitle(darkMode)}>Menu</Text>
+        {modalOpen && <Animated.View style={[
+          staticStyles.modal,
+          dynamicStyles.modal(anim, darkMode),
+        ]}>
+          <Text style={dynamicStyles.subtitle(darkMode)}>Menu</Text>
           <MenuButton
             label="Restart Level"
             icon={graphics.BOMB}
@@ -377,9 +392,9 @@ export default function PlayLevel({
             disabled={history.length === 0}
           />
           <MenuButton
-            label="Level Select"
-            icon={graphics.DOOR_ICON}
-            onPress={() => viewCallback(PageView.LEVELS)}
+            label={playtest ? "Continue Editing" : "Level Select"}
+            icon={playtest ? graphics.HAMMER_ICON : graphics.DOOR_ICON}
+            onPress={() => viewCallback(playtest ? PageView.EDITOR : PageView.LEVELS)}
           />
           <MenuButton
             label="Resume Game"
@@ -389,19 +404,22 @@ export default function PlayLevel({
           />
           {/* <MenuButton
             label="Get Hint"
-            icon={graphics.PLAYER}
-            // theme={colors.GREEN_THEME}
+            icon={graphics.SUPPORT_ICON}
+            theme={colors.GREEN_THEME}
             onPress={() => {
-              const path = aStarSearch(game, compoundHeuristic);
+              aStarSearch(game, compoundHeuristic);
+              aStarSearch(game, basicHeuristic);
             }}
           /> */}
         </Animated.View>}
-        <Animated.View style={{ flexDirection: "row", height: normalize(50), opacity: anim.interpolate({ inputRange: [0, 1], outputRange: [1, 0] }) }}>
+        <Animated.View style={dynamicStyles.buttonsRow(anim)}>
           {!game.won && <SimpleButton onPress={toggleModal} text="Pause Menu" />}
 
           {game.won && <>
-            <SimpleButton onPress={() => viewCallback(PageView.LEVELS)} text="Back" />
-            <View style={{ width: normalize(15) }} />
+            <SimpleButton onPress={() => viewCallback(playtest ? PageView.EDIT : PageView.LEVELS)} text="Back" />
+            <View style={staticStyles.buttonGap} />
+
+            {playtest && <SimpleButton onPress={() => viewCallback(PageView.EDITOR)} text="Keep Editing" main={true} wide={true} />}
             {!playtest && <SimpleButton onPress={() => nextLevelCallback(level.uuid)} text="Next Level" main={true} wide={true} />}
           </>}
         </Animated.View>
@@ -415,46 +433,35 @@ function bti(bool: boolean) {
   return bool === true ? 1 : 0;
 }
 
-function pressToIndex(touchPos: number, tileSize: number) {
-  const correction = -10;
+function pressToIndex(touchPos: number, tileSize: number, correction: number) {
   return Math.floor((touchPos + correction) / tileSize);
 }
 
-const styles = StyleSheet.create<any>({
+const dynamicStyles = StyleSheet.create<any>({
   subtitle: (darkMode: boolean) => ({
     ...TextStyles.subtitle(darkMode),
     marginBottom: -normalize(5),
   }),
-  container: {
-    paddingTop: StatusBar.currentHeight! + 15,
-    // paddingBottom: win.height * 0.05,
-    alignItems: "center",
-    justifyContent: "space-evenly",
-  },
+  buttonsRow: (anim: Animated.Value) => ({
+    flexDirection: "row",
+    height: normalize(50),
+    opacity: anim.interpolate({
+      inputRange: [0, 1],
+      outputRange: [1, 0],
+    }),
+  }),
   modal: (anim: Animated.Value, darkMode: boolean) => ({
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    flexDirection: "column",
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: darkMode ? colors.NEAR_BLACK_TRANSPARENT(0.85) : "rgba(255, 255, 255, 0.85)",
-    paddingHorizontal: win.width * 0.225,
+    backgroundColor: darkMode ? "rgba(0, 0, 0, 0.85)" : "rgba(255, 255, 255, 0.85)",
+    // backgroundColor: darkMode ? colors.NEAR_BLACK_TRANSPARENT(0.85) : "rgba(255, 255, 255, 0.85)",
     opacity: anim,
   }),
   indicator: (xPos: number, yPos: number, size: number, anim: Animated.Value, darkMode: boolean) => ({
-    position: "absolute",
     left: xPos * size,
     top: yPos * size,
     width: size,
     height: size,
     backgroundColor: (darkMode) ? colors.OFF_WHITE_TRANSPARENT(0.2) : colors.NEAR_BLACK_TRANSPARENT(0.1),
     borderColor: (darkMode) ? colors.OFF_WHITE : colors.DIM_GRAY,
-    borderStyle: "solid",
-    borderWidth: 1,
-    borderRadius: 2,
     opacity: anim,
     transform: [{
       scale: anim.interpolate({
@@ -463,4 +470,34 @@ const styles = StyleSheet.create<any>({
       }),
     }],
   }),
+});
+
+const staticStyles = StyleSheet.create({
+  container: {
+    // paddingTop: StatusBar.currentHeight!,
+    // paddingTop: StatusBar.currentHeight! + 15,
+    // paddingBottom: win.height * 0.05,
+    alignItems: "center",
+    justifyContent: "space-evenly",
+  },
+  buttonGap: {
+    width: normalize(15),
+  },
+  modal: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: win.width * 0.225,
+  },
+  indicator: {
+    position: "absolute",
+    borderStyle: "solid",
+    borderWidth: 1,
+    borderRadius: 2,
+  },
 });

@@ -90,7 +90,7 @@ export default function MenuButton({
       {(icon) && <Image style={styles.icon} source={icon} />}
 
       {!!label && <Text
-        numberOfLines={allowOverflow ? 0 : 1}
+        numberOfLines={allowOverflow ? undefined : 1}
         allowFontScaling={false}
         style={[
           styles.label,

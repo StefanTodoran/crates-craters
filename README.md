@@ -161,9 +161,12 @@ Built with JavaScript and React Native, Crates and Craters is a single player pu
 
 * Improve VirtualizedList performance especially as content length increases
 * Use cloud service to allow storage and sharing of user-created levels
-  * Could store normal levels here too, with levels downloaded as you go?
-  * Rework how levels are stored to a more robust system
-* Better way to do local level storage (read from file?)
+  * Allow account creation
+  * Require a user solves their level to upload it
+* Refactor play and edit screen pause menu container into separate component
+  * Menu should close when the user presses on it (not on a button)
 * Design and add many, many more levels, perhaps with new tile types
-* Create a proper tutorial? as opposed to simply an easy level
-* Research expo bare workflow to potentially integrate native code like MMKV
+  * Review level 16, might be too easy for where it is
+* Create a proper tutorial with live instruction, as opposed to simply an easy level
+* Could [react native web assembly](https://github.com/cawfree/react-native-webassembly) help improve performance? 
+* Add metal crate tile type and associated logic

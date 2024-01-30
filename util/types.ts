@@ -1,3 +1,6 @@
+// ============= \\
+// TILES & BOARD \\
+
 export enum TileType {
   EMPTY,
   WALL,
@@ -33,34 +36,11 @@ export interface BombTile {
 }
 
 export interface SimpleTile {
-  id: Exclude<TileType, TileType.ONEWAY | TileType.BOMB>
+  id: Exclude<TileType, TileType.ONEWAY | TileType.BOMB>,
 }
 
 export type BoardTile = SimpleTile | OneWayTile | BombTile;
 export type Board = BoardTile[][];
-
-interface LevelBase {
-  uuid: string,
-  name: string,
-  board: Board,
-  completed: boolean,
-  official: boolean,
-  designer?: string,
-  created?: Date,
-}
-
-export interface OfficialLevel extends LevelBase {
-  official: true,
-  order: number,
-}
-
-export interface UserLevel extends LevelBase {
-  official: false,
-  designer: string,
-  created: Date,
-}
-
-export type Level = OfficialLevel | UserLevel;
 
 export function createBlankBoard() {
   const blankBoard: Board = [];
@@ -74,6 +54,72 @@ export function createBlankBoard() {
   blankBoard[1][1] = { id: TileType.SPAWN };
   blankBoard[2][6] = { id: TileType.FLAG };
   return blankBoard;
+}
+
+// ============= \\
+// LEVEL OBJECTS \\
+
+interface LevelBase {
+  uuid: string,
+  name: string,
+  board: Board,
+  official: boolean,
+  completed: boolean,
+  best?: number, // Guaranteed to be defined if completed, represents the minimum moves the user has used to beat the level.
+}
+
+export interface OfficialLevel extends LevelBase {
+  official: true,
+  order: number,
+}
+
+type DateString = string; // In the form Date().toISOString();
+export interface UserLevel extends LevelBase {
+  official: false,
+  designer: string,
+  created: DateString,
+  shared?: DateString,
+}
+
+export interface SharedLevel extends UserLevel {
+  shared: DateString,
+  downloads: number,
+}
+
+export type Level = OfficialLevel | UserLevel | SharedLevel;
+
+enum LevelObjectType {
+  BASE,
+  OFFICIAL,
+  USER,
+  SHARED,
+}
+
+type levelObjectPropSet = { [key: string]: string };
+const levelObjectProps: { [key in LevelObjectType]: levelObjectPropSet} = {
+  [LevelObjectType.BASE]: {
+    "uuid": "string",
+    "name": "string",
+    "board": "object",
+    // TODO: Figure out why completed doesn't always exist?
+    // "completed": "boolean", 
+    "official": "boolean",
+  },
+  [LevelObjectType.OFFICIAL]: {}, // TODO: Add the appropriate keys here.
+  [LevelObjectType.USER]: {},
+  [LevelObjectType.SHARED]: {},
+}
+
+export function isLevelWellFormed(target: any, check: LevelObjectType = LevelObjectType.BASE): target is Level {
+  if (target === null || target === undefined) return false;
+  
+  const props = levelObjectProps[check];
+  for (const [key, type] of Object.entries(props)) {
+    if (!(key in target)) return false;
+    if (typeof target[key] !== type) return false;
+  }
+
+  return true;
 }
 
 // ========================= \\

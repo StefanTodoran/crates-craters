@@ -57,7 +57,7 @@ export default function EditorPage({
         icon: ListIcon,
       },
       {
-        label: "Editor",
+        label: "Manage",
         color: colors.RED_THEME.MAIN_COLOR,
         icon: EditorIcon,
       },

@@ -4,23 +4,23 @@ import * as NavigationBar from "expo-navigation-bar";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Dimensions, Animated, BackHandler, SafeAreaView, StatusBar as RNStatusBar, View, StyleSheet } from "react-native";
 
-import { createLevel, debugDump, getSavedSettings, importStoredLevels, parseCompressedBoardData, setData } from "./util/loader";
+import { createLevel, getData, getStoredLevels, updateLevel } from "./util/loader";
+import { useBooleanSetting, useNumberSetting } from "./util/hooks";
 import { checkForOfficialLevelUpdates } from "./util/database";
 import { Level, PageView, UserLevel } from "./util/types";
 import { Game, initializeGameObj } from "./util/logic";
+import { eventEmitter } from "./util/events";
 import GlobalContext from "./GlobalContext";
 import { colors } from "./Theme";
 
 import Menu from "./components/Menu";
 import Header from "./components/Header";
-import AccountPage from "./pages/AccountSettings";
+import SettingsPage from "./pages/HelpSettings";
 import LevelSelect from "./pages/LevelSelect";
 import EditorPage from "./pages/EditorPage";
 import PlayLevel from "./pages/PlayLevel";
 import StorePage from "./pages/StorePage";
 import EditLevel from "./pages/EditLevel";
-// import PlayLevel from "./pages/PlayLevel";
-// import CreateLevel from "./pages/CreateLevel";
 
 const win = Dimensions.get("window");
 
@@ -38,7 +38,7 @@ export default function App() {
 
   const pageAnim = useRef(new Animated.Value(0)).current;
   const setAnimTo = (animState: number, callback?: () => void) => {
-    // MAKE SURE 0 <= animState <= 1
+    // Make sure than 0 <= animState <= 1, interpolated styles assume on this.
     Animated.timing(pageAnim, {
       toValue: animState,
       duration: 300,
@@ -48,6 +48,16 @@ export default function App() {
 
   const [view, setView] = useState(PageView.MENU);
   const switchView = useCallback((newView: PageView) => {
+    // To playtest a level, the child component must call beginPlaytesting(),
+    // which will change the view to the play view. Therefore we need to clear
+    // it for the child once the user leaves the play view.
+    if (newView !== PageView.PLAY) setPlaytesting(false);
+
+    if (view === PageView.PLAY && newView === PageView.EDITOR) {
+      // If we are coming from PageView.PLAY, playLevel must not be undefined.
+      startEditingLevel(playLevel!.uuid); 
+    }
+
     if (newView === PageView.MENU) { // PAGE -> MENU
       setAnimTo(0, () => setView(newView));
     } else if (view === PageView.MENU) {// MENU -> PAGE
@@ -61,106 +71,92 @@ export default function App() {
     }
   }, [view]);
 
-  useEffect(() => {
-    // TODO: REMOVE ME!
-    debugDump();
-  }, [view]);
-  
   const [levels, setLevels] = useState<Level[]>([]);
+  const syncLevelStateWithStorage = useRef((_uuid?: string) => { });
+
   useEffect(() => {
-    checkForOfficialLevelUpdates().then(importStoredLevels).then(setLevels);
+    syncLevelStateWithStorage.current = (uuid?: string) => {
+      if (uuid) {
+        const updatedLevel = getData(uuid);
+        const levelIndex = levels.findIndex(level => level.uuid === updatedLevel.uuid);
+        levels[levelIndex] = updatedLevel;
+      
+        // Refresh this additional state variable if necessary.
+        if (uuid === editorLevel?.uuid) setEditorLevel(updatedLevel);
+      } else {
+        setLevels(getStoredLevels());
+      }
+    }
+  }, [levels]);
+
+  useEffect(() => {
+    checkForOfficialLevelUpdates().then(() => syncLevelStateWithStorage.current());
+
+    const handleSyncRequest = (event: CustomEvent) => syncLevelStateWithStorage.current(event?.detail);
+    const listener = eventEmitter.addListener("doStateStorageSync", handleSyncRequest);
+    return () => listener.remove();
   }, []);
 
   // We can't just await data from storage to set the default app state values,
   // so we will have to just put some default dummy values below and run the
   // update function to replace those values as soon as possible.
 
-  const [darkMode, setDarkMode] = useState(false);
-  const [dragSensitivity, setSensitivity] = useState(60);
-  const [doubleTapDelay, setTapDelay] = useState(250);
-  const [playAudio, setAudioMode] = useState(true);
+  const [darkMode, setDarkMode] = useBooleanSetting("darkMode");
+  const [dragSensitivity, setSensitivity] = useNumberSetting("dragSensitivity");
+  const [doubleTapDelay, setTapDelay] = useNumberSetting("doubleTapDelay");
+  const [playAudio, setAudioMode] = useBooleanSetting("playAudio");
 
-  // These functions are used by children (probably only the settings page)
-  // to modify App's state, and we use them to abstract that away from those
-  // components and because we have the state and AyncStorage here.
-
-  const toggleDarkMode = () => {
-    setDarkMode(current => !current);
-  }
-  const toggleAudioMode = () => {
-    setAudioMode(current => !current);
-  }
-
-  // We use this to avoid rewriting the settings on app start (since
-  // the setting writing useEffect will trigger on first render).
-  const didReadSettings = useRef(false);
-
-  async function readSettingsFromStorage() {
-    const settings = await getSavedSettings();
-
-    setDarkMode(settings.darkMode);
-    setAudioMode(settings.playAudio);
-    setSensitivity(settings.dragSensitivity);
-    setTapDelay(settings.doubleTapDelay);
-
-    didReadSettings.current = true;
-  }
-
-  // Any time an option holding some setting's state is updated,
-  // we should write this to storage so it remains the same next startup.
-  useEffect(() => {
-    if (didReadSettings.current) {
-      setData("isAppDarkMode", darkMode);
-      setData("appAudioMode", playAudio);
-      setData("appDragSensitivity", dragSensitivity);
-      setData("appDoubleTapDelay", doubleTapDelay);
-    }
-  }, [darkMode, playAudio, dragSensitivity, doubleTapDelay]);
-
-  useEffect(() => {
-    readSettingsFromStorage();
-  }, []);
+  const toggleDarkMode = () => setDarkMode(darkMode => !darkMode);
+  const toggleAudioMode = () => setAudioMode(playAudio => !playAudio);
 
   useEffect(() => {
     NavigationBar.setBackgroundColorAsync(darkMode ? "#000" : "#fff");
   }, [darkMode]);
 
-  const [playLevel, setPlayLevel] = useState<Level>();          // The level currently being played.
-  const [currentGame, setGameState] = useState<Game>();         // The game state of the level being played.
-  const [gameHistory, setGameHistory] = useState<Game[]>();     // The past game states, used for undoing moves.
-  const [editorLevel, setEditorLevel] = useState<UserLevel>();  // The level object being edited.
+  const [playLevel, setPlayLevel] = useState<Level>();             // The level currently being played.
+  const [currentGame, setGameState] = useState<Game>();            // The game state of the level being played.
+  const [gameHistory, setGameHistory] = useState<Game[]>();        // The past game states, used for undoing moves.
+  const [editorLevel, setEditorLevel] = useState<UserLevel>();     // The level object being edited.
+  const [playtesting, setPlaytesting] = useState<boolean>(false);  // Whether playtestingmode is requested.
 
   const changePlayLevel = useCallback((uuid: string) => {
-    const levelIndex = levels.findIndex(level => level.uuid === uuid);
-    const levelObject = levels[levelIndex];
+    const levelObject = getData(uuid);
     setPlayLevel(levelObject);
 
-    const newGame = initializeGameObj(levels[levelIndex]);
+    const newGame = initializeGameObj(levelObject);
     setGameState(newGame);
     setGameHistory([]);
-  }, [levels]);
+  }, []);
 
   const getNextLevel = useCallback(() => {
-    const nextIndex = levels.findIndex(level => level.uuid === playLevel!.uuid);
-    const nextLevel = levels[nextIndex + 1];
+    const nextIndex = levels.findIndex(level => level.uuid === playLevel!.uuid) + 1;
+    const nextLevel = levels[nextIndex];
 
     if (nextLevel) {
       setPlayLevel(nextLevel);
       setGameState(initializeGameObj(nextLevel));
       setGameHistory([]);
     }
-  }, [playLevel, levels]);
+  }, [levels, playLevel]);
 
   const startEditingLevel = useCallback((uuid: string) => {
-    const levelIndex = levels.findIndex(level => level.uuid === uuid);
-    setEditorLevel(levels[levelIndex] as UserLevel);
-  }, [levels]);
+    const levelObject = getData(uuid);
+    setEditorLevel(levelObject);
+  }, []);
 
   const createNewLevel = useCallback((level: UserLevel) => {
     setEditorLevel(level);
     createLevel(level);
-    importStoredLevels().then(setLevels);
-  }, [levels]);
+
+    const levels = getStoredLevels();
+    setLevels(levels);
+  }, []);
+
+  const beginPlaytesting = useCallback((uuid: string) => {
+    changePlayLevel(uuid);
+    setPlaytesting(true);
+    switchView(PageView.PLAY);
+  }, []);
 
   useEffect(() => { // TODO: update this method?
     const backAction = () => {
@@ -180,7 +176,7 @@ export default function App() {
 
   if (!fontsLoaded) return <></>;
   return (
-    <GlobalContext.Provider value={{ darkMode, dragSensitivity, doubleTapDelay, playAudio, levels }}>
+    <GlobalContext.Provider value={{ darkMode, dragSensitivity, doubleTapDelay, playAudio }}>
       <SafeAreaView style={{ flex: 1 }}>
 
         <Menu openPage={switchView} />
@@ -199,7 +195,7 @@ export default function App() {
                 viewCallback={switchView}
                 playLevelCallback={changePlayLevel}
                 // editorLevelCallback={startEditingLevel}
-                levels={levels.filter(level => level.official)}
+                levels={levels.filter(lvl => lvl.official)}
                 scrollTo={!currentGame?.won ? playLevel?.uuid : undefined}
                 elementHeight={levelElementHeight}
                 storeElementHeightCallback={setElementHeight}
@@ -216,17 +212,17 @@ export default function App() {
                 level={playLevel!}
                 game={currentGame!}
                 history={gameHistory!}
-                playtest={false}
+                playtest={playtesting}
               />
             }
 
             {view === PageView.EDIT &&
               <EditorPage
                 viewCallback={switchView}
-                playLevelCallback={changePlayLevel}
+                playLevelCallback={beginPlaytesting}
                 startEditingCallback={startEditingLevel}
                 createNewLevelCallback={createNewLevel}
-                levels={levels.filter(level => !level.official)} // TODO: and level.designer === the current user
+                levels={levels.filter(lvl => !lvl.official)} // TODO: and level.designer === the current user
                 editorLevel={editorLevel}
                 elementHeight={levelElementHeight}
                 storeElementHeightCallback={setElementHeight}
@@ -238,8 +234,8 @@ export default function App() {
                 viewCallback={switchView}
                 level={editorLevel!}
                 levelCallback={setEditorLevel}
-                playtestLevel={() => { }}
-                storeChanges={() => { }}
+                playtestLevel={() => beginPlaytesting(editorLevel!.uuid)}
+                storeChanges={updateLevel}
               />
             }
 
@@ -248,7 +244,7 @@ export default function App() {
             }
 
             {view === PageView.SETTINGS &&
-              <AccountPage
+              <SettingsPage
                 darkModeCallback={toggleDarkMode}
                 audioModeCallback={toggleAudioMode}
                 setSensitivityCallback={setSensitivity}

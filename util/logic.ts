@@ -134,7 +134,7 @@ export function getSpawnPosition(board: Board): Position {
 /**
  * Returns the number of time some value shows up in an array.
  */
-function countInstancesInBoard(board: Board, target: TileType) {
+export function countInstancesInBoard(board: Board, target: TileType) {
   const dimensions = [board.length, board[0].length];
   let count = 0;
 

@@ -1,19 +1,14 @@
-import { Text, View } from "react-native";
 import React, { useMemo } from "react";
 import { colors } from "../Theme";
 
 import About from "./About";
 import Settings from "./Settings";
 import HowToPlay from "./HowToPlay";
+import Subpages from "../components/Subpages";
 
 import GuideIcon from "../assets/main_theme/help.png";
 import SettingsIcon from "../assets/main_theme/settings.png";
 import AboutIcon from "../assets/main_theme/about.png";
-import ProfileIcon from "../assets/main_theme/profile.png";
-import Subpages from "../components/Subpages";
-import TextStyles from "../TextStyles";
-import MenuButton from "../components/MenuButton";
-import { clearStorage } from "../util/loader";
 
 interface Props {
   darkModeCallback: () => void,
@@ -38,13 +33,6 @@ export default function AccountSettings({
         setTapDelayCallback={setTapDelayCallback}
       />,
       <About />,
-      <View>
-        <Text style={[TextStyles.subtitle(false), { color: colors.GREEN_THEME.MAIN_COLOR }]}>
-          Coming Soon
-        </Text>
-
-        <MenuButton label="Clear Storage" onPress={clearStorage}/>
-      </View>,
     ];
   }, []);
 
@@ -64,11 +52,6 @@ export default function AccountSettings({
         label: "About",
         color: colors.GREEN_THEME.MAIN_COLOR,
         icon: AboutIcon,
-      },
-      {
-        label: "Profile",
-        color: colors.GREEN_THEME.MAIN_COLOR,
-        icon: ProfileIcon,
       },
     ];
   }, []);

@@ -55,7 +55,7 @@ export default function CreateLevel({ createLevelCallback }: Props) {
               completed: false,
               official: false,
               designer: levelDesigner,
-              created: levelCreated,
+              created: levelCreated.toISOString(),
             });
 
             eventEmitter.emit("doPageChange", { detail: 0 });

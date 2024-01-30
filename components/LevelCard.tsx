@@ -55,6 +55,10 @@ function LevelCardBase({
   if (!level.official) attributionText = `Designed by "${level.designer}"`;
   if (overrideAttribution) attributionText = "Let your creativity shine!";
 
+  let iconSource; // mode === PageView.EDIT is the same as level.official
+  if (level.official) iconSource = level.completed ? graphics.CRATER : graphics.CRATE;
+  else iconSource = graphics.METAL_CRATE;
+
   return (
     <Animated.View style={[
       styles.container,
@@ -79,7 +83,7 @@ function LevelCardBase({
           <View style={{ justifyContent: "center", alignItems: "center" }}>
             <Image
               style={styles.bigIcon}
-              source={mode === PageView.EDIT ? graphics.METAL_CRATE : level.official ? graphics.CRATE : graphics.CRATER}
+              source={iconSource}
             />
             <Text allowFontScaling={false} style={styles.number}>{levelIndex + 1}</Text>
           </View>
@@ -110,7 +114,7 @@ function LevelCardBase({
           level={level}
           previewSize={2}
           previewWidth={0.5}
-          rowCorrect={-0.1}
+          // rowCorrect={-0.1}
         />
 
         <View style={{ flexDirection: "column", flex: 0.9 }}>
@@ -148,7 +152,7 @@ export function LevelCardButtons({
   return (
     <>
       {playCallback && <SimpleButton
-        text={mode === PageView.EDIT ? "Test" : "Play"}
+        text={mode === PageView.EDIT ? "Playtest" : "Play"}
         icon={graphics.PLAY_ICON}
         main={true}
         theme={useTheme}
@@ -173,7 +177,7 @@ export function LevelCardButtons({
       />}
 
       {editCallback && <SimpleButton
-        text={"Edit"}
+        text={"Manage"}
         icon={mode === PageView.EDIT ? graphics.HAMMER_ICON_RED : graphics.HAMMER_ICON}
         theme={useTheme}
         onPress={editCallback}
