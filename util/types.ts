@@ -63,8 +63,9 @@ interface LevelBase {
   uuid: string,
   name: string,
   board: Board,
-  completed: boolean,
   official: boolean,
+  completed: boolean,
+  best?: number, // Guaranteed to be defined if completed, represents the minimum moves the user has used to beat the level.
 }
 
 export interface OfficialLevel extends LevelBase {

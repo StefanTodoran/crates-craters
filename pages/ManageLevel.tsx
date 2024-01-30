@@ -11,6 +11,7 @@ import BoardPreview from "../components/BoardPreview";
 import InputCard from "../components/InputCard";
 import MenuButton from "../components/MenuButton";
 import { deleteLevel, updateLevel } from "../util/loader";
+// import { compressBoardData } from "../util/loader";
 import { eventEmitter } from "../util/events";
 import { useForceRefresh } from "../util/hooks";
 
@@ -42,6 +43,7 @@ export default function ManageLevel({
   }, [level, refreshed]);
 
   if (!level) return;
+  // console.log(compressBoardData(level.board));
 
   const previewWidth = 0.9;
   const tileSize = calcPreviewTileSize(level.board[0].length, previewWidth, win);

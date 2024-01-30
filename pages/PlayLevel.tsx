@@ -1,4 +1,4 @@
-import { View, StyleSheet, Dimensions, PanResponder, Animated, SafeAreaView, StatusBar, Text, GestureResponderEvent, PanResponderGestureState } from "react-native";
+import { View, StyleSheet, Dimensions, PanResponder, Animated, SafeAreaView, Text, GestureResponderEvent, PanResponderGestureState } from "react-native";
 import React, { useState, useRef, useEffect, useContext, useMemo } from "react";
 import TextStyles, { normalize } from "../TextStyles";
 import GlobalContext from "../GlobalContext";
@@ -18,6 +18,7 @@ import { Direction, Level, PageView } from "../util/types";
 import { markLevelCompleted } from "../util/loader";
 import { calcBoardTileSize } from "../util/board";
 import { colors, graphics } from "../Theme";
+import MoveCounter from "../components/MoveCounter";
 
 const win = Dimensions.get("window");
 
@@ -136,7 +137,7 @@ export default function PlayLevel({
 
   useEffect(() => {
     panResponderEnabled.current = !game.won;
-    if (game.won && !level.completed && level.official) markLevelCompleted(game.uuid);
+    if (game.won) markLevelCompleted(game.uuid, history.length);
   }, [game]);
 
   // More player input state, we use these to keep track of double taps. We need to know
@@ -148,7 +149,7 @@ export default function PlayLevel({
   const pressAnim = useRef(new Animated.Value(0)).current;
 
   const panResponderEnabled = useRef(true);
-  const handleGesture = useRef((_gesture: Gesture) => {});
+  const handleGesture = useRef((_gesture: Gesture) => { });
 
   useEffect(() => {
     handleGesture.current = (gesture: Gesture) => {
@@ -157,7 +158,7 @@ export default function PlayLevel({
       if (bti(up) + bti(down) + bti(left) + bti(right) !== 1) {
         return;
       }
-  
+
       let new_state;
       if (up) {
         new_state = doGameMove(game, Direction.UP);
@@ -168,7 +169,7 @@ export default function PlayLevel({
       } else { // if (right) {
         new_state = doGameMove(game, Direction.RIGHT);
       }
-  
+
       if (playAudio) {
         let playedSound = false;
         if (new_state.soundEvent === SoundEvent.EXPLOSION) {
@@ -253,8 +254,8 @@ export default function PlayLevel({
   }
 
   const tileSize = game ? calcBoardTileSize(game.board[0].length, game.board.length, win) : 1;
-  const xCorrect = -0.4*tileSize;
-  const yCorrect = -1.6*tileSize;
+  const xCorrect = -0.4 * tileSize;
+  const yCorrect = -1.6 * tileSize;
 
   const panResponder = useMemo(
     () => PanResponder.create({
@@ -357,6 +358,8 @@ export default function PlayLevel({
       {game && <SafeAreaView style={staticStyles.container}>
         {/* GAMEPLAY COMPONENTS */}
         <View {...panResponder.panHandlers}>
+          <MoveCounter moveCount={history.length}/>
+
           <GameBoard board={game.board} overrideTileSize={tileSize}>
             <Player game={game} touch={touchMove} darkMode={darkMode} tileSize={tileSize} />
 
@@ -471,7 +474,8 @@ const dynamicStyles = StyleSheet.create<any>({
 
 const staticStyles = StyleSheet.create({
   container: {
-    paddingTop: StatusBar.currentHeight! + 15,
+    // paddingTop: StatusBar.currentHeight!,
+    // paddingTop: StatusBar.currentHeight! + 15,
     // paddingBottom: win.height * 0.05,
     alignItems: "center",
     justifyContent: "space-evenly",

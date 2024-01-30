@@ -15,7 +15,7 @@ import { colors } from "./Theme";
 
 import Menu from "./components/Menu";
 import Header from "./components/Header";
-import AccountPage from "./pages/AccountSettings";
+import SettingsPage from "./pages/HelpSettings";
 import LevelSelect from "./pages/LevelSelect";
 import EditorPage from "./pages/EditorPage";
 import PlayLevel from "./pages/PlayLevel";
@@ -82,7 +82,7 @@ export default function App() {
         levels[levelIndex] = updatedLevel;
       
         // Refresh this additional state variable if necessary.
-        if (uuid === editorLevel?.uuid) startEditingLevel(uuid);
+        if (uuid === editorLevel?.uuid) setEditorLevel(updatedLevel);
       } else {
         setLevels(getStoredLevels());
       }
@@ -244,7 +244,7 @@ export default function App() {
             }
 
             {view === PageView.SETTINGS &&
-              <AccountPage
+              <SettingsPage
                 darkModeCallback={toggleDarkMode}
                 audioModeCallback={toggleAudioMode}
                 setSensitivityCallback={setSensitivity}

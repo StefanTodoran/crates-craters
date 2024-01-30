@@ -137,14 +137,21 @@ export function multiGetData(keys: string[]) {
   return parsedData;
 }
 
-export function markLevelCompleted(uuid: string) {
+export function markLevelCompleted(uuid: string, moveCount: number) {
   const level = getData(uuid) as Level;
+  const wasCompleted = level.completed;
+
+  const prevBest = Number.isInteger(level.best) ? level.best : Infinity;
+  level.best = Math.min(prevBest!, moveCount);
   level.completed = true;
   setData(uuid, level);
   eventEmitter.emit("doStateStorageSync", { detail: uuid });
 
-  const gain = countInstancesInBoard(level.board, TileType.COIN);
-  modifyCoinBalance(gain);
+  if (level.official && !wasCompleted) {
+    // We only want to give coins for the first time an official level is completed.
+    const gain = countInstancesInBoard(level.board, TileType.COIN);
+    modifyCoinBalance(gain);
+  }
 }
 
 function modifyCoinBalance(change: number) {

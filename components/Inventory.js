@@ -49,16 +49,13 @@ export default function Inventory({ coins, maxCoins, keys }) {
 
   return (
     <View style={styles.inventory}>
-      <View style={[styles.row, { marginLeft: 5 }]}>
+      <View style={styles.row}>
+      {/* <View style={[styles.row, { marginLeft: 5 }]}> */}
         {inventory}
       </View>
       <View style={styles.row}>
         <Animated.Text allowFontScaling={false} style={styles.coinsText(coinsAnim)}>{coins}</Animated.Text>
-        <Animated.Text allowFontScaling={false} style={{
-          color: "#A7A2A9",
-          fontSize: normalize(12),
-          ...styles.font,
-        }}>/{maxCoins}</Animated.Text>
+        <Animated.Text allowFontScaling={false} style={styles.maxCoinsText}>/{maxCoins}</Animated.Text>
         <Animated.Image style={styles.icon(coinsAnim)} source={graphics.COIN} />
       </View>
     </View>
@@ -76,11 +73,20 @@ const styles = StyleSheet.create({
     color: colors.DIM_GRAY,
     fontSize: normalize(20),
     opacity: anim,
-    ...styles.font,
+    fontFamily: "Montserrat-Regular",
+    fontWeight: "normal",
   }),
+  maxCoinsText: {
+    color: "#A7A2A9",
+    fontSize: normalize(12),
+    fontFamily: "Montserrat-Regular",
+    fontWeight: "normal",
+  },
   row: {
     flexDirection: "row",
     alignItems: "center",
+    marginLeft: normalize(7),
+    marginRight: normalize(6),
   },
   icon: (anim) => ({
     height: normalize(32),
@@ -89,8 +95,4 @@ const styles = StyleSheet.create({
       scale: anim,
     }],
   }),
-  font: {
-    fontFamily: "Montserrat-Regular",
-    fontWeight: "normal",
-  },
 });

@@ -166,5 +166,7 @@ Built with JavaScript and React Native, Crates and Craters is a single player pu
 * Refactor play and edit screen pause menu container into separate component
   * Menu should close when the user presses on it (not on a button)
 * Design and add many, many more levels, perhaps with new tile types
+  * Review level 16, might be too easy for where it is
 * Create a proper tutorial with live instruction, as opposed to simply an easy level
 * Could [react native web assembly](https://github.com/cawfree/react-native-webassembly) help improve performance? 
+* Add metal crate tile type and associated logic
