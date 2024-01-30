@@ -240,7 +240,7 @@ function isTileReachable(board: Board, tile: Position) {
     TileType.EXPLOSION,
     TileType.LITTLE_EXPLOSION,
 
-    // TODO: remove this
+    // TODO: Remove this, after adding oneway tile logic.
     TileType.ONEWAY,
   ];
 

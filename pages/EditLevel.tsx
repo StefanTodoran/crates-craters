@@ -85,6 +85,12 @@ export default function EditLevel({
       }
     });
   }
+  
+  const [unsavedChanges, setUnsavedChanges] = useState(false);
+  function saveChanges() {
+    storeChanges(level);
+    setUnsavedChanges(false);
+  }
 
   function changeTile(y: number, x: number) {
     const newBoard = cloneBoard(level.board);
@@ -107,19 +113,21 @@ export default function EditLevel({
       if (playAudio) playErrorSound();
     }
 
+    setUnsavedChanges(true);
     levelCallback({
       ...level,
       board: newBoard,
     });
   }
-
+  
   function changeTool(tool: BoardTile) {
     selectTool(tool);
     toggleToolsModal();
   }
-
+  
   function clearBoard() {
     const newBoard = createBlankBoard();
+    setUnsavedChanges(true);
     levelCallback({
       ...level,
       board: newBoard,
@@ -150,7 +158,7 @@ export default function EditLevel({
         <SimpleButton onPress={toggleToolsModal} text="Tools & Options" main={true} />
         <View style={{ width: normalize(15) }} />
         <SimpleButton onPress={() => {
-          storeChanges(level);
+          saveChanges();
           viewCallback(PageView.EDIT);
         }} text="Save & Exit" />
       </Animated.View>
@@ -186,7 +194,7 @@ export default function EditLevel({
                 onPress={() => changeTool({ id: TileType.WALL })}
               />
               <MenuButton
-                label="Player"
+                label="Spawn"
                 icon={graphics.PLAYER}
                 onPress={() => changeTool({ id: TileType.SPAWN })}
               />
@@ -251,7 +259,7 @@ export default function EditLevel({
             <View style={styles.row}>
               <SliderBar label="Fuse Timer" value={fuseTimer} units={" turns"}
                 minValue={1} maxValue={100} changeCallback={setFuseTimer}
-                mainColor={darkMode ? "#F79B9B" : "#FB6C6C"} // TODO: replace this with colors.RED_THEME.___
+                mainColor={darkMode ? "#F79B9B" : "#FB6C6C"} // TODO: replace this with colors.RED_THEME
                 knobColor={darkMode ? "#1E0D0D" : "#FFFAFA"}
               />
             </View>
@@ -275,14 +283,22 @@ export default function EditLevel({
                 label="Clear Board     (Long Press)"
                 allowOverflow
               />
-              <MenuButton onPress={playtestLevel} label="Playtest" icon={graphics.PLAYER} />
+              <MenuButton
+                onPress={() => {
+                  saveChanges();
+                  playtestLevel();
+                }}
+                label="Playtest"
+                icon={graphics.PLAYER}
+              />
             </View>
             <View style={styles.row}>
               <MenuButton
-                onPress={() => storeChanges(level)}
+                onPress={saveChanges}
                 label="Save Changes"
                 icon={graphics.SAVE_ICON}
                 theme={colors.GREEN_THEME}
+                disabled={!unsavedChanges}
               />
               <MenuButton
                 onPress={toggleToolsModal}

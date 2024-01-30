@@ -1,7 +1,9 @@
 import { View, StatusBar, StyleSheet } from "react-native";
+import { PageView } from "../util/types";
+import { colors, purpleTheme } from "../Theme";
+
 import Banner from "./Banner";
 import HomeButton from "./HomeButton";
-import { PageView } from "../util/types";
 
 interface Props {
   pageView: PageView,
@@ -21,21 +23,21 @@ import RedBanner from "../assets/red_banner.png";
 import YellowBanner from "../assets/yellow_banner.png";
 import GreenBanner from "../assets/green_banner.png";
 
-const pageThemeData = [ // TODO: use colors from Theme.ts to avoid duplication!
+const pageThemeData = [
   { // Purple
-    color: "#BEA9DF",
+    color: purpleTheme.MIDDLE_COLOR,
     banner: PurpleBanner,
   },
   { // Red
-    color: "#FA8484",
+    color: colors.RED_THEME.MIDDLE_COLOR,
     banner: RedBanner,
   },
   { // Yellow    
-    color: "#f9d385",
+    color: colors.YELLOW_THEME.MIDDLE_COLOR,
     banner: YellowBanner,
   },
   { // Green
-    color: "#9BD99D",
+    color: colors.GREEN_THEME.MIDDLE_COLOR,
     banner: GreenBanner,
   },
 ];

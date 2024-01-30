@@ -100,7 +100,7 @@ const levelObjectProps: { [key in LevelObjectType]: levelObjectPropSet} = {
     "uuid": "string",
     "name": "string",
     "board": "object",
-    // TODO: Why isn't completed always set?
+    // TODO: Figure out why completed doesn't always exist?
     // "completed": "boolean", 
     "official": "boolean",
   },

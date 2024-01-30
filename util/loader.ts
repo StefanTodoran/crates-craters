@@ -220,7 +220,7 @@ export function compressBoardData(board: Board): string {
       let encoding = "";
       keys.forEach(key => {
         // TODO: These seem to always be in the right order, but need to
-        // make sure that this is a guarantee and not environemtn dependent.
+        // make sure that this is a guarantee and not environment dependent.
         encoding += tile[key as keyof BoardTile].toString() + split.tile;
       });
       encoding = encoding.slice(0, -1);
