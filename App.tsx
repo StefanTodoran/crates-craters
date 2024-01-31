@@ -55,7 +55,7 @@ export default function App() {
 
     if (view === PageView.PLAY && newView === PageView.EDITOR) {
       // If we are coming from PageView.PLAY, playLevel must not be undefined.
-      startEditingLevel(playLevel!.uuid); 
+      startEditingLevel(playLevel!.uuid);
     }
 
     if (newView === PageView.MENU) { // PAGE -> MENU
@@ -80,7 +80,7 @@ export default function App() {
         const updatedLevel = getData(uuid);
         const levelIndex = levels.findIndex(level => level.uuid === updatedLevel.uuid);
         levels[levelIndex] = updatedLevel;
-      
+
         // Refresh this additional state variable if necessary.
         if (uuid === editorLevel?.uuid) setEditorLevel(updatedLevel);
       } else {
@@ -110,8 +110,14 @@ export default function App() {
   const toggleAudioMode = () => setAudioMode(playAudio => !playAudio);
 
   useEffect(() => {
-    NavigationBar.setBackgroundColorAsync(darkMode ? "#000" : "#fff");
-  }, [darkMode]);
+    NavigationBar.setPositionAsync("absolute");
+    NavigationBar.setBehaviorAsync("overlay-swipe");
+    NavigationBar.setBackgroundColorAsync("#ffffff00");
+  }, []);
+
+  // useEffect(() => {
+  //   NavigationBar.setBackgroundColorAsync(darkMode ? "#000" : "#fff");
+  // }, [darkMode]);
 
   const [playLevel, setPlayLevel] = useState<Level>();             // The level currently being played.
   const [currentGame, setGameState] = useState<Game>();            // The game state of the level being played.

@@ -12,6 +12,10 @@ import { PageView } from "../util/types";
 import { PageTheme } from "./Header";
 
 const win = Dimensions.get("window");
+const scrn = Dimensions.get("screen");
+
+const bottomNavHeight = scrn.height - win.height;
+
 export const menuPages = [
   {
     color: "#CCB7E5",
@@ -125,7 +129,9 @@ const styles = StyleSheet.create<any>({
   },
   navigation: {
     position: "absolute",
-    bottom: normalize(30),
+    bottom: Math.max(bottomNavHeight, normalize(45)),
+    // bottom: 0,
+    // bottom: normalize(45),
     left: 0,
     right: 0,
     flexDirection: "row",

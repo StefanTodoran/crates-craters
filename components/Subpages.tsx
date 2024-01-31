@@ -69,7 +69,7 @@ const styles = StyleSheet.create<any>({
     position: "relative",
     flexDirection: "row",
     gap: normalize(20),
-    marginBottom: normalize(20),
+    marginBottom: normalize(30),
     width: "100%",
     justifyContent: "center",
     borderTopWidth: 1,

@@ -170,3 +170,4 @@ Built with JavaScript and React Native, Crates and Craters is a single player pu
 * Create a proper tutorial with live instruction, as opposed to simply an easy level
 * Could [react native web assembly](https://github.com/cawfree/react-native-webassembly) help improve performance? 
 * Add metal crate tile type and associated logic
+* Consider making bombs destroy keys and coins?
