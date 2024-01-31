@@ -115,10 +115,6 @@ export default function App() {
     NavigationBar.setBackgroundColorAsync("#ffffff00");
   }, []);
 
-  // useEffect(() => {
-  //   NavigationBar.setBackgroundColorAsync(darkMode ? "#000" : "#fff");
-  // }, [darkMode]);
-
   const [playLevel, setPlayLevel] = useState<Level>();             // The level currently being played.
   const [currentGame, setGameState] = useState<Game>();            // The game state of the level being played.
   const [gameHistory, setGameHistory] = useState<Game[]>();        // The past game states, used for undoing moves.

@@ -358,7 +358,7 @@ export default function PlayLevel({
       {game && <SafeAreaView style={staticStyles.container}>
         {/* GAMEPLAY COMPONENTS */}
         <View {...panResponder.panHandlers}>
-          <MoveCounter moveCount={game.moveCount}/>
+          <MoveCounter moveCount={game.moveCount} />
 
           <GameBoard board={game.board} overrideTileSize={tileSize}>
             <Player game={game} touch={touchMove} darkMode={darkMode} tileSize={tileSize} />
@@ -391,11 +391,26 @@ export default function PlayLevel({
             onPress={undoMove}
             disabled={history.length === 0}
           />
-          <MenuButton
-            label={playtest ? "Continue Editing" : "Level Select"}
-            icon={playtest ? graphics.HAMMER_ICON : graphics.DOOR_ICON}
-            onPress={() => viewCallback(playtest ? PageView.EDITOR : PageView.LEVELS)}
-          />
+          {playtest ?
+            <>
+              <MenuButton
+                label={"Continue Editing"}
+                icon={graphics.HAMMER_ICON}
+                onPress={() => viewCallback(PageView.EDITOR)}
+              />
+              <MenuButton
+                label={"To Levels List"}
+                icon={graphics.DOOR_ICON}
+                onPress={() => viewCallback(PageView.EDIT)}
+              />
+            </>
+            :
+            <MenuButton
+              label={"Level Select"}
+              icon={graphics.DOOR_ICON}
+              onPress={() => viewCallback(PageView.LEVELS)}
+            />
+          }
           <MenuButton
             label="Resume Game"
             icon={graphics.KEY}
