@@ -159,45 +159,45 @@ export default function PlayLevel({
         return;
       }
 
-      let new_state;
+      let newState, stateChanged;
       if (up) {
-        new_state = doGameMove(game, Direction.UP);
+        [newState, stateChanged] = doGameMove(game, Direction.UP);
       } else if (down) {
-        new_state = doGameMove(game, Direction.DOWN);
+        [newState, stateChanged] = doGameMove(game, Direction.DOWN);
       } else if (left) {
-        new_state = doGameMove(game, Direction.LEFT);
+        [newState, stateChanged] = doGameMove(game, Direction.LEFT);
       } else { // if (right) {
-        new_state = doGameMove(game, Direction.RIGHT);
+        [newState, stateChanged] = doGameMove(game, Direction.RIGHT);
       }
 
       if (playAudio) {
         let playedSound = false;
-        if (new_state.soundEvent === SoundEvent.EXPLOSION) {
+        if (newState.soundEvent === SoundEvent.EXPLOSION) {
           playExplosionSound();
           playedSound = true;
         }
-        if (new_state.soundEvent === SoundEvent.PUSH) {
+        if (newState.soundEvent === SoundEvent.PUSH) {
           playPushSound();
           playedSound = true;
         }
-        if (new_state.soundEvent === SoundEvent.FILL) {
+        if (newState.soundEvent === SoundEvent.FILL) {
           playFillSound();
           playedSound = true;
         }
-        if (new_state.coins > game.coins || new_state.keys > game.keys) {
+        if (newState.coins > game.coins || newState.keys > game.keys) {
           playCoinSound();
           playedSound = true;
         }
-        if (new_state.keys < game.keys) {
+        if (newState.keys < game.keys) {
           playDoorSound();
           playedSound = true;
         }
-        if (!playedSound && !new_state.won) {
+        if (!playedSound && !newState.won) {
           playMoveSound();
         }
       }
 
-      updateGameState(new_state);
+      if (stateChanged) updateGameState(newState);
     }
   }, [game]);
 
@@ -296,7 +296,7 @@ export default function PlayLevel({
             if (path) {
               let current = game;
               for (let i = 0; i < path.length; i++) {
-                current = doGameMove(current, path[i]);
+                [current] = doGameMove(current, path[i]);
               }
 
               updateGameState(current);

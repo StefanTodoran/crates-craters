@@ -223,9 +223,11 @@ export function canMoveTo(game: Game, tileX: number, tileY: number): Direction[]
 
 /**
  * Attempts to do a move, return the successor state. If the move
- * is invalid, successor state may be identical to current state.
+ * is invalid, successor state may be identical to current state,
+ * and the second item in the tuple is a boolean representing whether
+ * the state changed.
  */
-export function doGameMove(game: Game, move: Direction): Game {
+export function doGameMove(game: Game, move: Direction): [Game, boolean] {
   const next = cloneGameObj(game); // The next game object following this game move.
   const moveTo = { y: game.player.y, x: game.player.x }; // Where the player is attempting to move.
   const oneFurther = { y: game.player.y, x: game.player.x }; // One tile further that that in the same direction.
@@ -247,7 +249,7 @@ export function doGameMove(game: Game, move: Direction): Game {
   next.soundEvent = undefined; // Clear the previous sound event.
   if (!validTile(moveTo.y, moveTo.x, next.board)) {
     // The user attempted to move outside the board.
-    return game;
+    return [game, false];
   }
 
   // Clear explosion tiles.
@@ -311,34 +313,34 @@ export function doGameMove(game: Game, move: Direction): Game {
   }
 
   const moved = attemptMove(moveTo.y, moveTo.x, next, move);
-  if (moved) {
-    // Tile entity logic handling. If we haven't moved, we shouldn't
-    // decrease bomb fuse (invalid moves shouldn't count as a timestep).
+  if (!moved) return [game, false];
 
-    for (let i = 0; i < dimensions[0]; i++) {
-      for (let j = 0; j < dimensions[1]; j++) {
-        const tile = tileAt(i, j, next.board);
+  // Tile entity logic handling. If we haven't moved, we shouldn't
+  // decrease bomb fuse (invalid moves shouldn't count as a timestep).
 
-        if (tile.id === TileType.BOMB) {
-          tile.fuse--;
+  for (let i = 0; i < dimensions[0]; i++) {
+    for (let j = 0; j < dimensions[1]; j++) {
+      const tile = tileAt(i, j, next.board);
 
-          if (tile.fuse === 0) {
-            const littleExplosion: SimpleTile = { id: TileType.LITTLE_EXPLOSION };
-            if (boundTileAt(i - 1, j, next.board).id === TileType.CRATE) { next.board[i - 1][j] = littleExplosion; }
-            if (boundTileAt(i + 1, j, next.board).id === TileType.CRATE) { next.board[i + 1][j] = littleExplosion; }
-            if (boundTileAt(i, j - 1, next.board).id === TileType.CRATE) { next.board[i][j - 1] = littleExplosion; }
-            if (boundTileAt(i, j + 1, next.board).id === TileType.CRATE) { next.board[i][j + 1] = littleExplosion; }
+      if (tile.id === TileType.BOMB) {
+        tile.fuse--;
 
-            next.board[i][j] = { id: TileType.EXPLOSION };
-            next.soundEvent = SoundEvent.EXPLOSION;
-          }
+        if (tile.fuse === 0) {
+          const littleExplosion: SimpleTile = { id: TileType.LITTLE_EXPLOSION };
+          if (boundTileAt(i - 1, j, next.board).id === TileType.CRATE) { next.board[i - 1][j] = littleExplosion; }
+          if (boundTileAt(i + 1, j, next.board).id === TileType.CRATE) { next.board[i + 1][j] = littleExplosion; }
+          if (boundTileAt(i, j - 1, next.board).id === TileType.CRATE) { next.board[i][j - 1] = littleExplosion; }
+          if (boundTileAt(i, j + 1, next.board).id === TileType.CRATE) { next.board[i][j + 1] = littleExplosion; }
+
+          next.board[i][j] = { id: TileType.EXPLOSION };
+          next.soundEvent = SoundEvent.EXPLOSION;
         }
       }
     }
   }
 
   next.won = winCondition(next);
-  return next;
+  return [next, true];
 }
 
 function attemptMove(yPos: number, xPos: number, next: Game, direction?: Direction) {

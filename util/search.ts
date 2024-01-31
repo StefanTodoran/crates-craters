@@ -69,9 +69,9 @@ function getGameStateSuccessors(gameState: BaseGameState) {
   const successors: SuccessorState[] = [];
 
   directions.forEach(direction => {
-    const successor = doGameMove(gameState as Game, direction);
+    const [successor, moved] = doGameMove(gameState as Game, direction);
 
-    if (!areGameStatesEqual(gameState, successor)) {
+    if (moved && !areGameStatesEqual(gameState, successor)) { // TOOD: The boolean moved should eliminate the need for areGameStatesEqual, right?
       successors.push({
         game: pruneGameStateObject(successor),
         direction: [direction],
@@ -88,7 +88,7 @@ function getGameStateSuccessors(gameState: BaseGameState) {
     if (path) {
       let successor = gameState as Game;
       for (let i = 0; i < path.length; i++) {
-        successor = doGameMove(successor, path[i]);
+        [successor] = doGameMove(successor, path[i]);
       }
 
       successors.push({
