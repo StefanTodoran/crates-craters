@@ -358,7 +358,7 @@ export default function PlayLevel({
       {game && <SafeAreaView style={staticStyles.container}>
         {/* GAMEPLAY COMPONENTS */}
         <View {...panResponder.panHandlers}>
-          <MoveCounter moveCount={history.length}/>
+          <MoveCounter moveCount={game.moveCount}/>
 
           <GameBoard board={game.board} overrideTileSize={tileSize}>
             <Player game={game} touch={touchMove} darkMode={darkMode} tileSize={tileSize} />

@@ -24,6 +24,7 @@ export interface Game {
   keys: number,
   won: boolean, // Whether the curren run of the level has been completed.
   soundEvent?: SoundEvent,
+  moveCount: number,
 }
 
 // Deep copy of a game object.
@@ -340,6 +341,7 @@ export function doGameMove(game: Game, move: Direction): [Game, boolean] {
   }
 
   next.won = winCondition(next);
+  next.moveCount++;
   return [next, true];
 }
 
@@ -376,5 +378,6 @@ export function initializeGameObj(level: Level): Game {
     coins: 0,
     keys: 0,
     won: false,
+    moveCount: 0,
   };
 }

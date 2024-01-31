@@ -7,9 +7,7 @@ interface Props {
   moveCount: number,
 }
 
-export default function MoveCounter({
-  moveCount,
-}: Props) {
+export default function MoveCounter({ moveCount }: Props) {
   const anim = useRef(new Animated.Value(0)).current;
   const setAnimTo = (animState: number, duration: number) => {
     Animated.timing(anim, {
@@ -23,7 +21,7 @@ export default function MoveCounter({
     setAnimTo(moveCount ? 1 : 0, moveCount ? 500 : 150);
   }, [moveCount]);
 
-  
+
   const label = (moveCount !== 1) ? " moves" : " move";
 
   return (
