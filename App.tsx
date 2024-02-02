@@ -237,7 +237,10 @@ export default function App() {
                 viewCallback={switchView}
                 level={editorLevel!}
                 levelCallback={setEditorLevel}
-                playtestLevel={() => beginPlaytesting(editorLevel!.uuid)}
+                playtestLevel={() => {
+                  beginPlaytesting(editorLevel!.uuid);
+                  switchView(PageView.PLAY);
+                }}
                 storeChanges={updateLevel}
               />
             }

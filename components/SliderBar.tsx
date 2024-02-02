@@ -14,6 +14,7 @@ interface Props {
   changeCallback: (newValue: number) => void,
   mainColor?: string,
   knobColor?: string,
+  showSteppers?: boolean,
 }
 
 /**
@@ -27,6 +28,7 @@ interface Props {
  * @param {number} minValue
  * @param {number} maxValue
  * @param {Function} changeCallback The callback to use when the value inside is changed.
+ * @param {boolean} showSteppers
  * 
  * OPTIONAL:
  * @params mainColor, knobColor
@@ -40,6 +42,7 @@ export default function SliderBar({
   changeCallback,
   mainColor,
   knobColor,
+  showSteppers,
 }: Props) {
   const [pressed, setPressed] = useState(false);
   const [movedAmount, setMovedAmount] = useState(value);

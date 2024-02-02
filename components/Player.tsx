@@ -1,5 +1,5 @@
 import { StyleSheet, Image, Animated } from "react-native";
-import React, { useRef, useEffect } from "react";
+import React, { useRef, useEffect, useMemo } from "react";
 import { Direction, TileType } from "../util/types";
 import { Game, boundTileAt } from "../util/logic";
 import { colors, graphics } from "../Theme";
@@ -35,35 +35,39 @@ export default function Player({
     ).start();
   }, []);
 
-  // We only add selectors on adjacent tiles where the player could actually move.
-  const options = [];
-  for (let x = -1; x < 2; x++) {
-    for (let y = -1; y < 2; y++) {
-      if ((y === 0 || x === 0) && !(y === 0 && x === 0)) {
-        const xPos = game.player.x + x;
-        const yPos = game.player.y + y;
+  const options = useMemo(() => {
+    // We only add selectors on adjacent tiles where the player could actually move.
+    const newOptions = [];
+    for (let x = -1; x < 2; x++) {
+      for (let y = -1; y < 2; y++) {
+        if ((y === 0 || x === 0) && !(y === 0 && x === 0)) {
+          const xPos = game.player.x + x;
+          const yPos = game.player.y + y;
 
-        const tile = boundTileAt(yPos, xPos, game.board);
-        let selectable = ![TileType.OUTSIDE, TileType.CRATER, TileType.WALL].includes(tile.id);
-        selectable = (tile.id === TileType.DOOR && game.keys === 0) ? false : selectable;
-        
-        if (tile.id === TileType.ONEWAY) {
-          selectable = (tile.orientation === Direction.LEFT  && xPos > game.player.x) ? false : selectable;
-          selectable = (tile.orientation === Direction.RIGHT && xPos < game.player.x) ? false : selectable;
-          selectable = (tile.orientation === Direction.UP    && yPos > game.player.y) ? false : selectable;
-          selectable = (tile.orientation === Direction.DOWN  && yPos < game.player.y) ? false : selectable;
-        }
+          const tile = boundTileAt(yPos, xPos, game.board);
+          let selectable = ![TileType.OUTSIDE, TileType.CRATER, TileType.WALL].includes(tile.id);
+          selectable = (tile.id === TileType.DOOR && game.keys === 0) ? false : selectable;
+          selectable = (tile.id === TileType.FLAG && game.coins !== game.maxCoins) ? false : selectable;
 
-        if (selectable) {
-          const optionStyle = styles.optionTile(xPos, yPos, tileSize, optionsAnim, darkMode);
-          options.push(<Animated.View key={`option<${x},${y}}`} style={optionStyle}></Animated.View>)
+          if (tile.id === TileType.ONEWAY) {
+            selectable = (tile.orientation === Direction.LEFT && xPos > game.player.x) ? false : selectable;
+            selectable = (tile.orientation === Direction.RIGHT && xPos < game.player.x) ? false : selectable;
+            selectable = (tile.orientation === Direction.UP && yPos > game.player.y) ? false : selectable;
+            selectable = (tile.orientation === Direction.DOWN && yPos < game.player.y) ? false : selectable;
+          }
+
+          if (selectable) {
+            const optionStyle = styles.optionTile(xPos, yPos, tileSize, optionsAnim, darkMode);
+            newOptions.push(<Animated.View key={`option<${x},${y}}`} style={optionStyle}></Animated.View>)
+          }
         }
       }
     }
-  }
+
+    return newOptions;
+  }, [game, tileSize, darkMode]);
 
   const player_src = (darkMode) ? graphics.PLAYER_OUTLINED_DARK : graphics.PLAYER_OUTLINED;
-
   return (
     <>
       {!game.won && options}

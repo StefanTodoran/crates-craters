@@ -172,3 +172,14 @@ Built with JavaScript and React Native, Crates and Craters is a single player pu
 * Could [react native web assembly](https://github.com/cawfree/react-native-webassembly) help improve performance? 
 * Add metal crate tile type and associated logic
 * Consider making bombs destroy keys and coins?
+
+<h2 style="display: flex; align-items: center;">
+  Known Bugs
+  <img src="assets/main_theme/explosion.png" style="height: 1em;"/>
+</h2>
+
+* The constant animation for the move preview squares just stops sometimes
+  * See Animated.loop in Player.tsx
+* There are sometimes tiny 1px gaps between board tiles that vary by screen dimensions
+  * Not due to rounding, tile sizes are whole numbers
+  * See GameBoard.tsx
