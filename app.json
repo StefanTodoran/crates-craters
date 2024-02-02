@@ -13,14 +13,18 @@
       "backgroundColor": "#ffffff"
     },
     "updates": {
-      "fallbackToCacheTimeout": 0
+      "fallbackToCacheTimeout": 0,
+      "url": "https://u.expo.dev/35521822-b82a-4a39-9244-5560ebf3d2bb"
     },
     "assetBundlePatterns": [
       "**/*"
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.stefantodoran.cratesncraters"
+      "bundleIdentifier": "com.stefantodoran.cratesncraters",
+      "runtimeVersion": {
+        "policy": "appVersion"
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -28,7 +32,8 @@
         "backgroundColor": "#FFFFFF"
       },
       "package": "com.stefantodoran.cratesncraters",
-      "versionCode": 9
+      "versionCode": 10,
+      "runtimeVersion": "1.0.0"
     },
     "web": {
       "favicon": "./assets/favicon.png"

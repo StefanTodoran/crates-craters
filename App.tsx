@@ -47,12 +47,18 @@ export default function App() {
   }
 
   const [view, setView] = useState(PageView.MENU);
-  const switchView = useCallback((newView: PageView) => {
+
+  const openPageView = useCallback((newView: PageView) => {
+    setView(newView);
+    setAnimTo(1);
+
     // To playtest a level, the child component must call beginPlaytesting(),
     // which will change the view to the play view. Therefore we need to clear
     // it for the child once the user leaves the play view.
     if (newView !== PageView.PLAY) setPlaytesting(false);
+  }, []);
 
+  const switchView = useCallback((newView: PageView) => {
     if (view === PageView.PLAY && newView === PageView.EDITOR) {
       // If we are coming from PageView.PLAY, playLevel must not be undefined.
       startEditingLevel(playLevel!.uuid);
@@ -60,14 +66,10 @@ export default function App() {
 
     if (newView === PageView.MENU) { // PAGE -> MENU
       setAnimTo(0, () => setView(newView));
-    } else if (view === PageView.MENU) {// MENU -> PAGE
-      setView(newView);
-      setAnimTo(1);
+    } else if (view === PageView.MENU) { // MENU -> PAGE
+      openPageView(newView);
     } else { // PAGE -> PAGE
-      setAnimTo(0, () => {
-        setView(newView);
-        setAnimTo(1);
-      });
+      setAnimTo(0, () => openPageView(newView));
     }
   }, [view]);
 
@@ -218,7 +220,7 @@ export default function App() {
               />
             }
 
-            {view === PageView.EDIT &&
+            {view === PageView.MANAGE &&
               <EditorPage
                 viewCallback={switchView}
                 playLevelCallback={beginPlaytesting}

@@ -29,7 +29,7 @@ export const menuPages = [
     banner: PageTheme.RED,
     source: BombGraphic,
     text: "EDITOR",
-    target: PageView.EDIT,
+    target: PageView.MANAGE,
   },
   {
     color: "#FFE08E",

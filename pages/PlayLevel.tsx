@@ -398,11 +398,11 @@ export default function PlayLevel({
                 icon={graphics.HAMMER_ICON}
                 onPress={() => viewCallback(PageView.EDITOR)}
               />
-              <MenuButton
+              {/* <MenuButton
                 label={"To Levels List"}
                 icon={graphics.DOOR_ICON}
-                onPress={() => viewCallback(PageView.EDIT)}
-              />
+                onPress={() => viewCallback(PageView.MANAGE)}
+              /> */}
             </>
             :
             <MenuButton
@@ -428,10 +428,14 @@ export default function PlayLevel({
           /> */}
         </Animated.View>}
         <Animated.View style={dynamicStyles.buttonsRow(anim)}>
+          {playtest && !game.won && <> 
+            <SimpleButton onPress={() => viewCallback(PageView.MANAGE)} text="Level Select" />
+            <View style={staticStyles.buttonGap} />
+          </>}
           {!game.won && <SimpleButton onPress={toggleModal} text="Pause Menu" />}
 
           {game.won && <>
-            <SimpleButton onPress={() => viewCallback(playtest ? PageView.EDIT : PageView.LEVELS)} text="Back" />
+            <SimpleButton onPress={() => viewCallback(playtest ? PageView.MANAGE : PageView.LEVELS)} text="Back" />
             <View style={staticStyles.buttonGap} />
 
             {playtest && <SimpleButton onPress={() => viewCallback(PageView.EDITOR)} text="Keep Editing" main={true} wide={true} />}

@@ -160,6 +160,7 @@ Built with JavaScript and React Native, Crates and Craters is a single player pu
 </h2>
 
 * Improve VirtualizedList performance especially as content length increases
+* Do benchmarking to determine if the use of useCallback in App.tsx is worthwhile
 * Use cloud service to allow storage and sharing of user-created levels
   * Allow account creation
   * Require a user solves their level to upload it

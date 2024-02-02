@@ -41,7 +41,7 @@ export default function EditorPage({
       scrollTo={editorLevel?.uuid}
       elementHeight={elementHeight}
       storeElementHeightCallback={storeElementHeightCallback}
-      mode={PageView.EDIT}
+      mode={PageView.MANAGE}
     />,
 
     <ManageLevel level={editorLevel!} viewCallback={viewCallback}/>, // The button to switch to this subpage is disabled if editorLevel is undefined.

@@ -159,7 +159,7 @@ export default function EditLevel({
         <View style={{ width: normalize(15) }} />
         <SimpleButton onPress={() => {
           saveChanges();
-          viewCallback(PageView.EDIT);
+          viewCallback(PageView.MANAGE);
         }} text="Save & Exit" />
       </Animated.View>
 

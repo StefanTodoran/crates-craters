@@ -46,7 +46,7 @@ export function pageViewToPageTheme(pageView: PageView) {
   switch (pageView) {
     case PageView.LEVELS:
       return PageTheme.PURPLE;
-    case PageView.EDIT:
+    case PageView.MANAGE:
       return PageTheme.RED;
     case PageView.STORE:
       return PageTheme.YELLOW;

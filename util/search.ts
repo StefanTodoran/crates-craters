@@ -137,6 +137,7 @@ export function aStarSearch(start: Game, heuristic: HeuristicFunction): Directio
   const visited = new TrueSet();
 
   let count = 0;
+  let duplicates = 0;
   const maxSearches = 100000;
 
   const states: { [key: number]: SearchNode } = {};
@@ -163,12 +164,15 @@ export function aStarSearch(start: Game, heuristic: HeuristicFunction): Directio
 
     if (currentState.game.won) {
       const endTime = new Date().getTime();
-      console.log(`Searched ${count} nodes.`);
-      console.log(`Found a solution in ${(endTime - startTime) / 1000} seconds:`);
+      console.log(`Searched ${count} nodes, ${duplicates} of which were duplicates.`);
+      console.log(`Found a ${currentState.path.length} move solution in ${(endTime - startTime) / 1000} seconds:`);
       console.log(currentState.path.map(step => Direction[step]));
       return currentState.path;
     }
-    if (visited.has(currentState.game)) continue;
+    if (visited.has(currentState.game)) {
+      duplicates++;
+      continue;
+    }
 
     visited.add(currentState.game);
     const successors = getGameStateSuccessors(currentState.game);
@@ -185,7 +189,7 @@ export function aStarSearch(start: Game, heuristic: HeuristicFunction): Directio
 
   const endTime = new Date().getTime();
   console.log(`Searched for ${(endTime - startTime) / 1000} seconds.`);
-  console.log(`Unable to find a solution with fewer than ${maxSearches} nodes expanded.`);
+  console.log(`Unable to find a solution with fewer than ${maxSearches} nodes expanded, ${duplicates} of which were duplicates.`);
 
   const finalState = states[frontier.pop()!];
   printBoard(finalState.game.board, finalState.game.player);

@@ -1,19 +1,21 @@
 {
   "name": "crates-n-craters",
-  "version": "0.4.2",
+  "version": "0.4.3",
   "scripts": {
     "start": "expo start",
     "android": "expo run:android",
     "test": "expo start --no-dev --minify",
     "ios": "expo run:ios",
     "web": "expo start --web",
-    "eas-build-pre-install": "npm config set legacy-peer-deps true"
+    "eas-build-pre-install": "npm config set legacy-peer-deps true",
+    "store-build": "npm version patch && eas build -p android"
   },
   "dependencies": {
     "expo": "^49.0.0",
     "expo-av": "~13.4.1",
     "expo-font": "~11.4.0",
     "expo-navigation-bar": "~2.3.0",
+    "expo-splash-screen": "~0.20.5",
     "expo-status-bar": "~1.6.0",
     "firebase": "^10.6.0",
     "heapify": "github:StefanTodoran/javascript-minqueue#release",
@@ -21,15 +23,15 @@
     "react-native": "0.72.5",
     "react-native-mmkv": "^2.11.0",
     "react-native-svg": "13.9.0",
-    "expo-splash-screen": "~0.20.5"
+    "expo-updates": "~0.18.19"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",
     "@types/firebase": "^3.2.1",
     "@types/react": "~18.2.14",
     "@types/react-native": "^0.73.0",
-    "eas-cli": "^3.7.2",
-    "expo-cli": "^6.3.2",
+    "eas-cli": "^3.18.3",
+    "expo-cli": "^6.3.10",
     "expo-dev-client": "~2.4.12",
     "typescript": "^5.1.3"
   },

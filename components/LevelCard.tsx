@@ -17,7 +17,7 @@ interface LevelCardBaseProps {
   levelIndex: number,
   darkMode: boolean,
   children?: React.ReactNode,
-  mode: PageView.LEVELS | PageView.EDIT,
+  mode: PageView.LEVELS | PageView.MANAGE,
   overrideAttribution?: boolean,
 }
 
@@ -55,7 +55,7 @@ function LevelCardBase({
   if (!level.official) attributionText = `Designed by "${level.designer}"`;
   if (overrideAttribution) attributionText = "Let your creativity shine!";
 
-  let iconSource; // mode === PageView.EDIT is the same as level.official
+  let iconSource; // mode === PageView.MANAGE is the same as level.official
   if (level.official) iconSource = level.completed ? graphics.CRATER : graphics.CRATE;
   else iconSource = graphics.METAL_CRATE;
 
@@ -138,7 +138,7 @@ interface LevelCardButtonsProps {
   playCallback?: () => void, // The callback used to initiate the current level for playing. If not provided, the level is currently being played.
   resumeCallback?: () => void, // Used to resume play if this level is currently being played.
   editCallback?: () => void,
-  mode: PageView.LEVELS | PageView.EDIT,
+  mode: PageView.LEVELS | PageView.MANAGE,
 }
 
 export function LevelCardButtons({
@@ -152,7 +152,7 @@ export function LevelCardButtons({
   return (
     <>
       {playCallback && <SimpleButton
-        text={mode === PageView.EDIT ? "Playtest" : "Play"}
+        text={mode === PageView.MANAGE ? "Playtest" : "Play"}
         icon={graphics.PLAY_ICON}
         main={true}
         theme={useTheme}
@@ -178,7 +178,7 @@ export function LevelCardButtons({
 
       {editCallback && <SimpleButton
         text={"Manage"}
-        icon={mode === PageView.EDIT ? graphics.HAMMER_ICON_RED : graphics.HAMMER_ICON}
+        icon={mode === PageView.MANAGE ? graphics.HAMMER_ICON_RED : graphics.HAMMER_ICON}
         theme={useTheme}
         onPress={editCallback}
       />}

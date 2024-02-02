@@ -17,7 +17,7 @@ interface Props {
   elementHeight: number, // The card component size, used for pre scroll.
   storeElementHeightCallback: (height: number) => void, // Sets the element size, so this doesn't have to be recalculated every time we want to display the component.
 
-  mode: PageView.LEVELS | PageView.EDIT,
+  mode: PageView.LEVELS | PageView.MANAGE,
 }
 
 function LevelSelectBase({
@@ -39,7 +39,6 @@ function LevelSelectBase({
 
   const openLevel = useCallback((levelIndex: number) => {
     playLevelCallback(levels[levelIndex].uuid);
-    viewCallback(PageView.PLAY);
   }, []);
 
   const resumeLevel = useCallback(() => {
@@ -93,7 +92,7 @@ function LevelSelectBase({
             const editCallback = () => editLevel(index);
 
             let showResumeOption = item.uuid === scrollTo;
-            if (mode === PageView.EDIT) showResumeOption = false;
+            if (mode === PageView.MANAGE) showResumeOption = false;
 
             return <LevelCard
               playCallback={showResumeOption ? undefined : playCallback}
