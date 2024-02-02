@@ -37,32 +37,37 @@ export default function Player({
 
   const options = useMemo(() => {
     // We only add selectors on adjacent tiles where the player could actually move.
-    const newOptions = [];
-    for (let x = -1; x < 2; x++) {
-      for (let y = -1; y < 2; y++) {
-        if ((y === 0 || x === 0) && !(y === 0 && x === 0)) {
-          const xPos = game.player.x + x;
-          const yPos = game.player.y + y;
+    const newOptions: JSX.Element[] = [];
+    const offsets = [
+      {dx: -1, dy: 0},
+      {dx: 0, dy: -1},
+      {dx: 1, dy: 0},
+      {dx: 0, dy: 1},
+    ];
 
-          const tile = boundTileAt(yPos, xPos, game.board);
-          let selectable = ![TileType.OUTSIDE, TileType.CRATER, TileType.WALL].includes(tile.id);
-          selectable = (tile.id === TileType.DOOR && game.keys === 0) ? false : selectable;
-          selectable = (tile.id === TileType.FLAG && game.coins !== game.maxCoins) ? false : selectable;
+    offsets.forEach((offset, index) => {
+      const xPos = game.player.x + offset.dx;
+      const yPos = game.player.y + offset.dy;
 
-          if (tile.id === TileType.ONEWAY) {
-            selectable = (tile.orientation === Direction.LEFT && xPos > game.player.x) ? false : selectable;
-            selectable = (tile.orientation === Direction.RIGHT && xPos < game.player.x) ? false : selectable;
-            selectable = (tile.orientation === Direction.UP && yPos > game.player.y) ? false : selectable;
-            selectable = (tile.orientation === Direction.DOWN && yPos < game.player.y) ? false : selectable;
-          }
+      const tile = boundTileAt(yPos, xPos, game.board);
+      let selectable = ![TileType.OUTSIDE, TileType.CRATER, TileType.WALL].includes(tile.id);
+      selectable = (tile.id === TileType.DOOR && game.keys === 0) ? false : selectable;
+      selectable = (tile.id === TileType.FLAG && game.coins !== game.maxCoins) ? false : selectable;
 
-          if (selectable) {
-            const optionStyle = styles.optionTile(xPos, yPos, tileSize, optionsAnim, darkMode);
-            newOptions.push(<Animated.View key={`option<${x},${y}}`} style={optionStyle}></Animated.View>)
-          }
-        }
+      if (tile.id === TileType.ONEWAY) {
+        selectable = (tile.orientation === Direction.LEFT && xPos > game.player.x) ? false : selectable;
+        selectable = (tile.orientation === Direction.RIGHT && xPos < game.player.x) ? false : selectable;
+        selectable = (tile.orientation === Direction.UP && yPos > game.player.y) ? false : selectable;
+        selectable = (tile.orientation === Direction.DOWN && yPos < game.player.y) ? false : selectable;
       }
-    }
+
+      if (selectable) {
+        const optionStyle = styles.optionTile(xPos, yPos, tileSize, optionsAnim, darkMode);
+        newOptions.push(<Animated.View key={index} style={optionStyle}></Animated.View>);
+      } else {
+        newOptions.push(<Animated.View key={index}></Animated.View>);
+      }
+    });
 
     return newOptions;
   }, [game, tileSize, darkMode]);
