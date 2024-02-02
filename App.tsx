@@ -159,7 +159,6 @@ export default function App() {
   const beginPlaytesting = useCallback((uuid: string) => {
     changePlayLevel(uuid);
     setPlaytesting(true);
-    switchView(PageView.PLAY);
   }, []);
 
   useEffect(() => { // TODO: update this method?

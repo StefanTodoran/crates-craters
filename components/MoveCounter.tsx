@@ -35,6 +35,7 @@ const styles = StyleSheet.create<any>({
     fontSize: normalize(16),
     fontFamily: "Montserrat-Regular",
     fontWeight: "normal",
+    // marginTop: -(normalize(16) * 1.5), // Line height is roughly 1.5, found by trial and error.
     marginLeft: normalize(10),
     opacity: anim,
   }),

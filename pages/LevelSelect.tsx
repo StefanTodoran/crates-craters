@@ -39,6 +39,7 @@ function LevelSelectBase({
 
   const openLevel = useCallback((levelIndex: number) => {
     playLevelCallback(levels[levelIndex].uuid);
+    viewCallback(PageView.PLAY);
   }, []);
 
   const resumeLevel = useCallback(() => {

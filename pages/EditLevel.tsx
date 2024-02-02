@@ -1,4 +1,4 @@
-import { View, ScrollView, StyleSheet, Dimensions, Animated, Text, StatusBar, SafeAreaView } from "react-native";
+import { View, ScrollView, StyleSheet, Dimensions, Animated, Text, SafeAreaView } from "react-native";
 import React, { useState, useRef, useEffect, useContext } from "react";
 import { Sound } from "expo-av/build/Audio";
 import { Audio } from "expo-av";
@@ -317,7 +317,6 @@ export default function EditLevel({
 
 const styles = StyleSheet.create({
   container: {
-    paddingTop: StatusBar.currentHeight! + 15,
     alignItems: "center",
     justifyContent: "space-evenly",
     width: "100%",

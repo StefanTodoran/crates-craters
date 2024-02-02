@@ -353,9 +353,13 @@ export default function PlayLevel({
     }
   }
 
+  if (!game) { // TODO: Pretty sure this is uneeded.
+    console.error(`Error while trying to play ${level.uuid}, game is undefined or null!`);
+    return;
+  }
+
   return (
-    <>
-      {game && <SafeAreaView style={staticStyles.container}>
+    <SafeAreaView style={staticStyles.container}>
         {/* GAMEPLAY COMPONENTS */}
         <View {...panResponder.panHandlers}>
           <MoveCounter moveCount={game.moveCount} />
@@ -392,18 +396,11 @@ export default function PlayLevel({
             disabled={history.length === 0}
           />
           {playtest ?
-            <>
-              <MenuButton
-                label={"Continue Editing"}
-                icon={graphics.HAMMER_ICON}
-                onPress={() => viewCallback(PageView.EDITOR)}
-              />
-              {/* <MenuButton
-                label={"To Levels List"}
-                icon={graphics.DOOR_ICON}
-                onPress={() => viewCallback(PageView.MANAGE)}
-              /> */}
-            </>
+            <MenuButton
+              label={"Continue Editing"}
+              icon={graphics.HAMMER_ICON}
+              onPress={() => viewCallback(PageView.EDITOR)}
+            />
             :
             <MenuButton
               label={"Level Select"}
@@ -428,11 +425,11 @@ export default function PlayLevel({
           /> */}
         </Animated.View>}
         <Animated.View style={dynamicStyles.buttonsRow(anim)}>
-          {playtest && !game.won && <> 
+          {playtest && !game.won && <>
             <SimpleButton onPress={() => viewCallback(PageView.MANAGE)} text="Level Select" />
             <View style={staticStyles.buttonGap} />
           </>}
-          {!game.won && <SimpleButton onPress={toggleModal} text="Pause Menu" />}
+          {!game.won && <SimpleButton onPress={toggleModal} text="Pause Menu" main={playtest}/>}
 
           {game.won && <>
             <SimpleButton onPress={() => viewCallback(playtest ? PageView.MANAGE : PageView.LEVELS)} text="Back" />
@@ -442,8 +439,7 @@ export default function PlayLevel({
             {!playtest && <SimpleButton onPress={() => nextLevelCallback(level.uuid)} text="Next Level" main={true} wide={true} />}
           </>}
         </Animated.View>
-      </SafeAreaView>}
-    </>
+      </SafeAreaView>
   );
 }
 
@@ -463,6 +459,7 @@ const dynamicStyles = StyleSheet.create<any>({
   }),
   buttonsRow: (anim: Animated.Value) => ({
     flexDirection: "row",
+    marginTop: normalize(15),
     height: normalize(50),
     opacity: anim.interpolate({
       inputRange: [0, 1],
@@ -493,9 +490,9 @@ const dynamicStyles = StyleSheet.create<any>({
 
 const staticStyles = StyleSheet.create({
   container: {
-    // paddingTop: StatusBar.currentHeight!,
-    // paddingTop: StatusBar.currentHeight! + 15,
-    // paddingBottom: win.height * 0.05,
+    // Line height is roughly 1.5, found by trial and error,
+    // 16 comes from the font size of MoveCounter.
+    marginTop: -(normalize(16) * 1.5),
     alignItems: "center",
     justifyContent: "space-evenly",
   },
