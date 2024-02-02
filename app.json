@@ -32,7 +32,7 @@
         "backgroundColor": "#FFFFFF"
       },
       "package": "com.stefantodoran.cratesncraters",
-      "versionCode": 10,
+      "versionCode": 11,
       "runtimeVersion": "1.0.0"
     },
     "web": {
