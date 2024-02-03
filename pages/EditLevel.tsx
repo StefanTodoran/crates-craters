@@ -85,7 +85,7 @@ export default function EditLevel({
       }
     });
   }
-  
+
   const [unsavedChanges, setUnsavedChanges] = useState(false);
   function saveChanges() {
     storeChanges(level);
@@ -119,12 +119,12 @@ export default function EditLevel({
       board: newBoard,
     });
   }
-  
+
   function changeTool(tool: BoardTile) {
     selectTool(tool);
     toggleToolsModal();
   }
-  
+
   function clearBoard() {
     const newBoard = createBlankBoard();
     setUnsavedChanges(true);
@@ -257,10 +257,12 @@ export default function EditLevel({
             </View>
             <View style={{ height: 15 }} />
             <View style={styles.row}>
-              <SliderBar label="Fuse Timer" value={fuseTimer} units={" turns"}
+              <SliderBar
+                label="Fuse Timer" value={fuseTimer} units={" turns"}
                 minValue={1} maxValue={100} changeCallback={setFuseTimer}
                 mainColor={darkMode ? "#F79B9B" : "#FB6C6C"} // TODO: replace this with colors.RED_THEME
                 knobColor={darkMode ? "#1E0D0D" : "#FFFAFA"}
+                showSteppers
               />
             </View>
             <View style={styles.row}>

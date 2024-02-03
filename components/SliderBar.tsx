@@ -1,6 +1,7 @@
 import { View, Animated, Text, StyleSheet, Dimensions, PanResponder, PanResponderGestureState, GestureResponderEvent } from "react-native";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { normalize } from "../TextStyles";
+import StepperArrow from "./StepperArrow";
 
 const win = Dimensions.get("window");
 const barWidth = win.width / 2;
@@ -9,7 +10,7 @@ interface Props {
   label: string,
   units: string,
   value: number,
-  minValue: number, 
+  minValue: number,
   maxValue: number,
   changeCallback: (newValue: number) => void,
   mainColor?: string,
@@ -53,6 +54,16 @@ export default function SliderBar({
     return offset;
   }
 
+  // const calcValueFromGesture = useRef((_dx: number) => value);
+
+  // useEffect(() => {
+  //   calcValueFromGesture.current = (dx: number) => {
+  //     const sensitivity = (maxValue - minValue) / 8;
+  //     const newValue = Math.max(minValue, Math.min(maxValue, Math.round(value + (movedAmount * sensitivity))));
+  //     return newValue;
+  //   };
+  // }, [minValue, maxValue, changeCallback]);
+
   function onGestureMove(_evt: GestureResponderEvent, gestureState: PanResponderGestureState) {
     setMovedAmount(gestureState.vx);
   }
@@ -85,18 +96,26 @@ export default function SliderBar({
   ).current;
 
   return (
-    <View style={styles.container} {...panResponder.panHandlers}>
-      <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
+    <View style={styles.container}>
+      <View style={styles.row}>
         <Text allowFontScaling={false} style={styles.text(mainColor)}>{label}</Text>
         <Text allowFontScaling={false} style={styles.text(mainColor)}>{value}{units}</Text>
       </View>
-      <View style={[styles.bar, { backgroundColor: mainColor }]}>
-        <Animated.View style={styles.slider(
-          calcOffsetFromValue(),
-          pressed,
-          mainColor,
-          knobColor,
-        )}></Animated.View>
+
+      <View style={styles.barContainer}>
+        <View style={[styles.bar, { backgroundColor: mainColor }]} {...panResponder.panHandlers}>
+          <Animated.View style={styles.slider(
+            calcOffsetFromValue(),
+            pressed,
+            mainColor,
+            knobColor,
+          )}></Animated.View>
+        </View>
+
+        {showSteppers && <>
+          <StepperArrow color={mainColor!} onPress={() => changeCallback(Math.max(value - 1, minValue))} flipped />
+          <StepperArrow color={mainColor!} onPress={() => changeCallback(Math.min(value + 1, maxValue))} />
+        </>}
       </View>
     </View>
   );
@@ -109,13 +128,22 @@ const styles = StyleSheet.create<any>({
     paddingTop: 5,
     paddingBottom: 15,
   },
+  row: {
+    flexDirection: "row",
+    justifyContent: "space-between"
+  },
+  barContainer: {
+    position: "relative",
+    flexDirection: "row",
+    alignItems: "center",
+  },
   bar: {
     width: "100%",
     height: 3,
     borderRadius: 3,
   },
   text: (color: string) => ({
-    marginBottom: 10,
+    marginBottom: normalize(10),
     color: color,
     fontFamily: "Montserrat-Regular",
     fontWeight: "normal",
