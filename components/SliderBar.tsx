@@ -5,6 +5,7 @@ import StepperArrow from "./StepperArrow";
 
 const win = Dimensions.get("window");
 const barWidth = win.width / 2;
+const sensitivityDampen = win.width / 40;
 
 interface Props {
   label: string,
@@ -46,7 +47,6 @@ export default function SliderBar({
   showSteppers,
 }: Props) {
   const [pressed, setPressed] = useState(false);
-  const [movedAmount, setMovedAmount] = useState(value);
 
   function calcOffsetFromValue() {
     let offset = barWidth * ((value - minValue) / (maxValue - minValue));
@@ -54,29 +54,23 @@ export default function SliderBar({
     return offset;
   }
 
-  // const calcValueFromGesture = useRef((_dx: number) => value);
-
-  // useEffect(() => {
-  //   calcValueFromGesture.current = (dx: number) => {
-  //     const sensitivity = (maxValue - minValue) / 8;
-  //     const newValue = Math.max(minValue, Math.min(maxValue, Math.round(value + (movedAmount * sensitivity))));
-  //     return newValue;
-  //   };
-  // }, [minValue, maxValue, changeCallback]);
+  const calcValueFromGesture = useRef((_dx: number) => value);
+  useEffect(() => {
+    calcValueFromGesture.current = (dx: number) => {
+      // While this is just a magic number value that gave decent results, we
+      // base this on the range since larger ranges require higher sensitivity.
+      const sensitivity = (maxValue - minValue) / sensitivityDampen;
+      // const sensitivity = (maxValue - minValue) / normalize(10);
+      
+      const newValue = Math.max(minValue, Math.min(maxValue, Math.round(value + (dx * sensitivity))));
+      return newValue;
+    };
+  }, [value, minValue, maxValue]);
 
   function onGestureMove(_evt: GestureResponderEvent, gestureState: PanResponderGestureState) {
-    setMovedAmount(gestureState.vx);
+    const newValue = calcValueFromGesture.current(gestureState.vx);
+    changeCallback(newValue);
   }
-
-  useEffect(() => {
-    if (pressed) {
-      // While 8 is just a value that gave decent results, we
-      // base this on the range since larger ranges require higher sensitivity.
-      const sensitivity = (maxValue - minValue) / 8;
-      const newValue = Math.max(minValue, Math.min(maxValue, Math.round(value + (movedAmount * sensitivity))));
-      changeCallback(newValue);
-    }
-  }, [movedAmount]);
 
   const panResponder = React.useRef(
     PanResponder.create({
@@ -88,10 +82,10 @@ export default function SliderBar({
       onPanResponderTerminationRequest: () => true,
       onShouldBlockNativeResponder: () => true,
 
-      onPanResponderGrant: () => { setPressed(true) },
+      onPanResponderGrant: () => setPressed(true),
       onPanResponderMove: onGestureMove,
-      onPanResponderRelease: () => { setPressed(false) },
-      onPanResponderTerminate: () => { setPressed(false) },
+      onPanResponderRelease: () => setPressed(false),
+      onPanResponderTerminate: () => setPressed(false),
     }),
   ).current;
 

@@ -144,8 +144,8 @@ export default function EditLevel({
 
   return (
     <SafeAreaView style={styles.container}>
-      {level && <GameBoard board={level.board} tileCallback={changeTile}></GameBoard>}
-
+      <GameBoard board={level.board} tileCallback={changeTile}></GameBoard>
+      
       <Animated.View style={[
         styles.buttonsRow,
         {
