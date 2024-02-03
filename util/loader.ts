@@ -83,7 +83,6 @@ export function deleteLevel(level: UserLevel) {
   if (levelIndex !== -1) {
     customLevelKeys.splice(levelIndex, 1);
     setData(metadataKeys.customLevelKeys, customLevelKeys);
-    console.log(customLevelKeys);
   } else {
     console.error(`Attempted delete of level with uuid ${level.uuid} but no corresponding key was found in "metadataKeys.customLevelKeys"!`)
   }
@@ -157,7 +156,7 @@ export function markLevelCompleted(uuid: string, moveCount: number) {
 function modifyCoinBalance(change: number) {
   const balance = getData(metadataKeys.coinBalance) || 0;
   setData(metadataKeys.coinBalance, balance + change);
-  console.log("Updated balance to", balance, "+", change, "=", balance + change);
+  // console.log("Updated balance to", balance, "+", change, "=", balance + change);
 }
 
 export function useCoinBalance() {
