@@ -254,8 +254,8 @@ export default function PlayLevel({
   }
 
   const tileSize = game ? calcBoardTileSize(game.board[0].length, game.board.length, win) : 1;
-  const xCorrect = -0.4 * tileSize;
-  const yCorrect = -1.6 * tileSize;
+  const xCorrect = -0.5 * tileSize;
+  const yCorrect = -1 * tileSize;
 
   const panResponder = useMemo(
     () => PanResponder.create({
@@ -360,10 +360,11 @@ export default function PlayLevel({
 
   return (
     <SafeAreaView style={staticStyles.container}>
-        {/* GAMEPLAY COMPONENTS */}
-        <View {...panResponder.panHandlers}>
-          <MoveCounter moveCount={game.moveCount} />
+      {/* GAMEPLAY COMPONENTS */}
+      <View>
+        <MoveCounter moveCount={game.moveCount} />
 
+        <View {...panResponder.panHandlers}>
           <GameBoard board={game.board} overrideTileSize={tileSize}>
             <Player game={game} touch={touchMove} darkMode={darkMode} tileSize={tileSize} />
 
@@ -372,49 +373,51 @@ export default function PlayLevel({
               dynamicStyles.indicator(touchPos.x, touchPos.y, tileSize, pressAnim, darkMode),
             ]} />}
           </GameBoard>
-          <Inventory coins={game.coins} maxCoins={game.maxCoins} keys={game.keys} />
-          {game.won && <WinScreen />}
         </View>
 
-        {/* PAUSE MENU COMPONENTS */}
-        {modalOpen && <Animated.View style={[
-          staticStyles.modal,
-          dynamicStyles.modal(anim, darkMode),
-        ]}>
-          <Text style={dynamicStyles.subtitle(darkMode)}>Menu</Text>
+        <Inventory coins={game.coins} maxCoins={game.maxCoins} keys={game.keys} />
+        {game.won && <WinScreen />}
+      </View>
+
+      {/* PAUSE MENU COMPONENTS */}
+      {modalOpen && <Animated.View style={[
+        staticStyles.modal,
+        dynamicStyles.modal(anim, darkMode),
+      ]}>
+        <Text style={dynamicStyles.subtitle(darkMode)}>Menu</Text>
+        <MenuButton
+          label="Restart Level"
+          icon={graphics.BOMB}
+          theme={colors.RED_THEME}
+          onPress={restartLevel}
+        />
+        <MenuButton
+          label="Undo Move"
+          icon={graphics.ONE_WAY_LEFT}
+          theme={colors.BLUE_THEME}
+          onPress={undoMove}
+          disabled={history.length === 0}
+        />
+        {playtest ?
           <MenuButton
-            label="Restart Level"
-            icon={graphics.BOMB}
-            theme={colors.RED_THEME}
-            onPress={restartLevel}
+            label={"Continue Editing"}
+            icon={graphics.HAMMER_ICON}
+            onPress={() => viewCallback(PageView.EDITOR)}
           />
+          :
           <MenuButton
-            label="Undo Move"
-            icon={graphics.ONE_WAY_LEFT}
-            theme={colors.BLUE_THEME}
-            onPress={undoMove}
-            disabled={history.length === 0}
+            label={"Level Select"}
+            icon={graphics.DOOR_ICON}
+            onPress={() => viewCallback(PageView.LEVELS)}
           />
-          {playtest ?
-            <MenuButton
-              label={"Continue Editing"}
-              icon={graphics.HAMMER_ICON}
-              onPress={() => viewCallback(PageView.EDITOR)}
-            />
-            :
-            <MenuButton
-              label={"Level Select"}
-              icon={graphics.DOOR_ICON}
-              onPress={() => viewCallback(PageView.LEVELS)}
-            />
-          }
-          <MenuButton
-            label="Resume Game"
-            icon={graphics.KEY}
-            theme={colors.GREEN_THEME}
-            onPress={toggleModal}
-          />
-          {/* <MenuButton
+        }
+        <MenuButton
+          label="Resume Game"
+          icon={graphics.KEY}
+          theme={colors.GREEN_THEME}
+          onPress={toggleModal}
+        />
+        {/* <MenuButton
             label="Get Hint"
             icon={graphics.SUPPORT_ICON}
             theme={colors.GREEN_THEME}
@@ -423,23 +426,23 @@ export default function PlayLevel({
               aStarSearch(game, basicHeuristic);
             }}
           /> */}
-        </Animated.View>}
-        <Animated.View style={dynamicStyles.buttonsRow(anim)}>
-          {playtest && !game.won && <>
-            <SimpleButton onPress={() => viewCallback(PageView.MANAGE)} text="Level Select" />
-            <View style={staticStyles.buttonGap} />
-          </>}
-          {!game.won && <SimpleButton onPress={toggleModal} text="Pause Menu" main={playtest}/>}
+      </Animated.View>}
+      <Animated.View style={dynamicStyles.buttonsRow(anim)}>
+        {playtest && !game.won && <>
+          <SimpleButton onPress={() => viewCallback(PageView.MANAGE)} text="Level Select" />
+          <View style={staticStyles.buttonGap} />
+        </>}
+        {!game.won && <SimpleButton onPress={toggleModal} text="Pause Menu" main={playtest} />}
 
-          {game.won && <>
-            <SimpleButton onPress={() => viewCallback(playtest ? PageView.MANAGE : PageView.LEVELS)} text="Back" />
-            <View style={staticStyles.buttonGap} />
+        {game.won && <>
+          <SimpleButton onPress={() => viewCallback(playtest ? PageView.MANAGE : PageView.LEVELS)} text="Back" />
+          <View style={staticStyles.buttonGap} />
 
-            {playtest && <SimpleButton onPress={() => viewCallback(PageView.EDITOR)} text="Keep Editing" main={true} wide={true} />}
-            {!playtest && <SimpleButton onPress={() => nextLevelCallback(level.uuid)} text="Next Level" main={true} wide={true} />}
-          </>}
-        </Animated.View>
-      </SafeAreaView>
+          {playtest && <SimpleButton onPress={() => viewCallback(PageView.EDITOR)} text="Keep Editing" main={true} wide={true} />}
+          {!playtest && <SimpleButton onPress={() => nextLevelCallback(level.uuid)} text="Next Level" main={true} wide={true} />}
+        </>}
+      </Animated.View>
+    </SafeAreaView>
   );
 }
 

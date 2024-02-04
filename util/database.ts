@@ -16,7 +16,7 @@ import {
 } from "firebase/firestore";
 import { db } from "./firebase";
 
-import { getData, metadataKeys, multiStoreLevels, parseCompressedBoardData, setData } from "./loader";
+import { getData, getStoredLevelCount, metadataKeys, multiStoreLevels, parseCompressedBoardData, setData } from "./loader";
 import { OfficialLevel } from "./types";
 import { eventEmitter } from "./events";
 
@@ -50,11 +50,20 @@ export async function checkForOfficialLevelUpdates() {
   const metadata: MetadataDocument = await getSpecificEntry("metadata", "metadata");
   const updated: Timestamp = getData(metadataKeys.lastUpdatedOfficialLevels);
 
+  // TODO: Test why no levels appeared on cold boot fresh install?
+  // console.log(metadata);
+  // console.log(updated);
+
   if (!updated || !metadata || updated.seconds !== metadata.officialLevelsUpdated.seconds) {
+    const prevCount = getStoredLevelCount();
     const levels = await fetchOfficialLevelsFromServer();
+
     multiStoreLevels(levels);
     setData(metadataKeys.lastUpdatedOfficialLevels, metadata.officialLevelsUpdated);
+
+    return levels.length - prevCount;
   }
+  return 0;
 }
 
 export async function refreshLevelsFromServer() {

@@ -1,5 +1,5 @@
-import { Text, Image, ImageURISource, Dimensions, Pressable, StyleSheet } from "react-native";
-import TextStyles, { normalize } from "../TextStyles";
+import { Text, Image, ImageURISource, Dimensions, Pressable, StyleSheet, View } from "react-native";
+import { normalize } from "../TextStyles";
 
 const win = Dimensions.get("window");
 
@@ -7,14 +7,18 @@ interface Props {
   icon: ImageURISource,
   text: string,
   callback: () => void,
-  darkMode: boolean,
+  updates: number,
+  color: string,
+  darkColor: string,
 }
 
 export default function MenuPage({
   icon,
   text,
   callback,
-  darkMode,
+  updates,
+  color,
+  darkColor,
 }: Props) {
   return (
     <Pressable style={styles.body} onPress={callback}>
@@ -23,15 +27,24 @@ export default function MenuPage({
         style={styles.icon}
         source={icon}
       />
-      <Text style={[
-        TextStyles.paragraph(darkMode),
-        styles.text,
-      ]}>{text}</Text>
+
+      <View style={styles.textContainer}>
+        <Text style={[styles.text, { textShadowColor: darkColor }]}>
+          {text}
+        </Text>
+
+        {updates > 0 && <Text style={[styles.notification, { color: color }]}>
+          {updates}
+        </Text>}
+      </View>
     </Pressable>
   );
 }
 
-const styles = StyleSheet.create<any>({
+const notificationFontSize = normalize(14);
+const notificationBodySize = notificationFontSize * 1.5;
+
+const styles = StyleSheet.create({
   body: {
     height: win.height,
     width: win.width,
@@ -42,12 +55,31 @@ const styles = StyleSheet.create<any>({
     maxWidth: win.width * 0.65,
     maxHeight: win.width * 0.65,
   },
+  textContainer: {
+    position: "relative",
+    marginBottom: win.height / 6,
+  },
   text: {
-    textShadowColor: "#000",
+    fontFamily: "Montserrat-Regular",
+    fontWeight: "normal",
     textShadowRadius: 3,
     textShadowOffset: { width: 0, height: 1 },
     color: "white",
     fontSize: normalize(40),
-    marginBottom: win.height / 6,
+  },
+  notification: {
+    fontFamily: "Montserrat-Medium",
+    fontWeight: "bold",
+    position: "absolute",
+    color: "black",
+    backgroundColor: "white",
+    fontSize: notificationFontSize,
+    height: notificationBodySize,
+    width: notificationBodySize,
+    borderRadius: notificationBodySize / 2,
+    textAlign: "center",
+    textAlignVertical: "center",
+    top: 0,
+    right: -notificationBodySize,
   },
 });

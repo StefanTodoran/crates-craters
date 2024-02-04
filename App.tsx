@@ -88,6 +88,7 @@ export default function App() {
   }, []);
 
   const [levels, setLevels] = useState<Level[]>([]);
+  const [updateCount, setUpdateCount] = useState<number>(0);
   const syncLevelStateWithStorage = useRef((_uuid?: string) => { });
 
   const [playLevel, setPlayLevel] = useState<Level>();             // The level currently being played.
@@ -112,7 +113,10 @@ export default function App() {
   }, [levels, editorLevel]);
 
   useEffect(() => {
-    checkForOfficialLevelUpdates().then(() => syncLevelStateWithStorage.current());
+    checkForOfficialLevelUpdates().then((numUpdated) => {
+      setUpdateCount(numUpdated);
+      syncLevelStateWithStorage.current();
+    });
 
     const handleSyncRequest = (event: CustomEvent) => syncLevelStateWithStorage.current(event?.detail);
     const listener = eventEmitter.addListener("doStateStorageSync", handleSyncRequest);
@@ -178,7 +182,8 @@ export default function App() {
     <GlobalContext.Provider value={{ darkMode, dragSensitivity, doubleTapDelay, playAudio }}>
       <SafeAreaView style={{ flex: 1 }}>
 
-        <Menu openPage={switchView} />
+        {/* <Menu updateCounts={[updateCount, 0, 0, 0]} openPage={switchView} /> */}
+        <Menu updateCounts={[2, 0, 0, 0]} openPage={switchView} />
 
         <Animated.View
           style={styles.modal(pageAnim, darkMode)}

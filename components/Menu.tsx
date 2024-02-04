@@ -1,7 +1,6 @@
-import { useContext, useRef } from "react";
 import { Animated, Dimensions, ScrollView, StyleSheet, View } from "react-native";
+import { useRef } from "react";
 import MenuPage from "./MenuPage";
-import GlobalContext from "../GlobalContext";
 
 import CrateGraphic from "../assets/crates.png";
 import BombGraphic from "../assets/bomb.png";
@@ -19,6 +18,7 @@ const bottomNavHeight = scrn.height - win.height;
 export const menuPages = [
   {
     color: "#CCB7E5",
+    darkColor: "#6b3ba5", // Not the same as the theme's DARK_COLOR
     banner: PageTheme.PURPLE,
     source: CrateGraphic,
     text: "LEVELS",
@@ -26,6 +26,7 @@ export const menuPages = [
   },
   {
     color: "#FCB5B5",
+    darkColor: "#953131",
     banner: PageTheme.RED,
     source: BombGraphic,
     text: "EDITOR",
@@ -33,6 +34,7 @@ export const menuPages = [
   },
   {
     color: "#FFE08E",
+    darkColor: "#b88700",
     banner: PageTheme.YELLOW,
     source: CoinGraphic,
     text: "STORE",
@@ -40,6 +42,7 @@ export const menuPages = [
   },
   {
     color: "#BBE6BC",
+    darkColor: "#328534",
     banner: PageTheme.GREEN,
     source: DoorGraphic,
     text: "SETTINGS",
@@ -66,11 +69,11 @@ function createNodeOutputRange(activeIndex: number) {
 }
 
 interface Props {
+  updateCounts: number[],
   openPage: (target: PageView) => void,
 }
 
-export default function Menu({ openPage }: Props) {
-  const { darkMode } = useContext(GlobalContext);
+export default function Menu({ updateCounts, openPage }: Props) {
   const anim = useRef(new Animated.Value(0)).current;
 
   return (
@@ -103,7 +106,9 @@ export default function Menu({ openPage }: Props) {
               icon={page.source}
               text={page.text}
               callback={() => openPage(page.target)}
-              darkMode={darkMode}
+              updates={updateCounts[idx]}
+              color={menuPages[idx].color}
+              darkColor={menuPages[idx].darkColor}
             />
           </Animated.View>
         )}

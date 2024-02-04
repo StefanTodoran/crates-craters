@@ -12,6 +12,11 @@ export enum metadataKeys {
   coinBalance = "coinBalance",
 }
 
+export function getStoredLevelCount() {
+  // const olKeys: string[] = getData(metadataKeys.officialLevelKeys) || [];
+  // return olKeys.length;
+  return 20;
+}
 
 export function getStoredLevels() {
   const olKeys: string[] = getData(metadataKeys.officialLevelKeys) || [];
