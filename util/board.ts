@@ -27,7 +27,7 @@ export function calcBoardTileSize(boardWidth: number, boardHeight: number, windo
 // BOARD HANLDER FUNCTIONS \\
 // ======================= \\
 
-// This can't just be a dictionary since `graphics` changes.
+// This can't just be a dictionary since `graphics` may change.
 export function getIconSrc(tile: BoardTile) {
   if (tile.id === TileType.DOOR) return graphics.DOOR;
   if (tile.id === TileType.KEY) return graphics.KEY;

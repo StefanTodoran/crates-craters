@@ -73,36 +73,6 @@ export default function App() {
     }
   }, [view]);
 
-  const [levels, setLevels] = useState<Level[]>([]);
-  const syncLevelStateWithStorage = useRef((_uuid?: string) => { });
-
-  useEffect(() => {
-    syncLevelStateWithStorage.current = (uuid?: string) => {
-      if (uuid) {
-        const updatedLevel = getData(uuid);
-        const levelIndex = levels.findIndex(level => level.uuid === updatedLevel.uuid);
-        levels[levelIndex] = updatedLevel;
-
-        // Refresh this additional state variable if necessary.
-        if (uuid === editorLevel?.uuid) setEditorLevel(updatedLevel);
-      } else {
-        setLevels(getStoredLevels());
-      }
-    }
-  }, [levels]);
-
-  useEffect(() => {
-    checkForOfficialLevelUpdates().then(() => syncLevelStateWithStorage.current());
-
-    const handleSyncRequest = (event: CustomEvent) => syncLevelStateWithStorage.current(event?.detail);
-    const listener = eventEmitter.addListener("doStateStorageSync", handleSyncRequest);
-    return () => listener.remove();
-  }, []);
-
-  // We can't just await data from storage to set the default app state values,
-  // so we will have to just put some default dummy values below and run the
-  // update function to replace those values as soon as possible.
-
   const [darkMode, setDarkMode] = useBooleanSetting("darkMode");
   const [dragSensitivity, setSensitivity] = useNumberSetting("dragSensitivity");
   const [doubleTapDelay, setTapDelay] = useNumberSetting("doubleTapDelay");
@@ -117,11 +87,37 @@ export default function App() {
     NavigationBar.setBackgroundColorAsync("#ffffff00");
   }, []);
 
+  const [levels, setLevels] = useState<Level[]>([]);
+  const syncLevelStateWithStorage = useRef((_uuid?: string) => { });
+
   const [playLevel, setPlayLevel] = useState<Level>();             // The level currently being played.
   const [currentGame, setGameState] = useState<Game>();            // The game state of the level being played.
   const [gameHistory, setGameHistory] = useState<Game[]>();        // The past game states, used for undoing moves.
   const [editorLevel, setEditorLevel] = useState<UserLevel>();     // The level object being edited.
   const [playtesting, setPlaytesting] = useState<boolean>(false);  // Whether playtestingmode is requested.
+
+  useEffect(() => {
+    syncLevelStateWithStorage.current = (uuid?: string) => {
+      if (uuid) {
+        const updatedLevel = getData(uuid);
+        const levelIndex = levels.findIndex(level => level.uuid === updatedLevel.uuid);
+        levels[levelIndex] = updatedLevel;
+
+        // Refresh this additional state variable if necessary.
+        if (uuid === editorLevel?.uuid) setEditorLevel(updatedLevel);
+      } else {
+        setLevels(getStoredLevels());
+      }
+    }
+  }, [levels, editorLevel]);
+
+  useEffect(() => {
+    checkForOfficialLevelUpdates().then(() => syncLevelStateWithStorage.current());
+
+    const handleSyncRequest = (event: CustomEvent) => syncLevelStateWithStorage.current(event?.detail);
+    const listener = eventEmitter.addListener("doStateStorageSync", handleSyncRequest);
+    return () => listener.remove();
+  }, []);
 
   const changePlayLevel = useCallback((uuid: string) => {
     const levelObject = getData(uuid);

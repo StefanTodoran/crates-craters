@@ -3,7 +3,7 @@
     "name": "Crates & Craters",
     "slug": "crates-n-craters",
     "owner": "stefantodoran",
-    "version": "0.4.2",
+    "version": "0.4.5",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -32,7 +32,7 @@
         "backgroundColor": "#FFFFFF"
       },
       "package": "com.stefantodoran.cratesncraters",
-      "versionCode": 11,
+      "versionCode": 12,
       "runtimeVersion": "1.0.0"
     },
     "web": {

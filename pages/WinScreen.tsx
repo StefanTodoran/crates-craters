@@ -64,7 +64,7 @@ export default function WinScreen() {
     const icon = randomIcon();
 
     confetti.push(<Animated.Image
-      key={`confetti<${i}>`} source={icon}
+      key={i} source={icon}
       style={[
         styles.confetti,
         {

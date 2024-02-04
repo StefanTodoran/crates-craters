@@ -178,6 +178,9 @@ Built with JavaScript and React Native, Crates and Craters is a single player pu
   <img src="assets/main_theme/explosion.png" style="height: 1em;"/>
 </h2>
 
+* Sometimes the move preview squares animation just stops
+  * Was reproducibly happening due to id issues, fixed that bug, now is less frequent
+  * See Player.tsx
 * There are sometimes tiny 1px gaps between board tiles that vary by screen dimensions
   * Not due to rounding, tile sizes are whole numbers
   * See GameBoard.tsx
