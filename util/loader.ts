@@ -12,35 +12,6 @@ export enum metadataKeys {
   coinBalance = "coinBalance",
 }
 
-export function getStoredLevelCount() {
-  const olKeys: string[] = getData(metadataKeys.officialLevelKeys) || [];
-  return olKeys.length;
-}
-
-export function getStoredLevels() {
-  const olKeys: string[] = getData(metadataKeys.officialLevelKeys) || [];
-  const clKeys: string[] = getData(metadataKeys.customLevelKeys) || [];
-  const keys = [...olKeys, ...clKeys];
-
-  const levels: Level[] = [];
-  keys.forEach(key => {
-    const level = getData(key);
-    if (isLevelWellFormed(level)) {
-      levels.push(level);
-    } else {
-      // TODO: If the level is malformed, then the key needs to be deleted.
-      console.warn("Malformed level detected for key: ", key);
-    }
-  });
-
-  levels.sort((a, b) => {
-    if (!Object.hasOwn(a, "order") || !Object.hasOwn(b, "order")) return 0;
-    else return (a as OfficialLevel).order - (b as OfficialLevel).order;
-  });
-
-  return levels;
-}
-
 export function setData(key: string, value: any) {
   const jsonValue = JSON.stringify(value);
   try {
@@ -48,63 +19,6 @@ export function setData(key: string, value: any) {
     return true;
   } catch (err) {
     console.error("Error completing setData command:", err);
-    return false;
-  }
-}
-
-export function createLevel(level: UserLevel) {
-  setData(level.uuid, level);
-  // TODO: Create standard function with error handling for adding a value to a local storage list.
-  const customLevelKeys = getData(metadataKeys.customLevelKeys) || [];
-  customLevelKeys.push(level.uuid);
-  setData(metadataKeys.customLevelKeys, customLevelKeys);
-  eventEmitter.emit("doStateStorageSync", { detail: level.uuid });
-}
-
-export function updateLevel(updatedLevel: UserLevel) {
-  const existingLevel: Level = getData(updatedLevel.uuid);
-
-  if (!existingLevel) {
-    console.error("Attempted to update non-existent level: " + updatedLevel.uuid);
-    return;
-  }
-
-  const level: Level = {
-    ...existingLevel,
-    ...updatedLevel,
-    completed: false,
-  };
-
-  setData(level.uuid, level);
-  eventEmitter.emit("doStateStorageSync", { detail: level.uuid });
-}
-
-export function deleteLevel(level: UserLevel) {
-  storage.delete(level.uuid);
-  const customLevelKeys: string[] = getData(metadataKeys.customLevelKeys) || [];
-  const levelIndex = customLevelKeys.findIndex(key => key === level.uuid);
-  
-  if (levelIndex !== -1) {
-    customLevelKeys.splice(levelIndex, 1);
-    setData(metadataKeys.customLevelKeys, customLevelKeys);
-  } else {
-    console.error(`Attempted delete of level with uuid ${level.uuid} but no corresponding key was found in "metadataKeys.customLevelKeys"!`)
-  }
-  
-  eventEmitter.emit("doStateStorageSync");
-}
-
-export function multiStoreLevels(levels: Level[]) {
-  const keys = JSON.stringify(levels.map(level => level.uuid));
-
-  try {
-    levels.forEach(level => {
-      storage.set(level.uuid, JSON.stringify(level));
-    });
-    storage.set(metadataKeys.officialLevelKeys, keys);
-    return true;
-  } catch (err) {
-    console.error("Error completing multiStoreLevels command:", err);
     return false;
   }
 }
@@ -140,6 +54,92 @@ export function multiGetData(keys: string[]) {
   return parsedData;
 }
 
+export function getStoredLevelCount() {
+  const olKeys: string[] = getData(metadataKeys.officialLevelKeys) || [];
+  return olKeys.length;
+}
+
+export function getStoredLevels() {
+  const olKeys: string[] = getData(metadataKeys.officialLevelKeys) || [];
+  const clKeys: string[] = getData(metadataKeys.customLevelKeys) || [];
+  const keys = [...olKeys, ...clKeys];
+
+  const levels: Level[] = [];
+  keys.forEach(key => {
+    const level = getData(key);
+    if (isLevelWellFormed(level)) {
+      levels.push(level);
+    } else {
+      // TODO: If the level is malformed, then the key needs to be deleted.
+      console.warn("Malformed level detected for key: ", key);
+    }
+  });
+
+  levels.sort((a, b) => {
+    if (!Object.hasOwn(a, "order") || !Object.hasOwn(b, "order")) return 0;
+    else return (a as OfficialLevel).order - (b as OfficialLevel).order;
+  });
+
+  return levels;
+}
+
+export function createLevel(level: UserLevel) {
+  setData(level.uuid, level);
+  // TODO: Create standard function with error handling for adding a value to a local storage list.
+  const customLevelKeys = getData(metadataKeys.customLevelKeys) || [];
+  customLevelKeys.push(level.uuid);
+  setData(metadataKeys.customLevelKeys, customLevelKeys);
+  eventEmitter.emit("doStateStorageSync", level.uuid);
+}
+
+export function updateLevel(updatedLevel: UserLevel) {
+  const existingLevel: Level = getData(updatedLevel.uuid);
+
+  if (!existingLevel) {
+    console.error("Attempted to update non-existent level: " + updatedLevel.uuid);
+    return;
+  }
+
+  const level: Level = {
+    ...existingLevel,
+    ...updatedLevel,
+    completed: false,
+  };
+
+  setData(level.uuid, level);
+  eventEmitter.emit("doStateStorageSync", level.uuid);
+}
+
+export function deleteLevel(level: UserLevel) {
+  storage.delete(level.uuid);
+  const customLevelKeys: string[] = getData(metadataKeys.customLevelKeys) || [];
+  const levelIndex = customLevelKeys.findIndex(key => key === level.uuid);
+
+  if (levelIndex !== -1) {
+    customLevelKeys.splice(levelIndex, 1);
+    setData(metadataKeys.customLevelKeys, customLevelKeys);
+  } else {
+    console.error(`Attempted delete of level with uuid ${level.uuid} but no corresponding key was found in "metadataKeys.customLevelKeys"!`)
+  }
+
+  eventEmitter.emit("doStateStorageSync");
+}
+
+export function multiStoreLevels(levels: Level[]) {
+  const keys = JSON.stringify(levels.map(level => level.uuid));
+
+  try {
+    levels.forEach(level => {
+      storage.set(level.uuid, JSON.stringify(level));
+    });
+    storage.set(metadataKeys.officialLevelKeys, keys);
+    return true;
+  } catch (err) {
+    console.error("Error completing multiStoreLevels command:", err);
+    return false;
+  }
+}
+
 export function markLevelCompleted(uuid: string, moveCount: number) {
   const level = getData(uuid) as Level;
   const wasCompleted = level.completed;
@@ -148,19 +148,19 @@ export function markLevelCompleted(uuid: string, moveCount: number) {
   level.best = Math.min(prevBest!, moveCount);
   level.completed = true;
   setData(uuid, level);
-  eventEmitter.emit("doStateStorageSync", { detail: uuid });
+  eventEmitter.emit("doStateStorageSync", uuid);
 
   if (level.official && !wasCompleted) {
     // We only want to give coins for the first time an official level is completed.
     const gain = countInstancesInBoard(level.board, TileType.COIN);
     modifyCoinBalance(gain);
+    eventEmitter.emit("updateNotifications", { index: 2, change: 1 });
   }
 }
 
 function modifyCoinBalance(change: number) {
   const balance = getData(metadataKeys.coinBalance) || 0;
   setData(metadataKeys.coinBalance, balance + change);
-  // console.log("Updated balance to", balance, "+", change, "=", balance + change);
 }
 
 export function useCoinBalance() {

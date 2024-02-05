@@ -58,7 +58,7 @@ export default function CreateLevel({ createLevelCallback }: Props) {
               created: levelCreated.toISOString(),
             });
 
-            eventEmitter.emit("doPageChange", { detail: 0 });
+            eventEmitter.emit("doPageChange", 0);
           }}
         />
       </View>

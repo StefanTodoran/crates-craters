@@ -172,6 +172,7 @@ Built with JavaScript and React Native, Crates and Craters is a single player pu
 * Could [react native web assembly](https://github.com/cawfree/react-native-webassembly) help improve performance? 
 * Add metal crate tile type and associated logic
 * Consider making bombs destroy keys and coins?
+* Use a hitRect to give stepperArrows bigger hitboxes without overlapping SliderBar
 
 <h2 style="display: flex; align-items: center;">
   Known Bugs

@@ -69,11 +69,11 @@ function createNodeOutputRange(activeIndex: number) {
 }
 
 interface Props {
-  updateCounts: number[],
+  notificationCounts: number[],
   openPage: (target: PageView) => void,
 }
 
-export default function Menu({ updateCounts, openPage }: Props) {
+export default function Menu({ notificationCounts, openPage }: Props) {
   const anim = useRef(new Animated.Value(0)).current;
 
   return (
@@ -106,8 +106,8 @@ export default function Menu({ updateCounts, openPage }: Props) {
               icon={page.source}
               text={page.text}
               callback={() => openPage(page.target)}
-              updates={updateCounts[idx]}
-              color={menuPages[idx].color}
+              updates={notificationCounts[idx]}
+              // color={menuPages[idx].color}
               darkColor={menuPages[idx].darkColor}
             />
           </Animated.View>

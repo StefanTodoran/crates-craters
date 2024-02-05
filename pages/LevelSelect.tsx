@@ -65,7 +65,7 @@ function LevelSelectBase({
 
   const editLevel = useCallback((levelIndex: number) => {
     editorLevelCallback!(levels[levelIndex].uuid);
-    eventEmitter.emit("doPageChange", { detail: 1 });
+    eventEmitter.emit("doPageChange", 1);
   }, []);
 
   const scrollRef = useRef<any>();

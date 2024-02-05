@@ -90,8 +90,10 @@ export default function App() {
   }, []);
 
   const [levels, setLevels] = useState<Level[]>([]);
-  const [updateCount, setUpdateCount] = useState<number>(0);
+  const [notificationCounts, setNotificationCounts] = useState([0, 0, 0, 0]);
+
   const syncLevelStateWithStorage = useRef((_uuid?: string) => { });
+  const updateNotificationCounts = useRef((_index: number, _change: number) => { });
 
   const [playLevel, setPlayLevel] = useState<Level>();             // The level currently being played.
   const [currentGame, setGameState] = useState<Game>();            // The game state of the level being played.
@@ -115,18 +117,33 @@ export default function App() {
 
       // Refresh this additional state variable if necessary.
       if (uuid === editorLevel?.uuid) setEditorLevel(updatedLevel);
-    }
+    };
   }, [levels, editorLevel]);
 
   useEffect(() => {
+    updateNotificationCounts.current = (index: number, change: number) => {
+      const newNotificationCounts = [...notificationCounts];
+      newNotificationCounts[index] += change;
+      setNotificationCounts(newNotificationCounts);
+    };
+  }, [notificationCounts]);
+
+  useEffect(() => {
     checkForOfficialLevelUpdates().then((numUpdated) => {
-      setUpdateCount(numUpdated);
+      updateNotificationCounts.current(0, numUpdated);
       syncLevelStateWithStorage.current();
     });
 
-    const handleSyncRequest = (event: CustomEvent) => syncLevelStateWithStorage.current(event?.detail);
-    const listener = eventEmitter.addListener("doStateStorageSync", handleSyncRequest);
-    return () => listener.remove();
+    const handleSyncRequest = (uuid?: string) => syncLevelStateWithStorage.current(uuid);
+    const syncListener = eventEmitter.addListener("doStateStorageSync", handleSyncRequest);
+    
+    const handleNotificationRequest = (event: any) => updateNotificationCounts.current(event.index, event.change);
+    const notificationListener = eventEmitter.addListener("updateNotifications", handleNotificationRequest);
+    
+    return () => {
+      syncListener.remove();
+      notificationListener.remove();
+    }
   }, []);
 
   const changePlayLevel = useCallback((uuid: string) => {
@@ -188,7 +205,7 @@ export default function App() {
     <GlobalContext.Provider value={{ darkMode, dragSensitivity, doubleTapDelay, playAudio }}>
       <SafeAreaView style={{ flex: 1 }}>
 
-        <Menu updateCounts={[updateCount, 0, 0, 0]} openPage={switchView} />
+        <Menu notificationCounts={notificationCounts} openPage={switchView} />
 
         <Animated.View
           style={styles.modal(pageAnim, darkMode)}

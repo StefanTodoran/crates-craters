@@ -32,7 +32,7 @@ export default function EmptyList({ mode, refreshCallback }: Props) {
     <View style={styles.container}>
       <Text style={TextStyles.paragraph(darkMode)}>No custom levels created yet!</Text>
       <MenuButton
-        onPress={() => eventEmitter.emit("doPageChange", { detail: 2 })}
+        onPress={() => eventEmitter.emit("doPageChange", 2)}
         label="Create New Level"
         icon={graphics.METAL_CRATE}
         theme={colors.RED_THEME}

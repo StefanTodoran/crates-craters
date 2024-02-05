@@ -8,7 +8,7 @@ interface Props {
   text: string,
   callback: () => void,
   updates: number,
-  color: string,
+  // color: string,
   darkColor: string,
 }
 
@@ -17,7 +17,7 @@ export default function MenuPage({
   text,
   callback,
   updates,
-  color,
+  // color,
   darkColor,
 }: Props) {
   return (
@@ -33,16 +33,28 @@ export default function MenuPage({
           {text}
         </Text>
 
-        {updates > 0 && <Text style={[styles.notification, { color: color }]}>
-          {updates}
-        </Text>}
+        {updates > 0 && <>
+          <Text style={[
+            styles.notification,
+            {
+              top: 1,
+              color: darkColor,
+              borderColor: darkColor,
+            }
+          ]}>
+            {updates}
+          </Text>
+          <Text style={styles.notification}>
+            {updates}
+          </Text>
+        </>}
       </View>
     </Pressable>
   );
 }
 
 const notificationFontSize = normalize(14);
-const notificationBodySize = notificationFontSize * 1.5;
+const notificationBodySize = notificationFontSize * 1.6;
 
 const styles = StyleSheet.create({
   body: {
@@ -71,8 +83,11 @@ const styles = StyleSheet.create({
     fontFamily: "Montserrat-Medium",
     fontWeight: "bold",
     position: "absolute",
-    color: "black",
-    backgroundColor: "white",
+    // backgroundColor: "white",
+    // color: "black",
+    color: "#fff",
+    borderColor: "#fff",
+    borderWidth: 2,
     fontSize: notificationFontSize,
     height: notificationBodySize,
     width: notificationBodySize,

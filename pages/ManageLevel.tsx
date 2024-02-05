@@ -112,7 +112,7 @@ export default function ManageLevel({
           <MenuButton
             onLongPress={() => {
               deleteLevel(level);
-              eventEmitter.emit("doPageChange", { detail: 0 });
+              eventEmitter.emit("doPageChange", 0);
             }}
             icon={graphics.DELETE_ICON}
             theme={colors.RED_THEME}
