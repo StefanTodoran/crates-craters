@@ -118,6 +118,7 @@ const styles = StyleSheet.create({
     marginLeft: normalize(16),
     // textTransform: "uppercase",
     fontFamily: "Montserrat-Medium",
+    letterSpacing: 0.25,
     fontWeight: "bold",
   },
   icon: {

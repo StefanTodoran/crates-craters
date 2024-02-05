@@ -41,14 +41,13 @@ export default function ManageLevel({
     setLevelTitle(level.name);
     setLevelDesigner(level.designer);
   }, [level, refreshed]);
+  // console.log(compressBoardData(level.board));
+  
+  const previewWidth = 0.9;
+  const tileSize = level ? calcPreviewTileSize(level.board[0].length, previewWidth, win) : undefined;
+  const [previewPressed, setPreviewPressed] = useState(false);  
 
   if (!level) return;
-  // console.log(compressBoardData(level.board));
-
-  const previewWidth = 0.9;
-  const tileSize = calcPreviewTileSize(level.board[0].length, previewWidth, win);
-  const [previewPressed, setPreviewPressed] = useState(false);
-
   return (
     <SubpageContainer center>
       <View style={{
@@ -92,6 +91,7 @@ export default function ManageLevel({
           <Text style={[
             styles.previewOverlay,
             {
+              // @ts-expect-error No, it is not possibly undefined.
               borderRadius: tileSize / 5, // Same value as GameBoard borderRadius.
               backgroundColor: darkMode ? colors.OFF_WHITE_TRANSPARENT(0.45) : colors.NEAR_BLACK_TRANSPARENT(0.45),
               color: darkMode ? colors.NEAR_BLACK : colors.OFF_WHITE,

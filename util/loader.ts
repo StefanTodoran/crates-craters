@@ -13,9 +13,8 @@ export enum metadataKeys {
 }
 
 export function getStoredLevelCount() {
-  // const olKeys: string[] = getData(metadataKeys.officialLevelKeys) || [];
-  // return olKeys.length;
-  return 20;
+  const olKeys: string[] = getData(metadataKeys.officialLevelKeys) || [];
+  return olKeys.length;
 }
 
 export function getStoredLevels() {

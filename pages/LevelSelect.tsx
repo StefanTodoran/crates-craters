@@ -3,8 +3,10 @@ import React, { useCallback, useContext, useRef, useState } from "react";
 import { Level, PageView } from "../util/types";
 import { eventEmitter } from "../util/events";
 import GlobalContext from "../GlobalContext";
+import Toast from "react-native-toast-message";
 import LevelCard from "../components/LevelCard";
 import { refreshLevelsFromServer } from "../util/database";
+import EmptyList from "../components/EmptyList";
 
 interface Props {
   viewCallback: (newView: PageView) => void, // Sets the current view of the application.
@@ -34,7 +36,22 @@ function LevelSelectBase({
   const [refreshing, setRefreshing] = useState(false);
 
   const doRefresh = useCallback(() => {
-    refreshLevelsFromServer().then(() => setRefreshing(false));
+    refreshLevelsFromServer().then((success) => {
+      setRefreshing(false);
+      if (success) {
+        Toast.show({
+          type: "success",
+          text1: "Level refresh succeeded.",
+          text2: "Your levels have been successfully updated.",
+        });
+      } else {
+        Toast.show({
+          type: "error",
+          text1: "Level refresh failed.",
+          text2: "Please check your connection and try again.",
+        });
+      }
+    });
   }, []);
 
   const openLevel = useCallback((levelIndex: number) => {
@@ -54,7 +71,10 @@ function LevelSelectBase({
   const scrollRef = useRef<any>();
   let scrollIndex = Math.max(0, levels.findIndex(level => level.uuid === scrollTo));
 
-  if (levels.length === 0) return <></>;
+  if (levels.length === 0) return (
+    <EmptyList mode={mode} refreshCallback={doRefresh} />
+  );
+
   return (
     <>
       {/* This component exists just to calculate the height of level cards. */}
@@ -66,7 +86,7 @@ function LevelSelectBase({
         style={{ opacity: 0 }}
       >
         <LevelCard
-          playCallback={() => {}}
+          playCallback={() => { }}
           levelIndex={0}
           level={levels[0]}
           darkMode={darkMode}

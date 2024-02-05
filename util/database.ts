@@ -46,17 +46,14 @@ export interface UserLevelDocument {
 // ==================== \\
 // HIGH LEVEL FUNCTIONS \\
 
-export async function checkForOfficialLevelUpdates() {
+export async function checkForOfficialLevelUpdates(): Promise<number> {
   const metadata: MetadataDocument = await getSpecificEntry("metadata", "metadata");
   const updated: Timestamp = getData(metadataKeys.lastUpdatedOfficialLevels);
+  const prevCount = getStoredLevelCount();
 
-  // TODO: Test why no levels appeared on cold boot fresh install?
-  // console.log(metadata);
-  // console.log(updated);
-
-  if (!updated || !metadata || updated.seconds !== metadata.officialLevelsUpdated.seconds) {
-    const prevCount = getStoredLevelCount();
+  if (!updated || !metadata || updated.seconds !== metadata.officialLevelsUpdated.seconds || prevCount === 0) {
     const levels = await fetchOfficialLevelsFromServer();
+    if (levels.length === 0) return 0; // For some reason firestore getDocs returns an empty snapshot instead of failing when offline.
 
     multiStoreLevels(levels);
     setData(metadataKeys.lastUpdatedOfficialLevels, metadata.officialLevelsUpdated);
@@ -66,10 +63,13 @@ export async function checkForOfficialLevelUpdates() {
   return 0;
 }
 
-export async function refreshLevelsFromServer() {
+export async function refreshLevelsFromServer(): Promise<boolean> {
   const levels = await fetchOfficialLevelsFromServer();
+  if (levels.length === 0) return false; // For some reason firestore getDocs returns an empty snapshot instead of failing when offline.
+
   multiStoreLevels(levels);
   eventEmitter.emit("doStateStorageSync");
+  return true;
 }
 
 async function fetchOfficialLevelsFromServer() {

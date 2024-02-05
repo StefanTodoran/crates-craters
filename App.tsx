@@ -11,6 +11,8 @@ import { Level, PageView, UserLevel } from "./util/types";
 import { Game, initializeGameObj } from "./util/logic";
 import { eventEmitter } from "./util/events";
 import GlobalContext from "./GlobalContext";
+import Toast from "react-native-toast-message";
+import { toastConfig } from "./util/toasts";
 import { colors } from "./Theme";
 
 import Menu from "./components/Menu";
@@ -99,16 +101,20 @@ export default function App() {
 
   useEffect(() => {
     syncLevelStateWithStorage.current = (uuid?: string) => {
-      if (uuid) {
-        const updatedLevel = getData(uuid);
-        const levelIndex = levels.findIndex(level => level.uuid === updatedLevel.uuid);
-        levels[levelIndex] = updatedLevel;
-
-        // Refresh this additional state variable if necessary.
-        if (uuid === editorLevel?.uuid) setEditorLevel(updatedLevel);
-      } else {
+      if (!uuid) {
         setLevels(getStoredLevels());
-      }
+
+        const editorLevelIndex = levels.findIndex(level => level.uuid === editorLevel?.uuid);
+        if (editorLevelIndex !== -1) setEditorLevel(undefined);
+        return;
+      } // else if uuid is defined:
+
+      const updatedLevel = getData(uuid);
+      const levelIndex = levels.findIndex(level => level.uuid === updatedLevel.uuid);
+      levels[levelIndex] = updatedLevel;
+
+      // Refresh this additional state variable if necessary.
+      if (uuid === editorLevel?.uuid) setEditorLevel(updatedLevel);
     }
   }, [levels, editorLevel]);
 
@@ -182,8 +188,7 @@ export default function App() {
     <GlobalContext.Provider value={{ darkMode, dragSensitivity, doubleTapDelay, playAudio }}>
       <SafeAreaView style={{ flex: 1 }}>
 
-        {/* <Menu updateCounts={[updateCount, 0, 0, 0]} openPage={switchView} /> */}
-        <Menu updateCounts={[2, 0, 0, 0]} openPage={switchView} />
+        <Menu updateCounts={[updateCount, 0, 0, 0]} openPage={switchView} />
 
         <Animated.View
           style={styles.modal(pageAnim, darkMode)}
@@ -261,6 +266,11 @@ export default function App() {
           </View>
         </Animated.View>
 
+        <Toast
+          position="top"
+          bottomOffset={20}
+          config={toastConfig}
+        />
       </SafeAreaView>
       <StatusBar translucent={true} hidden={true} />
     </GlobalContext.Provider>
@@ -273,7 +283,6 @@ const styles = StyleSheet.create<any>({
     alignItems: "center",
     justifyContent: "center",
     width: win.width,
-    // paddingHorizontal: win.width * 0.225,
   },
   header: (animState: Animated.Value) => ({
     paddingTop: RNStatusBar.currentHeight,
@@ -284,12 +293,6 @@ const styles = StyleSheet.create<any>({
     borderBottomWidth: 1,
     borderColor: colors.DIM_GRAY_TRANSPARENT(0.2),
     opacity: animState,
-    // transform: [{
-    //   translateY: animState.interpolate({
-    //     inputRange: [0, 1],
-    //     outputRange: [-500, 0],
-    //   }),
-    // }],
   }),
   modal: (animState: Animated.Value, darkMode: boolean) => ({
     position: "absolute",
@@ -297,7 +300,6 @@ const styles = StyleSheet.create<any>({
     left: 0,
     right: 0,
     bottom: 0,
-    // paddingTop: RNStatusBar.currentHeight,
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: darkMode ? "black" : "white",
