@@ -260,7 +260,6 @@ export default function PlayLevel({
       onShouldBlockNativeResponder: () => panResponderEnabled.current,
 
       onPanResponderGrant: function (_evt, gestureState) { // The gesture has started!
-        // setTouchMove({ magY: 0, dirY: 0, magX: 0, dirX: 0 });
         setTouchMove({ y: 0, x: 0 });
 
         const pressX = pressToIndex(gestureState.x0, tileSize, xCorrect);

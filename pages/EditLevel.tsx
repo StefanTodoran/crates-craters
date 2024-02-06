@@ -1,5 +1,5 @@
-import { View, ScrollView, StyleSheet, Dimensions, Animated, Text, SafeAreaView } from "react-native";
-import React, { useState, useRef, useEffect, useContext } from "react";
+import { View, ScrollView, StyleSheet, Dimensions, Animated, Text, SafeAreaView, PanResponder, GestureResponderEvent, PanResponderGestureState } from "react-native";
+import React, { useState, useRef, useEffect, useContext, useMemo } from "react";
 import { Sound } from "expo-av/build/Audio";
 import { Audio } from "expo-av";
 
@@ -10,9 +10,12 @@ import SliderBar from "../components/SliderBar";
 
 import TextStyles, { normalize, sizeFromWidthPercent } from "../TextStyles";
 import { BoardTile, Direction, PageView, TileType, UserLevel, createBlankBoard } from "../util/types";
-import { cloneBoard, getSpawnPosition, validTile } from "../util/logic";
+import { boundTileAt, cloneBoard, getSpawnPosition, validTile } from "../util/logic";
 import { colors, graphics } from "../Theme";
 import GlobalContext from "../GlobalContext";
+import { calcBoardTileSize } from "../util/board";
+
+// import EraserIcon from "../assets/main_theme/eraser_icon.png";
 
 const win = Dimensions.get("window");
 
@@ -92,25 +95,38 @@ export default function EditLevel({
     setUnsavedChanges(false);
   }
 
-  function changeTile(y: number, x: number) {
+  enum GestureMode {
+    PLACE,
+    ERASE,
+  }
+
+  function changeTile(y: number, x: number, mode?: GestureMode) {
+    let gestureMode;
     const newBoard = cloneBoard(level.board);
-    const tileType = level.board[y][x].id;
+    const tileType = boundTileAt(y, x, level.board).id;
+    if (tileType === TileType.OUTSIDE) return;
 
     // Clear current spawn position, if it exists. We
     // cannot allow multiple spawn locations!
     if (currentTool.id === TileType.SPAWN) {
+      if (mode !== undefined) return; // Only want to trigger from onGestureStart.
+
       const spawnPos = getSpawnPosition(level.board);
       if (validTile(spawnPos.y, spawnPos.x, level.board)) {
         newBoard[spawnPos.y][spawnPos.x] = { id: 0 }; // Clear the old spawn position.
       }
+      gestureMode = GestureMode.ERASE;
     }
 
-    if (tileType === TileType.EMPTY) {
+    if (tileType === TileType.EMPTY && mode !== GestureMode.ERASE) {
       newBoard[y][x] = currentTool;
       if (playAudio) playSuccessSound();
-    } else if (tileType !== TileType.SPAWN) { // Never allow deletion of spawn tile, only replacement to somewhere else.
+      gestureMode = GestureMode.PLACE;
+    } else if (tileType !== TileType.SPAWN && mode !== GestureMode.PLACE) {
+      // Never allow deletion of spawn tile, only replacement to somewhere else.
       newBoard[y][x] = { id: 0 };
       if (playAudio) playErrorSound();
+      gestureMode = GestureMode.ERASE;
     }
 
     setUnsavedChanges(true);
@@ -118,7 +134,52 @@ export default function EditLevel({
       ...level,
       board: newBoard,
     });
+
+    return gestureMode;
   }
+
+  const tileSize = calcBoardTileSize(level.board[0].length, level.board.length, win);
+  const xCorrect = -0.5 * tileSize;
+  const yCorrect = -1 * tileSize;
+
+  const [gestureStartMode, setGestureStartMode] = useState<GestureMode>();
+
+  const onGestureStart = useRef((_evt: GestureResponderEvent, _gestureState: PanResponderGestureState) => { });
+  const onGestureMove = useRef((_evt: GestureResponderEvent, _gestureState: PanResponderGestureState) => { });
+  const onGestureEnd = useRef((_evt: GestureResponderEvent, _gestureState: PanResponderGestureState) => { });
+
+  useEffect(() => {
+    onGestureStart.current = (_evt: GestureResponderEvent, gestureState: PanResponderGestureState) => {
+      const pressX = pressToIndex(gestureState.x0, tileSize, xCorrect);
+      const pressY = pressToIndex(gestureState.y0, tileSize, yCorrect);
+      const mode = changeTile(pressY, pressX);
+      setGestureStartMode(mode);
+    };
+
+    onGestureMove.current = (_evt: GestureResponderEvent, gestureState: PanResponderGestureState) => {
+      // if (gestureStartMode === GestureMode.ERASE) return;
+
+      const pressX = pressToIndex(gestureState.moveX, tileSize, xCorrect);
+      const pressY = pressToIndex(gestureState.moveY, tileSize, yCorrect);
+      changeTile(pressY, pressX, gestureStartMode);
+    };
+  }, [level, currentTool, tileSize, gestureStartMode]);
+
+  const panResponder = useMemo(
+    () => PanResponder.create({
+      // Ask to be the responder:
+      onStartShouldSetPanResponder: () => true,
+      onStartShouldSetPanResponderCapture: () => true,
+      onMoveShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponderCapture: () => true,
+      onPanResponderTerminationRequest: () => true,
+      onShouldBlockNativeResponder: () => true,
+
+      onPanResponderGrant: (...args) => onGestureStart.current(...args),
+      onPanResponderMove: (...args) => onGestureMove.current(...args),
+      onPanResponderRelease: (...args) => onGestureEnd.current(...args),
+      onPanResponderTerminate: (...args) => onGestureEnd.current(...args),
+    }), []);
 
   function changeTool(tool: BoardTile) {
     selectTool(tool);
@@ -144,8 +205,12 @@ export default function EditLevel({
 
   return (
     <SafeAreaView style={styles.container}>
-      <GameBoard board={level.board} tileCallback={changeTile}/>
-      
+      {/* <GameBoard board={level.board} tileCallback={changeTile}/> */}
+
+      <View {...panResponder.panHandlers}>
+        <GameBoard board={level.board} overrideTileSize={tileSize} />
+      </View>
+
       <Animated.View style={[
         styles.buttonsRow,
         {
@@ -260,7 +325,7 @@ export default function EditLevel({
               <SliderBar
                 label="Fuse Timer" value={fuseTimer} units={" turns"}
                 minValue={1} maxValue={100} changeCallback={setFuseTimer}
-                mainColor={darkMode ? "#F79B9B" : "#FB6C6C"} // TODO: replace this with colors.RED_THEME
+                mainColor={darkMode ? "#F79B9B" : "#FB6C6C"} // TODO: Replace this with colors.RED_THEME
                 knobColor={darkMode ? "#1E0D0D" : "#FFFAFA"}
                 showSteppers
               />
@@ -273,6 +338,14 @@ export default function EditLevel({
                 theme={colors.RED_THEME}
               />
             </View>
+            {/* <View style={styles.row}>
+              <MenuButton
+                label="Eraser"
+                icon={EraserIcon}
+                onPress={() => changeTool({ id: TileType.BOMB, fuse: fuseTimer })}
+                theme={colors.RED_THEME}
+              />
+            </View> */}
           </View>
 
           <View style={styles.section}>
@@ -315,6 +388,10 @@ export default function EditLevel({
       {/* END MODAL */}
     </SafeAreaView>
   );
+}
+
+function pressToIndex(touchPos: number, tileSize: number, correction: number) {
+  return Math.floor((touchPos + correction) / tileSize);
 }
 
 const styles = StyleSheet.create({
