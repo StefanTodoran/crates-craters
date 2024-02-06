@@ -22,7 +22,7 @@ interface Props {
   mode: PageView.LEVELS | PageView.MANAGE,
 }
 
-function LevelSelectBase({
+export default function LevelSelect({
   viewCallback,
   playLevelCallback,
   editorLevelCallback,
@@ -135,9 +135,6 @@ function LevelSelectBase({
     </>
   );
 }
-
-const LevelSelect = React.memo(LevelSelectBase);
-export default LevelSelect;
 
 const styles = StyleSheet.create({
   contentContainer: {

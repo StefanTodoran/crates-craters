@@ -40,7 +40,7 @@ function cloneGameObj(game: Game): Game {
   }
 }
 
-export function cloneBoard(board: Board) {
+export function cloneBoard(board: Board): Board {
   const newBoard = [];
 
   for (let i = 0; i < board.length; i++) {

@@ -201,7 +201,7 @@ export default function App() {
   if (!fontsLoaded) return <></>;
   return (
     <GlobalContext.Provider value={{ darkMode, dragSensitivity, doubleTapDelay, playAudio }}>
-      <SafeAreaView style={{ flex: 1 }}>
+      <SafeAreaView style={styles.container}>
 
         <Menu notificationCounts={notificationCounts} openPage={switchView} />
 
@@ -293,6 +293,9 @@ export default function App() {
 }
 
 const styles = StyleSheet.create<any>({
+  container: {
+    flex: 1,
+  },
   page: {
     flex: 1,
     alignItems: "center",

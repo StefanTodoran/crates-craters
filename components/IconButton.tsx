@@ -36,48 +36,54 @@ export default function IconButton({
 
   return (
     <Pressable
-      style={{
-        ...styles.body,
-        opacity: (disabled) ? 0.5 : 1,
-        transform: [{
-          scale: pressed ? 0.95 : 1,
-        }],
-      }}
+      style={[
+        styles.body,
+        {
+          opacity: (disabled) ? 0.5 : 1,
+          transform: [{
+            scale: pressed ? 0.95 : 1,
+          }],
+        }
+      ]}
       onPress={onPress}
       onPressIn={() => { setPressedState(!!onPress) }}
       onPressOut={() => { setPressedState(false) }}
       disabled={disabled}
       // @ts-expect-error
       touchSoundDisabled={false}
-      android_disableSound={false}>
+      android_disableSound={false} >
 
       {icon && <Animated.Image
-        style={{
-          ...styles.icon,
-          transform: [{
-            translateY: anim.interpolate({
-              inputRange: [0, 1],
-              outputRange: [10, 0],
-            }),
-          }],
-        }}
-        source={icon}
-      />}
-
-      {!!label &&
-        <Animated.Text
-          allowFontScaling={false}
-          style={{
-            ...styles.label,
-            color: color,
-            opacity: anim,
+        style={[
+          styles.icon,
+          {
             transform: [{
               translateY: anim.interpolate({
                 inputRange: [0, 1],
                 outputRange: [10, 0],
               }),
             }],
-          }}>
+          }
+        ]}
+        source={icon}
+      />}
+
+      {!!label &&
+        <Animated.Text
+          allowFontScaling={false}
+          style={[
+            styles.label,
+            {
+              color: color,
+              opacity: anim,
+              transform: [{
+                translateY: anim.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [10, 0],
+                }),
+              }],
+            }
+          ]}>
           {label}
         </Animated.Text>
       }

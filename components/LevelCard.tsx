@@ -9,7 +9,7 @@ import { Level, PageView } from "../util/types";
 
 const win = Dimensions.get("window");
 
-interface LevelCardBaseProps {
+interface LevelCardProps {
   playCallback?: () => void, // The callback used to initiate the current level for playing.
   resumeCallback?: () => void, // Used to resume play if this level is currently being played.
   editCallback?: () => void,
@@ -18,20 +18,17 @@ interface LevelCardBaseProps {
   darkMode: boolean,
   children?: React.ReactNode,
   mode: PageView.LEVELS | PageView.MANAGE,
-  overrideAttribution?: boolean,
 }
 
-function LevelCardBase({
+export default function LevelCard({
   playCallback,
   resumeCallback,
   editCallback,
   level,
   levelIndex,
   darkMode,
-  children,
   mode,
-  overrideAttribution,
-}: LevelCardBaseProps) {
+}: LevelCardProps) {
   const useTheme = mode === PageView.LEVELS ? purpleTheme : colors.RED_THEME;
 
   const anim = useRef(new Animated.Value(0)).current;
@@ -52,8 +49,7 @@ function LevelCardBase({
 
   let attributionText;
   if (level.official) attributionText = "Standard Level";
-  if (!level.official) attributionText = `Designed by "${level.designer}"`;
-  if (overrideAttribution) attributionText = "Let your creativity shine!";
+  else /* if (!level.official) */ attributionText = `Designed by "${level.designer}"`;
 
   let iconSource; // mode === PageView.MANAGE is the same as level.official
   if (level.official) iconSource = level.completed ? graphics.CRATER : graphics.CRATE;
@@ -78,9 +74,9 @@ function LevelCardBase({
     ]}>
 
       <View style={styles.row}>
-        <View style={styles.levelLabel}>
+        <View style={styles.rowFlexStart}>
           {/* Icon & Number */}
-          <View style={{ justifyContent: "center", alignItems: "center" }}>
+          <View style={styles.center}>
             <Image
               style={styles.bigIcon}
               source={iconSource}
@@ -89,7 +85,7 @@ function LevelCardBase({
           </View>
 
           {/* Name & Designer */}
-          <View style={{ flexDirection: "column", justifyContent: "center", marginLeft: normalize(10) }}>
+          <View style={styles.labelText}>
             <Text
               allowFontScaling={false}
               style={[TextStyles.subtitle(darkMode, useTheme.DARK_COLOR), styles.levelName]}
@@ -103,7 +99,7 @@ function LevelCardBase({
           </View>
         </View>
 
-        {mode === PageView.LEVELS && <View style={{ flexDirection: "row" }}>
+        {mode === PageView.LEVELS && <View style={styles.rowFlexStart}>
           {resumeCallback && <Image style={styles.icon} source={graphics.PLAYER} />}
           {level.completed && <Image style={styles.icon} source={graphics.FLAG_ICON} />}
         </View>}
@@ -116,17 +112,12 @@ function LevelCardBase({
           previewWidth={0.5}
         />
 
-        <View style={{ flexDirection: "column", flex: 0.9 }}>
-          {
-            children ||
-            <LevelCardButtons
-              playCallback={playCallback}
-              resumeCallback={resumeCallback}
-              editCallback={editCallback}
-              mode={mode}
-            />
-          }
-        </View>
+        <LevelCardButtons
+          playCallback={playCallback}
+          resumeCallback={resumeCallback}
+          editCallback={editCallback}
+          mode={mode}
+        />
       </View>
 
     </Animated.View>
@@ -149,7 +140,7 @@ export function LevelCardButtons({
   const useTheme = mode === PageView.LEVELS ? purpleTheme : colors.RED_THEME;
 
   return (
-    <>
+    <View style={styles.buttonsContainer}>
       {playCallback && <SimpleButton
         text={mode === PageView.MANAGE ? "Playtest" : "Play"}
         icon={graphics.PLAY_ICON}
@@ -181,12 +172,9 @@ export function LevelCardButtons({
         theme={useTheme}
         onPress={editCallback}
       />}
-    </>
+    </View>
   );
 }
-
-const LevelCard = React.memo(LevelCardBase);
-export default LevelCard;
 
 const styles = StyleSheet.create({
   container: {
@@ -206,9 +194,13 @@ const styles = StyleSheet.create({
     // paddingHorizontal: normalize(15),
     paddingVertical: normalize(10),
   },
-  levelLabel: {
+  rowFlexStart: {
     flexDirection: "row",
     justifyContent: "flex-start",
+  },
+  center: {
+    justifyContent: "center",
+    alignItems: "center"
   },
   number: {
     position: "absolute",
@@ -227,6 +219,11 @@ const styles = StyleSheet.create({
     height: normalize(35),
     width: normalize(35),
   },
+  labelText: {
+    flexDirection: "column",
+    justifyContent: "center",
+    marginLeft: normalize(10)
+  },
   levelName: {
     marginTop: 0,
     marginBottom: 0,
@@ -234,5 +231,9 @@ const styles = StyleSheet.create({
   designerName: {
     marginTop: -normalize(5),
     marginBottom: 0,
+  },
+  buttonsContainer: {
+    flexDirection: "column",
+    flex: 0.9
   },
 });

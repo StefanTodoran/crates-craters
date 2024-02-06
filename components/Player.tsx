@@ -38,7 +38,7 @@ export default function Player({
         })
       ])
     ).start();
-  }, []);
+  }, [game.won]);
 
   const options = useMemo(() => {
     // We only add selectors on adjacent tiles where the player could actually move.

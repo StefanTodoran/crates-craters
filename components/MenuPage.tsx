@@ -34,18 +34,9 @@ export default function MenuPage({
         </Text>
 
         {updates > 0 && <>
-          <Text style={[
-            styles.notification,
-            {
-              top: 1,
-              color: darkColor,
-              borderColor: darkColor,
-            }
-          ]}>
-            {updates}
-          </Text>
-          <Text style={styles.notification}>
-            {updates}
+          <View style={[styles.notificationShadow, { backgroundColor: darkColor }]}/>
+          <Text style={[styles.notification, { color: darkColor }]}>
+            {updates > 1 ? updates : "!"}
           </Text>
         </>}
       </View>
@@ -83,11 +74,7 @@ const styles = StyleSheet.create({
     fontFamily: "Montserrat-Medium",
     fontWeight: "bold",
     position: "absolute",
-    // backgroundColor: "white",
-    // color: "black",
-    color: "#fff",
-    borderColor: "#fff",
-    borderWidth: 2,
+    backgroundColor: "white",
     fontSize: notificationFontSize,
     height: notificationBodySize,
     width: notificationBodySize,
@@ -95,6 +82,15 @@ const styles = StyleSheet.create({
     textAlign: "center",
     textAlignVertical: "center",
     top: 0,
+    right: -notificationBodySize,
+  },
+  notificationShadow: {
+    position: "absolute",
+    backgroundColor: "black",
+    height: notificationBodySize,
+    width: notificationBodySize,
+    borderRadius: notificationBodySize / 2,
+    top: 1,
     right: -notificationBodySize,
   },
 });
