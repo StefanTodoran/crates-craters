@@ -114,7 +114,6 @@ function LevelCardBase({
           level={level}
           previewSize={2}
           previewWidth={0.5}
-          // rowCorrect={-0.1}
         />
 
         <View style={{ flexDirection: "column", flex: 0.9 }}>

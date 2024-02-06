@@ -1,4 +1,4 @@
-import { FlatList, View } from "react-native";
+import { FlatList, StyleSheet, View } from "react-native";
 import React, { useCallback, useContext, useRef, useState } from "react";
 import { Level, PageView } from "../util/types";
 import { refreshLevelsFromServer } from "../util/database";
@@ -98,14 +98,12 @@ function LevelSelectBase({
         <FlatList
           ref={scrollRef}
           style={{ overflow: "hidden" }}
-          contentContainerStyle={{
-            paddingHorizontal: "5%",
-            paddingVertical: "5%",
-            alignItems: "center",
-          }}
+          contentContainerStyle={styles.contentContainer}
           overScrollMode="never"
           showsVerticalScrollIndicator={false}
+          initialNumToRender={5} // It isn't really possible to see more than 5 LevelCards on the screen at once.
           data={levels}
+          // onEndReached={} // TODO: Implement me!
           refreshing={refreshing}
           onRefresh={mode === PageView.LEVELS ? doRefresh : undefined}
           renderItem={({ item, index }) => {
@@ -140,3 +138,11 @@ function LevelSelectBase({
 
 const LevelSelect = React.memo(LevelSelectBase);
 export default LevelSelect;
+
+const styles = StyleSheet.create({
+  contentContainer: {
+    paddingHorizontal: "5%",
+    paddingVertical: "5%",
+    alignItems: "center",
+  },
+});
