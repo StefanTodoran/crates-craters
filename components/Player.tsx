@@ -84,14 +84,14 @@ function shouldHighlightTile(game: Game, offset: Offset) {
 
   if (tile.id === TileType.DOOR && game.keys === 0) return false;
   if (tile.id === TileType.FLAG && game.coins !== game.maxCoins) return false;
-  
+
   if (tile.id === TileType.ONEWAY) {
     if (tile.orientation === Direction.LEFT && xPos > game.player.x) return false;
     if (tile.orientation === Direction.RIGHT && xPos < game.player.x) return false;
     if (tile.orientation === Direction.UP && yPos > game.player.y) return false;
     if (tile.orientation === Direction.DOWN && yPos < game.player.y) return false;
   }
-  
+
   if (tile.id === TileType.CRATE || tile.id === TileType.BOMB) {
     const nextTile = boundTileAt(yPos + offset.dy, xPos + offset.dx, game.board);
     if (tile.id === TileType.CRATE && nextTile.id !== TileType.EMPTY && nextTile.id !== TileType.CRATER) return false;

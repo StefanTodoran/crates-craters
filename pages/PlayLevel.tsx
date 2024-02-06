@@ -158,6 +158,7 @@ export default function PlayLevel({
   // Player input related state. The touchMove state is used for the <Player/> component 
   // preview of moves, gesture is used for actually completing those moves on release.
   const [touchMove, setTouchMove] = useState({ y: 0, x: 0 });
+  const panResponderEnabled = useRef(true);
 
   useEffect(() => {
     panResponderEnabled.current = !game.won;
@@ -172,9 +173,7 @@ export default function PlayLevel({
   const [touchPos, setTouchPos] = useState({ y: -1, x: -1 });
   const pressAnim = useRef(new Animated.Value(0)).current;
 
-  const panResponderEnabled = useRef(true);
   const handleGesture = useRef((_gesture: Gesture) => { });
-
   useEffect(() => {
     handleGesture.current = (gesture: Gesture) => {
       const [up, down, left, right] = gesture;
@@ -198,52 +197,6 @@ export default function PlayLevel({
       if (stateChanged) updateGameState(newState);
     }
   }, [game]);
-
-  function onGestureMove(_evt: GestureResponderEvent, gestureState: PanResponderGestureState) {
-    const sensitivity = dragSensitivity / 100; // dragSens is given as a number representing a percent e.g. 60
-    let dragY = Math.abs(gestureState.dy) * sensitivity;
-    let dragX = Math.abs(gestureState.dx) * sensitivity;
-
-    if (dragX > dragY) {
-      dragY /= Math.max(2, dragX - dragY);
-    } else {
-      dragX /= Math.max(2, dragY - dragX);
-    }
-
-    setTouchMove({ y: Math.sign(gestureState.dy) * dragY, x: Math.sign(gestureState.dx) * dragX });
-  }
-
-  function onGestureEnd(_evt: GestureResponderEvent, gestureState: PanResponderGestureState) {
-    const distance = win.width / 10;
-    const vertDist = gestureState.dy; const horizDist = gestureState.dx;
-
-    let up = (vertDist < -distance);
-    let down = (vertDist > distance);
-    let left = (horizDist < -distance);
-    let right = (horizDist > distance);
-
-    // If they swiped perfectly vertically or horizontally, we can just
-    // go ahead and skip this and call handleGesture.
-    if (bti(up) + bti(down) + bti(left) + bti(right) !== 1) {
-      const diff = Math.abs(vertDist) - Math.abs(horizDist);
-      // Otherwise, we want to calculate if it was more of a vertical
-      // swipe or a horizontal swipe and send that data to handleGesture.
-      if (diff > 0) {
-        left = false; right = false;
-      } else {
-        up = false; down = false;
-      }
-    }
-
-    // We don't want fast succesive swipe gestures to trigger the
-    // double tap jump to position input.
-    if (up || down || left || right) {
-      prevTouchPos.current = undefined;
-    }
-
-    handleGesture.current([up, down, left, right]);
-    setTouchMove({ y: 0, x: 0 });
-  }
 
   const tileSize = calcBoardTileSize(game.board[0].length, game.board.length, win);
   const xCorrect = -0.5 * tileSize;
@@ -297,10 +250,56 @@ export default function PlayLevel({
         prevTouchTime.current = touchTime;
       }
     };
-  }, [game, tileSize]); // Since tileSize is a primitive, it can be used in a dependency array.
+  }, [game]);
 
-  const panResponder = useMemo(
-    () => PanResponder.create({
+  const panResponder = useMemo(() => {
+    const sensitivity = dragSensitivity / 100; // dragSens is given as a number representing a percent e.g. 60
+    function onGestureMove(_evt: GestureResponderEvent, gestureState: PanResponderGestureState) {
+      let dragY = Math.abs(gestureState.dy) * sensitivity;
+      let dragX = Math.abs(gestureState.dx) * sensitivity;
+
+      if (dragX > dragY) {
+        dragY /= Math.max(2, dragX - dragY);
+      } else {
+        dragX /= Math.max(2, dragY - dragX);
+      }
+
+      setTouchMove({ y: Math.sign(gestureState.dy) * dragY, x: Math.sign(gestureState.dx) * dragX });
+    }
+
+    function onGestureEnd(_evt: GestureResponderEvent, gestureState: PanResponderGestureState) {
+      const distance = win.width / 10;
+      const vertDist = gestureState.dy; const horizDist = gestureState.dx;
+
+      let up = (vertDist < -distance);
+      let down = (vertDist > distance);
+      let left = (horizDist < -distance);
+      let right = (horizDist > distance);
+
+      // If they swiped perfectly vertically or horizontally, we can just
+      // go ahead and skip this and call handleGesture.
+      if (bti(up) + bti(down) + bti(left) + bti(right) !== 1) {
+        const diff = Math.abs(vertDist) - Math.abs(horizDist);
+        // Otherwise, we want to calculate if it was more of a vertical
+        // swipe or a horizontal swipe and send that data to handleGesture.
+        if (diff > 0) {
+          left = false; right = false;
+        } else {
+          up = false; down = false;
+        }
+      }
+
+      // We don't want fast succesive swipe gestures to trigger the
+      // double tap jump to position input.
+      if (up || down || left || right) {
+        prevTouchPos.current = undefined;
+      }
+
+      handleGesture.current([up, down, left, right]);
+      setTouchMove({ y: 0, x: 0 });
+    }
+
+    return PanResponder.create({
       // Ask to be the responder:
       onStartShouldSetPanResponder: () => panResponderEnabled.current,
       onStartShouldSetPanResponderCapture: () => panResponderEnabled.current,
@@ -313,7 +312,8 @@ export default function PlayLevel({
       onPanResponderMove: onGestureMove, // These don't need the weird useRef function pattern because they only rely on useState setters, which never change.
       onPanResponderRelease: onGestureEnd,
       onPanResponderTerminate: onGestureEnd,
-    }), []);
+    })
+  }, []);
 
   const [modalOpen, setModalOpen] = useState(false);
   const anim = useRef(new Animated.Value(0)).current;
