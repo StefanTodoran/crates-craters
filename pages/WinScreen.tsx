@@ -107,11 +107,7 @@ export default function WinScreen() {
 
 const styles = StyleSheet.create({
   modal: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
+    ...StyleSheet.absoluteFillObject,
     alignItems: "center",
     justifyContent: "center",
   },

@@ -359,7 +359,7 @@ export default function PlayLevel({
       <View>
         <MoveCounter moveCount={game.moveCount} />
 
-        <View {...panResponder.panHandlers} style={{ position: "relative" }}>
+        <View {...panResponder.panHandlers}>
           <GameBoard board={game.board} overrideTileSize={tileSize}>
             <Player game={game} touch={touchMove} darkMode={darkMode} tileSize={tileSize} />
 
@@ -498,11 +498,7 @@ const staticStyles = StyleSheet.create({
     width: normalize(15),
   },
   modal: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
+    ...StyleSheet.absoluteFillObject,
     flexDirection: "column",
     alignItems: "center",
     justifyContent: "center",

@@ -127,11 +127,7 @@ export default function ManageLevel({
 
 const styles = StyleSheet.create({
   previewOverlay: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
+    ...StyleSheet.absoluteFillObject,
     textAlign: "center",
     textAlignVertical: "center",
     fontFamily: "Montserrat-Medium",

@@ -88,7 +88,7 @@ export default function Menu({ notificationCounts, openPage }: Props) {
         }}
       >
         <Animated.View style={{
-          ...styles.background,
+          ...StyleSheet.absoluteFillObject,
           backgroundColor: anim.interpolate({
             inputRange: inputRange,
             outputRange: pageColors,
@@ -125,13 +125,6 @@ export default function Menu({ notificationCounts, openPage }: Props) {
 }
 
 const styles = StyleSheet.create<any>({
-  background: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    bottom: 0,
-    right: 0,
-  },
   navigation: {
     position: "absolute",
     bottom: Math.max(bottomNavHeight, normalize(45)),

@@ -715,19 +715,4 @@ const styles = StyleSheet.create<any>({
     height: size,
     backgroundColor: bgColor,
   }),
-  entityContainer: (size: number) => ({
-    position: "absolute",
-    width: size,
-    height: size,
-    paddingTop: "17.5%",
-    paddingRight: "5%",
-    justifyContent: "center",
-    alignItems: "center",
-  }),
-  entity: (fontSize: number) => ({
-    fontFamily: "Montserrat-Regular",
-    fontWeight: "normal",
-    color: "white",
-    fontSize: fontSize
-  }),
 });

@@ -186,9 +186,7 @@ export default function App() {
 
   useEffect(() => { // TODO: update this method?
     const backAction = () => {
-      if (view !== PageView.MENU) {
-        switchView(PageView.MENU);
-      }
+      if (view !== PageView.MENU) switchView(PageView.MENU);
       return true;
     }
 
@@ -312,11 +310,7 @@ const styles = StyleSheet.create<any>({
     opacity: animState,
   }),
   modal: (animState: Animated.Value, darkMode: boolean) => ({
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
+    ...StyleSheet.absoluteFillObject,
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: darkMode ? "black" : "white",

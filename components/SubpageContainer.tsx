@@ -29,11 +29,7 @@ export default function SubpageContainer({ center, children }: Props) {
 
 const styles = StyleSheet.create({
   scrollContainer: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
+    ...StyleSheet.absoluteFillObject,
     flex: 1,
     overflow: "hidden",
   },

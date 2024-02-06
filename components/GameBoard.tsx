@@ -13,7 +13,6 @@ interface Props {
   board: Board,
   tileCallback?: (yPos: number, xPos: number, tileType: TileType) => void,
   overrideTileSize?: number,
-  // rowCorrect?: number,
   children?: React.ReactNode,
 }
 
@@ -21,7 +20,6 @@ export default function GameBoard({
   board,
   tileCallback,
   overrideTileSize,
-  // rowCorrect,
   children,
 }: Props) {
   const { darkMode } = useContext(GlobalContext);
