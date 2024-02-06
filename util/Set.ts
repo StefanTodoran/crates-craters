@@ -8,15 +8,15 @@ export class AnySet<T> {
   add(element: T) {
     this.set.add(JSON.stringify(element));
   }
-  
+
   has(element: T) {
     return this.set.has(JSON.stringify(element));
   }
-  
+
   delete(element: T) {
     return this.set.delete(JSON.stringify(element));
   }
-  
+
   get size() {
     return this.set.size;
   }
@@ -39,15 +39,15 @@ export class PositionSet {
   add(element: Position) {
     this.set.add(this.hash(element));
   }
-  
+
   has(element: Position) {
     return this.set.has(this.hash(element));
   }
-  
+
   delete(element: Position) {
     return this.set.delete(this.hash(element));
   }
-  
+
   get size() {
     return this.set.size;
   }

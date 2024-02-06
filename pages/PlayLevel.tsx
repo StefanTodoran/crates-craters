@@ -130,9 +130,33 @@ export default function PlayLevel({
     return boomSound ? () => { boomSound.unloadAsync(); } : undefined;
   }, [boomSound]);
 
+  function playSoundEffect(soundEffect: SoundEvent | undefined) {
+    if (!playAudio) return;
+
+    switch (soundEffect) {
+      case SoundEvent.EXPLOSION:
+        playExplosionSound();
+        break;
+      case SoundEvent.PUSH:
+        playPushSound();
+        break;
+      case SoundEvent.FILL:
+        playFillSound();
+        break;
+      case SoundEvent.DOOR:
+        playDoorSound();
+        break;
+        case SoundEvent.COLLECT:
+        playCoinSound();
+        break;
+      case SoundEvent.MOVE:
+        playMoveSound();
+        break;
+    }
+  }
+
   // Player input related state. The touchMove state is used for the <Player/> component 
   // preview of moves, gesture is used for actually completing those moves on release.
-  // const [touchMove, setTouchMove] = useState({ magY: 0, dirY: 0, magX: 0, dirX: 0 });
   const [touchMove, setTouchMove] = useState({ y: 0, x: 0 });
 
   useEffect(() => {
@@ -170,33 +194,7 @@ export default function PlayLevel({
         [newState, stateChanged] = doGameMove(game, Direction.RIGHT);
       }
 
-      if (playAudio) {
-        let playedSound = false;
-        if (newState.soundEvent === SoundEvent.EXPLOSION) {
-          playExplosionSound();
-          playedSound = true;
-        }
-        if (newState.soundEvent === SoundEvent.PUSH) {
-          playPushSound();
-          playedSound = true;
-        }
-        if (newState.soundEvent === SoundEvent.FILL) {
-          playFillSound();
-          playedSound = true;
-        }
-        if (newState.coins > game.coins || newState.keys > game.keys) {
-          playCoinSound();
-          playedSound = true;
-        }
-        if (newState.keys < game.keys) {
-          playDoorSound();
-          playedSound = true;
-        }
-        if (!playedSound && !newState.won) {
-          playMoveSound();
-        }
-      }
-
+      playSoundEffect(newState.soundEvent);
       if (stateChanged) updateGameState(newState);
     }
   }, [game]);
@@ -213,10 +211,6 @@ export default function PlayLevel({
     }
 
     setTouchMove({ y: Math.sign(gestureState.dy) * dragY, x: Math.sign(gestureState.dx) * dragX });
-    // setTouchMove({
-    //   magY: dragY, dirY: Math.sign(gestureState.dy), 
-    //   magX: dragX, dirX: Math.sign(gestureState.dx),
-    // });
   }
 
   function onEndGesture(_evt: GestureResponderEvent, gestureState: PanResponderGestureState) {
@@ -248,9 +242,7 @@ export default function PlayLevel({
     }
 
     handleGesture.current([up, down, left, right]);
-
     setTouchMove({ y: 0, x: 0 });
-    // setTouchMove({ magY: 0, dirY: 0, magX: 0, dirX: 0 });
   }
 
   const tileSize = calcBoardTileSize(game.board[0].length, game.board.length, win);
@@ -293,7 +285,7 @@ export default function PlayLevel({
               }
 
               updateGameState(current);
-              if (playAudio) playMoveSound();
+              playSoundEffect(current.soundEvent);
             }
 
             Animated.timing(pressAnim, {

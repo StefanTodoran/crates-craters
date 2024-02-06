@@ -6,6 +6,9 @@ export enum SoundEvent {
   EXPLOSION,
   PUSH,
   FILL,
+  DOOR,
+  COLLECT,
+  MOVE,
 }
 
 export interface Position {
@@ -281,16 +284,19 @@ export function doGameMove(game: Game, move: Direction): [Game, boolean] {
   if (moveToTile.id === TileType.COIN) {
     next.coins += 1;
     next.board[moveTo.y][moveTo.x] = emptyTile;
+    next.soundEvent = SoundEvent.COLLECT;
   }
   if (moveToTile.id === TileType.KEY) {
     next.keys += 1;
     next.board[moveTo.y][moveTo.x] = emptyTile;
+    next.soundEvent = SoundEvent.COLLECT;
   }
 
   // If we walked into a door and have the means to open it, do so.
   if (game.keys > 0 && moveToTile.id === TileType.DOOR) {
     next.keys -= 1;
     next.board[moveTo.y][moveTo.x] = emptyTile;
+    next.soundEvent = SoundEvent.DOOR;
   }
 
   // Pushing a crate onto an empty tile.
@@ -343,6 +349,11 @@ export function doGameMove(game: Game, move: Direction): [Game, boolean] {
 
   next.won = winCondition(next);
   next.moveCount++;
+
+  if (!next.soundEvent && !next.won) {
+    next.soundEvent = SoundEvent.MOVE;
+  }
+
   return [next, true];
 }
 
