@@ -6,6 +6,7 @@ import { Sound } from "expo-av/build/Audio";
 import { Audio } from "expo-av";
 
 import SimpleButton from "../components/SimpleButton";
+import MoveCounter from "../components/MoveCounter";
 import MenuButton from "../components/MenuButton";
 import GameBoard from "../components/GameBoard";
 import Inventory from "../components/Inventory";
@@ -18,7 +19,6 @@ import { Direction, Level, PageView } from "../util/types";
 import { markLevelCompleted } from "../util/loader";
 import { calcBoardTileSize } from "../util/board";
 import { colors, graphics } from "../Theme";
-import MoveCounter from "../components/MoveCounter";
 
 const win = Dimensions.get("window");
 
@@ -146,7 +146,7 @@ export default function PlayLevel({
       case SoundEvent.DOOR:
         playDoorSound();
         break;
-        case SoundEvent.COLLECT:
+      case SoundEvent.COLLECT:
         playCoinSound();
         break;
       case SoundEvent.MOVE:
@@ -167,8 +167,8 @@ export default function PlayLevel({
   // More player input state, we use these to keep track of double taps. We need to know
   // the previous tap time so we can determine if the two taps happened fast enough, and
   // we keep track of position show it is only a double tap if its the same square twice.
-  const [prevTouchTime, setPrevTouchTime] = useState(Date.now());
-  const [prevTouchPos, setPrevTouchPos] = useState<Position>();
+  const prevTouchTime = useRef(Date.now());
+  const prevTouchPos = useRef<Position>();
   const [touchPos, setTouchPos] = useState({ y: -1, x: -1 });
   const pressAnim = useRef(new Animated.Value(0)).current;
 
@@ -213,7 +213,7 @@ export default function PlayLevel({
     setTouchMove({ y: Math.sign(gestureState.dy) * dragY, x: Math.sign(gestureState.dx) * dragX });
   }
 
-  function onEndGesture(_evt: GestureResponderEvent, gestureState: PanResponderGestureState) {
+  function onGestureEnd(_evt: GestureResponderEvent, gestureState: PanResponderGestureState) {
     const distance = win.width / 10;
     const vertDist = gestureState.dy; const horizDist = gestureState.dx;
 
@@ -238,7 +238,7 @@ export default function PlayLevel({
     // We don't want fast succesive swipe gestures to trigger the
     // double tap jump to position input.
     if (up || down || left || right) {
-      setPrevTouchPos(undefined);
+      prevTouchPos.current = undefined;
     }
 
     handleGesture.current([up, down, left, right]);
@@ -248,6 +248,56 @@ export default function PlayLevel({
   const tileSize = calcBoardTileSize(game.board[0].length, game.board.length, win);
   const xCorrect = -0.5 * tileSize;
   const yCorrect = -1 * tileSize;
+
+  const onGestureStart = useRef((_evt: GestureResponderEvent, _gestureState: PanResponderGestureState) => { });
+  useEffect(() => {
+    onGestureStart.current = (_evt: GestureResponderEvent, gestureState: PanResponderGestureState) => {
+      setTouchMove({ y: 0, x: 0 });
+
+      const pressX = pressToIndex(gestureState.x0, tileSize, xCorrect);
+      const pressY = pressToIndex(gestureState.y0, tileSize, yCorrect);
+
+      if (
+        Date.now() - prevTouchTime.current < doubleTapDelay &&
+        prevTouchPos.current &&
+        prevTouchPos.current.x === pressX &&
+        prevTouchPos.current.y === pressY
+      ) {
+        setTouchPos({ x: pressX, y: pressY });
+        prevTouchPos.current = undefined;
+
+        Animated.timing(pressAnim, {
+          toValue: 1,
+          duration: 250,
+          useNativeDriver: true,
+        }).start(() => {
+          const path = canMoveTo(game, pressX, pressY);
+          if (path) {
+            let current = game;
+            for (let i = 0; i < path.length; i++) {
+              [current] = doGameMove(current, path[i]);
+            }
+
+            updateGameState(current);
+            playSoundEffect(current.soundEvent);
+          }
+
+          Animated.timing(pressAnim, {
+            toValue: 0,
+            duration: 250,
+            useNativeDriver: true,
+          }).start();
+        });
+      } else {
+        prevTouchPos.current = {
+          x: pressToIndex(gestureState.x0, tileSize, xCorrect),
+          y: pressToIndex(gestureState.y0, tileSize, yCorrect),
+        };
+        const touchTime = Date.now();
+        prevTouchTime.current = touchTime;
+      }
+    };
+  }, [game, tileSize]); // Since tileSize is a primitive, it can be used in a dependency array.
 
   const panResponder = useMemo(
     () => PanResponder.create({
@@ -259,55 +309,11 @@ export default function PlayLevel({
       onPanResponderTerminationRequest: () => panResponderEnabled.current,
       onShouldBlockNativeResponder: () => panResponderEnabled.current,
 
-      onPanResponderGrant: function (_evt, gestureState) { // The gesture has started!
-        setTouchMove({ y: 0, x: 0 });
-
-        const pressX = pressToIndex(gestureState.x0, tileSize, xCorrect);
-        const pressY = pressToIndex(gestureState.y0, tileSize, yCorrect);
-
-        if (Date.now() - prevTouchTime < doubleTapDelay && prevTouchPos &&
-          prevTouchPos.x === pressX && prevTouchPos.y === pressY) {
-
-          setTouchPos({ x: pressX, y: pressY });
-          setPrevTouchPos(undefined);
-
-          Animated.timing(pressAnim, {
-            toValue: 1,
-            duration: 250,
-            useNativeDriver: true,
-          }).start(() => {
-            const path = canMoveTo(game, pressX, pressY);
-            if (path) {
-              let current = game;
-              for (let i = 0; i < path.length; i++) {
-                [current] = doGameMove(current, path[i]);
-              }
-
-              updateGameState(current);
-              playSoundEffect(current.soundEvent);
-            }
-
-            Animated.timing(pressAnim, {
-              toValue: 0,
-              duration: 250,
-              useNativeDriver: true,
-            }).start();
-          });
-        } else {
-          setPrevTouchPos({
-            x: pressToIndex(gestureState.x0, tileSize, xCorrect),
-            y: pressToIndex(gestureState.y0, tileSize, yCorrect),
-          });
-          const touchTime = Date.now();
-          setPrevTouchTime(touchTime);
-        }
-      },
-      onPanResponderMove: onGestureMove,
-      onPanResponderRelease: onEndGesture,
-      onPanResponderTerminate: onEndGesture,
-    }),
-    [prevTouchPos, tileSize, prevTouchTime] // Since tileSize is a primitive, it can be used in a dependency array.
-  );
+      onPanResponderGrant: (...args) => onGestureStart.current(...args),
+      onPanResponderMove: onGestureMove, // These don't need the weird useRef function pattern because they only rely on useState setters, which never change.
+      onPanResponderRelease: onGestureEnd,
+      onPanResponderTerminate: onGestureEnd,
+    }), []);
 
   const [modalOpen, setModalOpen] = useState(false);
   const anim = useRef(new Animated.Value(0)).current;
