@@ -15,8 +15,6 @@ import { colors, graphics } from "../Theme";
 import GlobalContext from "../GlobalContext";
 import { calcBoardTileSize } from "../util/board";
 
-// import EraserIcon from "../assets/main_theme/eraser_icon.png";
-
 const win = Dimensions.get("window");
 
 interface Props {
@@ -143,10 +141,8 @@ export default function EditLevel({
   const yCorrect = -1 * tileSize;
 
   const [gestureStartMode, setGestureStartMode] = useState<GestureMode>();
-
   const onGestureStart = useRef((_evt: GestureResponderEvent, _gestureState: PanResponderGestureState) => { });
   const onGestureMove = useRef((_evt: GestureResponderEvent, _gestureState: PanResponderGestureState) => { });
-  const onGestureEnd = useRef((_evt: GestureResponderEvent, _gestureState: PanResponderGestureState) => { });
 
   useEffect(() => {
     onGestureStart.current = (_evt: GestureResponderEvent, gestureState: PanResponderGestureState) => {
@@ -158,7 +154,9 @@ export default function EditLevel({
 
     onGestureMove.current = (_evt: GestureResponderEvent, gestureState: PanResponderGestureState) => {
       // if (gestureStartMode === GestureMode.ERASE) return;
-
+      // Either allow only one at a time deletion (above line),
+      // or only deletion of the first tile type deleted, which 
+      // would need to be set by onGestureStart.
       const pressX = pressToIndex(gestureState.moveX, tileSize, xCorrect);
       const pressY = pressToIndex(gestureState.moveY, tileSize, yCorrect);
       changeTile(pressY, pressX, gestureStartMode);
@@ -177,8 +175,8 @@ export default function EditLevel({
 
       onPanResponderGrant: (...args) => onGestureStart.current(...args),
       onPanResponderMove: (...args) => onGestureMove.current(...args),
-      onPanResponderRelease: (...args) => onGestureEnd.current(...args),
-      onPanResponderTerminate: (...args) => onGestureEnd.current(...args),
+      // onPanResponderRelease: (...args) => onGestureEnd.current(...args),
+      // onPanResponderTerminate: (...args) => onGestureEnd.current(...args),
     }), []);
 
   function changeTool(tool: BoardTile) {
@@ -205,8 +203,6 @@ export default function EditLevel({
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* <GameBoard board={level.board} tileCallback={changeTile}/> */}
-
       <View {...panResponder.panHandlers}>
         <GameBoard board={level.board} overrideTileSize={tileSize} />
       </View>
@@ -338,14 +334,6 @@ export default function EditLevel({
                 theme={colors.RED_THEME}
               />
             </View>
-            {/* <View style={styles.row}>
-              <MenuButton
-                label="Eraser"
-                icon={EraserIcon}
-                onPress={() => changeTool({ id: TileType.BOMB, fuse: fuseTimer })}
-                theme={colors.RED_THEME}
-              />
-            </View> */}
           </View>
 
           <View style={styles.section}>
@@ -370,7 +358,7 @@ export default function EditLevel({
             <View style={styles.row}>
               <MenuButton
                 onPress={saveChanges}
-                label="Save Changes"
+                label="Save Changes" // TODO: Maybe a corresponding "Discard Changes" button?
                 icon={graphics.SAVE_ICON}
                 theme={colors.GREEN_THEME}
                 disabled={!unsavedChanges}

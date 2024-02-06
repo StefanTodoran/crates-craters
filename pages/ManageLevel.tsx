@@ -5,15 +5,16 @@ import { calcPreviewTileSize } from "../util/board";
 import { normalize } from "../TextStyles";
 import GlobalContext from "../GlobalContext";
 import { colors, graphics } from "../Theme";
+import { deleteLevel, updateLevel } from "../util/loader";
+// import { compressBoardData } from "../util/loader";
+import { doPageChange } from "../util/events";
+import { useForceRefresh } from "../util/hooks";
+import Toast from "react-native-toast-message";
 
 import SubpageContainer from "../components/SubpageContainer";
 import BoardPreview from "../components/BoardPreview";
 import InputCard from "../components/InputCard";
 import MenuButton from "../components/MenuButton";
-import { deleteLevel, updateLevel } from "../util/loader";
-// import { compressBoardData } from "../util/loader";
-import { doPageChange } from "../util/events";
-import { useForceRefresh } from "../util/hooks";
 
 const win = Dimensions.get("window");
 
@@ -113,6 +114,11 @@ export default function ManageLevel({
             onLongPress={() => {
               deleteLevel(level);
               doPageChange(0);
+              Toast.show({
+                type: "success",
+                text1: "Level deletion completed.",
+                text2: `"${level.name}" has been successfully deleted.`,
+              });
             }}
             icon={graphics.DELETE_ICON}
             theme={colors.RED_THEME}

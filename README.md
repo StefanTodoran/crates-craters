@@ -185,3 +185,5 @@ Built with JavaScript and React Native, Crates and Craters is a single player pu
 * There are sometimes tiny 1px gaps between board tiles that vary by screen dimensions
   * Not due to rounding, tile sizes are whole numbers
   * See GameBoard.tsx
+* Long level names may overflow card title
+  * See ManageLevel.tsx

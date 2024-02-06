@@ -1,4 +1,4 @@
-import { View, Dimensions, Image, Pressable, Text, Platform, StyleSheet } from "react-native";
+import { View, Dimensions, Image, Text, Platform, StyleSheet } from "react-native";
 import React, { useContext } from "react";
 import GlobalContext from "../GlobalContext";
 
@@ -11,14 +11,12 @@ const win = Dimensions.get("window");
 
 interface Props {
   board: Board,
-  tileCallback?: (yPos: number, xPos: number, tileType: TileType) => void,
   overrideTileSize?: number,
   children?: React.ReactNode,
 }
 
 export default function GameBoard({
   board,
-  tileCallback,
   overrideTileSize,
   children,
 }: Props) {
@@ -34,7 +32,6 @@ export default function GameBoard({
     // We need to know oddTile (board is checkered color-wise) and the tile type
     // regardless of whether the tile will be a wall, entity, or regular tile.
     const oddTile = (isEven(i) && isEven(j)) || (!isEven(i) && !isEven(j));
-    const pressCallback = tileCallback ? () => { tileCallback(i, j, tile.id) } : undefined;
 
     if (tile.id === TileType.WALL) {
       // Wall tiles are just Views with border and background. We apply
@@ -49,18 +46,7 @@ export default function GameBoard({
         borderRightWidth: j + 1 < boardWidth && board[i][j + 1].id === TileType.WALL ? 0 : 5,
       };
 
-      if (!tileCallback) {
-        return <View key={j} style={[styles.wallTile(fillColor, borderColor, tileSize), borders]} />;
-      } else {
-        return <Pressable
-          key={j}
-          style={[styles.wallTile(fillColor, borderColor, tileSize), borders]}
-          onPress={pressCallback}
-          // @ts-expect-error
-          touchSoundDisabled={true}
-          android_disableSound={true}
-        />;
-      }
+      return <View key={j} style={[styles.wallTile(fillColor, borderColor, tileSize), borders]} />;
     }
 
     // Regular tiles are sized like wall tiles but are Image elements. All
@@ -69,18 +55,7 @@ export default function GameBoard({
     const bgColor = oddTile ? colors.BLUE_THEME.MAIN_TRANSPARENT(0.03) : colors.BLUE_THEME.MAIN_TRANSPARENT(0.14);
 
     if (tile.id === TileType.EMPTY) {
-      if (!tileCallback) {
-        return <View key={j} style={styles.tile(bgColor, tileSize)} />;
-      } else {
-        return <Pressable
-          key={j}
-          style={styles.tile(bgColor, tileSize)}
-          onPress={pressCallback}
-          // @ts-expect-error
-          touchSoundDisabled={true}
-          android_disableSound={true}
-        />;
-      }
+      return <View key={j} style={styles.tile(bgColor, tileSize)} />;
     }
 
     const tileGraphic = useSvg ?
@@ -97,37 +72,9 @@ export default function GameBoard({
         </View>
       </>;
 
-      if (!tileCallback) {
-        return <View key={j} style={styles.relative}>{contents}</View>;
-      } else {
-        return <Pressable
-          key={j}
-          onPress={pressCallback}
-          // @ts-expect-error
-          touchSoundDisabled={true}
-          android_disableSound={true}
-          style={styles.relative}
-        >
-          {contents}
-        </Pressable>;
-      }
+      return <View key={j} style={styles.relative}>{contents}</View>;
     } else {
-      // Again we need a quick if to determine whether tiles should be 
-      // wrapped in pressable or not.
-
-      if (tileCallback) {
-        return <Pressable
-          key={j}
-          onPress={pressCallback}
-          // @ts-expect-error  
-          touchSoundDisabled={true}
-          android_disableSound={true}
-        >
-          {tileGraphic}
-        </Pressable>;
-      } else {
-        return tileGraphic;
-      }
+      return tileGraphic;
     }
   }
 
