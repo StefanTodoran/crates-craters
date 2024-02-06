@@ -37,8 +37,7 @@ export default function Subpages({ pageTabs, pageComponents, disabledPages }: Pr
   }
 
   useEffect(() => {
-    const handleChangeRequest = (targetPage: number) => updatePageState(targetPage);
-    const listener = eventEmitter.addListener("doPageChange", handleChangeRequest);
+    const listener = eventEmitter.addListener("doPageChange", updatePageState);
     return () => listener.remove();
   }, [currentPage, setPage]);
 

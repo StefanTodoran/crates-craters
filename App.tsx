@@ -138,7 +138,7 @@ export default function App() {
     const syncListener = eventEmitter.addListener("doStateStorageSync", handleSyncRequest);
     
     const handleNotificationRequest = (event: any) => updateNotificationCounts.current(event.index, event.change);
-    const notificationListener = eventEmitter.addListener("updateNotifications", handleNotificationRequest);
+    const notificationListener = eventEmitter.addListener("doNotificationsUpdate", handleNotificationRequest);
     
     return () => {
       syncListener.remove();

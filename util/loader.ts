@@ -1,6 +1,6 @@
 import { Board, BoardTile, BombTile, Level, OfficialLevel, OneWayTile, TileType, UserLevel, isLevelWellFormed } from "./types";
+import { doNotificationsUpdate, doStateStorageSync } from "./events";
 import { countInstancesInBoard } from "./logic";
-import { eventEmitter } from "./events";
 import { MMKV } from "react-native-mmkv";
 
 export const storage = new MMKV();
@@ -89,7 +89,7 @@ export function createLevel(level: UserLevel) {
   const customLevelKeys = getData(metadataKeys.customLevelKeys) || [];
   customLevelKeys.push(level.uuid);
   setData(metadataKeys.customLevelKeys, customLevelKeys);
-  eventEmitter.emit("doStateStorageSync", level.uuid);
+  doStateStorageSync(level.uuid);
 }
 
 export function updateLevel(updatedLevel: UserLevel) {
@@ -107,7 +107,7 @@ export function updateLevel(updatedLevel: UserLevel) {
   };
 
   setData(level.uuid, level);
-  eventEmitter.emit("doStateStorageSync", level.uuid);
+  doStateStorageSync(level.uuid);
 }
 
 export function deleteLevel(level: UserLevel) {
@@ -122,7 +122,7 @@ export function deleteLevel(level: UserLevel) {
     console.error(`Attempted delete of level with uuid ${level.uuid} but no corresponding key was found in "metadataKeys.customLevelKeys"!`)
   }
 
-  eventEmitter.emit("doStateStorageSync");
+  doStateStorageSync();
 }
 
 export function multiStoreLevels(levels: Level[]) {
@@ -148,13 +148,13 @@ export function markLevelCompleted(uuid: string, moveCount: number) {
   level.best = Math.min(prevBest!, moveCount);
   level.completed = true;
   setData(uuid, level);
-  eventEmitter.emit("doStateStorageSync", uuid);
+  doStateStorageSync(uuid);
 
   if (level.official && !wasCompleted) {
     // We only want to give coins for the first time an official level is completed.
     const gain = countInstancesInBoard(level.board, TileType.COIN);
     modifyCoinBalance(gain);
-    eventEmitter.emit("updateNotifications", { index: 2, change: 1 });
+    doNotificationsUpdate(2, 1);
   }
 }
 

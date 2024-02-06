@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { View, StyleSheet } from "react-native";
 import { colors, graphics } from "../Theme";
-import { eventEmitter } from "../util/events";
+import { doPageChange } from "../util/events";
 import { UserLevel, createBlankBoard } from "../util/types";
 
 import InputCard from "../components/InputCard";
@@ -58,7 +58,7 @@ export default function CreateLevel({ createLevelCallback }: Props) {
               created: levelCreated.toISOString(),
             });
 
-            eventEmitter.emit("doPageChange", 0);
+            doPageChange(0);
           }}
         />
       </View>

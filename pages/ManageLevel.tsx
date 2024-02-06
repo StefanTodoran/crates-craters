@@ -12,7 +12,7 @@ import InputCard from "../components/InputCard";
 import MenuButton from "../components/MenuButton";
 import { deleteLevel, updateLevel } from "../util/loader";
 // import { compressBoardData } from "../util/loader";
-import { eventEmitter } from "../util/events";
+import { doPageChange } from "../util/events";
 import { useForceRefresh } from "../util/hooks";
 
 const win = Dimensions.get("window");
@@ -112,7 +112,7 @@ export default function ManageLevel({
           <MenuButton
             onLongPress={() => {
               deleteLevel(level);
-              eventEmitter.emit("doPageChange", 0);
+              doPageChange(0);
             }}
             icon={graphics.DELETE_ICON}
             theme={colors.RED_THEME}

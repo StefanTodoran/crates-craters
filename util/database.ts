@@ -18,7 +18,7 @@ import { db } from "./firebase";
 
 import { getData, getStoredLevelCount, metadataKeys, multiStoreLevels, parseCompressedBoardData, setData } from "./loader";
 import { OfficialLevel } from "./types";
-import { eventEmitter } from "./events";
+import { doStateStorageSync } from "./events";
 
 // ======================== \\
 // DOCUMENT TYPE INTERFACES \\
@@ -68,7 +68,7 @@ export async function refreshLevelsFromServer(): Promise<boolean> {
   if (levels.length === 0) return false; // For some reason firestore getDocs returns an empty snapshot instead of failing when offline.
 
   multiStoreLevels(levels);
-  eventEmitter.emit("doStateStorageSync");
+  doStateStorageSync();
   return true;
 }
 

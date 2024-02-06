@@ -1,11 +1,11 @@
 import { FlatList, View } from "react-native";
 import React, { useCallback, useContext, useRef, useState } from "react";
 import { Level, PageView } from "../util/types";
-import { eventEmitter } from "../util/events";
+import { refreshLevelsFromServer } from "../util/database";
+import { doPageChange } from "../util/events";
 import GlobalContext from "../GlobalContext";
 import Toast from "react-native-toast-message";
 import LevelCard from "../components/LevelCard";
-import { refreshLevelsFromServer } from "../util/database";
 import EmptyList from "../components/EmptyList";
 
 interface Props {
@@ -65,7 +65,7 @@ function LevelSelectBase({
 
   const editLevel = useCallback((levelIndex: number) => {
     editorLevelCallback!(levels[levelIndex].uuid);
-    eventEmitter.emit("doPageChange", 1);
+    doPageChange(1);
   }, []);
 
   const scrollRef = useRef<any>();

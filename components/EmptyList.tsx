@@ -1,7 +1,7 @@
 import { StyleSheet, Text, View } from "react-native";
 import React, { useContext } from "react";
 import { PageView } from "../util/types";
-import { eventEmitter } from "../util/events";
+import { doPageChange } from "../util/events";
 import GlobalContext from "../GlobalContext";
 import MenuButton from "./MenuButton";
 import { colors, graphics } from "../Theme";
@@ -32,7 +32,7 @@ export default function EmptyList({ mode, refreshCallback }: Props) {
     <View style={styles.container}>
       <Text style={TextStyles.paragraph(darkMode)}>No custom levels created yet!</Text>
       <MenuButton
-        onPress={() => eventEmitter.emit("doPageChange", 2)}
+        onPress={() => doPageChange(2)}
         label="Create New Level"
         icon={graphics.METAL_CRATE}
         theme={colors.RED_THEME}

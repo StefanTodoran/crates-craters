@@ -253,7 +253,7 @@ export default function PlayLevel({
     // setTouchMove({ magY: 0, dirY: 0, magX: 0, dirX: 0 });
   }
 
-  const tileSize = game ? calcBoardTileSize(game.board[0].length, game.board.length, win) : 1;
+  const tileSize = calcBoardTileSize(game.board[0].length, game.board.length, win);
   const xCorrect = -0.5 * tileSize;
   const yCorrect = -1 * tileSize;
 
@@ -353,18 +353,13 @@ export default function PlayLevel({
     }
   }
 
-  if (!game) { // TODO: Pretty sure this is uneeded.
-    console.error(`Error while trying to play ${level.uuid}, game is undefined or null!`);
-    return;
-  }
-
   return (
     <SafeAreaView style={staticStyles.container}>
       {/* GAMEPLAY COMPONENTS */}
       <View>
         <MoveCounter moveCount={game.moveCount} />
 
-        <View {...panResponder.panHandlers}>
+        <View {...panResponder.panHandlers} style={{ position: "relative" }}>
           <GameBoard board={game.board} overrideTileSize={tileSize}>
             <Player game={game} touch={touchMove} darkMode={darkMode} tileSize={tileSize} />
 

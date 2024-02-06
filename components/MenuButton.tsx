@@ -3,7 +3,6 @@ import React, { useContext, useState } from "react";
 import { Theme, purpleTheme } from "../Theme";
 import GlobalContext from "../GlobalContext";
 import { normalize } from "../TextStyles";
-// import { Audio } from "expo-av";
 
 interface Props {
   label?: string, // The text to be displayed in the button.
@@ -34,33 +33,9 @@ export default function MenuButton({
   const { darkMode } = useContext(GlobalContext);
   const [pressed, setPressedState] = useState(false);
 
-  // const [sound, setSound] = useState();
-  // async function playSound() {
-  //   const { sound } = await Audio.Sound.createAsync(require('../assets/audio/button.wav'));
-  //   setSound(sound);
-  //   await sound.playAsync();
-  // }
-
-  // useEffect(() => {
-  //   return sound ? () => { sound.unloadAsync(); } : undefined;
-  // }, [sound]);
-
-  // This ensures that onPress is optional. TODO: does this actually do anything?
-  const pressedFn = () => {
-    if (!!onPress) {
-      onPress();
-      // if (playAudio) { playSound(); }
-    }
-  }
-
-  // This ensures that onLongPress is optional, and gives
-  // the user visual feedback when it occurs.
   const longPressedFn = () => {
-    setPressedState(true);
-    if (!!onLongPress) {
-      onLongPress();
-      // if (playAudio) { playSound(); }
-    }
+    setPressedState(true); // To give visual feedback even for long press only buttons.
+    if (!!onLongPress) onLongPress();
   }
 
   const useTheme = theme || purpleTheme;
@@ -78,14 +53,12 @@ export default function MenuButton({
         opacity: (disabled) ? 0.5 : 1,
       }
     ]}
-      onPress={pressedFn}
+      onPress={onPress}
       onLongPress={longPressedFn}
       onPressIn={() => { setPressedState(!!onPress) }}
       onPressOut={() => { setPressedState(false) }}
       disabled={disabled}
-      // @ts-expect-error
-      touchSoundDisabled={false}
-      android_disableSound={false}>
+    >
 
       {(icon) && <Image style={styles.icon} source={icon} />}
 
