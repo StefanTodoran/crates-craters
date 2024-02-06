@@ -284,14 +284,7 @@ export default function PlayLevel({
             toValue: 1,
             duration: 250,
             useNativeDriver: true,
-          }).start();
-          setTimeout(() => {
-            Animated.timing(pressAnim, {
-              toValue: 0,
-              duration: 250,
-              useNativeDriver: true,
-            }).start();
-
+          }).start(() => {
             const path = canMoveTo(game, pressX, pressY);
             if (path) {
               let current = game;
@@ -302,7 +295,13 @@ export default function PlayLevel({
               updateGameState(current);
               if (playAudio) playMoveSound();
             }
-          }, 750);
+
+            Animated.timing(pressAnim, {
+              toValue: 0,
+              duration: 250,
+              useNativeDriver: true,
+            }).start();
+          });
         } else {
           setPrevTouchPos({
             x: pressToIndex(gestureState.x0, tileSize, xCorrect),
@@ -413,14 +412,14 @@ export default function PlayLevel({
           onPress={toggleModal}
         />
         {/* <MenuButton
-            label="Get Hint"
-            icon={graphics.SUPPORT_ICON}
-            theme={colors.GREEN_THEME}
-            onPress={() => {
-              aStarSearch(game, compoundHeuristic);
-              aStarSearch(game, basicHeuristic);
-            }}
-          /> */}
+          label="Get Hint"
+          icon={graphics.SUPPORT_ICON}
+          theme={colors.GREEN_THEME}
+          onPress={() => {
+            aStarSearch(game, compoundHeuristic);
+            aStarSearch(game, basicHeuristic);
+          }}
+        /> */}
       </Animated.View>}
       <Animated.View style={dynamicStyles.buttonsRow(anim)}>
         {playtest && !game.won && <>

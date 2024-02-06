@@ -1,4 +1,5 @@
 import Queue from "./Queue";
+import { PositionSet } from "./Set";
 import { OneWayTile, Direction, TileType, Board, SimpleTile, Level, BoardTile } from "./types";
 
 export enum SoundEvent {
@@ -156,7 +157,7 @@ const crateTile: SimpleTile = { id: TileType.CRATE };
 /**
  * Checks if the destination position can be reached from the current position
  * walking only on empty spaces or the flag if enough coins have been collected. 
- * If there is no such path, returns false. If there is, returns a list of string
+ * If there is no such path, returns false. If there is, returns a list of step
  * instructions for reaching the destination.
  * 
  * @returns A path to the destination position, or null if there is no valid path.
@@ -172,14 +173,14 @@ export function canMoveTo(game: Game, tileX: number, tileY: number): Direction[]
     path: Direction[],
   }
 
-  const visited: string[] = []; // Specifically, strings of the form `y,x` representing visited positions.
+  const visited = new PositionSet(game.board[0].length);
   const queue = new Queue<SearchNode>();
   queue.enqueue({ x: game.player.x, y: game.player.y, path: [] });
 
   while (!queue.isEmpty) {
     const current = queue.dequeue();
 
-    if (visited.includes(`${current.y},${current.x}`)) {
+    if (visited.has(current)) {
       // If we have visited this state, go next.
       continue;
     }
@@ -195,7 +196,7 @@ export function canMoveTo(game: Game, tileX: number, tileY: number): Direction[]
     // We only mark tiles as visited after checking if we can walk on them,
     // because whether or not we can walk on a tile depends on the direction
     // we attempt to walk onto it from.
-    visited.push(`${current.y},${current.x}`);
+    visited.add(current);
 
     if (tileX === current.x && tileY === current.y) {
       return current.path; // Success!
