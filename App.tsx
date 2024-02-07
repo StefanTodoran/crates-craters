@@ -66,6 +66,10 @@ export default function App() {
       startEditingLevel(playLevel!.uuid);
     }
 
+    if (newView < notificationCounts.length) {
+      updateNotificationCounts.current(newView, 0);
+    }
+
     if (newView === PageView.MENU) { // PAGE -> MENU
       setAnimTo(0, () => setView(newView));
     } else if (view === PageView.MENU) { // MENU -> PAGE
@@ -123,7 +127,8 @@ export default function App() {
   useEffect(() => {
     updateNotificationCounts.current = (index: number, change: number) => {
       const newNotificationCounts = [...notificationCounts];
-      newNotificationCounts[index] += change;
+      if (change === 0) newNotificationCounts[index] = 0;
+      else newNotificationCounts[index] += change;
       setNotificationCounts(newNotificationCounts);
     };
   }, [notificationCounts]);

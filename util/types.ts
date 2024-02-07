@@ -126,13 +126,14 @@ export function isLevelWellFormed(target: any, check: LevelObjectType = LevelObj
 // OTHER MISCELLANEOUS TYPES \\
 
 export enum PageView {
-  MENU,
   LEVELS,
-  PLAY,
   MANAGE,
-  EDITOR,
-  SETTINGS,
   STORE,
+  SETTINGS,
+  // First four must remain in order.
+  MENU,
+  PLAY,
+  EDITOR,
 }
 
 export enum EditorView {

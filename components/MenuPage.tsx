@@ -90,6 +90,7 @@ const styles = StyleSheet.create({
     height: notificationBodySize,
     width: notificationBodySize,
     borderRadius: notificationBodySize / 2,
+    opacity: 0.75,
     top: 1,
     right: -notificationBodySize,
   },

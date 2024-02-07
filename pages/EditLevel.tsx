@@ -115,7 +115,7 @@ export default function EditLevel({
 
   const changeTile = useRef<(_y: number, _x: number) => void>(() => undefined);
 
-  useEffect(() => {
+  useEffect(() => { // TODO: This useEffect may be unnecessary. Evaluate if it is needed, potentially remove.
     changeTile.current = (y: number, x: number) => {
       const newBoard = cloneBoard(level.board);
       const tileType = boundTileAt(y, x, level.board).id;
