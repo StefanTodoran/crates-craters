@@ -3,12 +3,12 @@ import { PositionSet } from "./Set";
 import { OneWayTile, Direction, TileType, Board, SimpleTile, Level, BoardTile } from "./types";
 
 export enum SoundEvent {
+  MOVE,
   EXPLOSION,
   PUSH,
   FILL,
   DOOR,
   COLLECT,
-  MOVE,
 }
 
 export interface Position {
@@ -346,10 +346,10 @@ export function doGameMove(game: Game, move: Direction): [Game, boolean] {
       }
     }
   }
-
+  
   next.won = winCondition(next);
   next.moveCount++;
-
+  
   if (!next.soundEvent && !next.won) {
     next.soundEvent = SoundEvent.MOVE;
   }
