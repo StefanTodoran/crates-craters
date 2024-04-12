@@ -173,6 +173,7 @@ Built with JavaScript and React Native, Crates and Craters is a single player pu
 * Add metal crate tile type and associated logic
 * Consider making bombs destroy keys and coins?
 * Use a hitRect to give stepperArrows bigger hitboxes without overlapping SliderBar
+* Make notifications persist using MMKV?
 
 <h2 style="display: flex; align-items: center;">
   Known Bugs
@@ -188,3 +189,6 @@ Built with JavaScript and React Native, Crates and Craters is a single player pu
   * See GameBoard.tsx
 * Long level names may overflow card title
   * See ManageLevel.tsx
+* Board rows have gaps between them (sometimes?)
+  * Depends on screen size, but also sometimes it just doesn't happen making it difficult to reproduce
+  * There may also be a gap between the rows and the border, see application on Pixel 2
