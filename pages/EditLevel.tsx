@@ -1,5 +1,5 @@
 import { View, ScrollView, StyleSheet, Dimensions, Animated, Text, SafeAreaView, PanResponder, GestureResponderEvent, PanResponderGestureState } from "react-native";
-import React, { useState, useRef, useEffect, useContext, useMemo } from "react";
+import { useState, useRef, useEffect, useContext, useMemo } from "react";
 import { Sound } from "expo-av/build/Audio";
 import { Audio } from "expo-av";
 
@@ -8,7 +8,7 @@ import MenuButton from "../components/MenuButton";
 import GameBoard from "../components/GameBoard";
 import SliderBar from "../components/SliderBar";
 
-import TextStyles, { normalize, sizeFromWidthPercent } from "../TextStyles";
+import TextStyles, { normalize } from "../TextStyles";
 import { BoardTile, Direction, PageView, TileType, UserLevel, createBlankBoard } from "../util/types";
 import { boundTileAt, cloneBoard, getSpawnPosition } from "../util/logic";
 import { colors, graphics } from "../Theme";
@@ -209,6 +209,7 @@ export default function EditLevel({
     <SafeAreaView style={styles.container}>
       <View {...panResponder.panHandlers}>
         <GameBoard board={level.board} overrideTileSize={tileSize} />
+        {/* Like invertory but show current tool */}
       </View>
 
       <Animated.View style={[
@@ -245,11 +246,13 @@ export default function EditLevel({
                 label="Crate"
                 icon={graphics.CRATE}
                 onPress={() => changeTool({ id: TileType.CRATE })}
+                fillWidth
               />
               <MenuButton
                 label="Crater"
                 icon={graphics.CRATER}
                 onPress={() => changeTool({ id: TileType.CRATER })}
+                fillWidth
               />
             </View>
             <View style={styles.row}>
@@ -257,11 +260,13 @@ export default function EditLevel({
                 label="Wall"
                 icon={graphics.WALL_ICON}
                 onPress={() => changeTool({ id: TileType.WALL })}
+                fillWidth
               />
               <MenuButton
                 label="Spawn"
                 icon={graphics.PLAYER}
                 onPress={() => changeTool({ id: TileType.SPAWN })}
+                fillWidth
               />
             </View>
             <View style={styles.row}>
@@ -270,12 +275,14 @@ export default function EditLevel({
                 icon={graphics.DOOR}
                 onPress={() => changeTool({ id: TileType.DOOR })}
                 theme={colors.GREEN_THEME}
+                fillWidth
               />
               <MenuButton
                 label="Key"
                 icon={graphics.KEY}
                 onPress={() => changeTool({ id: TileType.KEY })}
                 theme={colors.GREEN_THEME}
+                fillWidth
               />
             </View>
             <View style={styles.row}>
@@ -284,12 +291,14 @@ export default function EditLevel({
                 icon={graphics.FLAG}
                 onPress={() => changeTool({ id: TileType.FLAG })}
                 theme={colors.YELLOW_THEME}
+                fillWidth
               />
               <MenuButton
                 label="Coin"
                 icon={graphics.COIN}
                 onPress={() => changeTool({ id: TileType.COIN })}
                 theme={colors.YELLOW_THEME}
+                fillWidth
               />
             </View>
             <View style={styles.row}>
@@ -298,12 +307,14 @@ export default function EditLevel({
                 icon={graphics.ONE_WAY_LEFT}
                 onPress={() => changeTool({ id: TileType.ONEWAY, orientation: Direction.LEFT })}
                 theme={colors.BLUE_THEME}
+                fillWidth
               />
               <MenuButton
                 label="Right"
                 icon={graphics.ONE_WAY_RIGHT}
                 onPress={() => changeTool({ id: TileType.ONEWAY, orientation: Direction.RIGHT })}
                 theme={colors.BLUE_THEME}
+                fillWidth
               />
             </View>
             <View style={styles.row}>
@@ -312,12 +323,14 @@ export default function EditLevel({
                 icon={graphics.ONE_WAY_UP}
                 onPress={() => changeTool({ id: TileType.ONEWAY, orientation: Direction.UP })}
                 theme={colors.BLUE_THEME}
+                fillWidth
               />
               <MenuButton
                 label="Down"
                 icon={graphics.ONE_WAY_DOWN}
                 onPress={() => changeTool({ id: TileType.ONEWAY, orientation: Direction.DOWN })}
                 theme={colors.BLUE_THEME}
+                fillWidth
               />
             </View>
             <View style={{ height: 15 }} />
@@ -336,6 +349,7 @@ export default function EditLevel({
                 icon={graphics.BOMB}
                 onPress={() => changeTool({ id: TileType.BOMB, fuse: fuseTimer })}
                 theme={colors.RED_THEME}
+                fillWidth
               />
             </View>
           </View>
@@ -349,6 +363,7 @@ export default function EditLevel({
                 theme={colors.RED_THEME}
                 label="Clear Board     (Long Press)"
                 allowOverflow
+                fillWidth
               />
               <MenuButton
                 onPress={() => {
@@ -357,6 +372,7 @@ export default function EditLevel({
                 }}
                 label="Playtest"
                 icon={graphics.PLAYER}
+                fillWidth
               />
             </View>
             <View style={styles.row}>
@@ -366,6 +382,7 @@ export default function EditLevel({
                 icon={graphics.SAVE_ICON}
                 theme={colors.GREEN_THEME}
                 disabled={!unsavedChanges}
+                fillWidth
               />
               <MenuButton
                 onPress={discardChanges}
@@ -373,6 +390,7 @@ export default function EditLevel({
                 icon={graphics.EXPLOSION}
                 theme={colors.RED_THEME}
                 disabled={!unsavedChanges}
+                fillWidth
               />
             </View>
             <View style={styles.row}>
@@ -380,6 +398,7 @@ export default function EditLevel({
                 onPress={toggleToolsModal}
                 label="Close Menu"
                 icon={graphics.DOOR_ICON}
+                fillWidth
               />
             </View>
           </View>
@@ -417,7 +436,6 @@ const styles = StyleSheet.create({
   buttonsRow: {
     flexDirection: "row",
     height: normalize(50),
-    marginTop: normalize(15),
   },
   singleButton: {
     paddingHorizontal: "22.5%",
@@ -453,13 +471,5 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: 10,
     paddingHorizontal: 15,
-  },
-  toolsBanner: {
-    width: sizeFromWidthPercent(0.45, 141, 300).width,
-    height: sizeFromWidthPercent(0.45, 141, 300).height,
-  },
-  optionsBanner: {
-    width: sizeFromWidthPercent(0.55, 145, 365).width,
-    height: sizeFromWidthPercent(0.55, 145, 365).height,
   },
 });

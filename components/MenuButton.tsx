@@ -1,8 +1,11 @@
-import { Pressable, Text, Image, ImageSourcePropType, StyleSheet } from "react-native";
-import React, { useContext, useState } from "react";
+import { useContext } from "react";
+import { Text, Image, ImageSourcePropType, StyleSheet } from "react-native";
+
+import { normalize } from "../TextStyles";
 import { Theme, purpleTheme } from "../Theme";
 import GlobalContext from "../GlobalContext";
-import { normalize } from "../TextStyles";
+
+import ResponsivePressable from "./ResponsivePressable";
 
 interface Props {
   label?: string, // The text to be displayed in the button.
@@ -12,6 +15,7 @@ interface Props {
   disabled?: boolean, // Whether or not the button can be pressed (changes appearance).
   allowOverflow?: boolean, // Whether number of lines for the button text should cap at 1.
   theme?: Theme,
+  fillWidth?: boolean,
 }
 
 /**
@@ -29,37 +33,31 @@ export default function MenuButton({
   disabled,
   allowOverflow,
   theme,
+  fillWidth,
 }: Props) {
   const { darkMode } = useContext(GlobalContext);
-  const [pressed, setPressedState] = useState(false);
-
-  const longPressedFn = () => {
-    setPressedState(true); // To give visual feedback even for long press only buttons.
-    if (!!onLongPress) onLongPress();
-  }
-
   const useTheme = theme || purpleTheme;
   const backgroundColor = darkMode ? useTheme.MAIN_TRANSPARENT(0.1) : useTheme.OFF_WHITE;
 
   return (
-    <Pressable style={[
-      styles.body,
-      {
-        width: label ? "100%" : undefined,
-        paddingRight: label ? normalize(17.5) : normalize(15),
-        borderColor: useTheme.MAIN_COLOR,
-        backgroundColor: (pressed) ? useTheme.MAIN_TRANSPARENT(0.3) : backgroundColor,
-        transform: [{ scale: pressed ? 0.98 : 1 }],
-        opacity: (disabled) ? 0.5 : 1,
-      }
-    ]}
+    <ResponsivePressable
       onPress={onPress}
-      onLongPress={longPressedFn}
-      onPressIn={() => { setPressedState(!!onPress) }}
-      onPressOut={() => { setPressedState(false) }}
+      onLongPress={onLongPress}
       disabled={disabled}
+      customStyle={[
+        styles.body,
+        {
+          width: fillWidth ? "100%" : undefined,
+          marginHorizontal: fillWidth ? normalize(5) : 0,
+          paddingRight: label ? normalize(17.5) : normalize(15),
+          borderColor: useTheme.MAIN_COLOR,
+          backgroundColor: backgroundColor,
+        }
+      ]}
+      pressedStyle={{
+        backgroundColor: useTheme.MAIN_TRANSPARENT(0.3),
+      }}
     >
-
       {(icon) && <Image style={styles.icon} source={icon} />}
 
       {!!label && <Text
@@ -68,8 +66,9 @@ export default function MenuButton({
         style={[
           styles.label,
           { color: useTheme.MIDDLE_COLOR }
-        ]}>{label}</Text>}
-    </Pressable>
+        ]}>{label}</Text>
+      }
+    </ResponsivePressable>
   );
 }
 
@@ -80,7 +79,6 @@ const styles = StyleSheet.create({
     paddingLeft: normalize(15),
     paddingVertical: normalize(14),
     marginTop: normalize(15),
-    marginHorizontal: normalize(5),
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",

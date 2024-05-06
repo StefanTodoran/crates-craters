@@ -1,5 +1,5 @@
 import { Text, View, Dimensions, Image, Animated, StyleSheet } from "react-native";
-import React, { useEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
 import SimpleButton from "./SimpleButton";
 import BoardPreview from "./BoardPreview";
 
@@ -48,7 +48,8 @@ export default function LevelCard({
   }, []);
 
   let attributionText;
-  if (level.official) attributionText = "Standard Level";
+  if (level.official && level.best) attributionText = `Best: ${level.best} moves`;
+  else if (level.official) attributionText = "Standard Level";
   else /* if (!level.official) */ attributionText = `Designed by "${level.designer}"`;
 
   let iconSource; // mode === PageView.MANAGE is the same as level.official

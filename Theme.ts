@@ -32,6 +32,8 @@ const mainGraphics = {
   AUDIO_ON_ICON: require("./assets/main_theme/audio_on_icon.png"),
   AUDIO_OFF_ICON: require("./assets/main_theme/audio_off_icon.png"),
   PLAY_ICON: require("./assets/main_theme/play_icon.png"),
+  PAUSE_ICON: require("./assets/main_theme/pause_icon.png"),
+  BACK_ICON: require("./assets/main_theme/back_icon.png"),
   DOOR_ICON: require("./assets/main_theme/door_icon.png"),
   KEY_ICON: require("./assets/main_theme/key_icon.png"),
   FLAG_ICON: require("./assets/main_theme/flag_icon.png"),

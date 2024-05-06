@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState } from "react";
+import { useRef, useEffect, useState } from "react";
 import { useMMKVBoolean, useMMKVNumber } from "react-native-mmkv";
 import { defaultSettings } from "../GlobalContext";
 

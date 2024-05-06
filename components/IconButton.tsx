@@ -1,5 +1,6 @@
-import { Pressable, ImageSourcePropType, StyleSheet, Animated } from "react-native";
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
+import { ImageSourcePropType, StyleSheet, Animated } from "react-native";
+import ResponsivePressable from "./ResponsivePressable";
 import { normalize } from "../TextStyles";
 
 interface Props {
@@ -19,8 +20,6 @@ export default function IconButton({
   active,
   disabled,
 }: Props) {
-  const [pressed, setPressedState] = useState(false);
-
   const anim = useRef(new Animated.Value(0)).current;
   const setAnimTo = (animState: number, callback?: () => void) => {
     Animated.timing(anim, {
@@ -35,24 +34,12 @@ export default function IconButton({
   }, [active]);
 
   return (
-    <Pressable
-      style={[
-        styles.body,
-        {
-          opacity: (disabled) ? 0.5 : 1,
-          transform: [{
-            scale: pressed ? 0.95 : 1,
-          }],
-        }
-      ]}
+    <ResponsivePressable
       onPress={onPress}
-      onPressIn={() => { setPressedState(!!onPress) }}
-      onPressOut={() => { setPressedState(false) }}
       disabled={disabled}
-      // @ts-expect-error
-      touchSoundDisabled={false}
-      android_disableSound={false} >
-
+      customStyle={styles.body}
+      pressedSize={0.95}
+    >
       {icon && <Animated.Image
         style={[
           styles.icon,
@@ -87,7 +74,7 @@ export default function IconButton({
           {label}
         </Animated.Text>
       }
-    </Pressable>
+    </ResponsivePressable>
   );
 }
 

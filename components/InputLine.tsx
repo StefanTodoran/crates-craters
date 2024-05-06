@@ -1,5 +1,5 @@
+import { useRef, useEffect, useState } from "react";
 import { View, Animated, StyleSheet, TextInput } from "react-native";
-import React, { useRef, useEffect, useState } from "react";
 import { colors } from "../Theme";
 
 interface Props {

@@ -1,5 +1,5 @@
 import { View, Text, StyleSheet, Image } from "react-native";
-import React, { useContext } from "react";
+import { useContext } from "react";
 
 import { colors, graphics } from "../Theme";
 import GlobalContext from "../GlobalContext";

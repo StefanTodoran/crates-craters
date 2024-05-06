@@ -1,20 +1,19 @@
 import { useState } from "react";
-import { View, StyleSheet } from "react-native";
-import { colors, graphics } from "../Theme";
+import { View } from "react-native";
+
+import { normalize } from "../TextStyles";
 import { doPageChange } from "../util/events";
+import { generateUUID } from "../util/loader";
 import { UserLevel, createBlankBoard } from "../util/types";
 
 import InputCard from "../components/InputCard";
-import MenuButton from "../components/MenuButton";
 import SubpageContainer from "../components/SubpageContainer";
-import { generateUUID } from "../util/loader";
 
 interface Props {
   createLevelCallback: (newLevel: UserLevel) => void,
 }
 
 export default function CreateLevel({ createLevelCallback }: Props) {
-
   const [levelTitle, setLevelTitle] = useState("");
   const [levelDesigner, setLevelDesigner] = useState("");
   const levelCreated = new Date();
@@ -37,40 +36,23 @@ export default function CreateLevel({ createLevelCallback }: Props) {
             update: setLevelDesigner
           },
         ]}
+        buttonText="Create"
+        buttonCallback={() => {
+          createLevelCallback({
+            name: levelTitle,
+            uuid: generateUUID(),
+            board: createBlankBoard(),
+            completed: false,
+            official: false,
+            designer: levelDesigner,
+            created: levelCreated.toISOString(),
+          });
+
+          doPageChange(0);
+        }}
+        buttonDisabled={!levelTitle || !levelDesigner}
       />
-
-      <View style={styles.singleButton}>
-        <MenuButton
-          label="Confirm & Create"
-          icon={graphics.LOAD_ICON}
-          theme={colors.GREEN_THEME}
-          disabled={!levelTitle || !levelDesigner}
-          // disabled={!levelTitle || !levelDesigner || nameTaken}
-
-          onPress={() => {
-            createLevelCallback({
-              name: levelTitle,
-              uuid: generateUUID(),
-              board: createBlankBoard(),
-              completed: false,
-              official: false,
-              designer: levelDesigner,
-              created: levelCreated.toISOString(),
-            });
-
-            doPageChange(0);
-          }}
-        />
-      </View>
+      <View style={{ height: normalize(60) }} />
     </SubpageContainer>
   );
 }
-
-const styles = StyleSheet.create({
-  singleButton: {
-    paddingHorizontal: "22.5%",
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-});

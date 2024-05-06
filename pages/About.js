@@ -1,5 +1,5 @@
 import { Text, StyleSheet, Dimensions, Linking, View } from "react-native";
-import React, { useContext } from "react";
+import { useContext } from "react";
 
 import { colors, graphics } from "../Theme";
 import MenuButton from "../components/MenuButton";
@@ -34,7 +34,7 @@ export default function About() {
       <View style={styles.buttonsContainer}>
         <MenuButton
           onPress={() => { Linking.openURL("https://todoran.dev/") }}
-          label="Stefan Todoran"
+          label="My Portfolio"
           icon={graphics.LOGO}
           theme={colors.GREEN_THEME}
         />
@@ -51,7 +51,9 @@ export default function About() {
 
 const styles = StyleSheet.create({
   buttonsContainer: {
-    paddingHorizontal: win.width * 0.175, // 0.225 - 0.05
     marginBottom: normalize(32),
+    flexDirection: "row",
+    justifyContent: "space-evenly",
+    width: "100%",
   },
 });

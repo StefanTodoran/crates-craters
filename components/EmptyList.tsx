@@ -1,10 +1,11 @@
+import { useContext } from "react";
 import { StyleSheet, Text, View } from "react-native";
-import React, { useContext } from "react";
+
 import { PageView } from "../util/types";
 import { doPageChange } from "../util/events";
-import GlobalContext from "../GlobalContext";
-import MenuButton from "./MenuButton";
 import { colors, graphics } from "../Theme";
+import MenuButton from "./MenuButton";
+import GlobalContext from "../GlobalContext";
 import TextStyles, { normalize } from "../TextStyles";
 
 interface Props {

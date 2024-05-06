@@ -184,11 +184,12 @@ Built with JavaScript and React Native, Crates and Craters is a single player pu
   * Was reproducibly happening due to id issues, fixed that bug, now is less frequent
   * Occured when going from level to next level (fixed)
   * See Player.tsx
+* On galaxy s24 the victory screen animation doesn't work
+* Long level names may overflow card title
+  * See ManageLevel.tsx
 * There are sometimes tiny 1px gaps between board tiles that vary by screen dimensions
   * Not due to rounding, tile sizes are whole numbers
   * See GameBoard.tsx
-* Long level names may overflow card title
-  * See ManageLevel.tsx
 * Board rows have gaps between them (sometimes?)
   * Depends on screen size, but also sometimes it just doesn't happen making it difficult to reproduce
   * There may also be a gap between the rows and the border, see application on Pixel 2

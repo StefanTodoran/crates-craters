@@ -1,8 +1,9 @@
+import { useContext } from "react";
 import { View, Dimensions, Image, Text, Platform, StyleSheet } from "react-native";
-import React, { useContext } from "react";
-import GlobalContext from "../GlobalContext";
 
 import { colors } from "../Theme";
+import GlobalContext from "../GlobalContext";
+
 import { TileIcon } from "../assets/Icons";
 import { Board, BoardTile, BombTile, TileType } from "../util/types";
 import { calcBoardTileSize, getIconSrc } from "../util/board";
@@ -83,7 +84,6 @@ export default function GameBoard({
       styles.board,
       {
         borderRadius: tileSize / 5,
-        borderColor: colors.BLUE_THEME.MAIN_COLOR,
         backgroundColor: (darkMode) ? "#000" : "#fff",
       }
     ]}>
@@ -103,7 +103,7 @@ const styles = StyleSheet.create<any>({
   board: {
     position: "relative",
     borderWidth: 1,
-    // borderRadius: 5,
+    borderColor: colors.BLUE_THEME.MAIN_COLOR,
     overflow: "hidden",
   },
   boardRow: {

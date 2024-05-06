@@ -1,12 +1,15 @@
-import { FlatList, StyleSheet, View } from "react-native";
-import React, { useCallback, useContext, useRef, useState } from "react";
+import { Text, FlatList, StyleSheet, View } from "react-native";
+import { useCallback, useContext, useRef, useState } from "react";
+
+import GlobalContext from "../GlobalContext";
+import { doPageChange } from "../util/events";
 import { Level, PageView } from "../util/types";
 import { refreshLevelsFromServer } from "../util/database";
-import { doPageChange } from "../util/events";
-import GlobalContext from "../GlobalContext";
+
 import Toast from "react-native-toast-message";
 import LevelCard from "../components/LevelCard";
 import EmptyList from "../components/EmptyList";
+import TextStyles, { normalize } from "../TextStyles";
 
 interface Props {
   viewCallback: (newView: PageView) => void, // Sets the current view of the application.
@@ -22,6 +25,9 @@ interface Props {
   mode: PageView.LEVELS | PageView.MANAGE,
 }
 
+// It isn't really possible to see more than 5 LevelCards on the screen at once.
+const cardsPerScreen = 5;
+
 export default function LevelSelect({
   viewCallback,
   playLevelCallback,
@@ -34,6 +40,12 @@ export default function LevelSelect({
 }: Props) {
   const { darkMode } = useContext(GlobalContext);
   const [refreshing, setRefreshing] = useState(false);
+
+  const scrollRef = useRef<any>();
+  let scrollIndex = Math.max(0, levels.findIndex(level => level.uuid === scrollTo));
+
+  const [loadedLevels, setLoadedLevels] = useState(Math.max(scrollIndex + cardsPerScreen, 10));
+  const displayLevels = levels.slice(0, loadedLevels);
 
   const doRefresh = useCallback(() => {
     refreshLevelsFromServer().then((success) => {
@@ -68,9 +80,6 @@ export default function LevelSelect({
     doPageChange(1);
   }, []);
 
-  const scrollRef = useRef<any>();
-  let scrollIndex = Math.max(0, levels.findIndex(level => level.uuid === scrollTo));
-
   if (levels.length === 0) return (
     <EmptyList mode={mode} refreshCallback={doRefresh} />
   );
@@ -101,11 +110,15 @@ export default function LevelSelect({
           contentContainerStyle={styles.contentContainer}
           overScrollMode="never"
           showsVerticalScrollIndicator={false}
-          initialNumToRender={5} // It isn't really possible to see more than 5 LevelCards on the screen at once.
-          data={levels}
-          // onEndReached={} // TODO: Implement me!
+
+          data={displayLevels}
+          initialNumToRender={cardsPerScreen}
+          onEndReached={() => setLoadedLevels(Math.min(levels.length, loadedLevels + 10))}
+          ListFooterComponent={loadedLevels < levels.length ? <Text style={[TextStyles.paragraph(darkMode), styles.loadingText]}>Loading...</Text> : undefined}
+
           refreshing={refreshing}
           onRefresh={mode === PageView.LEVELS ? doRefresh : undefined}
+
           renderItem={({ item, index }) => {
             const playCallback = () => openLevel(index);
             const editCallback = () => editLevel(index);
@@ -118,7 +131,7 @@ export default function LevelSelect({
               resumeCallback={showResumeOption ? resumeLevel : undefined}
               editCallback={editorLevelCallback ? editCallback : undefined}
               levelIndex={index}
-              level={levels[index]}
+              level={displayLevels[index]}
               darkMode={darkMode}
               mode={mode}
             />
@@ -140,6 +153,10 @@ const styles = StyleSheet.create({
   contentContainer: {
     paddingHorizontal: "5%",
     paddingVertical: "5%",
-    alignItems: "center",
   },
+  loadingText: {
+    textAlign: "center",
+    marginTop: normalize(10),
+    marginBottom: normalize(20),
+  }
 });

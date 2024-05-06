@@ -1,66 +1,82 @@
-import { Pressable, Text, Image, StyleSheet, ImageSourcePropType } from "react-native";
-import React, { useContext, useState } from "react";
-import TextStyles, { normalize } from "../TextStyles";
+import { useContext } from "react";
+import { Text, Image, StyleSheet, ImageSourcePropType } from "react-native";
+
 import { Theme, purpleTheme } from "../Theme";
+import TextStyles, { normalize } from "../TextStyles";
 import GlobalContext from "../GlobalContext";
 
+import ResponsivePressable from "./ResponsivePressable";
+
+interface SVGProps {
+  width: number,
+  height: number,
+  fillColor: string,
+}
+
 interface Props {
-  text: string,
+  text?: string,
   onPress?: () => void,
   icon?: ImageSourcePropType,
+  Svg?: React.FC<SVGProps>,
   disabled?: boolean,
   main?: boolean,
   wide?: boolean,
   theme?: Theme,
+  square?: boolean,
 }
 
 export default function SimpleButton({
   onPress,
   text,
   icon,
+  Svg,
   disabled,
   main,
   wide,
   theme,
+  square,
 }: Props) {
   const { darkMode } = useContext(GlobalContext);
-  const [pressed, setPressedState] = useState(false);
   const useTheme = theme || purpleTheme;
 
+  let backgroundColor = darkMode ? "#000" : "#fff";
+  if (main) backgroundColor = useTheme.MAIN_COLOR;
+  
+  let paddingHorizontal = (icon || Svg) ? normalize(10) : normalize(25);
+  if (wide) paddingHorizontal = normalize(50);
+
   return (
-    <Pressable
-      style={[
+    <ResponsivePressable
+      onPress={onPress}
+      disabled={disabled}
+      customStyle={[
         styles.simpleButton,
         {
           borderColor: useTheme.MAIN_COLOR,
-          backgroundColor: darkMode ? "#000" : "#fff",
-          paddingHorizontal: icon ? normalize(5) : normalize(25),
-          transform: [{ scale: pressed ? 0.98 : 1 }],
-          opacity: pressed ? 0.75 : (disabled ? 0.5 : 1),
+          backgroundColor: backgroundColor,
+          paddingHorizontal: paddingHorizontal,
+          paddingVertical: square ? paddingHorizontal : normalize(5),
         },
-        main && { backgroundColor: useTheme.MAIN_COLOR },
-        wide && { paddingHorizontal: normalize(50) },
       ]}
-      onPress={() => {
-        if (!disabled && onPress) onPress(); // We do this as opposed to using the disable property so we still capture the click event if disabled.
+      pressedStyle={{
+        opacity: 0.75,
       }}
-      onPressIn={() => setPressedState(!disabled)}
-      onPressOut={() => setPressedState(false)}
     >
       {icon && <Image style={styles.bigIcon} source={icon} />}
+      {!!Svg && <Svg width={styles.bigIcon.width} height={styles.bigIcon.height} fillColor={useTheme.MAIN_COLOR} />}
 
-      <Text
+      {text && <Text
         allowFontScaling={false}
         style={[
           TextStyles.paragraph(darkMode),
           {
             marginBottom: 0,
-            marginLeft: icon ? normalize(10) : 0,
+            marginHorizontal: (icon || Svg) ? normalize(10) : 0,
             color: main ? "#fff" : useTheme.MAIN_COLOR,
             fontSize: normalize(15),
           }
-        ]}>{text}</Text>
-    </Pressable>
+        ]}>{text}</Text>}
+    </ResponsivePressable>
   );
 }
 
@@ -68,14 +84,12 @@ const styles = StyleSheet.create({
   simpleButton: {
     flexDirection: "row",
     alignItems: "center",
-    // justifyContent: "space-between",
     marginVertical: normalize(5),
-    paddingVertical: normalize(3),
-    borderWidth: 1,
     borderRadius: normalize(10),
+    borderWidth: 1,
   },
   bigIcon: {
-    height: normalize(35),
-    width: normalize(35),
+    height: normalize(30),
+    width: normalize(30),
   },
 });

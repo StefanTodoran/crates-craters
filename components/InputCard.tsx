@@ -87,8 +87,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: normalize(10),
     overflow: "hidden",
-    marginBottom: normalize(15),
-    // marginVertical: normalize(15),
+    marginVertical: normalize(15),
+    // marginBottom: normalize(15),
   },
   hintsContainer: {
     marginTop: 5,

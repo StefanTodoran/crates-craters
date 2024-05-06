@@ -1,5 +1,5 @@
 import { View, StyleSheet, Dimensions, PanResponder, Animated, SafeAreaView, Text, GestureResponderEvent, PanResponderGestureState } from "react-native";
-import React, { useState, useRef, useEffect, useContext, useMemo } from "react";
+import { useState, useRef, useEffect, useContext, useMemo } from "react";
 import TextStyles, { normalize } from "../TextStyles";
 import GlobalContext from "../GlobalContext";
 import { Sound } from "expo-av/build/Audio";
@@ -19,6 +19,7 @@ import { Direction, Level, PageView } from "../util/types";
 import { markLevelCompleted } from "../util/loader";
 import { calcBoardTileSize } from "../util/board";
 import { colors, graphics } from "../Theme";
+import BackButton from "../assets/BackButton";
 
 const win = Dimensions.get("window");
 
@@ -355,7 +356,7 @@ export default function PlayLevel({
       <View>
         <MoveCounter moveCount={game.moveCount} />
 
-        <View {...panResponder.panHandlers}>
+        <View style={staticStyles.centerContents} {...panResponder.panHandlers}>
           <GameBoard board={game.board} overrideTileSize={tileSize}>
             <Player game={game} touch={touchMove} darkMode={darkMode} tileSize={tileSize} />
 
@@ -381,6 +382,7 @@ export default function PlayLevel({
           icon={graphics.BOMB}
           theme={colors.RED_THEME}
           onPress={restartLevel}
+          fillWidth
         />
         <MenuButton
           label="Undo Move"
@@ -388,18 +390,21 @@ export default function PlayLevel({
           theme={colors.BLUE_THEME}
           onPress={undoMove}
           disabled={history.length === 0}
+          fillWidth
         />
         {playtest ?
           <MenuButton
             label={"Continue Editing"}
             icon={graphics.HAMMER_ICON}
             onPress={() => viewCallback(PageView.EDITOR)}
+            fillWidth
           />
           :
           <MenuButton
             label={"Level Select"}
             icon={graphics.DOOR_ICON}
             onPress={() => viewCallback(PageView.LEVELS)}
+            fillWidth
           />
         }
         <MenuButton
@@ -407,6 +412,7 @@ export default function PlayLevel({
           icon={graphics.KEY}
           theme={colors.GREEN_THEME}
           onPress={toggleModal}
+          fillWidth
         />
         {/* <MenuButton
           label="Get Hint"
@@ -418,19 +424,15 @@ export default function PlayLevel({
           }}
         /> */}
       </Animated.View>}
+
       <Animated.View style={dynamicStyles.buttonsRow(anim)}>
-        {playtest && !game.won && <>
-          <SimpleButton onPress={() => viewCallback(PageView.MANAGE)} text="Level Select" />
-          <View style={staticStyles.buttonGap} />
-        </>}
-        {!game.won && <SimpleButton onPress={toggleModal} text="Pause Menu" main={playtest} />}
+        <SimpleButton onPress={() => viewCallback(playtest ? PageView.MANAGE : PageView.LEVELS)} Svg={BackButton} square />
+        <View style={staticStyles.buttonGap} />
 
+        {!game.won && <SimpleButton onPress={toggleModal} icon={graphics.PAUSE_ICON} text="Menu" main square />}
         {game.won && <>
-          <SimpleButton onPress={() => viewCallback(playtest ? PageView.MANAGE : PageView.LEVELS)} text="Back" />
-          <View style={staticStyles.buttonGap} />
-
-          {playtest && <SimpleButton onPress={() => viewCallback(PageView.EDITOR)} text="Keep Editing" main={true} wide={true} />}
-          {!playtest && <SimpleButton onPress={() => nextLevelCallback(level.uuid)} text="Next Level" main={true} wide={true} />}
+          {playtest && <SimpleButton onPress={() => viewCallback(PageView.EDITOR)} text="Keep Editing" main={true} />}
+          {!playtest && <SimpleButton onPress={() => nextLevelCallback(level.uuid)} icon={graphics.PLAY_ICON} text="Next Level" main={true} />}
         </>}
       </Animated.View>
     </SafeAreaView>
@@ -453,8 +455,8 @@ const dynamicStyles = StyleSheet.create<any>({
   }),
   buttonsRow: (anim: Animated.Value) => ({
     flexDirection: "row",
-    marginTop: normalize(15),
-    height: normalize(50),
+    marginTop: normalize(10),
+    // height: normalize(50),
     opacity: anim.interpolate({
       inputRange: [0, 1],
       outputRange: [1, 0],
@@ -486,9 +488,13 @@ const staticStyles = StyleSheet.create({
   container: {
     // Line height is roughly 1.5, found by trial and error,
     // 16 comes from the font size of MoveCounter.
-    marginTop: -(normalize(16) * 1.5),
+    // marginTop: -(normalize(16) * 1.5),
     alignItems: "center",
     justifyContent: "space-evenly",
+  },
+  centerContents: {
+    flexDirection: "row",
+    justifyContent: "center",
   },
   buttonGap: {
     width: normalize(15),

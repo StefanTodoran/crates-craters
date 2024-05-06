@@ -292,7 +292,10 @@ export default function App() {
           config={toastConfig}
         />
       </SafeAreaView>
-      <StatusBar translucent={true} hidden={true} />
+      <StatusBar translucent={true} />
+
+      {/* For some reason hidden makes translucent no longer work? */}
+      {/* <StatusBar translucent={true} hidden={true} /> */}
     </GlobalContext.Provider>
   );
 }

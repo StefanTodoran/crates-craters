@@ -1,5 +1,5 @@
 import { StyleSheet, Animated } from "react-native";
-import React, { useEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
 import { normalize } from "../TextStyles";
 import { colors } from "../Theme";
 

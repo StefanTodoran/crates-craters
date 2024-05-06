@@ -1,5 +1,5 @@
+import { useEffect, useRef, useState } from "react";
 import { View, Animated, Text, StyleSheet, Dimensions, PanResponder, PanResponderGestureState, GestureResponderEvent } from "react-native";
-import React, { useEffect, useRef, useState } from "react";
 import { normalize } from "../TextStyles";
 import StepperArrow from "./StepperArrow";
 
@@ -61,7 +61,7 @@ export default function SliderBar({
       // base this on the range since larger ranges require higher sensitivity.
       const sensitivity = (maxValue - minValue) / sensitivityDampen;
       // const sensitivity = (maxValue - minValue) / normalize(10);
-      
+
       const newValue = Math.max(minValue, Math.min(maxValue, Math.round(value + (dx * sensitivity))));
       return newValue;
     };
@@ -72,7 +72,7 @@ export default function SliderBar({
     changeCallback(newValue);
   }
 
-  const panResponder = React.useRef(
+  const panResponder = useRef(
     PanResponder.create({
       // Ask to be the responder:
       onStartShouldSetPanResponder: () => true,

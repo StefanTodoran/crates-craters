@@ -1,5 +1,5 @@
 import { StyleSheet, Image, Animated } from "react-native";
-import React, { useRef, useEffect, useMemo } from "react";
+import { useRef, useEffect, useMemo } from "react";
 import { Direction, TileType } from "../util/types";
 import { Game, boundTileAt } from "../util/logic";
 import { colors, graphics } from "../Theme";

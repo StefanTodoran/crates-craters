@@ -1,7 +1,6 @@
-import { Pressable } from "react-native";
-import React, { useState } from "react";
 import { Path, Svg } from "react-native-svg";
 import { normalize } from "../TextStyles";
+import ResponsivePressable from "./ResponsivePressable";
 
 interface Props {
     color: string,
@@ -10,18 +9,19 @@ interface Props {
 }
 
 export default function StepperArrow({ color, onPress, flipped }: Props) {
-    const [pressed, setPressedState] = useState(false);
     const size = normalize(20);
     const offset = -(size + normalize(10));
 
     return (
-        <Pressable onPress={onPress} hitSlop={normalize(10)} style={{
-            transform: [{
-                scale: pressed ? 0.9 : 1,
-            }],
-            position: "absolute",
-            ...(flipped ? { left: offset } : { right: offset }),
-        }} onPressIn={() => { setPressedState(!!onPress) }} onPressOut={() => { setPressedState(false) }}>
+        <ResponsivePressable
+            onPress={onPress}
+            hitSlop={normalize(10)}
+            pressedSize={0.9}
+            customStyle={{
+                position: "absolute",
+                ...(flipped ? { left: offset } : { right: offset }),
+            }}
+        >
             <Svg
                 width={size}
                 height={size}
@@ -42,6 +42,6 @@ export default function StepperArrow({ color, onPress, flipped }: Props) {
                     />
                 }
             </Svg>
-        </Pressable>
+        </ResponsivePressable>
     );
 }

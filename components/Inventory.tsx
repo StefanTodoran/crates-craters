@@ -1,5 +1,5 @@
 import { View, StyleSheet, Dimensions, Animated } from "react-native";
-import React, { useEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
 
 import { colors, graphics } from "../Theme";
 import { normalize } from "../TextStyles";

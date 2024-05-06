@@ -1,5 +1,5 @@
 import { StyleSheet, Image, Animated } from "react-native";
-import React, { useContext, useEffect, useRef } from "react";
+import { useContext, useEffect, useRef } from "react";
 import { Audio } from "expo-av";
 import { colors, graphics } from "../Theme";
 import GlobalContext from "../GlobalContext";

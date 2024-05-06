@@ -1,20 +1,24 @@
 import { useContext, useEffect, useState } from "react";
-import { Dimensions, Pressable, StyleSheet, Text, View } from "react-native";
-import { PageView, UserLevel } from "../util/types";
-import { calcPreviewTileSize } from "../util/board";
-import { normalize } from "../TextStyles";
-import GlobalContext from "../GlobalContext";
-import { colors, graphics } from "../Theme";
-import { deleteLevel, updateLevel } from "../util/loader";
-// import { compressBoardData } from "../util/loader";
+import { Dimensions, StyleSheet, Text, View } from "react-native";
+
 import { doPageChange } from "../util/events";
 import { useForceRefresh } from "../util/hooks";
-import Toast from "react-native-toast-message";
+import { PageView, UserLevel } from "../util/types";
+import { calcPreviewTileSize } from "../util/board";
 
-import SubpageContainer from "../components/SubpageContainer";
-import BoardPreview from "../components/BoardPreview";
+import GlobalContext from "../GlobalContext";
+import { normalize } from "../TextStyles";
+import { colors, graphics } from "../Theme";
+
+// import { compressBoardData } from "../util/loader";
+import { deleteLevel, updateLevel } from "../util/loader";
+
+import Toast from "react-native-toast-message";
 import InputCard from "../components/InputCard";
 import MenuButton from "../components/MenuButton";
+import BoardPreview from "../components/BoardPreview";
+import SubpageContainer from "../components/SubpageContainer";
+import ResponsivePressable from "../components/ResponsivePressable";
 
 const win = Dimensions.get("window");
 
@@ -43,16 +47,15 @@ export default function ManageLevel({
     setLevelDesigner(level.designer);
   }, [level, refreshed]);
   // console.log(compressBoardData(level.board));
-  
+
   const previewWidth = 0.9;
   const tileSize = level ? calcPreviewTileSize(level.board[0].length, previewWidth, win) : undefined;
-  const [previewPressed, setPreviewPressed] = useState(false);  
 
   if (!level) return;
   return (
     <SubpageContainer center>
       <View style={{
-        marginTop: normalize(60),
+        marginTop: normalize(30),
         marginBottom: normalize(50),
       }}>
         <InputCard
@@ -73,20 +76,16 @@ export default function ManageLevel({
           buttonText="Save"
           buttonCallback={() => {
             // @ts-expect-error We just want to update these two properties, which both exist on UserLevel.
-            updateLevel({ uuid: level.uuid, name: levelTitle, designer: levelDesigner});
+            updateLevel({ uuid: level.uuid, name: levelTitle, designer: levelDesigner });
             forceRefresh();
           }}
           buttonDisabled={levelTitle === level.name && levelDesigner === level.designer}
         />
 
-        <Pressable
-          style={{
-            position: "relative",
-            transform: [{ scale: previewPressed ? 0.99 : 1 }],
-          }}
+        <ResponsivePressable
           onPress={() => viewCallback(PageView.EDITOR)}
-          onPressIn={() => setPreviewPressed(true)}
-          onPressOut={() => setPreviewPressed(false)}
+          customStyle={styles.relative}
+          pressedSize={0.99}
         >
           <BoardPreview level={level} previewSize={3} previewWidth={previewWidth} />
           <Text style={[
@@ -98,9 +97,9 @@ export default function ManageLevel({
               color: darkMode ? colors.NEAR_BLACK : colors.OFF_WHITE,
             }
           ]}>Edit Board</Text>
-        </Pressable>
+        </ResponsivePressable>
 
-        <View style={styles.singleButton}>
+        <View style={styles.buttonsRow}>
           <MenuButton
             onPress={() => { }}
             label="Share Online"
@@ -108,8 +107,6 @@ export default function ManageLevel({
             theme={colors.GREEN_THEME}
             disabled
           />
-        </View>
-        <View style={styles.singleButton}>
           <MenuButton
             onLongPress={() => {
               deleteLevel(level);
@@ -142,10 +139,12 @@ const styles = StyleSheet.create({
     fontSize: normalize(32),
     letterSpacing: 1,
   },
-  singleButton: {
-    paddingHorizontal: "22.5%",
+  buttonsRow: {
+    width: "100%",
     flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
+    justifyContent: "space-evenly",
   },
+  relative: {
+    position: "relative",
+  }
 });

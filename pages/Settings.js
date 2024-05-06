@@ -1,5 +1,5 @@
 import { StyleSheet, Text, View } from "react-native";
-import React, { useContext, useState } from "react";
+import { useContext, useState } from "react";
 import { colors, graphics } from "../Theme";
 import TextStyles, { normalize } from "../TextStyles";
 import GlobalContext from "../GlobalContext";
@@ -53,6 +53,7 @@ export default function Settings({
           label="Toggle Dark Mode"
           icon={graphics.NIGHT_MODE_ICON}
           theme={colors.GREEN_THEME}
+          fillWidth
         />
         <MenuButton onPress={() => {
           // const newTheme = nextTheme();
@@ -62,6 +63,7 @@ export default function Settings({
           icon={graphics.THEME_ICON}
           disabled={true}
           theme={colors.GREEN_THEME}
+          fillWidth
         />
 
         <View style={{ height: 15 }} />
@@ -81,6 +83,7 @@ export default function Settings({
           label="Toggle Sounds"
           icon={playAudio ? graphics.AUDIO_ON_ICON : graphics.AUDIO_OFF_ICON}
           theme={colors.GREEN_THEME}
+          fillWidth
         />
       </View>
     </SubpageContainer>
