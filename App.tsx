@@ -328,7 +328,7 @@ const styles = StyleSheet.create<any>({
     opacity: animState,
     borderRadius: animState.interpolate({
       inputRange: [0, 0.75, 1],
-      outputRange: [50, 40, 0],
+      outputRange: [40, 30, 0],
     }),
     transform: [{
       translateY: animState.interpolate({

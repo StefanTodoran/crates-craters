@@ -37,7 +37,8 @@ export default function MenuButton({
 }: Props) {
   const { darkMode } = useContext(GlobalContext);
   const useTheme = theme || purpleTheme;
-  const backgroundColor = darkMode ? useTheme.MAIN_TRANSPARENT(0.1) : useTheme.OFF_WHITE;
+  // const backgroundColor = darkMode ? useTheme.MAIN_TRANSPARENT(0.1) : useTheme.OFF_WHITE;
+  const backgroundColor = darkMode ? useTheme.NEAR_BLACK : useTheme.OFF_WHITE;
 
   return (
     <ResponsivePressable

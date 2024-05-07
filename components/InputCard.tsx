@@ -34,7 +34,8 @@ interface PropsWithButton extends PropsBase {
 type Props = PropsWithoutButton | PropsWithButton;
 
 // We force this incomplete theme to be of type Theme since SimpleButton only uses MAIN_COLOR.
-const grayTheme: Theme = { MAIN_COLOR: "#8A858D" } as Theme;
+const lightModeGrayTheme: Theme = { MAIN_COLOR: "#8A858D" } as Theme;
+const darkModeGrayTheme: Theme = { MAIN_COLOR: "#d7d0db" } as Theme;
 
 export default function InputCard({
   title,
@@ -56,7 +57,7 @@ export default function InputCard({
 
         {buttonText && <SimpleButton
           text={buttonText}
-          theme={grayTheme}
+          theme={darkMode ? darkModeGrayTheme : lightModeGrayTheme}
           onPress={buttonCallback}
           disabled={buttonDisabled}
         />}

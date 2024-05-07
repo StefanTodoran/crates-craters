@@ -201,7 +201,7 @@ export default function PlayLevel({
 
   const tileSize = calcBoardTileSize(game.board[0].length, game.board.length, win);
   const xCorrect = -0.5 * tileSize;
-  const yCorrect = -1 * tileSize;
+  const yCorrect = -1.5 * tileSize;
 
   const onGestureStart = useRef((_evt: GestureResponderEvent, _gestureState: PanResponderGestureState) => { });
   useEffect(() => {
@@ -394,7 +394,7 @@ export default function PlayLevel({
         />
         {playtest ?
           <MenuButton
-            label={"Continue Editing"}
+            label={"Keep Editing"}
             icon={graphics.HAMMER_ICON}
             onPress={() => viewCallback(PageView.EDITOR)}
             fillWidth
@@ -429,7 +429,7 @@ export default function PlayLevel({
         <SimpleButton onPress={() => viewCallback(playtest ? PageView.MANAGE : PageView.LEVELS)} Svg={BackButton} square />
         <View style={staticStyles.buttonGap} />
 
-        {!game.won && <SimpleButton onPress={toggleModal} icon={graphics.PAUSE_ICON} text="Menu" main square />}
+        {!game.won && <SimpleButton onPress={toggleModal} icon={graphics.MENU_ICON} text="Menu" main />}
         {game.won && <>
           {playtest && <SimpleButton onPress={() => viewCallback(PageView.EDITOR)} text="Keep Editing" main={true} />}
           {!playtest && <SimpleButton onPress={() => nextLevelCallback(level.uuid)} icon={graphics.PLAY_ICON} text="Next Level" main={true} />}

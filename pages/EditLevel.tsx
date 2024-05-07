@@ -1,21 +1,37 @@
-import { View, ScrollView, StyleSheet, Dimensions, Animated, Text, SafeAreaView, PanResponder, GestureResponderEvent, PanResponderGestureState } from "react-native";
+import { View, StyleSheet, Dimensions, Animated, Text, SafeAreaView, PanResponder, GestureResponderEvent, PanResponderGestureState } from "react-native";
 import { useState, useRef, useEffect, useContext, useMemo } from "react";
 import { Sound } from "expo-av/build/Audio";
 import { Audio } from "expo-av";
 
-import SimpleButton from "../components/SimpleButton";
-import MenuButton from "../components/MenuButton";
-import GameBoard from "../components/GameBoard";
+import BackButton from "../assets/BackButton";
 import SliderBar from "../components/SliderBar";
+import GameBoard from "../components/GameBoard";
+import MenuButton from "../components/MenuButton";
+import SimpleButton from "../components/SimpleButton";
+import CurrentToolIndicator from "../components/CurrentToolIndicator";
 
+import GlobalContext from "../GlobalContext";
 import TextStyles, { normalize } from "../TextStyles";
-import { BoardTile, Direction, PageView, TileType, UserLevel, createBlankBoard } from "../util/types";
+import { PageView, TileType, UserLevel } from "../util/types";
 import { boundTileAt, cloneBoard, getSpawnPosition } from "../util/logic";
 import { colors, graphics } from "../Theme";
-import GlobalContext from "../GlobalContext";
 import { calcBoardTileSize } from "../util/board";
+import { Tool, tools, wallTool } from "../util/tools";
 
 const win = Dimensions.get("window");
+
+interface ToolPair {
+  left: Tool,
+  right: Tool,
+}
+
+const toolPairs: ToolPair[] = [];
+for (let i = 0; i < tools.length - 1; i += 2) {
+  toolPairs.push({
+    left: tools[i],
+    right: tools[i + 1],
+  });
+}
 
 enum GestureMode {
   PLACE,
@@ -67,7 +83,7 @@ export default function EditLevel({
   // END SOUND SETUP
   // ===============
 
-  const [currentTool, selectTool] = useState<BoardTile>({ id: TileType.WALL });
+  const [currentTool, selectTool] = useState<Tool>(wallTool);
   const [toolsModalOpen, setToolsModalState] = useState(false);
 
   const fadeToolsAnim = useRef(new Animated.Value(0)).current;
@@ -111,7 +127,7 @@ export default function EditLevel({
 
   const tileSize = calcBoardTileSize(level.board[0].length, level.board.length, win);
   const xCorrect = -0.5 * tileSize;
-  const yCorrect = -1 * tileSize;
+  const yCorrect = -1.5 * tileSize;
 
   const changeTile = useRef<(_y: number, _x: number) => void>(() => undefined);
 
@@ -122,7 +138,7 @@ export default function EditLevel({
       if (tileType === TileType.OUTSIDE) return;
 
       // Clear current spawn position, as we cannot allow multiple spawn locations!
-      if (currentTool.id === TileType.SPAWN) {
+      if (currentTool.tile.id === TileType.SPAWN) {
         if (gestureStartMode.current !== undefined) return; // Only want to trigger from onGestureStart.
 
         const spawnPos = getSpawnPosition(level.board);
@@ -131,7 +147,7 @@ export default function EditLevel({
       }
 
       if (tileType === TileType.EMPTY && gestureStartMode.current !== GestureMode.ERASE) {
-        newBoard[y][x] = currentTool;
+        newBoard[y][x] = currentTool.tile;
         if (playAudio) playSuccessSound();
         gestureStartMode.current = GestureMode.PLACE;
 
@@ -183,21 +199,18 @@ export default function EditLevel({
     });
   }, []);
 
-  function changeTool(tool: BoardTile) {
+  function changeTool(tool: Tool) {
     selectTool(tool);
     toggleToolsModal();
   }
 
-  function clearBoard() {
-    const newBoard = createBlankBoard();
-    setUnsavedChanges(true);
-    levelCallback({
-      ...level,
-      board: newBoard,
-    });
-  }
-
   const [fuseTimer, setFuseTimer] = useState(15);
+  const bombTool: Tool = {
+    label: "Bomb",
+    tile: { id: TileType.BOMB, fuse: fuseTimer },
+    icon: graphics.BOMB,
+    theme: colors.RED_THEME,
+  };
 
   if (level === undefined) {
     return <Text style={[TextStyles.subtitle(darkMode), { color: colors.RED_THEME.MAIN_COLOR }]}>
@@ -211,6 +224,7 @@ export default function EditLevel({
         <GameBoard board={level.board} overrideTileSize={tileSize} />
         {/* Like invertory but show current tool */}
       </View>
+      <CurrentToolIndicator tool={currentTool} />
 
       <Animated.View style={[
         styles.buttonsRow,
@@ -221,7 +235,7 @@ export default function EditLevel({
           }),
         },
       ]}>
-        <SimpleButton onPress={toggleToolsModal} text="Tools & Options" main={true} />
+        <SimpleButton onPress={toggleToolsModal} text="Change Tool" main={true} />
         <View style={{ width: normalize(15) }} />
         <SimpleButton onPress={() => {
           saveChanges();
@@ -237,102 +251,25 @@ export default function EditLevel({
           backgroundColor: darkMode ? colors.NEAR_BLACK_TRANSPARENT(0.85) : "rgba(255, 255, 255, 0.85)",
         },
       ]}>
-        <ScrollView overScrollMode="never" style={{ width: "100%" }}>
-
           <View style={styles.section}>
-            <Text style={[TextStyles.subtitle(darkMode), styles.subtitle]}>Tools</Text>
-            <View style={styles.row}>
-              <MenuButton
-                label="Crate"
-                icon={graphics.CRATE}
-                onPress={() => changeTool({ id: TileType.CRATE })}
-                fillWidth
-              />
-              <MenuButton
-                label="Crater"
-                icon={graphics.CRATER}
-                onPress={() => changeTool({ id: TileType.CRATER })}
-                fillWidth
-              />
-            </View>
-            <View style={styles.row}>
-              <MenuButton
-                label="Wall"
-                icon={graphics.WALL_ICON}
-                onPress={() => changeTool({ id: TileType.WALL })}
-                fillWidth
-              />
-              <MenuButton
-                label="Spawn"
-                icon={graphics.PLAYER}
-                onPress={() => changeTool({ id: TileType.SPAWN })}
-                fillWidth
-              />
-            </View>
-            <View style={styles.row}>
-              <MenuButton
-                label="Door"
-                icon={graphics.DOOR}
-                onPress={() => changeTool({ id: TileType.DOOR })}
-                theme={colors.GREEN_THEME}
-                fillWidth
-              />
-              <MenuButton
-                label="Key"
-                icon={graphics.KEY}
-                onPress={() => changeTool({ id: TileType.KEY })}
-                theme={colors.GREEN_THEME}
-                fillWidth
-              />
-            </View>
-            <View style={styles.row}>
-              <MenuButton
-                label="Flag"
-                icon={graphics.FLAG}
-                onPress={() => changeTool({ id: TileType.FLAG })}
-                theme={colors.YELLOW_THEME}
-                fillWidth
-              />
-              <MenuButton
-                label="Coin"
-                icon={graphics.COIN}
-                onPress={() => changeTool({ id: TileType.COIN })}
-                theme={colors.YELLOW_THEME}
-                fillWidth
-              />
-            </View>
-            <View style={styles.row}>
-              <MenuButton
-                label="Left"
-                icon={graphics.ONE_WAY_LEFT}
-                onPress={() => changeTool({ id: TileType.ONEWAY, orientation: Direction.LEFT })}
-                theme={colors.BLUE_THEME}
-                fillWidth
-              />
-              <MenuButton
-                label="Right"
-                icon={graphics.ONE_WAY_RIGHT}
-                onPress={() => changeTool({ id: TileType.ONEWAY, orientation: Direction.RIGHT })}
-                theme={colors.BLUE_THEME}
-                fillWidth
-              />
-            </View>
-            <View style={styles.row}>
-              <MenuButton
-                label="Up"
-                icon={graphics.ONE_WAY_UP}
-                onPress={() => changeTool({ id: TileType.ONEWAY, orientation: Direction.UP })}
-                theme={colors.BLUE_THEME}
-                fillWidth
-              />
-              <MenuButton
-                label="Down"
-                icon={graphics.ONE_WAY_DOWN}
-                onPress={() => changeTool({ id: TileType.ONEWAY, orientation: Direction.DOWN })}
-                theme={colors.BLUE_THEME}
-                fillWidth
-              />
-            </View>
+            {toolPairs.map((pair, index) =>
+              <View key={index} style={styles.row}>
+                <MenuButton
+                  label={pair.left.label}
+                  icon={pair.left.icon}
+                  onPress={() => changeTool(pair.left)}
+                  theme={pair.left.theme}
+                  fillWidth
+                />
+                <MenuButton
+                  label={pair.right.label}
+                  icon={pair.right.icon}
+                  onPress={() => changeTool(pair.right)}
+                  theme={pair.right.theme}
+                  fillWidth
+                />
+              </View>
+            )}
             <View style={{ height: 15 }} />
             <View style={styles.row}>
               <SliderBar
@@ -346,64 +283,59 @@ export default function EditLevel({
             <View style={styles.row}>
               <MenuButton
                 label="Bomb"
-                icon={graphics.BOMB}
-                onPress={() => changeTool({ id: TileType.BOMB, fuse: fuseTimer })}
-                theme={colors.RED_THEME}
+                icon={bombTool.icon}
+                onPress={() => changeTool(bombTool)}
+                theme={bombTool.theme}
                 fillWidth
               />
             </View>
           </View>
 
           <View style={styles.section}>
-            <Text style={[TextStyles.subtitle(darkMode), styles.subtitle]}>Options</Text>
             <View style={styles.row}>
-              <MenuButton
-                onLongPress={clearBoard}
-                icon={graphics.DELETE_ICON}
-                theme={colors.RED_THEME}
-                label="Clear Board     (Long Press)"
-                allowOverflow
-                fillWidth
-              />
-              <MenuButton
-                onPress={() => {
-                  saveChanges();
-                  playtestLevel();
-                }}
-                label="Playtest"
-                icon={graphics.PLAYER}
-                fillWidth
-              />
-            </View>
-            <View style={styles.row}>
-              <MenuButton
-                onPress={saveChanges}
-                label="Save Changes"
-                icon={graphics.SAVE_ICON}
-                theme={colors.GREEN_THEME}
-                disabled={!unsavedChanges}
-                fillWidth
-              />
-              <MenuButton
-                onPress={discardChanges}
-                label="Discard Changes"
+              <SimpleButton
+                onLongPress={discardChanges}
+                text="Discard Changes"
                 icon={graphics.EXPLOSION}
                 theme={colors.RED_THEME}
                 disabled={!unsavedChanges}
                 fillWidth
+                extraMargin
+              />
+              <SimpleButton
+                onPress={saveChanges}
+                text="Save Changes"
+                icon={graphics.SAVE_ICON}
+                theme={colors.GREEN_THEME}
+                disabled={!unsavedChanges}
+                fillWidth
+                extraMargin
+                main
               />
             </View>
+
             <View style={styles.row}>
-              <MenuButton
+              <SimpleButton
                 onPress={toggleToolsModal}
-                label="Close Menu"
-                icon={graphics.DOOR_ICON}
+                Svg={BackButton}
+                text="Close Menu"
                 fillWidth
+                extraMargin
+              />
+              <SimpleButton
+                onPress={() => {
+                  saveChanges();
+                  playtestLevel();
+                }}
+                text="Playtest"
+                icon={graphics.PLAY_ICON}
+                square
+                fillWidth
+                extraMargin
+                main
               />
             </View>
           </View>
-
-        </ScrollView>
       </Animated.View>}
       {/* END MODAL */}
     </SafeAreaView>
@@ -417,7 +349,7 @@ function pressToIndex(touchPos: number, tileSize: number, correction: number) {
 const styles = StyleSheet.create({
   container: {
     alignItems: "center",
-    justifyContent: "space-evenly",
+    justifyContent: "center",
     width: "100%",
     height: "100%",
   },
@@ -426,7 +358,8 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     width: "100%",
-    marginBottom: normalize(36),
+    marginTop: normalize(6),
+    marginBottom: normalize(18),
   },
   row: {
     flexDirection: "row",
@@ -445,19 +378,12 @@ const styles = StyleSheet.create({
   },
   modal: {
     ...StyleSheet.absoluteFillObject,
-    // borderTopWidth: 1,
-    // borderBottomWidth: 1,
-    // borderColor: colors.MAIN_PURPLE_TRANSPARENT(0.3),
+    paddingTop: normalize(36),
+    paddingBottom: normalize(24),
     alignItems: "center",
-    justifyContent: "center",
-  },
-  text: {
-    marginTop: 5,
-    marginBottom: 15,
-    color: colors.MAIN_PURPLE_TRANSPARENT(0.8),
-    fontSize: 12,
-    fontFamily: "Montserrat-Regular",
-    fontWeight: "normal",
+    justifyContent: "space-between",
+    height: "100%",
+    width: "100%",
   },
   subtitle: {
     marginTop: normalize(32),

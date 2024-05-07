@@ -1,5 +1,5 @@
 import { useContext } from "react";
-import { Text, Image, StyleSheet, ImageSourcePropType } from "react-native";
+import { Text, Image, StyleSheet, ImageSourcePropType, View } from "react-native";
 
 import { Theme, purpleTheme } from "../Theme";
 import TextStyles, { normalize } from "../TextStyles";
@@ -16,6 +16,7 @@ interface SVGProps {
 interface Props {
   text?: string,
   onPress?: () => void,
+  onLongPress?: () => void,
   icon?: ImageSourcePropType,
   Svg?: React.FC<SVGProps>,
   disabled?: boolean,
@@ -23,10 +24,13 @@ interface Props {
   wide?: boolean,
   theme?: Theme,
   square?: boolean,
+  fillWidth?: boolean,
+  extraMargin?: boolean,
 }
 
 export default function SimpleButton({
   onPress,
+  onLongPress,
   text,
   icon,
   Svg,
@@ -35,52 +39,90 @@ export default function SimpleButton({
   wide,
   theme,
   square,
+  fillWidth,
+  extraMargin,
 }: Props) {
   const { darkMode } = useContext(GlobalContext);
   const useTheme = theme || purpleTheme;
+  const hasIcon: boolean = !!icon || !!Svg;
 
   let backgroundColor = darkMode ? "#000" : "#fff";
   if (main) backgroundColor = useTheme.MAIN_COLOR;
-  
-  let paddingHorizontal = (icon || Svg) ? normalize(10) : normalize(25);
+
+  let paddingHorizontal = hasIcon ? normalize(10) : normalize(25);
   if (wide) paddingHorizontal = normalize(50);
+
+  let paddingVertical = square ? paddingHorizontal : normalize(5);
+  if (!!onLongPress) paddingVertical = normalize(10);
 
   return (
     <ResponsivePressable
       onPress={onPress}
+      onLongPress={onLongPress}
       disabled={disabled}
       customStyle={[
-        styles.simpleButton,
+        staticStyles.simpleButton,
         {
           borderColor: useTheme.MAIN_COLOR,
           backgroundColor: backgroundColor,
           paddingHorizontal: paddingHorizontal,
-          paddingVertical: square ? paddingHorizontal : normalize(5),
+          paddingVertical: paddingVertical,
         },
+        fillWidth ? staticStyles.fillWidth : {},
+        extraMargin ? staticStyles.extraMargin : {},
       ]}
       pressedStyle={{
         opacity: 0.75,
       }}
     >
-      {icon && <Image style={styles.bigIcon} source={icon} />}
-      {!!Svg && <Svg width={styles.bigIcon.width} height={styles.bigIcon.height} fillColor={useTheme.MAIN_COLOR} />}
+      {icon && <Image style={staticStyles.bigIcon} source={icon} />}
+      {!!Svg && <Svg width={staticStyles.bigIcon.width} height={staticStyles.bigIcon.height} fillColor={useTheme.MAIN_COLOR} />}
 
-      {text && <Text
-        allowFontScaling={false}
-        style={[
-          TextStyles.paragraph(darkMode),
-          {
-            marginBottom: 0,
-            marginHorizontal: (icon || Svg) ? normalize(10) : 0,
-            color: main ? "#fff" : useTheme.MAIN_COLOR,
-            fontSize: normalize(15),
-          }
-        ]}>{text}</Text>}
+      {text && <View>
+        <Label
+          text={text}
+          darkMode={darkMode}
+          hasIcon={hasIcon}
+          theme={useTheme}
+          main={main}
+        />
+
+        {onLongPress && <Label
+          text={"(Long Press)"}
+          darkMode={darkMode}
+          hasIcon={hasIcon}
+          theme={useTheme}
+          main={main}
+        />}
+      </View>}
     </ResponsivePressable>
   );
 }
 
-const styles = StyleSheet.create({
+interface LabelProps {
+  text: string,
+  darkMode: boolean,
+  hasIcon: boolean,
+  main?: boolean,
+  theme: Theme,
+}
+
+function Label({ text, darkMode, hasIcon, main, theme }: LabelProps) {
+  return (
+    <>
+      <Text
+        allowFontScaling={false}
+        style={[
+          TextStyles.paragraph(darkMode),
+          dynamicStyles.label(hasIcon, theme, main),
+        ]}>
+        {text}
+      </Text>
+    </>
+  );
+}
+
+const staticStyles = StyleSheet.create({
   simpleButton: {
     flexDirection: "row",
     alignItems: "center",
@@ -88,8 +130,26 @@ const styles = StyleSheet.create({
     borderRadius: normalize(10),
     borderWidth: 1,
   },
+  extraMargin: {
+    marginVertical: normalize(6),
+    marginHorizontal: normalize(6),
+  },
   bigIcon: {
     height: normalize(30),
     width: normalize(30),
   },
+  fillWidth: {
+    justifyContent: "space-between",
+    width: "100%",
+  },
+});
+
+const dynamicStyles = StyleSheet.create<any>({
+  label: (hasIcon: boolean, theme: Theme, main?: boolean) => ({
+    marginBottom: 0,
+    marginHorizontal: hasIcon ? normalize(10) : 0,
+    color: main ? "#fff" : theme.MAIN_COLOR,
+    fontSize: normalize(15),
+    textAlign: "right",
+  }),
 });

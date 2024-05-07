@@ -5,7 +5,13 @@ import { colors, graphics } from "../Theme";
 import { normalize } from "../TextStyles";
 const win = Dimensions.get("window");
 
-export default function Inventory({ coins, maxCoins, keys }) {
+interface Props {
+  coins: number,
+  maxCoins: number,
+  keys: number,
+}
+
+export default function Inventory({ coins, maxCoins, keys }: Props) {
   const coinsAnim = useRef(new Animated.Value(0)).current;
   useEffect(() => {
     coinsAnim.setValue(0);
@@ -18,7 +24,7 @@ export default function Inventory({ coins, maxCoins, keys }) {
 
   // =============
   // KEY ANIMATION
-  const prevKeys = useRef();
+  const prevKeys = useRef(0);
   const keysAnim = useRef(new Animated.Value(0)).current;
   useEffect(() => {
     const startVal = (prevKeys.current < keys) ? 0 : 1;
@@ -35,8 +41,7 @@ export default function Inventory({ coins, maxCoins, keys }) {
   }, [keys]);
 
   const inventory = [];
-  const displayKeys = (prevKeys.current > keys) ? prevKeys.current : keys;
-  // We don't do Math.max(prevKeys, keys); because there is a possibility of NaN.
+  const displayKeys = Math.max(prevKeys.current, keys);
 
   for (let i = 0; i < displayKeys; i++) {
     // If it is the last key and # of keys changed, animate it. Otherwise set animated to
@@ -50,7 +55,6 @@ export default function Inventory({ coins, maxCoins, keys }) {
   return (
     <View style={styles.inventory}>
       <View style={styles.row}>
-      {/* <View style={[styles.row, { marginLeft: 5 }]}> */}
         {inventory}
       </View>
       <View style={styles.row}>
@@ -62,13 +66,14 @@ export default function Inventory({ coins, maxCoins, keys }) {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = StyleSheet.create<any>({
   inventory: {
     flexDirection: "row",
     justifyContent: "space-between",
     width: win.width * 0.9,
     marginBottom: normalize(10),
   },
+  // @ts-expect-error
   coinsText: (anim) => ({
     color: colors.DIM_GRAY,
     fontSize: normalize(20),
@@ -88,6 +93,7 @@ const styles = StyleSheet.create({
     marginLeft: normalize(7),
     marginRight: normalize(6),
   },
+  // @ts-expect-error
   icon: (anim) => ({
     height: normalize(32),
     width: normalize(32),
