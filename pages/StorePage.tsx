@@ -9,14 +9,13 @@ import Subpages from "../components/Subpages";
 
 import CartIcon from "../assets/main_theme/cart.png";
 import ProfileIcon from "../assets/main_theme/profile.png";
+import DownloadIcon from "../assets/main_theme/download.png";
+import ProfilePage from "./ProfilePage";
+import DownloadLevelsPage from "./DownloadLevelsPage";
 
-interface Props {
-
-}
-
-export default function ({ }: Props) {
+export default function ({ }) {
   const { darkMode } = useContext(GlobalContext);
-  const [balance, modifyBalance] = useCoinBalance();
+  const [balance, _modifyBalance] = useCoinBalance();
 
   const pageComponents = useMemo(() => {
     return [
@@ -30,9 +29,8 @@ export default function ({ }: Props) {
           <Image style={styles.icon} source={graphics.COIN} />
         </View>
       </>,
-      <Text style={[TextStyles.subtitle(darkMode), { color: colors.YELLOW_THEME.MAIN_COLOR }]}>
-        Under Construction
-      </Text>,
+      <ProfilePage />,
+      <DownloadLevelsPage />,
     ];
   }, []);
 
@@ -47,6 +45,11 @@ export default function ({ }: Props) {
         label: "Profile",
         color: colors.YELLOW_THEME.MAIN_COLOR,
         icon: ProfileIcon,
+      },
+      {
+        label: "Levels",
+        color: colors.YELLOW_THEME.MAIN_COLOR,
+        icon: DownloadIcon,
       },
     ];
   }, []);

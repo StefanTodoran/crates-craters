@@ -54,10 +54,7 @@ export default function ManageLevel({
   if (!level) return;
   return (
     <SubpageContainer center>
-      <View style={{
-        marginTop: normalize(30),
-        marginBottom: normalize(50),
-      }}>
+      <View style={styles.continer}>
         <InputCard
           title={level.name}
           hints={[`Created ${new Date(level.created).toDateString()}`]}
@@ -105,6 +102,7 @@ export default function ManageLevel({
             label="Share Online"
             icon={graphics.LOAD_ICON}
             theme={colors.GREEN_THEME}
+            // disabled={!level.completed}
             disabled
           />
           <MenuButton
@@ -146,5 +144,9 @@ const styles = StyleSheet.create({
   },
   relative: {
     position: "relative",
-  }
+  },
+  continer: {
+    marginTop: normalize(12),
+    marginBottom: normalize(36),
+  },
 });

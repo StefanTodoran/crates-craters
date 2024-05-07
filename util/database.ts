@@ -39,8 +39,14 @@ export interface UserLevelDocument {
   name: string,
   board: string,
   designer: string,
+  user_id: string,
   shared: Timestamp,
   downloads: number,
+}
+
+export interface UserAccountDocument {
+  id: string, // Referred to as user_id in documents in other collections.
+  username: string,
 }
 
 // ==================== \\
