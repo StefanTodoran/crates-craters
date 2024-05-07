@@ -1,7 +1,7 @@
 import { StyleSheet, Image, Animated } from "react-native";
 import { useContext, useEffect, useRef } from "react";
 import { Audio } from "expo-av";
-import { colors, graphics } from "../Theme";
+import { graphics } from "../Theme";
 import GlobalContext from "../GlobalContext";
 import { sizeFromWidthPercent } from "../TextStyles";
 
@@ -97,7 +97,7 @@ export default function WinScreen() {
     <Animated.View style={{
       ...styles.modal,
       opacity: fadeAnim,
-      backgroundColor: (darkMode) ? colors.NEAR_BLACK_TRANSPARENT(0.95) : "rgba(255, 255, 255, 0.9)",
+      backgroundColor: (darkMode) ? "rgba(0, 0, 0, 0.85)" : "rgba(255, 255, 255, 0.85)",
     }}>
       <Image style={styles.banner} source={graphics.WIN_BANNER} />
       {confetti}

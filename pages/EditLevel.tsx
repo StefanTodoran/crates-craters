@@ -248,7 +248,7 @@ export default function EditLevel({
         styles.modal,
         {
           opacity: fadeToolsAnim,
-          backgroundColor: darkMode ? colors.NEAR_BLACK_TRANSPARENT(0.85) : "rgba(255, 255, 255, 0.85)",
+          backgroundColor: darkMode ? "rgba(0, 0, 0, 0.85)" : "rgba(255, 255, 255, 0.85)",
         },
       ]}>
           <View style={styles.section}>

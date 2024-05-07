@@ -44,10 +44,12 @@ export default function SimpleButton({
 }: Props) {
   const { darkMode } = useContext(GlobalContext);
   const useTheme = theme || purpleTheme;
+  
   const hasIcon: boolean = !!icon || !!Svg;
+  const buttonColor = darkMode ? useTheme.DARK_COLOR : useTheme.MAIN_COLOR;
 
   let backgroundColor = darkMode ? "#000" : "#fff";
-  if (main) backgroundColor = useTheme.MAIN_COLOR;
+  if (main) backgroundColor = buttonColor;
 
   let paddingHorizontal = hasIcon ? normalize(10) : normalize(25);
   if (wide) paddingHorizontal = normalize(50);
@@ -63,7 +65,7 @@ export default function SimpleButton({
       customStyle={[
         staticStyles.simpleButton,
         {
-          borderColor: useTheme.MAIN_COLOR,
+          borderColor: buttonColor,
           backgroundColor: backgroundColor,
           paddingHorizontal: paddingHorizontal,
           paddingVertical: paddingVertical,

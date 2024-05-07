@@ -13,8 +13,8 @@ import Inventory from "../components/Inventory";
 import Player from "../components/Player";
 import WinScreen from "./WinScreen";
 
-import { Game, SoundEvent, canMoveTo, doGameMove, initializeGameObj } from "../util/logic";
 // import { aStarSearch, basicHeuristic, compoundHeuristic } from "../util/search";
+import { Game, SoundEvent, canMoveTo, doGameMove, initializeGameObj } from "../util/logic";
 import { Direction, Level, PageView } from "../util/types";
 import { markLevelCompleted } from "../util/loader";
 import { calcBoardTileSize } from "../util/board";
@@ -462,9 +462,9 @@ const dynamicStyles = StyleSheet.create<any>({
       outputRange: [1, 0],
     }),
   }),
+  // TODO: factor this out maybe? also found in EditLevel and WinScreen
   modal: (anim: Animated.Value, darkMode: boolean) => ({
     backgroundColor: darkMode ? "rgba(0, 0, 0, 0.85)" : "rgba(255, 255, 255, 0.85)",
-    // backgroundColor: darkMode ? colors.NEAR_BLACK_TRANSPARENT(0.85) : "rgba(255, 255, 255, 0.85)",
     opacity: anim,
   }),
   indicator: (xPos: number, yPos: number, size: number, anim: Animated.Value, darkMode: boolean) => ({
