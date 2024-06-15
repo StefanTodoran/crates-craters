@@ -199,7 +199,7 @@ export default function PlayLevel({
     }
   }, [game]);
 
-  const tileSize = calcBoardTileSize(game.board[0].length, game.board.length, win);
+  const tileSize = calcBoardTileSize(game.board.width, game.board.height, win);
   const xCorrect = -0.5 * tileSize;
   const yCorrect = -1.5 * tileSize;
 

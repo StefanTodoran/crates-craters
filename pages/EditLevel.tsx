@@ -13,10 +13,10 @@ import CurrentToolIndicator from "../components/CurrentToolIndicator";
 import GlobalContext from "../GlobalContext";
 import TextStyles, { normalize } from "../TextStyles";
 import { PageView, TileType, UserLevel } from "../util/types";
-import { boundTileAt, cloneBoard, getSpawnPosition } from "../util/logic";
 import { colors, graphics } from "../Theme";
 import { calcBoardTileSize } from "../util/board";
 import { Tool, tools, wallTool } from "../util/tools";
+import { getSpawnPosition } from "../util/logic";
 
 const win = Dimensions.get("window");
 
@@ -125,7 +125,7 @@ export default function EditLevel({
   const gestureStartMode = useRef<GestureMode>();
   const gestureStartTile = useRef<TileType>();
 
-  const tileSize = calcBoardTileSize(level.board[0].length, level.board.length, win);
+  const tileSize = calcBoardTileSize(level.board.width, level.board.height, win);
   const xCorrect = -0.5 * tileSize;
   const yCorrect = -1.5 * tileSize;
 
@@ -133,8 +133,8 @@ export default function EditLevel({
 
   useEffect(() => { // TODO: This useEffect may be unnecessary. Evaluate if it is needed, potentially remove.
     changeTile.current = (y: number, x: number) => {
-      const newBoard = cloneBoard(level.board);
-      const tileType = boundTileAt(y, x, level.board).id;
+      const newBoard = level.board.clone();
+      const tileType = level.board.getTile(y, x, true).id;
       if (tileType === TileType.OUTSIDE) return;
 
       // Clear current spawn position, as we cannot allow multiple spawn locations!
@@ -142,12 +142,12 @@ export default function EditLevel({
         if (gestureStartMode.current !== undefined) return; // Only want to trigger from onGestureStart.
 
         const spawnPos = getSpawnPosition(level.board);
-        if (tileType === TileType.EMPTY) newBoard[spawnPos.y][spawnPos.x] = { id: 0 }; // Clear the old spawn position.
+        if (tileType === TileType.EMPTY) newBoard.setTile(spawnPos.y, spawnPos.x, { id: 0 }); // Clear the old spawn position.
         gestureStartMode.current = GestureMode.PLACE;
       }
 
       if (tileType === TileType.EMPTY && gestureStartMode.current !== GestureMode.ERASE) {
-        newBoard[y][x] = currentTool.tile;
+        newBoard.setTile(y, x, currentTool.tile);
         if (playAudio) playSuccessSound();
         gestureStartMode.current = GestureMode.PLACE;
 
@@ -156,7 +156,7 @@ export default function EditLevel({
         gestureStartMode.current !== GestureMode.PLACE
       ) {
         // Never allow deletion of spawn tile, only replacement to somewhere else.
-        if (tileType !== TileType.SPAWN) newBoard[y][x] = { id: 0 };
+        if (tileType !== TileType.SPAWN) newBoard.setTile(y, x, { id: 0 });
         if (tileType !== TileType.EMPTY && playAudio) playErrorSound();
         gestureStartMode.current = GestureMode.ERASE;
         gestureStartTile.current = tileType;

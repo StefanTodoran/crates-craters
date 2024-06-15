@@ -1,4 +1,4 @@
-import { Board, BoardTile, BombTile, Level, OfficialLevel, OneWayTile, TileType, UserLevel, isLevelWellFormed } from "./types";
+import { BombTile, FlatBoard, Level, OfficialLevel, OneWayTile, TileType, UserLevel, isLevelWellFormed } from "./types";
 import { doNotificationsUpdate, doStateStorageSync } from "./events";
 import { countInstancesInBoard } from "./logic";
 import { MMKV } from "react-native-mmkv";
@@ -35,6 +35,13 @@ export function getData(key: string) {
   return rawValue ? JSON.parse(rawValue) : undefined;
 }
 
+export function getLevelData(key: string) {
+  const level = getData(key);
+  const board = new FlatBoard(level.board.board);
+  level.board = board;
+  return level as Level;
+}
+
 export function multiGetData(keys: string[]) {
   let rawValues: any[];
   try {
@@ -68,6 +75,10 @@ export function getStoredLevels() {
   keys.forEach(key => {
     const level = getData(key);
     if (isLevelWellFormed(level)) {
+      // @ts-expect-error The next two lines turn level.board from an object to a class instance.
+      const board = new FlatBoard(level.board.board);
+      level.board = board;
+      
       levels.push(level);
     } else {
       // TODO: If the level is malformed, then the key needs to be deleted.
@@ -141,7 +152,7 @@ export function multiStoreLevels(levels: Level[]) {
 }
 
 export function markLevelCompleted(uuid: string, moveCount: number) {
-  const level = getData(uuid) as Level;
+  const level = getLevelData(uuid);
   const wasCompleted = level.completed;
 
   const prevBest = Number.isInteger(level.best) ? level.best : Infinity;
@@ -174,15 +185,14 @@ const split = {
   tile: ".",
 }
 
-export function parseCompressedBoardData(raw: string): Board {
+export function parseCompressedBoardData(raw: string): FlatBoard {
   const rawBoard = raw.split(split.row);
-  const board: Board = [];
+  const board = new FlatBoard(FlatBoard.createEmptyBoard());
 
-  rawBoard.forEach(strRow => {
+  rawBoard.forEach((strRow, yPos) => {
     const rawRow = strRow.split(split.column);
-    const row: BoardTile[] = [];
 
-    rawRow.forEach(strTile => {
+    rawRow.forEach((strTile, xPos) => {
       if (strTile.includes(split.tile)) {
         const tileData = strTile.split(split.tile).map(substr => parseInt(substr));
         const tile = { id: tileData[0] };
@@ -198,13 +208,11 @@ export function parseCompressedBoardData(raw: string): Board {
           (tile as BombTile).fuse = tileData[1];
         }
 
-        row.push(tile);
+        board.setTile(yPos, xPos, tile);
       } else {
-        row.push({ id: parseInt(strTile) });
+        board.setTile(yPos, xPos, { id: parseInt(strTile) });
       }
     });
-
-    board.push(row);
   });
 
   return board;
@@ -217,21 +225,23 @@ export function parseCompressedBoardData(raw: string): Board {
  * for packed levels, the compressed representation of a board will rarely
  * exceed 300 bytes.
  */
-export function compressBoardData(board: Board): string {
+export function compressBoardData(board: FlatBoard): string {
   let result = "";
 
-  for (let y = 0; y < board.length; y++) {
+  for (let y = 0; y < board.height; y++) {
     let row = "";
 
-    for (let x = 0; x < board[0].length; x++) {
-      const tile = board[y][x];
+    for (let x = 0; x < board.width; x++) {
+      const tile = board.getTile(y, x);
       const keys = Object.keys(tile);
 
       let encoding = "";
       keys.forEach(key => {
         // TODO: These seem to always be in the right order, but need to
         // make sure that this is a guarantee and not environment dependent.
-        encoding += tile[key as keyof BoardTile].toString() + split.tile;
+
+        // @ts-expect-error
+        encoding += tile[key].toString() + split.tile;
       });
       encoding = encoding.slice(0, -1);
 

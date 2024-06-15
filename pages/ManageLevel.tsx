@@ -49,7 +49,7 @@ export default function ManageLevel({
   // console.log(compressBoardData(level.board));
 
   const previewWidth = 0.9;
-  const tileSize = level ? calcPreviewTileSize(level.board[0].length, previewWidth, win) : undefined;
+  const tileSize = level ? calcPreviewTileSize(level.board.width, previewWidth, win) : undefined;
 
   if (!level) return;
   return (

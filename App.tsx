@@ -4,7 +4,7 @@ import * as NavigationBar from "expo-navigation-bar";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Dimensions, Animated, BackHandler, SafeAreaView, StatusBar as RNStatusBar, View, StyleSheet } from "react-native";
 
-import { createLevel, getData, getStoredLevels, updateLevel } from "./util/loader";
+import { createLevel, getLevelData, getStoredLevels, updateLevel } from "./util/loader";
 import { useBooleanSetting, useNumberSetting } from "./util/hooks";
 import { checkForOfficialLevelUpdates } from "./util/database";
 import { Level, PageView, UserLevel } from "./util/types";
@@ -115,12 +115,12 @@ export default function App() {
         return;
       } // else if uuid is defined:
 
-      const updatedLevel = getData(uuid);
+      const updatedLevel = getLevelData(uuid);
       const levelIndex = levels.findIndex(level => level.uuid === updatedLevel.uuid);
       levels[levelIndex] = updatedLevel;
 
       // Refresh this additional state variable if necessary.
-      if (uuid === editorLevel?.uuid) setEditorLevel(updatedLevel);
+      if (uuid === editorLevel?.uuid) setEditorLevel(updatedLevel as UserLevel);
     };
   }, [levels, editorLevel]);
 
@@ -152,7 +152,7 @@ export default function App() {
   }, []);
 
   const changePlayLevel = useCallback((uuid: string) => {
-    const levelObject = getData(uuid);
+    const levelObject = getLevelData(uuid);
     setPlayLevel(levelObject);
 
     const newGame = initializeGameObj(levelObject);
@@ -172,8 +172,8 @@ export default function App() {
   }, [levels, playLevel]);
 
   const startEditingLevel = useCallback((uuid: string) => {
-    const levelObject = getData(uuid);
-    setEditorLevel(levelObject);
+    const levelObject = getLevelData(uuid);
+    setEditorLevel(levelObject as UserLevel);
   }, []);
 
   const createNewLevel = useCallback((level: UserLevel) => {
@@ -191,6 +191,7 @@ export default function App() {
 
   useEffect(() => { // TODO: update this method?
     const backAction = () => {
+      if (view === PageView.PLAY || view === PageView.EDITOR) return true;
       if (view !== PageView.MENU) switchView(PageView.MENU);
       return true;
     }

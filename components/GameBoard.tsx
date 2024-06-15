@@ -5,13 +5,13 @@ import { colors } from "../Theme";
 import GlobalContext from "../GlobalContext";
 
 import { TileIcon } from "../assets/Icons";
-import { Board, BoardTile, BombTile, TileType } from "../util/types";
+import { FlatBoard, LayeredBoard, TileType, BombTile, FlatTile, LayeredTile } from "../util/types";
 import { calcBoardTileSize, getIconSrc } from "../util/board";
 
 const win = Dimensions.get("window");
 
 interface Props {
-  board: Board,
+  board: FlatBoard | LayeredBoard,
   overrideTileSize?: number,
   children?: React.ReactNode,
 }
@@ -23,13 +23,11 @@ export default function GameBoard({
 }: Props) {
   const { darkMode } = useContext(GlobalContext);
 
-  const boardHeight = board.length;
-  const boardWidth = board[0].length;
-
-  const tileSize = overrideTileSize ? overrideTileSize : calcBoardTileSize(boardWidth, boardHeight, win);
+  const tileSize = overrideTileSize ? overrideTileSize : calcBoardTileSize(board.width, board.height, win);
   const useSvg = Platform.OS === "ios";
+  const isFlatBoard = board instanceof FlatBoard;
 
-  function getTile(tile: BoardTile, i: number, j: number) {
+  function getTile(tile: FlatTile, i: number, j: number) {
     // We need to know oddTile (board is checkered color-wise) and the tile type
     // regardless of whether the tile will be a wall, entity, or regular tile.
     const oddTile = (isEven(i) && isEven(j)) || (!isEven(i) && !isEven(j));
@@ -40,11 +38,12 @@ export default function GameBoard({
       const borderColor = oddTile ? colors.BLUE_THEME.MAIN_TRANSPARENT(0.65) : colors.BLUE_THEME.MAIN_TRANSPARENT(0.8);
       const fillColor = oddTile ? colors.BLUE_THEME.MAIN_TRANSPARENT(0.5) : colors.BLUE_THEME.MAIN_TRANSPARENT(0.65);
 
+      const adjacentWalls = board.findAdjacentWalls(i, j);
       const borders = {
-        borderTopWidth: i > 0 && board[i - 1][j].id === TileType.WALL ? 0 : 5,
-        borderLeftWidth: j > 0 && board[i][j - 1].id === TileType.WALL ? 0 : 5,
-        borderBottomWidth: i + 1 < boardHeight && board[i + 1][j].id === TileType.WALL ? 0 : 5,
-        borderRightWidth: j + 1 < boardWidth && board[i][j + 1].id === TileType.WALL ? 0 : 5,
+        borderTopWidth: adjacentWalls.top ? 0 : 5,
+        borderLeftWidth: adjacentWalls.left ? 0 : 5,
+        borderBottomWidth: adjacentWalls.bottom ? 0 : 5,
+        borderRightWidth: adjacentWalls.right ? 0 : 5,
       };
 
       return <View key={j} style={[styles.wallTile(fillColor, borderColor, tileSize), borders]} />;
@@ -87,11 +86,23 @@ export default function GameBoard({
         backgroundColor: (darkMode) ? "#000" : "#fff",
       }
     ]}>
-      {board.map((row, y) =>
-        <View key={y} style={styles.boardRow}>
-          {row.map((tile, x) => getTile(tile, y, x))}
-        </View>
-      )}
+      {
+        isFlatBoard ?
+          board.map((row, y) => <View key={y} style={styles.boardRow}>
+            {(row as FlatTile[]).map((tile, x) => getTile(tile, y, x))}
+          </View>)
+          :
+          <>
+            <View style={styles.absolute}>
+              {board.map((row, y) => <View key={y} style={styles.boardRow}>
+                {(row as LayeredTile[]).map((tile, x) => getTile(tile.background, y, x))}
+              </View>)}
+            </View>
+            {board.map((row, y) => <View key={y} style={styles.boardRow}>
+              {(row as LayeredTile[]).map((tile, x) => getTile(tile.foreground, y, x))}
+            </View>)}
+          </>
+      }
       {children}
     </View>
   );
@@ -112,6 +123,9 @@ const styles = StyleSheet.create<any>({
   },
   relative: {
     position: "relative",
+  },
+  absolute: {
+    position: "absolute",
   },
   wallTile: (bgColor: string, borderColor: string, size: number) => ({
     width: size,
