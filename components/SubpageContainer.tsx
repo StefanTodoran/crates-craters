@@ -4,10 +4,11 @@ const win = Dimensions.get("window");
 
 interface Props {
   center?: boolean,
+  noWidthPad?: boolean,
   children: React.ReactNode,
 }
 
-export default function SubpageContainer({ center, children }: Props) {
+export default function SubpageContainer({ center, noWidthPad, children }: Props) {
   return (
     <ScrollView
       overScrollMode="never"
@@ -15,9 +16,11 @@ export default function SubpageContainer({ center, children }: Props) {
       style={styles.scrollContainer}
       contentContainerStyle={[
         {
-          paddingHorizontal: win.width * 0.05,
           paddingTop: win.height * 0.015,
           paddingBottom: win.height * 0.025,
+        },
+        !noWidthPad && {
+          paddingHorizontal: win.width * 0.05,
         },
         center && {
           justifyContent: "center",

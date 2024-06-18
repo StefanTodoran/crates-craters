@@ -19,11 +19,16 @@ export default function CreateLevel({ createLevelCallback }: Props) {
   const levelCreated = new Date();
   // const nameTaken = levels.some(lvl => lvl.name === levelTitle);
 
+  let inputHint = "Click create to get started!";
+  if (!levelTitle && !levelDesigner) inputHint = "Both title and designer name are required!";
+  else if (!levelTitle) inputHint = "Level title is required!";
+  else if (!levelDesigner) inputHint = "Designer name required!";
+
   return (
     <SubpageContainer center>
       <InputCard
         title={"Create New Level"}
-        hints={[`Created ${levelCreated.toDateString()}`]}
+        hints={[inputHint]}
         fields={[
           {
             label: "Level Title",
@@ -47,7 +52,6 @@ export default function CreateLevel({ createLevelCallback }: Props) {
             designer: levelDesigner,
             created: levelCreated.toISOString(),
           });
-
           doPageChange(0);
         }}
         buttonDisabled={!levelTitle || !levelDesigner}

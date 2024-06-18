@@ -10,6 +10,11 @@ export enum metadataKeys {
   officialLevelKeys = "officialLevelKeys",
   customLevelKeys = "customLevelKeys",
   coinBalance = "coinBalance",
+  
+  // These reference the UUIDs of publicly shared user created levels.
+  likedLevels = "likedLevels",
+  attemptedLevels = "attemptedLevels",
+  completedLevels = "completedLevels",
 }
 
 export function setData(key: string, value: any) {

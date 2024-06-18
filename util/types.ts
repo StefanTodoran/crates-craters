@@ -291,13 +291,17 @@ type DateString = string; // In the form Date().toISOString();
 export interface UserLevel extends LevelBase {
   official: false,
   designer: string,
-  created: DateString,
+  created: DateString, 
   shared?: DateString,
 }
 
 export interface SharedLevel extends UserLevel {
+  // TODO: SharedLevel objects fetched from the server WON'T have the "created" property!.
   shared: DateString,
   downloads: number,
+  attempts: number,
+  wins: number,
+  likes: number,
 }
 
 export type Level = OfficialLevel | UserLevel | SharedLevel;
@@ -348,10 +352,4 @@ export enum PageView {
   MENU,
   PLAY,
   EDITOR,
-}
-
-export enum EditorView {
-  LIST,
-  CREATE,
-  EDIT,
 }

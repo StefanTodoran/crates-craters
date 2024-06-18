@@ -1,24 +1,12 @@
-import {
-  DocumentData,
-  DocumentReference,
-  QuerySnapshot,
-  Timestamp,
-  addDoc,
-  collection,
-  doc,
-  documentId,
-  getCountFromServer,
-  getDocs,
-  query,
-  setDoc,
-  updateDoc,
-  where
-} from "firebase/firestore";
-import { db } from "./firebase";
-
+import { DocumentData, DocumentReference, Query, QuerySnapshot, Timestamp, WhereFilterOp, addDoc, collection, doc, getCountFromServer, getDocs, limit, orderBy, query, setDoc, updateDoc, where } from "firebase/firestore";
 import { getData, getStoredLevelCount, metadataKeys, multiStoreLevels, parseCompressedBoardData, setData } from "./loader";
+
+import { db } from "./firebase";
 import { OfficialLevel } from "./types";
 import { doStateStorageSync } from "./events";
+
+// import { setLogLevel } from "firebase/firestore";
+// setLogLevel("debug");
 
 // ======================== \\
 // DOCUMENT TYPE INTERFACES \\
@@ -41,7 +29,9 @@ export interface UserLevelDocument {
   designer: string,
   user_id: string,
   shared: Timestamp,
-  downloads: number,
+  attempts: number,
+  wins: number,
+  likes: number,
 }
 
 export interface UserAccountDocument {
@@ -85,12 +75,13 @@ async function fetchOfficialLevelsFromServer() {
   for (let i = 0; i < rawLevels.length; i++) {
     const rawLevel = rawLevels[i];
     const existingLevel: OfficialLevel = getData(rawLevel.id);
-    
+
     const updatedLevel: OfficialLevel = {
       uuid: rawLevel.id,
       name: rawLevel.name,
       board: parseCompressedBoardData(rawLevel.board),
       completed: existingLevel?.completed,
+      best: existingLevel?.best,
       official: true,
       order: rawLevel.order,
     };
@@ -101,23 +92,69 @@ async function fetchOfficialLevelsFromServer() {
   return parsedLevels;
 }
 
+export async function likeUserLevel(uuid: string) {
+  const likedLevels = getData(metadataKeys.likedLevels) || [];
+  if (likedLevels.includes(uuid)) return false;
+
+  const updatedData = await getSpecificEntry("userLevels", uuid) as UserLevelDocument;
+  updateDocument("userLevels", uuid, { likes: updatedData.likes + 1});
+  likedLevels.push(uuid);
+  setData(metadataKeys.likedLevels, likedLevels);
+
+  return true;
+}
+
 // ========================== \\
 // COLLECTION QUERY FUNCTIONS \\
 
-export async function doesEntryExist(collectionName: string, docName: string): Promise<boolean> {
-  const q = query(collection(db, collectionName), where(documentId(), '==', docName)); // TODO: evaluate difference between documentId() and "__name__"
-  const snap = await getCountFromServer(q)
-  return !!snap.data().count;
+export interface ExplicitOrder {
+  field: string,
+  order: "asc" | "desc",
 }
 
-export async function getEntryCount(collectionName: string): Promise<number> {
-  const q = query(collection(db, collectionName));
-  const snap = await getCountFromServer(q)
-  return snap.data().count;
+export interface QueryFilter {
+  field: string,
+  operator: WhereFilterOp,
+  value: any,
 }
+
+export function createFirebaseQuery(
+  collectionName: string,
+  pageSize: number,
+  orderFields: ExplicitOrder[] = [],
+  filters: QueryFilter[] = [],
+) {
+  let q: Query = collection(db, collectionName);
+  filters.forEach(filter => q = query(q, where(filter.field, filter.operator, filter.value)));
+  orderFields.forEach(field => q = query(q, orderBy(field.field, field.order)));
+  q = query(q, limit(pageSize));
+  return q;
+}
+
+// export async function doesEntryExist(collectionName: string, docName: string): Promise<boolean> {
+//   const q = query(collection(db, collectionName), where(documentId(), "==", docName)); // TODO: evaluate difference between documentId() and "__name__"
+//   const snap = await getCountFromServer(q);
+//   return !!snap.data().count;
+// }
+
+// export async function getEntryCount(collectionName: string): Promise<number> {
+//   const q = query(collection(db, collectionName));
+//   const snap = await getCountFromServer(q);
+//   return snap.data().count;
+// }
 
 export async function getAllEntries(collectionName: string) {
   const querySnapshot = await getDocs(collection(db, collectionName));
+  return parseQuerySnapshot(querySnapshot);
+}
+
+export async function getEntryCountFromQuery(query: Query) {
+  const snap = await getCountFromServer(query);
+  return snap.data().count;
+}
+
+export async function getEntriesFromQuery(query: Query) {
+  const querySnapshot = await getDocs(query);
   return parseQuerySnapshot(querySnapshot);
 }
 
@@ -187,7 +224,7 @@ function parseQuerySnapshot(snapshot: QuerySnapshot<DocumentData, DocumentData>)
   snapshot.forEach((doc) => {
     // doc.data() is never undefined for query doc snapshots
     const next = doc.data();
-    next.id = doc.id;
+    next.uuid = doc.id;
     docs.push(next);
   });
 

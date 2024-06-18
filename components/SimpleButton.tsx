@@ -131,6 +131,9 @@ const staticStyles = StyleSheet.create({
     marginVertical: normalize(5),
     borderRadius: normalize(10),
     borderWidth: 1,
+    // TODO: Maybe optionally allow flex here? For when there is only a single
+    // button in a level card, since it looks somewhat empty.
+    // flex: 1,
   },
   extraMargin: {
     marginVertical: normalize(6),
@@ -149,7 +152,7 @@ const staticStyles = StyleSheet.create({
 const dynamicStyles = StyleSheet.create<any>({
   label: (hasIcon: boolean, theme: Theme, main?: boolean) => ({
     marginBottom: 0,
-    marginHorizontal: hasIcon ? normalize(10) : 0,
+    marginHorizontal: hasIcon ? normalize(8) : 0,
     color: main ? "#fff" : theme.MAIN_COLOR,
     fontSize: normalize(15),
     textAlign: "right",

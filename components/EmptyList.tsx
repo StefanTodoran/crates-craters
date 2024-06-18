@@ -1,43 +1,40 @@
 import { useContext } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { ImageSourcePropType, StyleSheet, Text, View } from "react-native";
 
-import { PageView } from "../util/types";
-import { doPageChange } from "../util/events";
-import { colors, graphics } from "../Theme";
+import { Theme } from "../Theme";
 import MenuButton from "./MenuButton";
 import GlobalContext from "../GlobalContext";
 import TextStyles, { normalize } from "../TextStyles";
 
-interface Props {
-  mode: PageView.LEVELS | PageView.MANAGE,
-  refreshCallback?: () => void,
+export interface EmptyListProps {
+  textLines: string[],
+  padBottom?: boolean,
+  onPress?: () => void,
+  buttonLabel: string,
+  buttonIcon: ImageSourcePropType,
+  buttonTheme?: Theme,
 }
 
-export default function EmptyList({ mode, refreshCallback }: Props) {
+export default function EmptyList({ 
+  textLines,
+  padBottom,
+  onPress,
+  buttonLabel,
+  buttonIcon,
+  buttonTheme,
+}: EmptyListProps) {
   const { darkMode } = useContext(GlobalContext);
 
-  if (mode === PageView.LEVELS) return (
+  return (
     <View style={styles.container}>
-      <Text style={TextStyles.paragraph(darkMode)}>Levels not downloaded yet!</Text>
-      <Text style={TextStyles.paragraph(darkMode)}>Check your internet connection, then try again.</Text>
+      {textLines.map((line, idx) => <Text key={idx} style={TextStyles.paragraph(darkMode)}>{line}</Text>)}
       <MenuButton
-        onPress={refreshCallback}
-        label="Retry Download"
-        icon={graphics.CRATE}
+        onPress={onPress}
+        label={buttonLabel}
+        icon={buttonIcon}
+        theme={buttonTheme}
       />
-      <View style={styles.padding}/>
-    </View>
-  );
-
-  if (mode === PageView.MANAGE) return (
-    <View style={styles.container}>
-      <Text style={TextStyles.paragraph(darkMode)}>No custom levels created yet!</Text>
-      <MenuButton
-        onPress={() => doPageChange(2)}
-        label="Create New Level"
-        icon={graphics.METAL_CRATE}
-        theme={colors.RED_THEME}
-      />
+      {padBottom && <View style={styles.padding}/>}
     </View>
   );
 }
@@ -47,7 +44,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: "22.5%",
-    width: "100%",
+    flex: 1,
   },
   padding: {
     height: normalize(80),

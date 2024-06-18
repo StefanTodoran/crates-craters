@@ -1,11 +1,11 @@
 import { ImageSourcePropType } from "react-native";
 import { Theme, colors, graphics } from "../Theme";
-import { BoardTile, Direction, TileType } from "./types";
+import { Direction, FlatTile, TileType } from "./types";
 
 export interface Tool {
     label: string,
     icon: ImageSourcePropType,
-    tile: BoardTile,
+    tile: FlatTile,
     theme?: Theme,
 }
 

@@ -12,6 +12,7 @@ interface Props {
   previewSize: number,
   previewWidth: number,
   // rowCorrect?: number,
+  children?: React.ReactNode,
 }
 
 export default function BoardPreview({
@@ -19,6 +20,7 @@ export default function BoardPreview({
   previewSize,
   previewWidth,
   // rowCorrect,
+  children,
 }: Props) {
   const tileSize = calcPreviewTileSize(level.board.width, previewWidth, win);
   const previewCenter = useMemo(() => getSpawnPosition(level.board).y, [level]);
@@ -40,6 +42,7 @@ export default function BoardPreview({
       board={level.board.slice(previewTop, previewBottom)}
       overrideTileSize={tileSize}
       // rowCorrect={rowCorrect}
+      children={children}
     />
   );
 }

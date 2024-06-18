@@ -5,15 +5,18 @@ import GlobalContext from "../GlobalContext";
 import TextStyles, { normalize } from "../TextStyles";
 import { colors, graphics } from "../Theme";
 import { useCoinBalance } from "../util/loader";
+
 import Subpages from "../components/Subpages";
+import ProfilePage from "./ProfilePage";
 
 import CartIcon from "../assets/main_theme/cart.png";
 import ProfileIcon from "../assets/main_theme/profile.png";
-import DownloadIcon from "../assets/main_theme/download.png";
-import ProfilePage from "./ProfilePage";
-import DownloadLevelsPage from "./DownloadLevelsPage";
 
-export default function ({ }) {
+interface Props {
+  //
+}
+
+export default function StorePage({}: Props) {
   const { darkMode } = useContext(GlobalContext);
   const [balance, _modifyBalance] = useCoinBalance();
 
@@ -30,7 +33,6 @@ export default function ({ }) {
         </View>
       </>,
       <ProfilePage />,
-      <DownloadLevelsPage />,
     ];
   }, []);
 
@@ -45,11 +47,6 @@ export default function ({ }) {
         label: "Profile",
         color: colors.YELLOW_THEME.MAIN_COLOR,
         icon: ProfileIcon,
-      },
-      {
-        label: "Levels",
-        color: colors.YELLOW_THEME.MAIN_COLOR,
-        icon: DownloadIcon,
       },
     ];
   }, []);

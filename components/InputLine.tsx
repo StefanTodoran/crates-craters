@@ -1,11 +1,14 @@
 import { useRef, useEffect, useState } from "react";
 import { View, Animated, StyleSheet, TextInput } from "react-native";
 import { colors } from "../Theme";
+import { normalize } from "../TextStyles";
 
 interface Props {
   label: string,
   value: string,
   onChange: (newValue: string) => void,
+  fullBorder?: boolean,
+  disabled?: boolean,
   darkMode: boolean,
 }
 
@@ -17,6 +20,8 @@ export default function InputLine({
   label,
   value,
   onChange,
+  fullBorder,
+  disabled,
   darkMode,
 }: Props) {
   const [focused, setFocus] = useState(false);
@@ -32,8 +37,8 @@ export default function InputLine({
   }, [value, focused]); // so that on unmount the animation "state" isn't lost
 
   return (
-    <View style={styles.container}>
-      <Animated.Text style={styles.label(anim)} allowFontScaling={false}>
+    <View style={[styles.container, fullBorder && styles.fullBorderContainer]}>
+      <Animated.Text style={[styles.label(anim), fullBorder && styles.fullBorderLabel]} allowFontScaling={false}>
         {label}
       </Animated.Text>
       <Animated.View style={{
@@ -47,7 +52,10 @@ export default function InputLine({
         <TextInput
           style={[
             styles.input,
-            { color: (darkMode) ? "#fff" : "#000" },
+            { 
+              color: (darkMode) ? "#fff" : "#000", 
+              opacity: disabled ? 0.75 : 1,
+            },
           ]}
           onChangeText={(newVal) => {
             setFocus(true);
@@ -62,6 +70,7 @@ export default function InputLine({
           cursorColor={colors.DIM_GRAY}
           maxLength={24}
           allowFontScaling={false}
+          editable={!disabled}
         />
       </Animated.View>
     </View>
@@ -71,11 +80,18 @@ export default function InputLine({
 const styles = StyleSheet.create<any>({
   container: {
     position: "relative",
-    paddingTop: 12.5,
-    paddingBottom: 7.5,
+    paddingTop: normalize(12.5),
+    paddingBottom: normalize(7.5),
     borderBottomWidth: 1,
     borderColor: colors.DIM_GRAY_TRANSPARENT(0.3),
     marginBottom: 7.5,
+  },
+  fullBorderContainer: {
+    paddingTop: normalize(12),
+    paddingBottom: normalize(12),
+    paddingHorizontal: normalize(12),
+    borderWidth: 1,
+    borderRadius: normalize(8),
   },
   label: (anim: Animated.Value) => ({
     position: "absolute",
@@ -98,6 +114,9 @@ const styles = StyleSheet.create<any>({
       outputRange: [14, 10],
     }),
   }),
+  fullBorderLabel: {
+    left: normalize(12),
+  },
   input: {
     width: "100%",
     fontFamily: "Montserrat-Regular",

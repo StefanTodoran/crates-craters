@@ -57,7 +57,11 @@ export default function ManageLevel({
       <View style={styles.continer}>
         <InputCard
           title={level.name}
-          hints={[`Created ${new Date(level.created).toDateString()}`]}
+          // TODO: Add level stats here once shared!
+          hints={[
+            `Created on ${new Date(level.created).toDateString()}.`,
+            "Not publicly shared."
+          ]}
           fields={[
             {
               label: "Level Title",

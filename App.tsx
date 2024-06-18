@@ -10,19 +10,19 @@ import { checkForOfficialLevelUpdates } from "./util/database";
 import { Level, PageView, UserLevel } from "./util/types";
 import { Game, initializeGameObj } from "./util/logic";
 import { eventEmitter } from "./util/events";
-import GlobalContext from "./GlobalContext";
-import Toast from "react-native-toast-message";
 import { toastConfig } from "./util/toasts";
 import { colors } from "./Theme";
+import GlobalContext from "./GlobalContext";
+import Toast from "react-native-toast-message";
 
 import Menu from "./components/Menu";
 import Header from "./components/Header";
 import SettingsPage from "./pages/HelpSettings";
-import LevelSelect from "./pages/LevelSelect";
 import EditorPage from "./pages/EditorPage";
 import PlayLevel from "./pages/PlayLevel";
 import StorePage from "./pages/StorePage";
 import EditLevel from "./pages/EditLevel";
+import LevelsPage from "./pages/LevelsPage";
 
 const win = Dimensions.get("window");
 
@@ -141,10 +141,10 @@ export default function App() {
 
     const handleSyncRequest = (uuid?: string) => syncLevelStateWithStorage.current(uuid);
     const syncListener = eventEmitter.addListener("doStateStorageSync", handleSyncRequest);
-    
+
     const handleNotificationRequest = (event: any) => updateNotificationCounts.current(event.index, event.change);
     const notificationListener = eventEmitter.addListener("doNotificationsUpdate", handleNotificationRequest);
-    
+
     return () => {
       syncListener.remove();
       notificationListener.remove();
@@ -221,15 +221,13 @@ export default function App() {
 
           <View style={styles.page}>
             {view === PageView.LEVELS &&
-              <LevelSelect
+              <LevelsPage
                 viewCallback={switchView}
                 playLevelCallback={changePlayLevel}
-                // editorLevelCallback={startEditingLevel}
-                levels={levels.filter(lvl => lvl.official)}
                 scrollTo={!currentGame?.won ? playLevel?.uuid : undefined}
+                levels={levels.filter(lvl => lvl.official)}
                 elementHeight={levelElementHeight}
                 storeElementHeightCallback={setElementHeight}
-                mode={PageView.LEVELS}
               />
             }
 

@@ -1,28 +1,44 @@
-import { Text, FlatList, StyleSheet, View } from "react-native";
-import { useCallback, useContext, useRef, useState } from "react";
+import { Text, FlatList, StyleSheet, View, ImageSourcePropType } from "react-native";
+import { useCallback, useContext, useEffect, useRef, useState } from "react";
 
 import GlobalContext from "../GlobalContext";
-import { doPageChange } from "../util/events";
 import { Level, PageView } from "../util/types";
-import { refreshLevelsFromServer } from "../util/database";
+import { Theme, purpleTheme } from "../Theme";
+import TextStyles, { normalize } from "../TextStyles";
 
 import Toast from "react-native-toast-message";
 import LevelCard from "../components/LevelCard";
-import EmptyList from "../components/EmptyList";
-import TextStyles, { normalize } from "../TextStyles";
+import SimpleButton from "../components/SimpleButton";
+import EmptyList, { EmptyListProps } from "../components/EmptyList";
+
+interface SecondButtonProps {
+  text?: string | ((uuid: string, index: number) => string),
+  icon?: ImageSourcePropType,
+  callback?: (uuid: string, index: number) => void, // Triggers an effect on the current level.
+  disabled?: boolean | ((uuid: string, index: number) => boolean),
+}
 
 interface Props {
   viewCallback: (newView: PageView) => void, // Sets the current view of the application.
   playLevelCallback: (uuid: string) => void, // Sets the current play level in the parent state so it can be passed to the PlayLevel component and played.
-  editorLevelCallback?: (uuid: string) => void, // Requests to start editing a certain level by uuid.
+  secondButtonProps: SecondButtonProps,
+  headerComponent?: React.ReactElement,
+  footerText?: string,
 
+  theme?: Theme,
   levels: Level[],
+  noNumber?: boolean,
+  getStats?: (targetLevel: Level) => string[] | undefined,
+
   scrollTo?: string, // The index in levels of the level currently being played (if a level is being played). 
+  allowResume?: boolean,
+
+  onRefresh?: () => Promise<boolean>,
+  onEndReached?: () => void,
+  emptyListProps: EmptyListProps,
 
   elementHeight: number, // The card component size, used for pre scroll.
   storeElementHeightCallback: (height: number) => void, // Sets the element size, so this doesn't have to be recalculated every time we want to display the component.
-
-  mode: PageView.LEVELS | PageView.MANAGE,
 }
 
 // It isn't really possible to see more than 5 LevelCards on the screen at once.
@@ -31,24 +47,35 @@ const cardsPerScreen = 5;
 export default function LevelSelect({
   viewCallback,
   playLevelCallback,
-  editorLevelCallback,
+  secondButtonProps,
+  headerComponent,
+  footerText,
+  theme,
   levels,
+  noNumber,
+  getStats,
   scrollTo,
+  allowResume,
+  onRefresh,
+  onEndReached,
+  emptyListProps,
   elementHeight,
   storeElementHeightCallback,
-  mode,
 }: Props) {
   const { darkMode } = useContext(GlobalContext);
   const [refreshing, setRefreshing] = useState(false);
+  const useTheme = theme || purpleTheme;
 
   const scrollRef = useRef<any>();
   let scrollIndex = Math.max(0, levels.findIndex(level => level.uuid === scrollTo));
 
-  const [loadedLevels, setLoadedLevels] = useState(Math.max(scrollIndex + cardsPerScreen, 10));
+  const [loadedLevels, setLoadedLevels] = useState(scrollIndex + cardsPerScreen);
+  useEffect(() => setLoadedLevels(scrollIndex + cardsPerScreen), [levels]);
   const displayLevels = levels.slice(0, loadedLevels);
 
   const doRefresh = useCallback(() => {
-    refreshLevelsFromServer().then((success) => {
+    // @ts-expect-error We won't call doRefresh if onRefresh isn't defined.
+    onRefresh().then((success) => {
       setRefreshing(false);
       if (success) {
         Toast.show({
@@ -69,20 +96,27 @@ export default function LevelSelect({
   const openLevel = useCallback((levelIndex: number) => {
     playLevelCallback(levels[levelIndex].uuid);
     viewCallback(PageView.PLAY);
-  }, []);
+  }, [levels]);
 
   const resumeLevel = useCallback(() => {
     viewCallback(PageView.PLAY);
   }, []);
 
-  const editLevel = useCallback((levelIndex: number) => {
-    editorLevelCallback!(levels[levelIndex].uuid);
-    doPageChange(1);
-  }, []);
+  const secondButtonOnPress = useCallback((levelIndex: number) => {
+    console.log(levelIndex, levels[levelIndex]);
+    secondButtonProps.callback!(levels[levelIndex].uuid, levelIndex);
+  }, [levels]);
 
-  if (levels.length === 0) return (
-    <EmptyList mode={mode} refreshCallback={doRefresh} />
-  );
+  if (levels.length === 0) return (<>
+    {headerComponent}
+    <EmptyList
+      {...emptyListProps}
+      onPress={emptyListProps.onPress || doRefresh}
+      buttonTheme={useTheme}
+    />
+  </>);
+
+  console.log("levels.length", levels.length, "loadedLevels", loadedLevels);
 
   return (
     <>
@@ -99,42 +133,59 @@ export default function LevelSelect({
           levelIndex={0}
           level={levels[0]}
           darkMode={darkMode}
-          mode={mode}
+          useTheme={useTheme}
         />
       </View>}
 
       {elementHeight !== 0 &&
         <FlatList
           ref={scrollRef}
-          style={{ overflow: "hidden" }}
+          // style={{ overflow: "hidden" }}
           contentContainerStyle={styles.contentContainer}
           overScrollMode="never"
           showsVerticalScrollIndicator={false}
 
           data={displayLevels}
           initialNumToRender={cardsPerScreen}
-          onEndReached={() => setLoadedLevels(Math.min(levels.length, loadedLevels + 10))}
-          ListFooterComponent={loadedLevels < levels.length ? <Text style={[TextStyles.paragraph(darkMode), styles.loadingText]}>Loading...</Text> : undefined}
+          onEndReached={() => {
+            console.log(onEndReached, levels.length, loadedLevels + 10);
+            setLoadedLevels(Math.min(levels.length, loadedLevels + 10));
+            onEndReached && onEndReached();
+          }}
+          ListHeaderComponent={headerComponent}
+          ListFooterComponent={(loadedLevels < levels.length || !!footerText) ? <Text style={[TextStyles.paragraph(darkMode), styles.loadingText]}>
+            {loadedLevels < levels.length ? "Loading..." : footerText}
+          </Text> : undefined}
 
           refreshing={refreshing}
-          onRefresh={mode === PageView.LEVELS ? doRefresh : undefined}
+          onRefresh={onRefresh ? doRefresh : undefined}
 
           renderItem={({ item, index }) => {
             const playCallback = () => openLevel(index);
-            const editCallback = () => editLevel(index);
+            const sbCallback = () => secondButtonOnPress(index);
 
             let showResumeOption = item.uuid === scrollTo;
-            if (mode === PageView.MANAGE) showResumeOption = false;
+            if (!allowResume) showResumeOption = false;
 
             return <LevelCard
               playCallback={showResumeOption ? undefined : playCallback}
               resumeCallback={showResumeOption ? resumeLevel : undefined}
-              editCallback={editorLevelCallback ? editCallback : undefined}
+              stats={getStats && getStats(item)}
               levelIndex={index}
               level={displayLevels[index]}
               darkMode={darkMode}
-              mode={mode}
-            />
+              useTheme={useTheme}
+              noNumber={noNumber}
+              showCompletion /* TODO: Should this be false for editor levels? */
+            >
+              {secondButtonProps.callback && <SimpleButton
+                text={typeof secondButtonProps.text === "function" ? secondButtonProps.text(item.uuid, index) : secondButtonProps.text}
+                disabled={typeof secondButtonProps.disabled === "function" ? secondButtonProps.disabled(item.uuid, index) : secondButtonProps.disabled}
+                icon={secondButtonProps.icon}
+                onPress={sbCallback}
+                theme={useTheme}
+              />}
+            </LevelCard>
           }}
           keyExtractor={item => item.uuid}
           getItemLayout={(_data, index) => (
@@ -151,12 +202,12 @@ export default function LevelSelect({
 
 const styles = StyleSheet.create({
   contentContainer: {
-    paddingHorizontal: "5%",
     paddingVertical: "5%",
+    alignItems: "center",
   },
   loadingText: {
     textAlign: "center",
     marginTop: normalize(10),
     marginBottom: normalize(20),
-  }
+  },
 });

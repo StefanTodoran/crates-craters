@@ -1,17 +1,9 @@
 import { ScaledSize } from "react-native";
-import { Board, BoardTile, Direction, OneWayTile, TileType } from "./types";
+import { Direction, FlatTile, OneWayTile, TileType } from "./types";
 import { graphics } from "../Theme";
 
 // ======================= \\
 // BOARD HANLDER FUNCTIONS \\
-
-export function createBlankBoard(w: number, h: number): Board {
-  const board = new Array(h);
-  for (let i = 0; i < h; i++) {
-    board[i] = new Array(w).fill(0);
-  }
-  return board;
-}
 
 export function calcPreviewTileSize(tilesWidth: number, widthPercent: number, window: ScaledSize) {
   const maxWidth = (window.width * widthPercent) / tilesWidth;
@@ -28,7 +20,7 @@ export function calcBoardTileSize(boardWidth: number, boardHeight: number, windo
 // ======================= \\
 
 // This can't just be a dictionary since `graphics` may change.
-export function getIconSrc(tile: BoardTile) {
+export function getIconSrc(tile: FlatTile) {
   if (tile.id === TileType.DOOR) return graphics.DOOR;
   if (tile.id === TileType.KEY) return graphics.KEY;
   if (tile.id === TileType.CRATE) return graphics.CRATE;

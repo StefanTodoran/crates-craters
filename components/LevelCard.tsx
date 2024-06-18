@@ -1,36 +1,39 @@
-import { Text, View, Dimensions, Image, Animated, StyleSheet } from "react-native";
 import { useEffect, useRef } from "react";
+import { Text, View, Dimensions, Image, Animated, StyleSheet } from "react-native";
 import SimpleButton from "./SimpleButton";
 import BoardPreview from "./BoardPreview";
 
+import { Level } from "../util/types";
+import { Theme, colors, graphics } from "../Theme";
 import TextStyles, { normalize } from "../TextStyles";
-import { colors, graphics, purpleTheme } from "../Theme";
-import { Level, PageView } from "../util/types";
 
 const win = Dimensions.get("window");
 
 interface LevelCardProps {
   playCallback?: () => void, // The callback used to initiate the current level for playing.
   resumeCallback?: () => void, // Used to resume play if this level is currently being played.
-  editCallback?: () => void,
   level: Level,
   levelIndex: number,
   darkMode: boolean,
+  useTheme: Theme,
+  noNumber?: boolean,
+  showCompletion?: boolean,
+  stats?: string[],
   children?: React.ReactNode,
-  mode: PageView.LEVELS | PageView.MANAGE,
 }
 
 export default function LevelCard({
   playCallback,
   resumeCallback,
-  editCallback,
   level,
   levelIndex,
   darkMode,
-  mode,
+  useTheme,
+  noNumber,
+  showCompletion,
+  stats,
+  children,
 }: LevelCardProps) {
-  const useTheme = mode === PageView.LEVELS ? purpleTheme : colors.RED_THEME;
-
   const anim = useRef(new Animated.Value(0)).current;
   const setAnimTo = (animState: number, callback?: () => void) => {
     Animated.timing(anim, {
@@ -39,21 +42,15 @@ export default function LevelCard({
       useNativeDriver: true
     }).start(callback);
   }
-
-  useEffect(() => {
-    setAnimTo(1);
-    // setTimeout(() => {
-    //   setAnimTo(1);
-    // }, (levelIndex - scrollIndex) * 100);
-  }, []);
+  useEffect(() => setAnimTo(1), []);
 
   let attributionText;
   if (level.official && level.best) attributionText = `Best: ${level.best} moves`;
   else if (level.official) attributionText = "Standard Level";
   else /* if (!level.official) */ attributionText = `Designed by "${level.designer}"`;
 
-  let iconSource; // mode === PageView.MANAGE is the same as level.official
-  if (level.official) iconSource = level.completed ? graphics.CRATER : graphics.CRATE;
+  let iconSource;
+  if (level.official || useTheme.NAME === "PURPLE") iconSource = level.completed ? graphics.CRATER : graphics.CRATE;
   else iconSource = graphics.METAL_CRATE;
 
   return (
@@ -82,7 +79,7 @@ export default function LevelCard({
               style={styles.bigIcon}
               source={iconSource}
             />
-            <Text allowFontScaling={false} style={styles.number}>{levelIndex + 1}</Text>
+            {!noNumber && <Text allowFontScaling={false} style={styles.number}>{levelIndex + 1}</Text>}
           </View>
 
           {/* Name & Designer */}
@@ -100,80 +97,50 @@ export default function LevelCard({
           </View>
         </View>
 
-        {mode === PageView.LEVELS && <View style={styles.rowFlexStart}>
+        {showCompletion && <View style={styles.rowFlexStart}>
           {resumeCallback && <Image style={styles.icon} source={graphics.PLAYER} />}
           {level.completed && <Image style={styles.icon} source={graphics.FLAG_ICON} />}
         </View>}
       </View>
 
       <View style={styles.row}>
+
         <BoardPreview
           level={level}
           previewSize={2}
           previewWidth={0.5}
-        />
+        >
+          {stats && <Text style={[
+            styles.boardOverlay,
+            {
+              backgroundColor: darkMode ? colors.OFF_WHITE_TRANSPARENT(0.65) : colors.NEAR_BLACK_TRANSPARENT(0.65),
+              color: darkMode ? colors.NEAR_BLACK : colors.OFF_WHITE,
+            },
+          ]}>{stats.join("\n")}</Text>}
+        </BoardPreview>
 
-        <LevelCardButtons
-          playCallback={playCallback}
-          resumeCallback={resumeCallback}
-          editCallback={editCallback}
-          mode={mode}
-        />
+        <View style={styles.buttonsContainer}>
+          {playCallback && <SimpleButton
+            text="Play"
+            icon={graphics.PLAY_ICON}
+            main={true}
+            theme={useTheme}
+            onPress={playCallback}
+          />}
+
+          {resumeCallback && <SimpleButton
+            text={"Resume"}
+            icon={graphics.KEY_ICON}
+            main={true}
+            theme={useTheme}
+            onPress={resumeCallback}
+          />}
+
+          {children}
+        </View>
       </View>
 
     </Animated.View>
-  );
-}
-
-interface LevelCardButtonsProps {
-  playCallback?: () => void, // The callback used to initiate the current level for playing. If not provided, the level is currently being played.
-  resumeCallback?: () => void, // Used to resume play if this level is currently being played.
-  editCallback?: () => void,
-  mode: PageView.LEVELS | PageView.MANAGE,
-}
-
-export function LevelCardButtons({
-  playCallback,
-  resumeCallback,
-  editCallback,
-  mode,
-}: LevelCardButtonsProps) {
-  const useTheme = mode === PageView.LEVELS ? purpleTheme : colors.RED_THEME;
-
-  return (
-    <View style={styles.buttonsContainer}>
-      {playCallback && <SimpleButton
-        text={mode === PageView.MANAGE ? "Playtest" : "Play"}
-        icon={graphics.PLAY_ICON}
-        main={true}
-        theme={useTheme}
-        onPress={playCallback}
-      />}
-
-      {resumeCallback && <SimpleButton
-        text={"Resume"}
-        icon={graphics.KEY_ICON}
-        main={true}
-        theme={useTheme}
-        onPress={resumeCallback}
-      />}
-
-      {!editCallback && <SimpleButton
-        text={"Stats"}
-        icon={graphics.SHARE_ICON}
-        disabled={true}
-        onPress={() => {
-          // TODO: implement this page, then go to it
-        }}
-      />}
-
-      {editCallback && <SimpleButton
-        text={"Manage"}
-        icon={mode === PageView.MANAGE ? graphics.HAMMER_ICON_RED : graphics.HAMMER_ICON}
-        theme={useTheme}
-        onPress={editCallback}
-      />}
-    </View>
   );
 }
 
@@ -237,4 +204,13 @@ const styles = StyleSheet.create({
     flexDirection: "column",
     flex: 0.9
   },
+  boardOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    textAlign: "center",
+    textAlignVertical: "center",
+    fontFamily: "Montserrat-Medium",
+    fontWeight: "normal",
+    fontSize: normalize(16),
+    letterSpacing: 1,
+  }
 });
