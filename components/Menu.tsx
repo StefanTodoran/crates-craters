@@ -37,7 +37,7 @@ export const menuPages = [
     darkColor: "#b88700",
     banner: PageTheme.YELLOW,
     source: CoinGraphic,
-    text: "STORE",
+    text: "PROFILE",
     target: PageView.STORE,
   },
   {

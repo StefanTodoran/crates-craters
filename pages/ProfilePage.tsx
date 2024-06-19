@@ -11,6 +11,7 @@ import SubpageContainer from "../components/SubpageContainer";
 import SimpleButton from "../components/SimpleButton";
 import Toast from "react-native-toast-message";
 import LoginPage from "./LoginPage";
+import { metadataKeys, setData } from "../util/loader";
 
 interface Props {
     setUserCredential: (newCredential: UserCredential | undefined) => void,
@@ -18,8 +19,6 @@ interface Props {
 
 export default function ProfilePage({ setUserCredential }: Props) {
     const { darkMode, userCredential } = useContext(GlobalContext);
-
-    console.log("userCredential?.user.emailVerified", userCredential?.user.emailVerified)
 
     if (!userCredential) return <LoginPage setUserCredential={setUserCredential} />;
     return (
@@ -47,6 +46,8 @@ export default function ProfilePage({ setUserCredential }: Props) {
                         signOut(auth)
                             .then(() => {
                                 setUserCredential(undefined);
+                                setData(metadataKeys.userCredentials, null);
+                                
                                 Toast.show({
                                     type: "success",
                                     text1: "Account logout succeeded!",

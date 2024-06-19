@@ -6,6 +6,8 @@ import TextStyles, { normalize } from "../TextStyles";
 import GlobalContext from "../GlobalContext";
 import { UserCredential, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../util/firebase";
+import { createDocument } from "../util/database";
+import { getData, metadataKeys, setData } from "../util/loader";
 
 import SubpageContainer from "../components/SubpageContainer";
 import SimpleButton from "../components/SimpleButton";
@@ -58,6 +60,7 @@ export default function LoginPage({ setUserCredential }: Props) {
                         signInWithEmailAndPassword(auth, username, password)
                             .then((userCredential) => {
                                 setUserCredential(userCredential);
+                                setData(metadataKeys.userCredentials, { username: username, password: password });
                                 Toast.show({
                                     type: "success",
                                     text1: "Account login succeeded!",
@@ -77,8 +80,22 @@ export default function LoginPage({ setUserCredential }: Props) {
                 <SimpleButton
                     text="Create Account"
                     onPress={() => {
+                        const coinBalance = getData(metadataKeys.coinBalance) || 0;
+                        const attemptedLevels = getData(metadataKeys.attemptedLevels) || [];
+                        const completedLevels = getData(metadataKeys.completedLevels) || [];
+
                         createUserWithEmailAndPassword(auth, username, password)
                             .then((userCredential) => {
+                                createDocument("userAccounts", username, {
+                                    user_email: username,
+                                    likes: [],
+                                    attempted: attemptedLevels,
+                                    completed: completedLevels,
+                                    coins: coinBalance,
+                                });
+                                setData(metadataKeys.userCredentials, { username: username, password: password });
+                                // TODO: Failure to create this document should be handled somehow.
+
                                 setUserCredential(userCredential);
                                 Toast.show({
                                     type: "success",

@@ -1,12 +1,12 @@
-import { DocumentData, DocumentReference, Query, QuerySnapshot, Timestamp, WhereFilterOp, addDoc, collection, doc, getCountFromServer, getDocs, limit, orderBy, query, setDoc, updateDoc, where } from "firebase/firestore";
+import { DocumentData, DocumentReference, Query, QuerySnapshot, Timestamp, WhereFilterOp, addDoc, collection, doc, getCountFromServer, getDocs, limit, orderBy, query, runTransaction, setDoc, updateDoc, where } from "firebase/firestore";
 import { getData, getStoredLevelCount, metadataKeys, multiStoreLevels, parseCompressedBoardData, setData } from "./loader";
 
 import { db } from "./firebase";
 import { Direction, OfficialLevel } from "./types";
 import { doStateStorageSync } from "./events";
 
-import { setLogLevel } from "firebase/firestore";
-setLogLevel("debug");
+// import { setLogLevel } from "firebase/firestore";
+// setLogLevel("debug");
 
 // ======================== \\
 // DOCUMENT TYPE INTERFACES \\
@@ -27,7 +27,7 @@ export interface UserLevelDocument {
   name: string,
   board: string,
   designer: string,
-  user_id: string,
+  user_email: string,
   shared: Timestamp,
   attempts: number,
   wins: number,
@@ -38,15 +38,18 @@ export interface UserLevelDocument {
 }
 
 export interface UserAccountDocument {
-  uuid: string, // Referred to as user_id in documents in other collections.
-  username: string,
+  user_email: string,
+  likes: string[],
+  attempted: string[],
+  completed: string[],
+  coins: number,
 }
 
 // ==================== \\
 // HIGH LEVEL FUNCTIONS \\
 
 export async function checkForOfficialLevelUpdates(): Promise<number> {
-  const metadata: MetadataDocument = await getSpecificEntry("metadata", "metadata");
+  const metadata: MetadataDocument = await getSpecificEntryByName("metadata", "metadata");
   const updated: Timestamp = getData(metadataKeys.lastUpdatedOfficialLevels);
   const prevCount = getStoredLevelCount();
 
@@ -96,25 +99,51 @@ async function fetchOfficialLevelsFromServer() {
   return parsedLevels;
 }
 
-export async function likeUserLevel(uuid: string) {
+// export async function likeUserLevel(uuid: string, user: UserCredential) {
+//   const likedLevels = getData(metadataKeys.likedLevels) || [];
+//   if (likedLevels.includes(uuid)) return false;
+
+//   const updatedData = await getSpecificEntry("userLevels", uuid) as UserLevelDocument;
+//   const success = await updateDocument("userLevels", uuid, { likes: updatedData.likes + 1 });
+
+//   if (success) {
+//     likedLevels.push(uuid);
+//     setData(metadataKeys.likedLevels, likedLevels);
+//   }
+
+//   return success;
+// }
+
+export async function likeUserLevel(level_id: string, user_id: string) {
   const likedLevels = getData(metadataKeys.likedLevels) || [];
-  if (likedLevels.includes(uuid)) return false;
+  if (likedLevels.includes(level_id)) return false;
 
-  const updatedData = await getSpecificEntry("userLevels", uuid) as UserLevelDocument;
-  const success = await updateDocument("userLevels", uuid, { likes: updatedData.likes + 1 });
+  try {
+    const success = await runTransaction(db, async (transaction) => {
+      const userLevelRef = doc(db, "userLevels", level_id);
+      const userLevelDoc = await transaction.get(userLevelRef);
+      const userLevelData = userLevelDoc.data() as UserLevelDocument;
 
-  if (success) {
-    likedLevels.push(uuid);
-    setData(metadataKeys.likedLevels, likedLevels);
+      const userAccountRef = doc(db, "userAccounts", user_id);
+      likedLevels.push(level_id);
+      
+      transaction.update(userLevelRef, { likes: userLevelData.likes + 1 });
+      transaction.update(userAccountRef, { likes: likedLevels });
+      setData(metadataKeys.likedLevels, likedLevels);
+      return true;
+    });
+
+    return success;
+  } catch (error) {
+    console.error("Error liking level:", level_id, error);
+    return false;
   }
-
-  return success;
 }
 
 export async function attemptUserLevel(uuid: string) {
   const attemptedLevels = getData(metadataKeys.attemptedLevels) || [];
 
-  const updatedData = await getSpecificEntry("userLevels", uuid) as UserLevelDocument;
+  const updatedData = await getSpecificEntryByName("userLevels", uuid) as UserLevelDocument;
   const success = await updateDocument("userLevels", uuid, {
     attempts: updatedData.attempts + 1,
     winrate: updatedData.wins / (updatedData.attempts + 1),
@@ -132,7 +161,7 @@ export async function markUserLevelCompleted(uuid: string, moveHistory: Directio
   const completedLevels = getData(metadataKeys.completedLevels) || [];
   const firstCompletion = !completedLevels.includes(uuid);
 
-  const prevData = await getSpecificEntry("userLevels", uuid) as UserLevelDocument;
+  const prevData = await getSpecificEntryByName("userLevels", uuid) as UserLevelDocument;
   const updatedData: any = { best: Math.min(prevData.best, moveHistory.length) };
   if (firstCompletion) {
     updatedData.wins = prevData.wins + 1;
@@ -150,6 +179,10 @@ export async function markUserLevelCompleted(uuid: string, moveHistory: Directio
   }
 
   return success;
+}
+
+export async function getUserData(username: string) {
+  return getSpecificEntryByName("userAccounts", username);
 }
 
 // ========================== \\
@@ -175,7 +208,7 @@ export function createFirebaseQuery(
   let q: Query = collection(db, collectionName);
   filters.forEach(filter => q = query(q, where(filter.field, filter.operator, filter.value)));
   orderFields.forEach(field => q = query(q, orderBy(field.field, field.order)));
-  q = query(q, limit(pageSize));
+  if (pageSize !== -1) q = query(q, limit(pageSize));
   return q;
 }
 
@@ -196,17 +229,32 @@ export async function getAllEntries(collectionName: string) {
   return parseQuerySnapshot(querySnapshot);
 }
 
-export async function getEntryCountFromQuery(query: Query) {
-  const snap = await getCountFromServer(query);
+export async function getEntryCountFromQuery(q: Query) {
+  const snap = await getCountFromServer(q);
   return snap.data().count;
 }
 
-export async function getEntriesFromQuery(query: Query) {
-  const querySnapshot = await getDocs(query);
+export async function getEntriesFromQuery(q: Query) {
+  const querySnapshot = await getDocs(q);
   return parseQuerySnapshot(querySnapshot);
 }
 
-export async function getSpecificEntry(collectionName: string, docName: string) {
+export async function getSpecificEntry(q: Query) {
+  const querySnapshot = await getDocs(q);
+  const docs = parseQuerySnapshot(querySnapshot);
+
+  if (docs.length === 0) {
+    throw new Error(`No document matching query "${q}" found.`);
+  }
+  else if (docs.length === 1) return docs[0]; // Success case
+  else {
+    console.warn(`Found multiple records matching query "${q}"!`);
+    console.warn(`Using first document returned by query snapshot.`);
+    return docs[0];
+  }
+}
+
+export async function getSpecificEntryByName(collectionName: string, docName: string) {
   const q = query(collection(db, collectionName), where("__name__", "==", docName));
   const querySnapshot = await getDocs(q);
   const docs = parseQuerySnapshot(querySnapshot);

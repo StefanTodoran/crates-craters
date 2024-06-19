@@ -4,12 +4,11 @@ import * as NavigationBar from "expo-navigation-bar";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Dimensions, Animated, BackHandler, SafeAreaView, StatusBar as RNStatusBar, View, StyleSheet } from "react-native";
 
-import { createLevel, getLevelData, getStoredLevels, updateLevel } from "./util/loader";
+import { createLevel, getData, getLevelData, getStoredLevels, metadataKeys, setData, updateLevel } from "./util/loader";
 import { useBooleanSetting, useNumberSetting } from "./util/hooks";
-import { checkForOfficialLevelUpdates } from "./util/database";
+import { UserAccountDocument, checkForOfficialLevelUpdates, getUserData } from "./util/database";
 import { Level, PageView, PlayMode, SharedLevel, UserLevel } from "./util/types";
 import { Game, initializeGameObj } from "./util/logic";
-import { UserCredential } from "firebase/auth";
 import { eventEmitter } from "./util/events";
 import { toastConfig } from "./util/toasts";
 import { colors } from "./Theme";
@@ -24,6 +23,8 @@ import PlayLevel from "./pages/PlayLevel";
 import StorePage from "./pages/StorePage";
 import EditLevel from "./pages/EditLevel";
 import LevelsPage from "./pages/LevelsPage";
+import { UserCredential, signInWithEmailAndPassword } from "firebase/auth";
+import { auth } from "./util/firebase";
 
 const win = Dimensions.get("window");
 
@@ -96,6 +97,26 @@ export default function App() {
   const [levels, setLevels] = useState<Level[]>([]);
   const [notificationCounts, setNotificationCounts] = useState([0, 0, 0, 0]);
   const [userCredential, setUserCredential] = useState<UserCredential>();
+  const [userData, setUserData] = useState<UserAccountDocument>();
+
+  useEffect(() => {
+    if (!userCredential) {
+      const savedCredentials = getData(metadataKeys.userCredentials);
+      if (!savedCredentials) return;
+      
+      signInWithEmailAndPassword(auth, savedCredentials.username, savedCredentials.password)
+        .catch((error) => {
+          console.error("Failed to sign in with saved credentials:", error.code);
+          if (error.code === "auth/invalid-credential") setData(metadataKeys.userCredentials, undefined);
+        });
+      return;
+    }
+
+    getUserData(userCredential.user.email!)
+      .then((data) => setUserData(data))
+      .catch((err) => console.log(">>>", err));
+    // TODO: Put a Toast message here? What to do if fail?
+  }, [userCredential]);
 
   const syncLevelStateWithStorage = useRef((_uuid?: string) => { });
   const updateNotificationCounts = useRef((_index: number, _change: number) => { });
@@ -209,7 +230,7 @@ export default function App() {
 
   if (!fontsLoaded) return <></>;
   return (
-    <GlobalContext.Provider value={{ darkMode, dragSensitivity, doubleTapDelay, playAudio, userCredential }}>
+    <GlobalContext.Provider value={{ darkMode, dragSensitivity, doubleTapDelay, playAudio, userCredential, userData }}>
       <SafeAreaView style={styles.container}>
 
         <Menu notificationCounts={notificationCounts} openPage={switchView} />

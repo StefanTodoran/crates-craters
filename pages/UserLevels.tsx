@@ -72,7 +72,7 @@ export default function UserLevels({
     elementHeight,
     storeElementHeightCallback,
 }: Props) {
-    const { darkMode } = useContext(GlobalContext);
+    const { darkMode, userCredential } = useContext(GlobalContext);
     const likedLevels = getData(metadataKeys.likedLevels) || [];
     const attemptedLevels = getData(metadataKeys.attemptedLevels) || [];
     const completedLevels = getData(metadataKeys.completedLevels) || [];
@@ -238,10 +238,10 @@ export default function UserLevels({
             }}
             secondButtonProps={{
                 text: (uuid: string) => likedLevels.includes(uuid) ? "Liked" : "Like",
-                disabled: (uuid: string) => likedLevels.includes(uuid),
+                disabled: (uuid: string) => !userCredential || likedLevels.includes(uuid),
                 icon: graphics.LIKE_ICON,
                 callback: async (uuid: string, index: number) => {
-                    const success = await likeUserLevel(uuid);
+                    const success = await likeUserLevel(uuid, userCredential!.user.email!);
                     if (!success) {
                         Toast.show({
                             type: "error",

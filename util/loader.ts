@@ -11,6 +11,7 @@ export enum metadataKeys {
   officialLevelKeys = "officialLevelKeys",
   customLevelKeys = "customLevelKeys",
   coinBalance = "coinBalance",
+  userCredentials = "userCredentials",
   
   // These reference the UUIDs of publicly shared user created levels.
   likedLevels = "likedLevels",
@@ -106,6 +107,9 @@ export function createLevel(level: UserLevel) {
   const customLevelKeys = getData(metadataKeys.customLevelKeys) || [];
   customLevelKeys.push(level.uuid);
   setData(metadataKeys.customLevelKeys, customLevelKeys);
+  
+  // TODO: All state storage sync functions could maybe be replaced with
+  // a number of event listeners on MMKV.
   doStateStorageSync(level.uuid);
 }
 

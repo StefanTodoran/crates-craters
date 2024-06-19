@@ -23,6 +23,7 @@ export default function StorePage({ setUserCredential }: Props) {
 
   const pageComponents = useMemo(() => {
     return [
+      <ProfilePage setUserCredential={setUserCredential} />,
       <>
         <Text style={[TextStyles.subtitle(darkMode), { color: colors.YELLOW_THEME.MAIN_COLOR }]}>
           Coming Soon
@@ -33,21 +34,20 @@ export default function StorePage({ setUserCredential }: Props) {
           <Image style={styles.icon} source={graphics.COIN} />
         </View>
       </>,
-      <ProfilePage setUserCredential={setUserCredential} />,
     ];
   }, []);
 
   const pageTabs = useMemo(() => {
     return [
       {
-        label: "Store",
-        color: colors.YELLOW_THEME.MAIN_COLOR,
-        icon: CartIcon,
-      },
-      {
         label: "Profile",
         color: colors.YELLOW_THEME.MAIN_COLOR,
         icon: ProfileIcon,
+      },
+      {
+        label: "Store",
+        color: colors.YELLOW_THEME.MAIN_COLOR,
+        icon: CartIcon,
       },
     ];
   }, []);

@@ -1,4 +1,16 @@
+import { UserCredential } from "firebase/auth";
 import { FlatBoard } from "./board";
+
+export interface UserData extends UserCredential {
+  data: {
+    id: string,
+    username: string,
+    likes: [],
+    attempted: [],
+    completed: [],
+    coins: [],
+  }
+}
 
 // ============= \\
 // TILES & BOARD \\
