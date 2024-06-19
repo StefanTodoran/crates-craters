@@ -18,18 +18,14 @@ export interface Position {
 }
 
 export interface Game {
-  uuid: string,
-  name: string,
   board: LayeredBoard,
-  // official: boolean,
-
   player: Position,
   maxCoins: number, // The number of coins needed to complete the level.
   coins: number,
   keys: number,
   won: boolean, // Whether the curren run of the level has been completed.
   soundEvent?: SoundEvent,
-  moveCount: number,
+  moveHistory: Direction[],
 }
 
 // Deep copy of a game object.
@@ -38,6 +34,7 @@ function cloneGameObj(game: Game): Game {
     ...game,
     board: game.board.clone(),
     player: { y: game.player.y, x: game.player.x },
+    moveHistory: [...game.moveHistory],
   }
 }
 
@@ -314,7 +311,7 @@ export function doGameMove(game: Game, move: Direction): [Game, boolean] {
   }
 
   next.won = winCondition(next);
-  next.moveCount++;
+  next.moveHistory.push(move);
 
   if (!next.soundEvent && !next.won) {
     next.soundEvent = SoundEvent.MOVE;
@@ -347,14 +344,12 @@ export function initializeGameObj(level: Level): Game {
 
   const numberOfCoins = countInstancesInBoard(board, TileType.COIN);
   return {
-    uuid: level.uuid,
-    name: level.name,
     board: board,
     player: startPos,
     maxCoins: numberOfCoins,
     coins: 0,
     keys: 0,
     won: false,
-    moveCount: 0,
+    moveHistory: [],
   };
 }

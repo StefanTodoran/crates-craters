@@ -88,8 +88,7 @@ export interface UserLevel extends LevelBase {
   shared?: DateString,
 }
 
-export interface SharedLevel extends UserLevel {
-  // TODO: SharedLevel objects fetched from the server WON'T have the "created" property!.
+export interface SharedLevel extends Exclude<UserLevel, "created"> {
   shared: DateString,
   downloads: number,
   attempts: number,

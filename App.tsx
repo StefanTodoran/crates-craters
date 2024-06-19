@@ -98,10 +98,10 @@ export default function App() {
   const syncLevelStateWithStorage = useRef((_uuid?: string) => { });
   const updateNotificationCounts = useRef((_index: number, _change: number) => { });
 
-  const [playLevel, setPlayLevel] = useState<Level>();                  // The level currently being played.
-  const [currentGame, setGameState] = useState<Game>();                 // The game state of the level being played.
-  const [gameHistory, setGameHistory] = useState<Game[]>();             // The past game states, used for undoing moves.
-  const [editorLevel, setEditorLevel] = useState<UserLevel>();          // The level object being edited.
+  const [playLevel, setPlayLevel] = useState<Level>(); // The level currently being played.
+  const [currentGame, setGameState] = useState<Game>(); // The game state of the level being played.
+  const [gameHistory, setGameHistory] = useState<Game[]>([]); // The past game states, used for undoing moves.
+  const [editorLevel, setEditorLevel] = useState<UserLevel>(); // The level object being edited.
   const [playMode, setPlayMode] = useState<PlayMode>(PlayMode.STANDARD); // Different level types may require slightly different behavior.
 
   useEffect(() => {
@@ -154,7 +154,7 @@ export default function App() {
     const levelObject = getLevelData(uuid);
     playLevelFromObj(levelObject);
   }, []);
-  
+
   const playLevelFromObj = useCallback((level: Level) => {
     setPlayLevel(level);
     const newGame = initializeGameObj(level);
@@ -165,12 +165,7 @@ export default function App() {
   const getNextLevel = useCallback(() => {
     const nextIndex = levels.findIndex(level => level.uuid === playLevel!.uuid) + 1;
     const nextLevel = levels[nextIndex];
-
-    if (nextLevel) {
-      setPlayLevel(nextLevel);
-      setGameState(initializeGameObj(nextLevel));
-      setGameHistory([]);
-    }
+    if (nextLevel) playLevelFromObj(nextLevel);
   }, [levels, playLevel]);
 
   const startEditingLevel = useCallback((uuid: string) => {
@@ -181,7 +176,6 @@ export default function App() {
   const createNewLevel = useCallback((level: UserLevel) => {
     setEditorLevel(level);
     createLevel(level);
-
     const levels = getStoredLevels();
     setLevels(levels);
   }, []);

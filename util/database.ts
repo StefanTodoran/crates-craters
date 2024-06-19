@@ -34,7 +34,7 @@ export interface UserLevelDocument {
   winrate: number,
   likes: number,
   best: number,
-  // keywords: string[], // Space-seperated contents of name and designer
+  keywords: string[], // Space-seperated contents of name and designer
 }
 
 export interface UserAccountDocument {
@@ -100,8 +100,8 @@ export async function likeUserLevel(uuid: string) {
   if (likedLevels.includes(uuid)) return false;
 
   const updatedData = await getSpecificEntry("userLevels", uuid) as UserLevelDocument;
-  const success = await updateDocument("userLevels", uuid, { likes: updatedData.likes + 1});
-  
+  const success = await updateDocument("userLevels", uuid, { likes: updatedData.likes + 1 });
+
   if (success) {
     likedLevels.push(uuid);
     setData(metadataKeys.likedLevels, likedLevels);
@@ -114,11 +114,11 @@ export async function attemptUserLevel(uuid: string) {
   const attemptedLevels = getData(metadataKeys.attemptedLevels) || [];
 
   const updatedData = await getSpecificEntry("userLevels", uuid) as UserLevelDocument;
-  const success = await updateDocument("userLevels", uuid, { 
+  const success = await updateDocument("userLevels", uuid, {
     attempts: updatedData.attempts + 1,
     winrate: updatedData.wins / (updatedData.attempts + 1),
   });
-  
+
   if (success && !attemptedLevels.includes(uuid)) {
     attemptedLevels.push(uuid);
     setData(metadataKeys.likedLevels, attemptedLevels);
@@ -127,16 +127,21 @@ export async function attemptUserLevel(uuid: string) {
   return success;
 }
 
-export async function markCompletedUserLevel(uuid: string) {
+export async function markUserLevelCompleted(uuid: string, moveCount: number) {
   const completedLevels = getData(metadataKeys.completedLevels) || [];
+  const firstCompletion = !completedLevels.includes(uuid);
 
-  const updatedData = await getSpecificEntry("userLevels", uuid) as UserLevelDocument;
-  const success = await updateDocument("userLevels", uuid, { 
-    wins: updatedData.wins + 1,
-    winrate: (updatedData.wins + 1) / updatedData.attempts,
-  });
-  
-  if (success && !completedLevels.includes(uuid)) {
+  // TODO: add document to levelSolutions
+
+  const prevData = await getSpecificEntry("userLevels", uuid) as UserLevelDocument;
+  const updatedData: any = { best: Math.min(prevData.best, moveCount) };
+  if (firstCompletion) {
+    updatedData.wins = prevData.wins + 1;
+    updatedData.winrate = (prevData.wins + 1) / prevData.attempts;
+  }
+
+  const success = await updateDocument("userLevels", uuid, updatedData);
+  if (success && firstCompletion) {
     completedLevels.push(uuid);
     setData(metadataKeys.likedLevels, completedLevels);
   }

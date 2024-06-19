@@ -29,8 +29,6 @@ export default function LevelsPage({
     elementHeight,
     storeElementHeightCallback,
 }: Props) {
-    console.log("scrollTo", scrollTo);
-
     const pageComponents = [
         <LevelSelect
             viewCallback={viewCallback}

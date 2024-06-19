@@ -17,6 +17,7 @@ import BackButton from "../assets/BackButton";
 // import { aStarSearch, basicHeuristic, compoundHeuristic } from "../util/search";
 import { Game, SoundEvent, canMoveTo, doGameMove, initializeGameObj } from "../util/logic";
 import { Direction, Level, PageView, PlayMode } from "../util/types";
+import { markUserLevelCompleted } from "../util/database";
 import { markLevelCompleted } from "../util/loader";
 import { calcBoardTileSize } from "../util/board";
 import { colors, graphics } from "../Theme";
@@ -164,7 +165,10 @@ export default function PlayLevel({
 
   useEffect(() => {
     panResponderEnabled.current = !game.won;
-    if (game.won) markLevelCompleted(game.uuid, history.length);
+    if (game.won) {
+      markLevelCompleted(level.uuid, game.moveHistory.length);
+      if (mode === PlayMode.SHARED) markUserLevelCompleted(level.uuid, game.moveHistory.length);
+    }
   }, [game]);
 
   // More player input state, we use these to keep track of double taps. We need to know
@@ -180,20 +184,14 @@ export default function PlayLevel({
     handleGesture.current = (gesture: Gesture) => {
       const [up, down, left, right] = gesture;
       // Exactly one of up, down, left, right must be true!
-      if (bti(up) + bti(down) + bti(left) + bti(right) !== 1) {
-        return;
-      }
+      if (bti(up) + bti(down) + bti(left) + bti(right) !== 1) return;
 
-      let newState, stateChanged;
-      if (up) {
-        [newState, stateChanged] = doGameMove(game, Direction.UP);
-      } else if (down) {
-        [newState, stateChanged] = doGameMove(game, Direction.DOWN);
-      } else if (left) {
-        [newState, stateChanged] = doGameMove(game, Direction.LEFT);
-      } else { // if (right) {
-        [newState, stateChanged] = doGameMove(game, Direction.RIGHT);
-      }
+      let move;
+      if (up) move = Direction.UP;
+      else if (down) move = Direction.DOWN;
+      else if (left) move = Direction.LEFT;
+      else move = Direction.RIGHT;
+      const [newState, stateChanged] = doGameMove(game, move);
 
       playSoundEffect(newState.soundEvent);
       if (stateChanged) updateGameState(newState);
@@ -358,9 +356,9 @@ export default function PlayLevel({
     doPageChange(1);
   };
   const modeToBackPage = {
-    [PlayMode.STANDARD]: toLevelSearch, 
-    [PlayMode.PLAYTEST]: () => viewCallback(PageView.MANAGE), 
-    [PlayMode.SHARED]: toLevelSearch, 
+    [PlayMode.STANDARD]: toLevelSearch,
+    [PlayMode.PLAYTEST]: () => viewCallback(PageView.MANAGE),
+    [PlayMode.SHARED]: toLevelSearch,
   };
 
   let returnMenuButton, postWinActionBtn;
@@ -399,7 +397,7 @@ export default function PlayLevel({
         fillWidth
       />;
       postWinActionBtn = <SimpleButton
-        onPress={() => {/* TODO: make this work! */}}
+        onPress={() => {/* TODO: make this work! */ }}
         text="Like Level"
         main
       />;
@@ -410,7 +408,7 @@ export default function PlayLevel({
     <SafeAreaView style={staticStyles.container}>
       {/* GAMEPLAY COMPONENTS */}
       <View>
-        <MoveCounter moveCount={game.moveCount} />
+        <MoveCounter moveCount={game.moveHistory.length} />
 
         <View style={staticStyles.centerContents} {...panResponder.panHandlers}>
           <GameBoard board={game.board} overrideTileSize={tileSize}>
