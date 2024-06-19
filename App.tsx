@@ -4,12 +4,12 @@ import * as NavigationBar from "expo-navigation-bar";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Dimensions, Animated, BackHandler, SafeAreaView, StatusBar as RNStatusBar, View, StyleSheet } from "react-native";
 
-import { createLevel, getData, getLevelData, getStoredLevels, metadataKeys, setData, updateLevel } from "./util/loader";
+import { createLevel, getData, getLevelData, getStoredLevels, metadataKeys, setData } from "./util/loader";
 import { useBooleanSetting, useNumberSetting } from "./util/hooks";
 import { UserAccountDocument, checkForOfficialLevelUpdates, getUserData } from "./util/database";
 import { Level, PageView, PlayMode, SharedLevel, UserLevel } from "./util/types";
 import { Game, initializeGameObj } from "./util/logic";
-import { eventEmitter } from "./util/events";
+import { doPageChange, eventEmitter } from "./util/events";
 import { toastConfig } from "./util/toasts";
 import { colors } from "./Theme";
 import GlobalContext from "./GlobalContext";
@@ -52,16 +52,18 @@ export default function App() {
 
   const [view, setView] = useState(PageView.MENU);
 
-  const openPageView = useCallback((newView: PageView) => {
+  const openPageView = useCallback((newView: PageView, pageNum?: number) => {
     setView(newView);
-    setAnimTo(1);
+    setAnimTo(1, () => {
+      if (pageNum !== undefined) doPageChange(pageNum);
+    });
 
     // Non-standard play modes are set when calling App.tsx to 
     // begin play, and therefore should be cleared when play is left.
     if (newView !== PageView.PLAY) setPlayMode(PlayMode.STANDARD);
   }, []);
 
-  const switchView = useCallback((newView: PageView) => {
+  const switchView = useCallback((newView: PageView, pageNum?: number) => {
     if (view === PageView.PLAY && newView === PageView.EDITOR) {
       // If we are coming from PageView.PLAY, playLevel must not be undefined.
       startEditingLevel(playLevel!.uuid);
@@ -74,9 +76,9 @@ export default function App() {
     if (newView === PageView.MENU) { // PAGE -> MENU
       setAnimTo(0, () => setView(newView));
     } else if (view === PageView.MENU) { // MENU -> PAGE
-      openPageView(newView);
+      openPageView(newView, pageNum);
     } else { // PAGE -> PAGE
-      setAnimTo(0, () => openPageView(newView));
+      setAnimTo(0, () => openPageView(newView, pageNum));
     }
   }, [view]);
 
@@ -103,8 +105,9 @@ export default function App() {
     if (!userCredential) {
       const savedCredentials = getData(metadataKeys.userCredentials);
       if (!savedCredentials) return;
-      
+
       signInWithEmailAndPassword(auth, savedCredentials.username, savedCredentials.password)
+        .then((userCredential) => setUserCredential(userCredential))
         .catch((error) => {
           console.error("Failed to sign in with saved credentials:", error.code);
           if (error.code === "auth/invalid-credential") setData(metadataKeys.userCredentials, undefined);
@@ -203,8 +206,8 @@ export default function App() {
     setLevels(levels);
   }, []);
 
-  const playSharedLevel = useCallback((level: SharedLevel) => {
-    playLevelFromObj(level);
+  const playSharedLevel = useCallback((level: SharedLevel|undefined) => {
+    if (level) playLevelFromObj(level); // If undefined we simply resume.
     setPlayMode(PlayMode.SHARED);
   }, []);
 
@@ -288,7 +291,6 @@ export default function App() {
                 level={editorLevel!}
                 levelCallback={setEditorLevel}
                 playtestLevel={beginPlaytesting}
-                storeChanges={updateLevel}
               />
             }
 

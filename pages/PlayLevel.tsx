@@ -17,16 +17,15 @@ import BackButton from "../assets/BackButton";
 // import { aStarSearch, basicHeuristic, compoundHeuristic } from "../util/search";
 import { Game, SoundEvent, canMoveTo, doGameMove, initializeGameObj } from "../util/logic";
 import { Direction, Level, PageView, PlayMode } from "../util/types";
-import { markUserLevelCompleted } from "../util/database";
+import { markUserLevelCompleted, postSolutionData } from "../util/database";
 import { markLevelCompleted } from "../util/loader";
 import { calcBoardTileSize } from "../util/board";
 import { colors, graphics } from "../Theme";
-import { doPageChange } from "../util/events";
 
 const win = Dimensions.get("window");
 
 interface Props {
-  viewCallback: (newView: PageView) => void, // Sets the current view of the application. 
+  viewCallback: (newView: PageView, newPage?: number) => void, // Sets the current view of the application. 
   nextLevelCallback: (uuid: string) => void, // Request the parent update the level to the next level. 
   gameStateCallback: (newState: Game) => void, // Updates the state of the game, stored in the parent for resumeability.
   gameHistoryCallback: (newHistory: Game[]) => void, // Updates the history of the state of the game, stored in the parent for resumeability.
@@ -67,7 +66,7 @@ export default function PlayLevel({
   history,
   mode,
 }: Props) {
-  const { darkMode, dragSensitivity, doubleTapDelay, playAudio } = useContext(GlobalContext);
+  const { darkMode, dragSensitivity, doubleTapDelay, playAudio, userCredential } = useContext(GlobalContext);
 
   function updateGameState(newState: Game) {
     gameStateCallback(newState);
@@ -167,11 +166,13 @@ export default function PlayLevel({
   useEffect(() => {
     panResponderEnabled.current = !game.won;
     if (game.won) {
-      console.log(mode, PlayMode.SHARED);
       if (mode === PlayMode.SHARED) {
-        markUserLevelCompleted(level.uuid, game.moveHistory);
+        markUserLevelCompleted(level.uuid, userCredential?.user.email, game.moveHistory);
       } else {
         markLevelCompleted(level.uuid, game.moveHistory.length);
+        
+        // We want to collect solution data for official levels, even without a user account.
+        if (mode === PlayMode.STANDARD) postSolutionData(level.uuid, userCredential?.user.email, game.moveHistory);
       }
     }
   }, [game]);
@@ -356,12 +357,9 @@ export default function PlayLevel({
 
   const toEditor = () => viewCallback(PageView.EDITOR);
   const toLevelSelect = () => viewCallback(PageView.LEVELS);
-  const toLevelSearch = () => {
-    viewCallback(PageView.LEVELS);
-    doPageChange(1);
-  };
+  const toLevelSearch = () => viewCallback(PageView.LEVELS, 1);
   const modeToBackPage = {
-    [PlayMode.STANDARD]: toLevelSearch,
+    [PlayMode.STANDARD]: toLevelSelect,
     [PlayMode.PLAYTEST]: () => viewCallback(PageView.MANAGE),
     [PlayMode.SHARED]: toLevelSearch,
   };

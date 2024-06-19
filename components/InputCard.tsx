@@ -1,11 +1,13 @@
 import { useContext } from "react";
-import { View, Text, StyleSheet } from "react-native";
+import { View, Text, StyleSheet, Dimensions } from "react-native";
 import { Theme, colors } from "../Theme";
 
 import InputLine from "./InputLine";
 import GlobalContext from "../GlobalContext";
 import TextStyles, { normalize } from "../TextStyles";
 import SimpleButton from "./SimpleButton";
+
+const win = Dimensions.get("window");
 
 interface InputField {
   label: string,
@@ -89,6 +91,7 @@ const styles = StyleSheet.create({
     borderRadius: normalize(10),
     overflow: "hidden",
     marginVertical: normalize(15),
+    width: win.width * 0.9,
     // marginBottom: normalize(15),
   },
   hintsContainer: {

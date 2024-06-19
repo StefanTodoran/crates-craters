@@ -27,6 +27,7 @@ const mainGraphics = {
   DELETE_ICON: require("./assets/main_theme/delete_icon.png"),
   OPTIONS_ICON: require("./assets/main_theme/options_icon.png"),
   SHARE_ICON: require("./assets/main_theme/share_icon.png"),
+  SHARE_ICON_RED: require("./assets/main_theme/share_icon_red.png"),
   SUPPORT_ICON: require("./assets/main_theme/support_icon.png"),
   AUDIO_ON_ICON: require("./assets/main_theme/audio_on_icon.png"),
   AUDIO_OFF_ICON: require("./assets/main_theme/audio_off_icon.png"),

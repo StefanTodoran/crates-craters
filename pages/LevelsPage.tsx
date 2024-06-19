@@ -9,11 +9,12 @@ import Subpages from "../components/Subpages";
 
 import OfficialIcon from "../assets/main_theme/official.png";
 import SharedIcon from "../assets/main_theme/shared.png";
+import { IndicatorIcon } from "../components/LevelCard";
 
 interface Props {
-    viewCallback: (newView: PageView) => void,
+    viewCallback: (newView: PageView, newPage?: number) => void,
     playLevelCallback: (uuid: string) => void,
-    playSharedLevelCb: (obj: SharedLevel) => void,
+    playSharedLevelCb: (obj?: SharedLevel) => void,
     scrollTo?: string,
     levels: Level[],
     elementHeight: number,
@@ -38,13 +39,13 @@ export default function LevelsPage({
             scrollTo={scrollTo}
             elementHeight={elementHeight}
             storeElementHeightCallback={storeElementHeightCallback}
+            footerText={`Showing ${levels.length} of ${levels.length} levels`}
             emptyListProps={{
-                textLines: ["Levels not yet downloaded!", "Check your internet connection, then try again."],
+                textLines: ["Could not yet download levels!", "Check your internet connection, then try again."],
                 buttonLabel: "Retry Download",
                 buttonIcon: graphics.CRATE,
-                padBottom: true,
             }}
-            showCompletion
+            indicatorIcon={IndicatorIcon.COMPLETION}
             allowResume
         />,
         <UserLevels

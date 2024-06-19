@@ -4,20 +4,18 @@ import { ImageSourcePropType, StyleSheet, Text, View } from "react-native";
 import { Theme } from "../Theme";
 import MenuButton from "./MenuButton";
 import GlobalContext from "../GlobalContext";
-import TextStyles, { normalize } from "../TextStyles";
+import TextStyles from "../TextStyles";
 
 export interface EmptyListProps {
   textLines: string[],
-  padBottom?: boolean,
   onPress?: () => void,
   buttonLabel?: string,
   buttonIcon?: ImageSourcePropType,
   buttonTheme?: Theme,
 }
 
-export default function EmptyList({ 
+export default function EmptyList({
   textLines,
-  padBottom,
   onPress,
   buttonLabel,
   buttonIcon,
@@ -27,14 +25,17 @@ export default function EmptyList({
 
   return (
     <View style={styles.container}>
-      {textLines.map((line, idx) => <Text key={idx} style={TextStyles.paragraph(darkMode)}>{line}</Text>)}
-      {buttonLabel && <MenuButton
-        onPress={onPress}
-        label={buttonLabel}
-        icon={buttonIcon}
-        theme={buttonTheme}
-      />}
-      {padBottom && <View style={styles.padding}/>}
+      <Text style={TextStyles.paragraph(darkMode)}>
+        {textLines.join("\n\n")}
+      </Text>
+      <View style={styles.buttonWrap}>
+        {buttonLabel && <MenuButton
+          onPress={onPress}
+          label={buttonLabel}
+          icon={buttonIcon}
+          theme={buttonTheme}
+        />}
+      </View>
     </View>
   );
 }
@@ -43,10 +44,11 @@ const styles = StyleSheet.create({
   container: {
     alignItems: "center",
     justifyContent: "center",
-    paddingHorizontal: "22.5%",
+    paddingHorizontal: "11.25%",
+    paddingVertical: "11.25%",
     flex: 1,
   },
-  padding: {
-    height: normalize(80),
-  }
+  buttonWrap: {
+    paddingHorizontal: "11.25%",
+  },
 });

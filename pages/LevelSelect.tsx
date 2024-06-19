@@ -7,7 +7,7 @@ import { Theme, purpleTheme } from "../Theme";
 import TextStyles, { normalize } from "../TextStyles";
 
 import Toast from "react-native-toast-message";
-import LevelCard from "../components/LevelCard";
+import LevelCard, { IndicatorIcon } from "../components/LevelCard";
 import SimpleButton from "../components/SimpleButton";
 import EmptyList, { EmptyListProps } from "../components/EmptyList";
 
@@ -20,7 +20,9 @@ interface SecondButtonProps {
 
 interface Props {
   viewCallback: (newView: PageView) => void, // Sets the current view of the application.
-  playLevelCallback: (uuid: string) => void, // Sets the current play level in the parent state so it can be passed to the PlayLevel component and played.
+  playLevelCallback: (uuid: string, index: number) => void, // Sets the current play level in the parent state so it can be passed to the PlayLevel component and played.
+  resumeLevelCallback?: () => void,
+
   secondButtonProps?: SecondButtonProps,
   headerComponent?: React.ReactElement,
   footerText?: string,
@@ -32,7 +34,7 @@ interface Props {
 
   scrollTo?: string, // The index in levels of the level currently being played (if a level is being played). 
   allowResume?: boolean,
-  showCompletion?: boolean,
+  indicatorIcon?: IndicatorIcon,
 
   onRefresh?: () => Promise<boolean>,
   overrideRefreshing?: boolean,
@@ -49,6 +51,7 @@ const cardsPerScreen = 5;
 export default function LevelSelect({
   viewCallback,
   playLevelCallback,
+  resumeLevelCallback,
   secondButtonProps,
   headerComponent,
   footerText,
@@ -58,7 +61,7 @@ export default function LevelSelect({
   getStats,
   scrollTo,
   allowResume,
-  showCompletion,
+  indicatorIcon,
   onRefresh,
   overrideRefreshing,
   onEndReached,
@@ -99,26 +102,18 @@ export default function LevelSelect({
   }, []);
 
   const openLevel = useCallback((levelIndex: number) => {
-    playLevelCallback(levels[levelIndex].uuid);
+    playLevelCallback(levels[levelIndex].uuid, levelIndex);
     viewCallback(PageView.PLAY);
   }, [levels]);
 
   const resumeLevel = useCallback(() => {
+    resumeLevelCallback && resumeLevelCallback();
     viewCallback(PageView.PLAY);
   }, []);
 
   const secondButtonOnPress = useCallback((levelIndex: number) => {
     secondButtonProps!.callback!(levels[levelIndex].uuid, levelIndex);
   }, [levels]);
-
-  if (levels.length === 0) return (<>
-    {headerComponent}
-    <EmptyList
-      {...emptyListProps}
-      onPress={emptyListProps.onPress || doRefresh}
-      buttonTheme={useTheme}
-    />
-  </>);
 
   return (
     <>
@@ -142,9 +137,8 @@ export default function LevelSelect({
       {elementHeight !== 0 &&
         <FlatList
           ref={scrollRef}
-          // style={{ overflow: "hidden" }}
-          contentContainerStyle={styles.contentContainer}
           overScrollMode="never"
+          contentContainerStyle={styles.container}
           showsVerticalScrollIndicator={false}
 
           data={displayLevels}
@@ -154,7 +148,12 @@ export default function LevelSelect({
             onEndReached && onEndReached();
           }}
           ListHeaderComponent={headerComponent}
-          ListFooterComponent={(loadedLevels < levels.length || !!footerText) ? <Text style={[TextStyles.paragraph(darkMode), styles.loadingText]}>
+          ListEmptyComponent={<EmptyList
+            {...emptyListProps}
+            onPress={emptyListProps.onPress || doRefresh}
+            buttonTheme={useTheme}
+          />}
+          ListFooterComponent={levels.length > 0 && (loadedLevels < levels.length || !!footerText) ? <Text style={[TextStyles.paragraph(darkMode), styles.loadingText]}>
             {loadedLevels < levels.length ? "Loading..." : footerText}
           </Text> : undefined}
 
@@ -177,7 +176,7 @@ export default function LevelSelect({
               darkMode={darkMode}
               useTheme={useTheme}
               noNumber={noNumber}
-              showCompletion={showCompletion}
+              indicatorIcon={indicatorIcon}
             >
               {secondButtonProps && <SimpleButton
                 text={typeof secondButtonProps.text === "function" ? secondButtonProps.text(item.uuid, index) : secondButtonProps.text}
@@ -195,6 +194,7 @@ export default function LevelSelect({
           onLayout={() => {
             if (scrollIndex) scrollRef.current.scrollToIndex({ index: scrollIndex, animated: false });
           }}
+          removeClippedSubviews
         />
       }
     </>
@@ -202,7 +202,7 @@ export default function LevelSelect({
 }
 
 const styles = StyleSheet.create({
-  contentContainer: {
+  container: {
     paddingVertical: "5%",
     alignItems: "center",
   },

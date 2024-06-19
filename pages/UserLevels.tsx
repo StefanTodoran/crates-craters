@@ -58,8 +58,8 @@ function getRange(value: number, ranges: Record<Filter, [number, number]>): stri
 }
 
 interface Props {
-    viewCallback: (newView: PageView) => void,
-    playLevelCallback: (level: SharedLevel) => void,
+    viewCallback: (newView: PageView, newPage?: number) => void,
+    playLevelCallback: (level?: SharedLevel) => void,
     scrollTo?: string,
     elementHeight: number,
     storeElementHeightCallback: (height: number) => void,
@@ -128,16 +128,23 @@ export default function UserLevels({
             const filterFields: QueryFilter[] = [];
             if (filters.has(Filter.UNBEATEN)) filterFields.push({ field: "wins", operator: "==", value: 0 });
 
-            const filterInList = (operator: "in"|"not-in", list: string[]) => {
-                const nonEmptyList = list.length === 0 ? [null] : list;
+            const filterInList = (operator: "in" | "not-in" | "array-contains-any", list: string[], field: string = "uuid") => {
+                if (list.length === 0) return;
                 // TODO: The following needs chunking, since we can have at most 30 disjunctions.
-                filterFields.push({ field: "uuid", operator: operator, value: nonEmptyList });
+                filterFields.push({ field: field, operator: operator, value: list });
             };
-            
+
             if (filters.has(Filter.LIKED)) filterInList("in", likedLevels);
             if (filters.has(Filter.PLAYED)) filterInList("in", attemptedLevels);
             if (filters.has(Filter.UNPLAYED)) filterInList("not-in", attemptedLevels);
             if (filters.has(Filter.COMPLETED)) filterInList("in", completedLevels);
+
+            console.log(attemptedLevels);
+
+            // if (searchQuery) {
+            //     const keywords = [...searchQuery.toLowerCase().split(/\s+/)];
+            //     filterInList("array_contains_any", keywords, "keywords");
+            // }
 
             const difficulties: difficultyFilter[] = [Filter.EASY, Filter.MEDIUM, Filter.HARD];
             for (let i = 0; i < difficulties.length; i++) {
@@ -150,7 +157,7 @@ export default function UserLevels({
                     break;
                 }
             }
-            
+
             const lengths: lengthFilter[] = [Filter.SHORT, Filter.NORMAL, Filter.LONG];
             for (let i = 0; i < difficulties.length; i++) {
                 const length = lengths[i];
@@ -190,21 +197,25 @@ export default function UserLevels({
     useEffect(() => {
         if (!areSetsEqual(filters, prevFilters.current)) fetchLevels();
         prevFilters.current = filters;
-    }, [filters, numLoaded, searchQuery]);
+    }, [filters, numLoaded]);
+    // }, [filters, numLoaded, searchQuery]);
+
+    let filteredLevels = userLevels;
+    if (searchQuery) filteredLevels = userLevels.filter(level => level.name.includes(searchQuery) || level.designer.includes(searchQuery));
 
     return (
         <LevelSelect
             headerComponent={<>
                 <View style={{
                     marginHorizontal: "5%",
-                    marginTop: userLevels.length === 0 ? "5%" : 0,
-                    width: userLevels.length === 0 ? "90%" : undefined,
+                    // marginTop: filteredLevels.length === 0 ? "5%" : 0,
+                    // width: filteredLevels.length === 0 ? "90%" : undefined,
                 }}>
                     <InputLine
                         label={"Search"}
                         value={searchQuery}
                         onChange={setSearchQuery}
-                        // disabled={userLevels.length === 0}
+                        // disabled={filteredLevels.length === 0}
                         darkMode={darkMode}
                         fullBorder
                     />
@@ -223,24 +234,29 @@ export default function UserLevels({
                         text={item}
                         active={filters.has(item)}
                         onPress={() => toggleFilter(item)}
-                    // disabled={userLevels.length === 0}
+                    // disabled={filteredLevels.length === 0}
                     />}
                 />
             </>}
-            footerText={`Showing ${userLevels.length}/${matchingCount} levels`}
+            footerText={`Showing ${filteredLevels.length} of ${matchingCount} levels`}
 
-            viewCallback={viewCallback}
+            viewCallback={(newView: PageView) => viewCallback(newView, 1)}
+            resumeLevelCallback={playLevelCallback}
             playLevelCallback={(uuid: string) => {
-                const level = userLevels.find(level => level.uuid === uuid)!;
+                const level = filteredLevels.find(level => level.uuid === uuid)!;
                 playLevelCallback(level);
-                attemptUserLevel(uuid);
-                viewCallback(PageView.PLAY);
+                attemptUserLevel(uuid, userCredential?.user.email);
             }}
             secondButtonProps={{
                 text: (uuid: string) => likedLevels.includes(uuid) ? "Liked" : "Like",
-                disabled: (uuid: string) => !userCredential || likedLevels.includes(uuid),
+                disabled: (uuid: string) => {
+                    return !userCredential || 
+                        likedLevels.includes(uuid) || 
+                        filteredLevels.find(lvl => lvl.uuid === uuid)!.user_email === userCredential.user.email
+                },
+                // disabled: (uuid: string, index: number) => !userCredential || likedLevels.includes(uuid) || filteredLevels[index].user_email === userCredential.user.email,
                 icon: graphics.LIKE_ICON,
-                callback: async (uuid: string, index: number) => {
+                callback: async (uuid: string) => {
                     const success = await likeUserLevel(uuid, userCredential!.user.email!);
                     if (!success) {
                         Toast.show({
@@ -250,6 +266,7 @@ export default function UserLevels({
                         });
                     }
                     const newUserLevels = [...userLevels];
+                    const index = newUserLevels.findIndex(lvl => lvl.uuid === uuid);
                     newUserLevels[index].likes += 1;
                     setUserLevels(newUserLevels);
                 },
@@ -265,10 +282,13 @@ export default function UserLevels({
                 else stats.push(`${winrate}% solve rate (${getRange(winrate / 100, difficultyRanges)})`);
 
                 stats.push(getRange(targetLevel.best!, lengthRanges) + " solution");
+                if (userCredential && targetLevel.user_email === userCredential.user.email) {
+                    stats.push("Made by you!");
+                }
 
                 return stats;
             }}
-            levels={userLevels}
+            levels={filteredLevels}
             scrollTo={scrollTo}
             allowResume
             elementHeight={elementHeight}
@@ -277,12 +297,11 @@ export default function UserLevels({
             overrideRefreshing={loading}
             onEndReached={() => {
                 // If this triggers, there are no more levels to load!
-                if (numLoaded > userLevels.length) return;
+                if (numLoaded > filteredLevels.length) return;
                 setNumLoaded(numLoaded + 10);
             }}
             emptyListProps={{
-                textLines: ["Could not find any matching levels for your search.", "Note that search terms must match whole words."],
-                padBottom: true,
+                textLines: ["Could not find any good matches for your search.", "Try widening your search to use less filters."],
             }}
             theme={purpleTheme}
             noNumber

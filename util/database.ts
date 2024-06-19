@@ -23,7 +23,6 @@ export interface OfficialLevelDocument {
 }
 
 export interface UserLevelDocument {
-  uuid: string,
   name: string,
   board: string,
   designer: string,
@@ -98,23 +97,7 @@ async function fetchOfficialLevelsFromServer() {
 
   return parsedLevels;
 }
-
-// export async function likeUserLevel(uuid: string, user: UserCredential) {
-//   const likedLevels = getData(metadataKeys.likedLevels) || [];
-//   if (likedLevels.includes(uuid)) return false;
-
-//   const updatedData = await getSpecificEntry("userLevels", uuid) as UserLevelDocument;
-//   const success = await updateDocument("userLevels", uuid, { likes: updatedData.likes + 1 });
-
-//   if (success) {
-//     likedLevels.push(uuid);
-//     setData(metadataKeys.likedLevels, likedLevels);
-//   }
-
-//   return success;
-// }
-
-export async function likeUserLevel(level_id: string, user_id: string) {
+export async function likeUserLevel(level_id: string, user_email: string) {
   const likedLevels = getData(metadataKeys.likedLevels) || [];
   if (likedLevels.includes(level_id)) return false;
 
@@ -124,9 +107,9 @@ export async function likeUserLevel(level_id: string, user_id: string) {
       const userLevelDoc = await transaction.get(userLevelRef);
       const userLevelData = userLevelDoc.data() as UserLevelDocument;
 
-      const userAccountRef = doc(db, "userAccounts", user_id);
+      const userAccountRef = doc(db, "userAccounts", user_email);
       likedLevels.push(level_id);
-      
+
       transaction.update(userLevelRef, { likes: userLevelData.likes + 1 });
       transaction.update(userAccountRef, { likes: likedLevels });
       setData(metadataKeys.likedLevels, likedLevels);
@@ -140,45 +123,99 @@ export async function likeUserLevel(level_id: string, user_id: string) {
   }
 }
 
-export async function attemptUserLevel(uuid: string) {
+export async function attemptUserLevel(level_id: string, user_email?: string | null) {
   const attemptedLevels = getData(metadataKeys.attemptedLevels) || [];
-
-  const updatedData = await getSpecificEntryByName("userLevels", uuid) as UserLevelDocument;
-  const success = await updateDocument("userLevels", uuid, {
-    attempts: updatedData.attempts + 1,
-    winrate: updatedData.wins / (updatedData.attempts + 1),
-  });
-
-  if (success && !attemptedLevels.includes(uuid)) {
-    attemptedLevels.push(uuid);
-    setData(metadataKeys.likedLevels, attemptedLevels);
+  if (attemptedLevels.includes(level_id)) return false;
+  if (!user_email) {
+    // We still want to keep track, server side will be updated when the
+    // user eventually makes an account.
+    attemptedLevels.push(level_id);
+    setData(metadataKeys.attemptedLevels, attemptedLevels);
+    return false;
   }
 
-  return success;
+  try {
+    const success = await runTransaction(db, async (transaction) => {
+      const userLevelRef = doc(db, "userLevels", level_id);
+      const userLevelDoc = await transaction.get(userLevelRef);
+      const userLevelData = userLevelDoc.data() as UserLevelDocument;
+
+      const userAccountRef = doc(db, "userAccounts", user_email);
+      attemptedLevels.push(level_id);
+
+      transaction.update(userLevelRef, { attempts: userLevelData.attempts + 1 });
+      transaction.update(userAccountRef, { attempts: attemptedLevels });
+      setData(metadataKeys.attemptedLevels, attemptedLevels);
+      return true;
+    });
+
+    return success;
+  } catch (error) {
+    console.error("Error marking level attempted:", level_id, error);
+    return false;
+  }
 }
 
-export async function markUserLevelCompleted(uuid: string, moveHistory: Direction[]) {
+export async function markUserLevelCompleted(
+  level_id: string,
+  user_email: string | null | undefined,
+  moveHistory: Direction[],
+) {
   const completedLevels = getData(metadataKeys.completedLevels) || [];
-  const firstCompletion = !completedLevels.includes(uuid);
-
-  const prevData = await getSpecificEntryByName("userLevels", uuid) as UserLevelDocument;
-  const updatedData: any = { best: Math.min(prevData.best, moveHistory.length) };
-  if (firstCompletion) {
-    updatedData.wins = prevData.wins + 1;
-    updatedData.winrate = (prevData.wins + 1) / prevData.attempts;
+  const firstCompletion = !completedLevels.includes(level_id);
+  if (!user_email) {
+    completedLevels.push(level_id);
+    setData(metadataKeys.completedLevels, completedLevels);
+    return;
   }
 
-  createDocument("levelSolutions", undefined, {
-    level_id: uuid,
+  try {
+    const success = await runTransaction(db, async (transaction) => {
+      const userLevelRef = doc(db, "userLevels", level_id);
+      const userLevelDoc = await transaction.get(userLevelRef);
+      const userLevelData = userLevelDoc.data() as UserLevelDocument;
+
+      const userAccountRef = doc(db, "userAccounts", user_email);
+
+      const levelSolnRef = doc(collection(db, "levelSolutions"));
+      transaction.set(levelSolnRef, {
+        level_id: level_id,
+        user_email: user_email,
+        solution: moveHistory.join(""),
+        moves: moveHistory.length,
+      });
+
+      if (!firstCompletion) {
+        completedLevels.push(level_id);
+        transaction.update(userLevelRef, {
+          wins: userLevelData.wins + 1,
+          winrate: (userLevelData.wins + 1) / userLevelData.attempts,
+        });
+      }
+
+      transaction.update(userAccountRef, { completed: completedLevels });
+      setData(metadataKeys.completedLevels, completedLevels);
+      return true;
+    });
+
+    return success;
+  } catch (error) {
+    console.error("Error marking level completed:", level_id, error);
+    return false;
+  }
+}
+
+export async function postSolutionData(
+  level_id: string,
+  user_email: string | null | undefined,
+  moveHistory: Direction[],
+) {
+  return createDocument("levelSolutions", undefined, {
+    level_id: level_id,
+    user_email: user_email,
     solution: moveHistory.join(""),
+    moves: moveHistory.length,
   });
-  const success = await updateDocument("userLevels", uuid, updatedData);
-  if (success && firstCompletion) {
-    completedLevels.push(uuid);
-    setData(metadataKeys.likedLevels, completedLevels);
-  }
-
-  return success;
 }
 
 export async function getUserData(username: string) {

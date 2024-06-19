@@ -1,13 +1,19 @@
-import { useEffect, useRef } from "react";
+import { memo, useEffect, useRef } from "react";
 import { Text, View, Dimensions, Image, Animated, StyleSheet } from "react-native";
 import SimpleButton from "./SimpleButton";
 import BoardPreview from "./BoardPreview";
 
-import { Level } from "../util/types";
+import { Level, SharedLevel } from "../util/types";
 import { Theme, colors, graphics } from "../Theme";
 import TextStyles, { normalize } from "../TextStyles";
 
 const win = Dimensions.get("window");
+
+export enum IndicatorIcon {
+  NONE,
+  COMPLETION,
+  SHARED,
+}
 
 interface LevelCardProps {
   playCallback?: () => void, // The callback used to initiate the current level for playing.
@@ -17,12 +23,12 @@ interface LevelCardProps {
   darkMode: boolean,
   useTheme: Theme,
   noNumber?: boolean,
-  showCompletion?: boolean,
+  indicatorIcon?: IndicatorIcon,
   stats?: string[],
   children?: React.ReactNode,
 }
 
-export default function LevelCard({
+const LevelCard = memo(function ({
   playCallback,
   resumeCallback,
   level,
@@ -30,7 +36,7 @@ export default function LevelCard({
   darkMode,
   useTheme,
   noNumber,
-  showCompletion,
+  indicatorIcon,
   stats,
   children,
 }: LevelCardProps) {
@@ -97,10 +103,11 @@ export default function LevelCard({
           </View>
         </View>
 
-        {showCompletion && <View style={styles.rowFlexStart}>
-          {resumeCallback && <Image style={styles.icon} source={graphics.PLAYER} />}
-          {level.completed && <Image style={styles.icon} source={graphics.FLAG_ICON} />}
-        </View>}
+        <View style={styles.rowFlexStart}>
+          {indicatorIcon === IndicatorIcon.COMPLETION && resumeCallback && <Image style={styles.icon} source={graphics.PLAYER} />}
+          {indicatorIcon === IndicatorIcon.COMPLETION && level.completed && <Image style={styles.icon} source={graphics.FLAG_ICON} />}
+          {indicatorIcon === IndicatorIcon.SHARED && (level as SharedLevel).shared && <Image style={styles.icon} source={graphics.SHARE_ICON_RED} />}
+        </View>
       </View>
 
       <View style={styles.row}>
@@ -142,7 +149,9 @@ export default function LevelCard({
 
     </Animated.View>
   );
-}
+});
+
+export default LevelCard;
 
 const styles = StyleSheet.create({
   container: {

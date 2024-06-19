@@ -101,6 +101,7 @@ export interface UserLevel extends LevelBase {
 }
 
 export interface SharedLevel extends Exclude<UserLevel, "created"> {
+  user_email: string,
   shared: DateString,
   downloads: number,
   attempts: number,

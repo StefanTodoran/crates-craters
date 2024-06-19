@@ -1,5 +1,5 @@
 import { View, StyleSheet, Dimensions, Animated, Text, SafeAreaView, PanResponder, GestureResponderEvent, PanResponderGestureState } from "react-native";
-import { useState, useRef, useEffect, useContext, useMemo } from "react";
+import { useState, useRef, useEffect, useContext, useMemo, useCallback } from "react";
 import { Sound } from "expo-av/build/Audio";
 import { Audio } from "expo-av";
 
@@ -17,6 +17,7 @@ import { colors, graphics } from "../Theme";
 import { calcBoardTileSize } from "../util/board";
 import { Tool, tools, wallTool } from "../util/tools";
 import { getSpawnPosition } from "../util/logic";
+import { updateLevel } from "../util/loader";
 
 const win = Dimensions.get("window");
 
@@ -42,9 +43,7 @@ interface Props {
   viewCallback: (newView: PageView) => void, // Sets the current view of the application. 
   level: UserLevel, // The level currently being edited. The uuid must not change.
   levelCallback: (newState: UserLevel) => void, // Updates the level (usually board changes).
-
   playtestLevel: (uuid: string) => void,
-  storeChanges: (newState: UserLevel) => void,
 }
 
 export default function EditLevel({
@@ -52,7 +51,6 @@ export default function EditLevel({
   level,
   levelCallback,
   playtestLevel,
-  storeChanges,
 }: Props) {
   const { darkMode, playAudio } = useContext(GlobalContext);
 
@@ -87,7 +85,7 @@ export default function EditLevel({
   const [toolsModalOpen, setToolsModalState] = useState(false);
 
   const fadeToolsAnim = useRef(new Animated.Value(0)).current;
-  function toggleToolsModal() {
+  const toggleToolsModal = useCallback(() => {
     const start = (toolsModalOpen) ? 1 : 0;
     const end = (toolsModalOpen) ? 0 : 1;
     const modalWasOpen = toolsModalOpen;
@@ -106,21 +104,21 @@ export default function EditLevel({
         setToolsModalState(false);
       }
     });
-  }
+  }, []);
 
   const [unsavedChanges, setUnsavedChanges] = useState(false);
   const [unmodifiedLevel, setUnmodifiedLevel] = useState<UserLevel>(level);
 
-  function saveChanges() {
-    storeChanges(level);
+  const saveChanges = useCallback(() => {
+    updateLevel(level); // Stores changes to MMKV
     setUnmodifiedLevel(level);
     setUnsavedChanges(false);
-  }
+  },[]);
 
-  function discardChanges() {
+  const discardChanges = useCallback(() => {
     levelCallback(unmodifiedLevel);
     setUnsavedChanges(false);
-  }
+  }, []);
 
   const gestureStartMode = useRef<GestureMode>();
   const gestureStartTile = useRef<TileType>();
@@ -235,12 +233,12 @@ export default function EditLevel({
           }),
         },
       ]}>
-        <SimpleButton onPress={toggleToolsModal} text="Change Tool" main={true} />
-        <View style={{ width: normalize(15) }} />
         <SimpleButton onPress={() => {
           saveChanges();
           viewCallback(PageView.MANAGE);
-        }} text="Save & Exit" />
+        }} text={unsavedChanges ? "Save & Exit" : "Exit"} />
+        <View style={{ width: normalize(15) }} />
+        <SimpleButton onPress={toggleToolsModal} text="Change Tool" main={true} />
       </Animated.View>
 
       {/* START MODAL */}

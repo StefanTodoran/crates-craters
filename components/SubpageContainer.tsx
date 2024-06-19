@@ -16,8 +16,8 @@ export default function SubpageContainer({ center, noWidthPad, children }: Props
       style={styles.scrollContainer}
       contentContainerStyle={[
         {
-          paddingTop: win.height * 0.015,
-          paddingBottom: win.height * 0.025,
+          paddingTop: win.height * 0.05,
+          paddingBottom: win.height * 0.05,
         },
         !noWidthPad && {
           paddingHorizontal: win.width * 0.05,

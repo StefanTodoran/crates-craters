@@ -6,7 +6,7 @@ import TextStyles, { normalize } from "../TextStyles";
 import GlobalContext from "../GlobalContext";
 import { UserCredential, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../util/firebase";
-import { createDocument } from "../util/database";
+import { UserAccountDocument, createDocument } from "../util/database";
 import { getData, metadataKeys, setData } from "../util/loader";
 
 import SubpageContainer from "../components/SubpageContainer";
@@ -86,13 +86,14 @@ export default function LoginPage({ setUserCredential }: Props) {
 
                         createUserWithEmailAndPassword(auth, username, password)
                             .then((userCredential) => {
-                                createDocument("userAccounts", username, {
+                                const accountDoc: UserAccountDocument = {
                                     user_email: username,
                                     likes: [],
                                     attempted: attemptedLevels,
                                     completed: completedLevels,
                                     coins: coinBalance,
-                                });
+                                };
+                                createDocument("userAccounts", username, accountDoc);
                                 setData(metadataKeys.userCredentials, { username: username, password: password });
                                 // TODO: Failure to create this document should be handled somehow.
 
