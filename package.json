@@ -8,6 +8,7 @@
     "ios": "expo run:ios",
     "web": "expo start --web",
     "eas-build-pre-install": "npm config set legacy-peer-deps true",
+    "build": "eas build -p android --profile preview",
     "store-build": "npm version patch && eas build -p android",
     "prune-exports": "ts-prune"
   },

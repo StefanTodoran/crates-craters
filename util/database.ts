@@ -56,7 +56,6 @@ export async function checkForOfficialLevelUpdates(): Promise<number> {
     const levels = await fetchOfficialLevelsFromServer();
     if (levels.length === 0) return 0; // For some reason firestore getDocs returns an empty snapshot instead of failing when offline.
 
-    console.log(">>> levels", levels);
     multiStoreLevels(levels);
     setData(metadataKeys.lastUpdatedOfficialLevels, metadata.officialLevelsUpdated);
 

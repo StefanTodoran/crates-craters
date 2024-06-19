@@ -116,8 +116,8 @@ export default function App() {
     }
 
     getUserData(userCredential.user.email!)
-      .then((data) => setUserData(data))
-      .catch((err) => console.log(">>>", err));
+      .then((data) => setUserData(data));
+    // .catch((err) => console.log(">>>", err));
     // TODO: Put a Toast message here? What to do if fail?
   }, [userCredential]);
 
@@ -206,7 +206,7 @@ export default function App() {
     setLevels(levels);
   }, []);
 
-  const playSharedLevel = useCallback((level: SharedLevel|undefined) => {
+  const playSharedLevel = useCallback((level: SharedLevel | undefined) => {
     if (level) playLevelFromObj(level); // If undefined we simply resume.
     setPlayMode(PlayMode.SHARED);
   }, []);

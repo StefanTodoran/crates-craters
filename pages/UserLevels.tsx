@@ -139,8 +139,6 @@ export default function UserLevels({
             if (filters.has(Filter.UNPLAYED)) filterInList("not-in", attemptedLevels);
             if (filters.has(Filter.COMPLETED)) filterInList("in", completedLevels);
 
-            console.log(attemptedLevels);
-
             // if (searchQuery) {
             //     const keywords = [...searchQuery.toLowerCase().split(/\s+/)];
             //     filterInList("array_contains_any", keywords, "keywords");
@@ -170,13 +168,10 @@ export default function UserLevels({
                 }
             }
 
-            console.log(">>> QUERY", numLoaded, orderFields, filterFields);
             const query = createFirebaseQuery("userLevels", numLoaded, orderFields, filterFields);
-
             const data = await getEntriesFromQuery(query);
             const count = await getEntryCountFromQuery(query);
 
-            console.log(">>> RECIEVED", count, data);
             setMatchingCount(count);
             setUserLevels(data.map(doc => {
                 return {
