@@ -163,11 +163,16 @@ export default function PlayLevel({
   const [touchMove, setTouchMove] = useState({ y: 0, x: 0 });
   const panResponderEnabled = useRef(true);
 
+  
   useEffect(() => {
     panResponderEnabled.current = !game.won;
     if (game.won) {
-      markLevelCompleted(level.uuid, game.moveHistory.length);
-      if (mode === PlayMode.SHARED) markUserLevelCompleted(level.uuid, game.moveHistory.length);
+      console.log(mode, PlayMode.SHARED);
+      if (mode === PlayMode.SHARED) {
+        markUserLevelCompleted(level.uuid, game.moveHistory);
+      } else {
+        markLevelCompleted(level.uuid, game.moveHistory.length);
+      }
     }
   }, [game]);
 

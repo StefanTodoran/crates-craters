@@ -104,10 +104,8 @@ export default function ManageLevel({
           <MenuButton
             onPress={() => { }}
             label="Share Online"
-            icon={graphics.LOAD_ICON}
-            theme={colors.GREEN_THEME}
-            // disabled={!level.completed}
-            disabled
+            icon={graphics.SHARE_ICON}
+            disabled={!level.completed}
           />
           <MenuButton
             onLongPress={() => {
@@ -125,6 +123,8 @@ export default function ManageLevel({
             allowOverflow
           />
         </View>
+
+        {/* TODO: Text informing the player to complete the level to enable sharing */}
       </View>
     </SubpageContainer>
   );

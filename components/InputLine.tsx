@@ -10,6 +10,8 @@ interface Props {
   fullBorder?: boolean,
   disabled?: boolean,
   darkMode: boolean,
+  isSensitive?: boolean,
+  filterSpecialChars?: boolean,
 }
 
 /**
@@ -23,6 +25,8 @@ export default function InputLine({
   fullBorder,
   disabled,
   darkMode,
+  isSensitive,
+  filterSpecialChars,
 }: Props) {
   const [focused, setFocus] = useState(false);
   const anim = useRef(new Animated.Value(0)).current;
@@ -60,7 +64,7 @@ export default function InputLine({
           onChangeText={(newVal) => {
             setFocus(true);
             // Matches and removes any non-alphanumeric characters (except space)
-            const filtered = newVal.replace(/[^a-z0-9 ]/gi, "");
+            const filtered = filterSpecialChars ? newVal.replace(/[^a-z0-9 ]/gi, "") : newVal;
             onChange(filtered);
           }}
           onFocus={() => setFocus(true)}
@@ -71,6 +75,7 @@ export default function InputLine({
           maxLength={24}
           allowFontScaling={false}
           editable={!disabled}
+          secureTextEntry={isSensitive}
         />
       </Animated.View>
     </View>

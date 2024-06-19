@@ -2,7 +2,7 @@ import { DocumentData, DocumentReference, Query, QuerySnapshot, Timestamp, Where
 import { getData, getStoredLevelCount, metadataKeys, multiStoreLevels, parseCompressedBoardData, setData } from "./loader";
 
 import { db } from "./firebase";
-import { OfficialLevel } from "./types";
+import { Direction, OfficialLevel } from "./types";
 import { doStateStorageSync } from "./events";
 
 import { setLogLevel } from "firebase/firestore";
@@ -54,6 +54,7 @@ export async function checkForOfficialLevelUpdates(): Promise<number> {
     const levels = await fetchOfficialLevelsFromServer();
     if (levels.length === 0) return 0; // For some reason firestore getDocs returns an empty snapshot instead of failing when offline.
 
+    console.log(">>> levels", levels);
     multiStoreLevels(levels);
     setData(metadataKeys.lastUpdatedOfficialLevels, metadata.officialLevelsUpdated);
 
@@ -127,19 +128,21 @@ export async function attemptUserLevel(uuid: string) {
   return success;
 }
 
-export async function markUserLevelCompleted(uuid: string, moveCount: number) {
+export async function markUserLevelCompleted(uuid: string, moveHistory: Direction[]) {
   const completedLevels = getData(metadataKeys.completedLevels) || [];
   const firstCompletion = !completedLevels.includes(uuid);
 
-  // TODO: add document to levelSolutions
-
   const prevData = await getSpecificEntry("userLevels", uuid) as UserLevelDocument;
-  const updatedData: any = { best: Math.min(prevData.best, moveCount) };
+  const updatedData: any = { best: Math.min(prevData.best, moveHistory.length) };
   if (firstCompletion) {
     updatedData.wins = prevData.wins + 1;
     updatedData.winrate = (prevData.wins + 1) / prevData.attempts;
   }
 
+  createDocument("levelSolutions", undefined, {
+    level_id: uuid,
+    solution: moveHistory.join(""),
+  });
   const success = await updateDocument("userLevels", uuid, updatedData);
   if (success && firstCompletion) {
     completedLevels.push(uuid);
@@ -270,6 +273,7 @@ function parseQuerySnapshot(snapshot: QuerySnapshot<DocumentData, DocumentData>)
     // doc.data() is never undefined for query doc snapshots
     const next = doc.data();
     next.id = doc.id;
+    next.uuid = doc.id;
     docs.push(next);
   });
 

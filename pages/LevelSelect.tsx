@@ -21,7 +21,7 @@ interface SecondButtonProps {
 interface Props {
   viewCallback: (newView: PageView) => void, // Sets the current view of the application.
   playLevelCallback: (uuid: string) => void, // Sets the current play level in the parent state so it can be passed to the PlayLevel component and played.
-  secondButtonProps: SecondButtonProps,
+  secondButtonProps?: SecondButtonProps,
   headerComponent?: React.ReactElement,
   footerText?: string,
 
@@ -108,7 +108,7 @@ export default function LevelSelect({
   }, []);
 
   const secondButtonOnPress = useCallback((levelIndex: number) => {
-    secondButtonProps.callback!(levels[levelIndex].uuid, levelIndex);
+    secondButtonProps!.callback!(levels[levelIndex].uuid, levelIndex);
   }, [levels]);
 
   if (levels.length === 0) return (<>
@@ -179,7 +179,7 @@ export default function LevelSelect({
               noNumber={noNumber}
               showCompletion={showCompletion}
             >
-              {secondButtonProps.callback && <SimpleButton
+              {secondButtonProps && <SimpleButton
                 text={typeof secondButtonProps.text === "function" ? secondButtonProps.text(item.uuid, index) : secondButtonProps.text}
                 disabled={typeof secondButtonProps.disabled === "function" ? secondButtonProps.disabled(item.uuid, index) : secondButtonProps.disabled}
                 icon={secondButtonProps.icon}

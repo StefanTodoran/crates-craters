@@ -9,6 +9,7 @@ import { useBooleanSetting, useNumberSetting } from "./util/hooks";
 import { checkForOfficialLevelUpdates } from "./util/database";
 import { Level, PageView, PlayMode, SharedLevel, UserLevel } from "./util/types";
 import { Game, initializeGameObj } from "./util/logic";
+import { UserCredential } from "firebase/auth";
 import { eventEmitter } from "./util/events";
 import { toastConfig } from "./util/toasts";
 import { colors } from "./Theme";
@@ -94,6 +95,7 @@ export default function App() {
 
   const [levels, setLevels] = useState<Level[]>([]);
   const [notificationCounts, setNotificationCounts] = useState([0, 0, 0, 0]);
+  const [userCredential, setUserCredential] = useState<UserCredential>();
 
   const syncLevelStateWithStorage = useRef((_uuid?: string) => { });
   const updateNotificationCounts = useRef((_index: number, _change: number) => { });
@@ -207,7 +209,7 @@ export default function App() {
 
   if (!fontsLoaded) return <></>;
   return (
-    <GlobalContext.Provider value={{ darkMode, dragSensitivity, doubleTapDelay, playAudio }}>
+    <GlobalContext.Provider value={{ darkMode, dragSensitivity, doubleTapDelay, playAudio, userCredential }}>
       <SafeAreaView style={styles.container}>
 
         <Menu notificationCounts={notificationCounts} openPage={switchView} />
@@ -270,7 +272,9 @@ export default function App() {
             }
 
             {view === PageView.STORE &&
-              <StorePage />
+              <StorePage
+                setUserCredential={setUserCredential}
+              />
             }
 
             {view === PageView.SETTINGS &&

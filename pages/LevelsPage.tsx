@@ -33,10 +33,6 @@ export default function LevelsPage({
         <LevelSelect
             viewCallback={viewCallback}
             playLevelCallback={playLevelCallback}
-            secondButtonProps={{
-                text: "Stats",
-                icon: graphics.STATS_ICON,
-            }}
             levels={levels}
             onRefresh={refreshLevelsFromServer}
             scrollTo={scrollTo}

@@ -1,3 +1,4 @@
+import { UserCredential } from "firebase/auth";
 import { createContext } from "react";
 
 /**
@@ -20,6 +21,7 @@ interface GlobalContext {
   dragSensitivity: number,
   doubleTapDelay: number,
   playAudio: boolean,
+  userCredential?: UserCredential,
 }
 
 export const defaultSettings = {
