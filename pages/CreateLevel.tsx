@@ -4,7 +4,8 @@ import { View } from "react-native";
 import { normalize } from "../TextStyles";
 import { doPageChange } from "../util/events";
 import { generateUUID } from "../util/loader";
-import { UserLevel, createBlankBoard } from "../util/types";
+import { UserLevel } from "../util/types";
+import { createBlankBoard } from "../util/board";
 
 import InputCard from "../components/InputCard";
 import SubpageContainer from "../components/SubpageContainer";

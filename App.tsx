@@ -7,7 +7,7 @@ import { Dimensions, Animated, BackHandler, SafeAreaView, StatusBar as RNStatusB
 import { createLevel, getLevelData, getStoredLevels, updateLevel } from "./util/loader";
 import { useBooleanSetting, useNumberSetting } from "./util/hooks";
 import { checkForOfficialLevelUpdates } from "./util/database";
-import { Level, PageView, UserLevel } from "./util/types";
+import { Level, PageView, PlayMode, SharedLevel, UserLevel } from "./util/types";
 import { Game, initializeGameObj } from "./util/logic";
 import { eventEmitter } from "./util/events";
 import { toastConfig } from "./util/toasts";
@@ -54,10 +54,9 @@ export default function App() {
     setView(newView);
     setAnimTo(1);
 
-    // To playtest a level, the child component must call beginPlaytesting(),
-    // which will change the view to the play view. Therefore we need to clear
-    // it for the child once the user leaves the play view.
-    if (newView !== PageView.PLAY) setPlaytesting(false);
+    // Non-standard play modes are set when calling App.tsx to 
+    // begin play, and therefore should be cleared when play is left.
+    if (newView !== PageView.PLAY) setPlayMode(PlayMode.STANDARD);
   }, []);
 
   const switchView = useCallback((newView: PageView) => {
@@ -99,11 +98,11 @@ export default function App() {
   const syncLevelStateWithStorage = useRef((_uuid?: string) => { });
   const updateNotificationCounts = useRef((_index: number, _change: number) => { });
 
-  const [playLevel, setPlayLevel] = useState<Level>();             // The level currently being played.
-  const [currentGame, setGameState] = useState<Game>();            // The game state of the level being played.
-  const [gameHistory, setGameHistory] = useState<Game[]>();        // The past game states, used for undoing moves.
-  const [editorLevel, setEditorLevel] = useState<UserLevel>();     // The level object being edited.
-  const [playtesting, setPlaytesting] = useState<boolean>(false);  // Whether playtestingmode is requested.
+  const [playLevel, setPlayLevel] = useState<Level>();                  // The level currently being played.
+  const [currentGame, setGameState] = useState<Game>();                 // The game state of the level being played.
+  const [gameHistory, setGameHistory] = useState<Game[]>();             // The past game states, used for undoing moves.
+  const [editorLevel, setEditorLevel] = useState<UserLevel>();          // The level object being edited.
+  const [playMode, setPlayMode] = useState<PlayMode>(PlayMode.STANDARD); // Different level types may require slightly different behavior.
 
   useEffect(() => {
     syncLevelStateWithStorage.current = (uuid?: string) => {
@@ -153,9 +152,12 @@ export default function App() {
 
   const changePlayLevel = useCallback((uuid: string) => {
     const levelObject = getLevelData(uuid);
-    setPlayLevel(levelObject);
-
-    const newGame = initializeGameObj(levelObject);
+    playLevelFromObj(levelObject);
+  }, []);
+  
+  const playLevelFromObj = useCallback((level: Level) => {
+    setPlayLevel(level);
+    const newGame = initializeGameObj(level);
     setGameState(newGame);
     setGameHistory([]);
   }, []);
@@ -184,9 +186,14 @@ export default function App() {
     setLevels(levels);
   }, []);
 
+  const playSharedLevel = useCallback((level: SharedLevel) => {
+    playLevelFromObj(level);
+    setPlayMode(PlayMode.SHARED);
+  }, []);
+
   const beginPlaytesting = useCallback((uuid: string) => {
     changePlayLevel(uuid);
-    setPlaytesting(true);
+    setPlayMode(PlayMode.PLAYTEST);
   }, []);
 
   useEffect(() => { // TODO: update this method?
@@ -224,6 +231,7 @@ export default function App() {
               <LevelsPage
                 viewCallback={switchView}
                 playLevelCallback={changePlayLevel}
+                playSharedLevelCb={playSharedLevel}
                 scrollTo={!currentGame?.won ? playLevel?.uuid : undefined}
                 levels={levels.filter(lvl => lvl.official)}
                 elementHeight={levelElementHeight}
@@ -240,7 +248,7 @@ export default function App() {
                 level={playLevel!}
                 game={currentGame!}
                 history={gameHistory!}
-                playtest={playtesting}
+                mode={playMode}
               />
             }
 
@@ -262,10 +270,7 @@ export default function App() {
                 viewCallback={switchView}
                 level={editorLevel!}
                 levelCallback={setEditorLevel}
-                playtestLevel={() => {
-                  beginPlaytesting(editorLevel!.uuid);
-                  switchView(PageView.PLAY);
-                }}
+                playtestLevel={beginPlaytesting}
                 storeChanges={updateLevel}
               />
             }

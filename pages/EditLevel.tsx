@@ -43,7 +43,7 @@ interface Props {
   level: UserLevel, // The level currently being edited. The uuid must not change.
   levelCallback: (newState: UserLevel) => void, // Updates the level (usually board changes).
 
-  playtestLevel: () => void,
+  playtestLevel: (uuid: string) => void,
   storeChanges: (newState: UserLevel) => void,
 }
 
@@ -325,7 +325,8 @@ export default function EditLevel({
               <SimpleButton
                 onPress={() => {
                   saveChanges();
-                  playtestLevel();
+                  playtestLevel(level.uuid);
+                  viewCallback(PageView.PLAY);
                 }}
                 text="Playtest"
                 icon={graphics.PLAY_ICON}

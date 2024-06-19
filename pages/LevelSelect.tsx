@@ -32,8 +32,10 @@ interface Props {
 
   scrollTo?: string, // The index in levels of the level currently being played (if a level is being played). 
   allowResume?: boolean,
+  showCompletion?: boolean,
 
   onRefresh?: () => Promise<boolean>,
+  overrideRefreshing?: boolean,
   onEndReached?: () => void,
   emptyListProps: EmptyListProps,
 
@@ -56,7 +58,9 @@ export default function LevelSelect({
   getStats,
   scrollTo,
   allowResume,
+  showCompletion,
   onRefresh,
+  overrideRefreshing,
   onEndReached,
   emptyListProps,
   elementHeight,
@@ -74,6 +78,7 @@ export default function LevelSelect({
   const displayLevels = levels.slice(0, loadedLevels);
 
   const doRefresh = useCallback(() => {
+    setRefreshing(true);
     // @ts-expect-error We won't call doRefresh if onRefresh isn't defined.
     onRefresh().then((success) => {
       setRefreshing(false);
@@ -103,7 +108,6 @@ export default function LevelSelect({
   }, []);
 
   const secondButtonOnPress = useCallback((levelIndex: number) => {
-    console.log(levelIndex, levels[levelIndex]);
     secondButtonProps.callback!(levels[levelIndex].uuid, levelIndex);
   }, [levels]);
 
@@ -115,8 +119,6 @@ export default function LevelSelect({
       buttonTheme={useTheme}
     />
   </>);
-
-  console.log("levels.length", levels.length, "loadedLevels", loadedLevels);
 
   return (
     <>
@@ -148,7 +150,6 @@ export default function LevelSelect({
           data={displayLevels}
           initialNumToRender={cardsPerScreen}
           onEndReached={() => {
-            console.log(onEndReached, levels.length, loadedLevels + 10);
             setLoadedLevels(Math.min(levels.length, loadedLevels + 10));
             onEndReached && onEndReached();
           }}
@@ -157,7 +158,7 @@ export default function LevelSelect({
             {loadedLevels < levels.length ? "Loading..." : footerText}
           </Text> : undefined}
 
-          refreshing={refreshing}
+          refreshing={refreshing || !!overrideRefreshing}
           onRefresh={onRefresh ? doRefresh : undefined}
 
           renderItem={({ item, index }) => {
@@ -176,7 +177,7 @@ export default function LevelSelect({
               darkMode={darkMode}
               useTheme={useTheme}
               noNumber={noNumber}
-              showCompletion /* TODO: Should this be false for editor levels? */
+              showCompletion={showCompletion}
             >
               {secondButtonProps.callback && <SimpleButton
                 text={typeof secondButtonProps.text === "function" ? secondButtonProps.text(item.uuid, index) : secondButtonProps.text}

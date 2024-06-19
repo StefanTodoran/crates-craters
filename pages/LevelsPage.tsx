@@ -1,21 +1,21 @@
 import { useMemo } from "react";
-import { Level, PageView, UserLevel } from "../util/types";
+import { Level, PageView, SharedLevel } from "../util/types";
 import { graphics, purpleTheme } from "../Theme";
+import { refreshLevelsFromServer } from "../util/database";
 
-import Subpages from "../components/Subpages";
 import LevelSelect from "./LevelSelect";
+import UserLevels from "./UserLevels";
+import Subpages from "../components/Subpages";
 
 import OfficialIcon from "../assets/main_theme/official.png";
 import SharedIcon from "../assets/main_theme/shared.png";
-import UserLevels from "./UserLevels";
-import { refreshLevelsFromServer } from "../util/database";
 
 interface Props {
     viewCallback: (newView: PageView) => void,
     playLevelCallback: (uuid: string) => void,
+    playSharedLevelCb: (obj: SharedLevel) => void,
     scrollTo?: string,
     levels: Level[],
-    editorLevel?: UserLevel,
     elementHeight: number,
     storeElementHeightCallback: (height: number) => void,
 }
@@ -23,11 +23,14 @@ interface Props {
 export default function LevelsPage({
     viewCallback,
     playLevelCallback,
+    playSharedLevelCb,
     scrollTo,
     levels,
     elementHeight,
     storeElementHeightCallback,
 }: Props) {
+    console.log("scrollTo", scrollTo);
+
     const pageComponents = [
         <LevelSelect
             viewCallback={viewCallback}
@@ -47,9 +50,13 @@ export default function LevelsPage({
                 buttonIcon: graphics.CRATE,
                 padBottom: true,
             }}
+            showCompletion
             allowResume
         />,
         <UserLevels
+            viewCallback={viewCallback}
+            playLevelCallback={playSharedLevelCb}
+            scrollTo={scrollTo}
             elementHeight={elementHeight}
             storeElementHeightCallback={storeElementHeightCallback}
         />,

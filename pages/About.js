@@ -1,4 +1,4 @@
-import { Text, StyleSheet, Dimensions, Linking, View } from "react-native";
+import { Text, StyleSheet, Linking, View } from "react-native";
 import { useContext } from "react";
 
 import { colors, graphics } from "../Theme";
@@ -6,7 +6,6 @@ import MenuButton from "../components/MenuButton";
 import GlobalContext from "../GlobalContext";
 import TextStyles, { normalize } from "../TextStyles";
 import SubpageContainer from "../components/SubpageContainer";
-const win = Dimensions.get("window");
 
 export default function About() {
   const { darkMode } = useContext(GlobalContext);

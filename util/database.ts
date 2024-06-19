@@ -5,8 +5,8 @@ import { db } from "./firebase";
 import { OfficialLevel } from "./types";
 import { doStateStorageSync } from "./events";
 
-// import { setLogLevel } from "firebase/firestore";
-// setLogLevel("debug");
+import { setLogLevel } from "firebase/firestore";
+setLogLevel("debug");
 
 // ======================== \\
 // DOCUMENT TYPE INTERFACES \\
@@ -16,14 +16,14 @@ interface MetadataDocument {
 }
 
 export interface OfficialLevelDocument {
-  id: string,
+  uuid: string,
   name: string,
   board: string,
   order: number,
 }
 
 export interface UserLevelDocument {
-  id: string,
+  uuid: string,
   name: string,
   board: string,
   designer: string,
@@ -31,11 +31,14 @@ export interface UserLevelDocument {
   shared: Timestamp,
   attempts: number,
   wins: number,
+  winrate: number,
   likes: number,
+  best: number,
+  // keywords: string[], // Space-seperated contents of name and designer
 }
 
 export interface UserAccountDocument {
-  id: string, // Referred to as user_id in documents in other collections.
+  uuid: string, // Referred to as user_id in documents in other collections.
   username: string,
 }
 
@@ -74,10 +77,10 @@ async function fetchOfficialLevelsFromServer() {
 
   for (let i = 0; i < rawLevels.length; i++) {
     const rawLevel = rawLevels[i];
-    const existingLevel: OfficialLevel = getData(rawLevel.id);
+    const existingLevel: OfficialLevel = getData(rawLevel.uuid);
 
     const updatedLevel: OfficialLevel = {
-      uuid: rawLevel.id,
+      uuid: rawLevel.uuid,
       name: rawLevel.name,
       board: parseCompressedBoardData(rawLevel.board),
       completed: existingLevel?.completed,
@@ -97,11 +100,48 @@ export async function likeUserLevel(uuid: string) {
   if (likedLevels.includes(uuid)) return false;
 
   const updatedData = await getSpecificEntry("userLevels", uuid) as UserLevelDocument;
-  updateDocument("userLevels", uuid, { likes: updatedData.likes + 1});
-  likedLevels.push(uuid);
-  setData(metadataKeys.likedLevels, likedLevels);
+  const success = await updateDocument("userLevels", uuid, { likes: updatedData.likes + 1});
+  
+  if (success) {
+    likedLevels.push(uuid);
+    setData(metadataKeys.likedLevels, likedLevels);
+  }
 
-  return true;
+  return success;
+}
+
+export async function attemptUserLevel(uuid: string) {
+  const attemptedLevels = getData(metadataKeys.attemptedLevels) || [];
+
+  const updatedData = await getSpecificEntry("userLevels", uuid) as UserLevelDocument;
+  const success = await updateDocument("userLevels", uuid, { 
+    attempts: updatedData.attempts + 1,
+    winrate: updatedData.wins / (updatedData.attempts + 1),
+  });
+  
+  if (success && !attemptedLevels.includes(uuid)) {
+    attemptedLevels.push(uuid);
+    setData(metadataKeys.likedLevels, attemptedLevels);
+  }
+
+  return success;
+}
+
+export async function markCompletedUserLevel(uuid: string) {
+  const completedLevels = getData(metadataKeys.completedLevels) || [];
+
+  const updatedData = await getSpecificEntry("userLevels", uuid) as UserLevelDocument;
+  const success = await updateDocument("userLevels", uuid, { 
+    wins: updatedData.wins + 1,
+    winrate: (updatedData.wins + 1) / updatedData.attempts,
+  });
+  
+  if (success && !completedLevels.includes(uuid)) {
+    completedLevels.push(uuid);
+    setData(metadataKeys.likedLevels, completedLevels);
+  }
+
+  return success;
 }
 
 // ========================== \\
@@ -224,7 +264,7 @@ function parseQuerySnapshot(snapshot: QuerySnapshot<DocumentData, DocumentData>)
   snapshot.forEach((doc) => {
     // doc.data() is never undefined for query doc snapshots
     const next = doc.data();
-    next.uuid = doc.id;
+    next.id = doc.id;
     docs.push(next);
   });
 

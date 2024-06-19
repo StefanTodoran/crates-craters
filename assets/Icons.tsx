@@ -1,11 +1,11 @@
 import { StyleSheet } from "react-native";
 import Svg, { Path, G, Mask, Defs, LinearGradient, Stop, Circle } from "react-native-svg"
-import { BoardTile, Direction, TileType } from "../util/types";
+import { Direction, FlatTile, TileType } from "../util/types";
 
 interface Props {
   bgColor: string,
   tileSize: number,
-  tileData: BoardTile,
+  tileData: FlatTile,
 }
 
 export function TileIcon({ bgColor, tileSize, tileData }: Props) {

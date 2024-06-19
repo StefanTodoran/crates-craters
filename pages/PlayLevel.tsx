@@ -12,14 +12,15 @@ import GameBoard from "../components/GameBoard";
 import Inventory from "../components/Inventory";
 import Player from "../components/Player";
 import WinScreen from "./WinScreen";
+import BackButton from "../assets/BackButton";
 
 // import { aStarSearch, basicHeuristic, compoundHeuristic } from "../util/search";
 import { Game, SoundEvent, canMoveTo, doGameMove, initializeGameObj } from "../util/logic";
-import { Direction, Level, PageView } from "../util/types";
+import { Direction, Level, PageView, PlayMode } from "../util/types";
 import { markLevelCompleted } from "../util/loader";
 import { calcBoardTileSize } from "../util/board";
 import { colors, graphics } from "../Theme";
-import BackButton from "../assets/BackButton";
+import { doPageChange } from "../util/events";
 
 const win = Dimensions.get("window");
 
@@ -32,7 +33,7 @@ interface Props {
   level: Level, // The level currently being played. 
   game: Game, // The current game state.
   history: Game[],
-  playtest: boolean, // Whether or not the play screen has been opened from the level creation menu. If so the navigation buttons should show return to level creation, not levels.
+  mode: PlayMode,
 }
 
 interface Position {
@@ -63,7 +64,7 @@ export default function PlayLevel({
   level,
   game,
   history,
-  playtest,
+  mode,
 }: Props) {
   const { darkMode, dragSensitivity, doubleTapDelay, playAudio } = useContext(GlobalContext);
 
@@ -350,6 +351,61 @@ export default function PlayLevel({
     }
   }
 
+  const toEditor = () => viewCallback(PageView.EDITOR);
+  const toLevelSelect = () => viewCallback(PageView.LEVELS);
+  const toLevelSearch = () => {
+    viewCallback(PageView.LEVELS);
+    doPageChange(1);
+  };
+  const modeToBackPage = {
+    [PlayMode.STANDARD]: toLevelSearch, 
+    [PlayMode.PLAYTEST]: () => viewCallback(PageView.MANAGE), 
+    [PlayMode.SHARED]: toLevelSearch, 
+  };
+
+  let returnMenuButton, postWinActionBtn;
+  switch (mode) {
+    case PlayMode.STANDARD:
+      returnMenuButton = <MenuButton
+        label={"Level Select"}
+        icon={graphics.DOOR_ICON}
+        onPress={toLevelSelect}
+        fillWidth
+      />;
+      postWinActionBtn = <SimpleButton
+        onPress={() => nextLevelCallback(level.uuid)}
+        icon={graphics.PLAY_ICON}
+        text="Next Level" main
+      />;
+      break;
+    case PlayMode.PLAYTEST:
+      returnMenuButton = <MenuButton
+        label={"Keep Editing"}
+        icon={graphics.HAMMER_ICON}
+        onPress={toEditor}
+        fillWidth
+      />;
+      postWinActionBtn = <SimpleButton
+        onPress={toEditor}
+        text="Keep Editing"
+        main
+      />;
+      break;
+    case PlayMode.SHARED:
+      returnMenuButton = <MenuButton
+        label={"Level Search"}
+        icon={graphics.DOOR_ICON}
+        onPress={toLevelSearch}
+        fillWidth
+      />;
+      postWinActionBtn = <SimpleButton
+        onPress={() => {/* TODO: make this work! */}}
+        text="Like Level"
+        main
+      />;
+      break;
+  }
+
   return (
     <SafeAreaView style={staticStyles.container}>
       {/* GAMEPLAY COMPONENTS */}
@@ -392,21 +448,7 @@ export default function PlayLevel({
           disabled={history.length === 0}
           fillWidth
         />
-        {playtest ?
-          <MenuButton
-            label={"Keep Editing"}
-            icon={graphics.HAMMER_ICON}
-            onPress={() => viewCallback(PageView.EDITOR)}
-            fillWidth
-          />
-          :
-          <MenuButton
-            label={"Level Select"}
-            icon={graphics.DOOR_ICON}
-            onPress={() => viewCallback(PageView.LEVELS)}
-            fillWidth
-          />
-        }
+        {returnMenuButton}
         <MenuButton
           label="Resume Game"
           icon={graphics.KEY}
@@ -426,14 +468,11 @@ export default function PlayLevel({
       </Animated.View>}
 
       <Animated.View style={dynamicStyles.buttonsRow(anim)}>
-        <SimpleButton onPress={() => viewCallback(playtest ? PageView.MANAGE : PageView.LEVELS)} Svg={BackButton} square />
+        <SimpleButton onPress={modeToBackPage[mode]} Svg={BackButton} square />
         <View style={staticStyles.buttonGap} />
 
         {!game.won && <SimpleButton onPress={toggleModal} icon={graphics.MENU_ICON} text="Menu" main />}
-        {game.won && <>
-          {playtest && <SimpleButton onPress={() => viewCallback(PageView.EDITOR)} text="Keep Editing" main={true} />}
-          {!playtest && <SimpleButton onPress={() => nextLevelCallback(level.uuid)} icon={graphics.PLAY_ICON} text="Next Level" main={true} />}
-        </>}
+        {game.won && postWinActionBtn}
       </Animated.View>
     </SafeAreaView>
   );

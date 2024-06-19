@@ -10,8 +10,8 @@ export interface EmptyListProps {
   textLines: string[],
   padBottom?: boolean,
   onPress?: () => void,
-  buttonLabel: string,
-  buttonIcon: ImageSourcePropType,
+  buttonLabel?: string,
+  buttonIcon?: ImageSourcePropType,
   buttonTheme?: Theme,
 }
 
@@ -28,12 +28,12 @@ export default function EmptyList({
   return (
     <View style={styles.container}>
       {textLines.map((line, idx) => <Text key={idx} style={TextStyles.paragraph(darkMode)}>{line}</Text>)}
-      <MenuButton
+      {buttonLabel && <MenuButton
         onPress={onPress}
         label={buttonLabel}
         icon={buttonIcon}
         theme={buttonTheme}
-      />
+      />}
       {padBottom && <View style={styles.padding}/>}
     </View>
   );

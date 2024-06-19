@@ -5,8 +5,8 @@ import { colors } from "../Theme";
 import GlobalContext from "../GlobalContext";
 
 import { TileIcon } from "../assets/Icons";
-import { FlatBoard, LayeredBoard, TileType, BombTile, FlatTile, LayeredTile } from "../util/types";
-import { calcBoardTileSize, getIconSrc } from "../util/board";
+import { TileType, BombTile, FlatTile, LayeredTile } from "../util/types";
+import { FlatBoard, LayeredBoard, calcBoardTileSize, getIconSrc } from "../util/board";
 
 const win = Dimensions.get("window");
 
