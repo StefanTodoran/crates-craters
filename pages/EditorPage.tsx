@@ -1,17 +1,14 @@
 import { useMemo } from "react";
-import { Level, PageView, UserLevel } from "../util/types";
+import CreateIcon from "../assets/main_theme/create.png";
+import EditorIcon from "../assets/main_theme/editor.png";
+import { IndicatorIcon } from "../components/LevelCard";
+import Subpages from "../components/Subpages";
 import { colors, graphics } from "../Theme";
 import { doPageChange } from "../util/events";
-
-import Subpages from "../components/Subpages";
-import LevelSelect from "./LevelSelect";
+import { Level, PageView, UserLevel } from "../util/types";
 import CreateLevel from "./CreateLevel";
+import LevelSelect from "./LevelSelect";
 import ManageLevel from "./ManageLevel";
-
-// import ListIcon from "../assets/main_theme/list.png";
-import EditorIcon from "../assets/main_theme/editor.png";
-import CreateIcon from "../assets/main_theme/create.png";
-import { IndicatorIcon } from "../components/LevelCard";
 
 interface Props {
   viewCallback: (newView: PageView) => void,

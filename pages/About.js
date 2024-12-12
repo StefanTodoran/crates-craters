@@ -1,10 +1,9 @@
-import { Text, StyleSheet, Linking, View } from "react-native";
 import { useContext } from "react";
-
-import { colors, graphics } from "../Theme";
-import MenuButton from "../components/MenuButton";
+import { Linking, StyleSheet, Text, View } from "react-native";
 import GlobalContext from "../GlobalContext";
 import TextStyles, { normalize } from "../TextStyles";
+import { colors, graphics } from "../Theme";
+import MenuButton from "../components/MenuButton";
 import SubpageContainer from "../components/SubpageContainer";
 
 export default function About() {

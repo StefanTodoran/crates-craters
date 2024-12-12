@@ -1,10 +1,9 @@
 import { useContext } from "react";
-import { View, Text, StyleSheet, Dimensions } from "react-native";
-import { Theme, colors } from "../Theme";
-
-import InputLine from "./InputLine";
+import { Dimensions, StyleSheet, Text, View } from "react-native";
 import GlobalContext from "../GlobalContext";
 import TextStyles, { normalize } from "../TextStyles";
+import { Theme, colors } from "../Theme";
+import InputLine from "./InputLine";
 import SimpleButton from "./SimpleButton";
 
 const win = Dimensions.get("window");

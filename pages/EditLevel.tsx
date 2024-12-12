@@ -1,23 +1,21 @@
-import { View, StyleSheet, Dimensions, Animated, Text, SafeAreaView, PanResponder, GestureResponderEvent, PanResponderGestureState } from "react-native";
-import { useState, useRef, useEffect, useContext, useMemo, useCallback } from "react";
-import { Sound } from "expo-av/build/Audio";
 import { Audio } from "expo-av";
-
+import { Sound } from "expo-av/build/Audio";
+import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { Animated, Dimensions, GestureResponderEvent, PanResponder, PanResponderGestureState, SafeAreaView, StyleSheet, Text, View } from "react-native";
 import BackButton from "../assets/BackButton";
-import SliderBar from "../components/SliderBar";
+import CurrentToolIndicator from "../components/CurrentToolIndicator";
 import GameBoard from "../components/GameBoard";
 import MenuButton from "../components/MenuButton";
 import SimpleButton from "../components/SimpleButton";
-import CurrentToolIndicator from "../components/CurrentToolIndicator";
-
+import SliderBar from "../components/SliderBar";
 import GlobalContext from "../GlobalContext";
 import TextStyles, { normalize } from "../TextStyles";
-import { PageView, TileType, UserLevel } from "../util/types";
 import { colors, graphics } from "../Theme";
 import { calcBoardTileSize } from "../util/board";
-import { Tool, tools, wallTool } from "../util/tools";
-import { getSpawnPosition } from "../util/logic";
 import { updateLevel } from "../util/loader";
+import { getSpawnPosition } from "../util/logic";
+import { Tool, tools, wallTool } from "../util/tools";
+import { PageView, TileType, UserLevel } from "../util/types";
 
 const win = Dimensions.get("window");
 

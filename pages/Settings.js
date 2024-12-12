@@ -1,12 +1,11 @@
-import { StyleSheet, Text, View } from "react-native";
 import { useContext, useState } from "react";
-import { colors, graphics } from "../Theme";
-import TextStyles, { normalize } from "../TextStyles";
+import { StyleSheet, Text, View } from "react-native";
 import GlobalContext from "../GlobalContext";
-
-import SubpageContainer from "../components/SubpageContainer";
+import TextStyles, { normalize } from "../TextStyles";
+import { colors, graphics } from "../Theme";
 import MenuButton from "../components/MenuButton";
 import SliderBar from "../components/SliderBar";
+import SubpageContainer from "../components/SubpageContainer";
 import { useOnUnmount } from "../util/hooks";
 
 /**

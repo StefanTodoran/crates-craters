@@ -1,24 +1,21 @@
+import { Timestamp } from "firebase/firestore";
 import { useContext, useEffect, useState } from "react";
 import { Dimensions, StyleSheet, Text, View } from "react-native";
-
-import { doPageChange } from "../util/events";
-import { useForceRefresh } from "../util/hooks";
-import { PageView, UserLevel } from "../util/types";
-import { calcPreviewTileSize } from "../util/board";
-
+import Toast from "react-native-toast-message";
+import BoardPreview from "../components/BoardPreview";
+import InputCard from "../components/InputCard";
+import MenuButton from "../components/MenuButton";
+import ResponsivePressable from "../components/ResponsivePressable";
+import SubpageContainer from "../components/SubpageContainer";
 import GlobalContext from "../GlobalContext";
 import TextStyles, { normalize } from "../TextStyles";
 import { colors, graphics } from "../Theme";
-import { compressBoardData, deleteLevel, updateLevel } from "../util/loader";
-
-import Toast from "react-native-toast-message";
-import InputCard from "../components/InputCard";
-import MenuButton from "../components/MenuButton";
-import BoardPreview from "../components/BoardPreview";
-import SubpageContainer from "../components/SubpageContainer";
-import ResponsivePressable from "../components/ResponsivePressable";
+import { calcPreviewTileSize } from "../util/board";
 import { UserLevelDocument, createDocument } from "../util/database";
-import { Timestamp } from "firebase/firestore";
+import { doPageChange } from "../util/events";
+import { useForceRefresh } from "../util/hooks";
+import { compressBoardData, deleteLevel, updateLevel } from "../util/loader";
+import { PageView, UserLevel } from "../util/types";
 
 const win = Dimensions.get("window");
 

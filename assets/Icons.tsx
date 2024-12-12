@@ -1,5 +1,5 @@
 import { StyleSheet } from "react-native";
-import Svg, { Path, G, Mask, Defs, LinearGradient, Stop, Circle } from "react-native-svg"
+import Svg, { Circle, Defs, G, LinearGradient, Mask, Path, Stop } from "react-native-svg";
 import { Direction, FlatTile, TileType } from "../util/types";
 
 interface Props {

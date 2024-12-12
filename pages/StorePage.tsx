@@ -1,17 +1,14 @@
+import { UserCredential } from "firebase/auth";
 import { useContext, useMemo } from "react";
 import { Image, StyleSheet, Text, View } from "react-native";
-
+import CartIcon from "../assets/main_theme/cart.png";
+import ProfileIcon from "../assets/main_theme/profile.png";
+import Subpages from "../components/Subpages";
 import GlobalContext from "../GlobalContext";
 import TextStyles, { normalize } from "../TextStyles";
 import { colors, graphics } from "../Theme";
 import { useCoinBalance } from "../util/loader";
-import { UserCredential } from "firebase/auth";
-
-import Subpages from "../components/Subpages";
 import ProfilePage from "./ProfilePage";
-
-import CartIcon from "../assets/main_theme/cart.png";
-import ProfileIcon from "../assets/main_theme/profile.png";
 
 interface Props {
   setUserCredential: (newCredential: UserCredential | undefined) => void,

@@ -1,4 +1,4 @@
-import { BaseToast, ErrorToast } from "react-native-toast-message"
+import { BaseToast, ErrorToast } from "react-native-toast-message";
 import { colors } from "../Theme";
 
 export const toastConfig = {

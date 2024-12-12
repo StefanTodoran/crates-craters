@@ -1,7 +1,6 @@
-import { View, StatusBar, StyleSheet } from "react-native";
-import { PageView } from "../util/types";
+import { StatusBar, StyleSheet, View } from "react-native";
 import { colors, purpleTheme } from "../Theme";
-
+import { PageView } from "../util/types";
 import Banner from "./Banner";
 import HomeButton from "./HomeButton";
 
@@ -18,10 +17,10 @@ export enum PageTheme {
   NONE,
 }
 
+import GreenBanner from "../assets/green_banner.png";
 import PurpleBanner from "../assets/purple_banner.png";
 import RedBanner from "../assets/red_banner.png";
 import YellowBanner from "../assets/yellow_banner.png";
-import GreenBanner from "../assets/green_banner.png";
 
 const pageThemeData = [
   { // Purple

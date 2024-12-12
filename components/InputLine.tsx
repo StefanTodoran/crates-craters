@@ -1,7 +1,7 @@
-import { useRef, useEffect, useState } from "react";
-import { View, Animated, StyleSheet, TextInput } from "react-native";
-import { colors } from "../Theme";
+import { useEffect, useRef, useState } from "react";
+import { Animated, StyleSheet, TextInput, View } from "react-native";
 import { normalize } from "../TextStyles";
+import { colors } from "../Theme";
 
 interface Props {
   label: string,

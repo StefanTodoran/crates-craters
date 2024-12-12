@@ -1,9 +1,8 @@
 import { DocumentData, DocumentReference, Query, QuerySnapshot, Timestamp, WhereFilterOp, addDoc, collection, doc, getCountFromServer, getDocs, limit, orderBy, query, runTransaction, setDoc, updateDoc, where } from "firebase/firestore";
-import { getData, getStoredLevelCount, metadataKeys, multiStoreLevels, parseCompressedBoardData, setData } from "./loader";
-
-import { db } from "./firebase";
-import { Direction, OfficialLevel } from "./types";
 import { doStateStorageSync } from "./events";
+import { db } from "./firebase";
+import { getData, getStoredLevelCount, metadataKeys, multiStoreLevels, parseCompressedBoardData, setData } from "./loader";
+import { Direction, OfficialLevel } from "./types";
 
 // import { setLogLevel } from "firebase/firestore";
 // setLogLevel("debug");

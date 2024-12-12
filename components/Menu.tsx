@@ -1,14 +1,13 @@
-import { Animated, Dimensions, ScrollView, StyleSheet, View } from "react-native";
 import { useRef } from "react";
-import MenuPage from "./MenuPage";
-
-import CrateGraphic from "../assets/crates.png";
+import { Animated, Dimensions, ScrollView, StyleSheet, View } from "react-native";
 import BombGraphic from "../assets/bomb.png";
-import DoorGraphic from "../assets/door_n_keys.png";
 import CoinGraphic from "../assets/coin_stack.png";
+import CrateGraphic from "../assets/crates.png";
+import DoorGraphic from "../assets/door_n_keys.png";
 import { normalize } from "../TextStyles";
 import { PageView } from "../util/types";
 import { PageTheme } from "./Header";
+import MenuPage from "./MenuPage";
 
 const win = Dimensions.get("window");
 const scrn = Dimensions.get("screen");

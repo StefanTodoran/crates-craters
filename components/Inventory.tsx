@@ -1,8 +1,7 @@
-import { View, StyleSheet, Dimensions, Animated } from "react-native";
 import { useEffect, useRef } from "react";
-
-import { colors, graphics } from "../Theme";
+import { Animated, Dimensions, StyleSheet, View } from "react-native";
 import { normalize } from "../TextStyles";
+import { colors, graphics } from "../Theme";
 const win = Dimensions.get("window");
 
 interface Props {

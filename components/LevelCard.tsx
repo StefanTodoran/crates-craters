@@ -1,11 +1,10 @@
 import { memo, useEffect, useRef } from "react";
-import { Text, View, Dimensions, Image, Animated, StyleSheet } from "react-native";
-import SimpleButton from "./SimpleButton";
-import BoardPreview from "./BoardPreview";
-
-import { Level, SharedLevel } from "../util/types";
-import { Theme, colors, graphics } from "../Theme";
+import { Animated, Dimensions, Image, StyleSheet, Text, View } from "react-native";
 import TextStyles, { normalize } from "../TextStyles";
+import { Theme, colors, graphics } from "../Theme";
+import { Level, SharedLevel } from "../util/types";
+import BoardPreview from "./BoardPreview";
+import SimpleButton from "./SimpleButton";
 
 const win = Dimensions.get("window");
 

@@ -1,8 +1,8 @@
-import { StyleSheet, Image, Animated } from "react-native";
-import { useRef, useEffect, useMemo } from "react";
-import { Direction, TileType } from "../util/types";
+import { useEffect, useMemo, useRef } from "react";
+import { Animated, Image, StyleSheet } from "react-native";
 import { colors, graphics } from "../Theme";
 import { Game } from "../util/logic";
+import { Direction, TileType } from "../util/types";
 
 interface Offset {
   dx: number,

@@ -1,30 +1,28 @@
-import { StatusBar } from "expo-status-bar";
 import { useFonts } from "expo-font";
 import * as NavigationBar from "expo-navigation-bar";
+import { StatusBar } from "expo-status-bar";
+import { UserCredential, signInWithEmailAndPassword } from "firebase/auth";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Dimensions, Animated, BackHandler, SafeAreaView, StatusBar as RNStatusBar, View, StyleSheet } from "react-native";
-
-import { createLevel, getData, getLevelData, getStoredLevels, metadataKeys, setData } from "./util/loader";
-import { useBooleanSetting, useNumberSetting } from "./util/hooks";
-import { UserAccountDocument, checkForOfficialLevelUpdates, getUserData } from "./util/database";
-import { Level, PageView, PlayMode, SharedLevel, UserLevel } from "./util/types";
-import { Game, initializeGameObj } from "./util/logic";
-import { doPageChange, eventEmitter } from "./util/events";
-import { toastConfig } from "./util/toasts";
-import { colors } from "./Theme";
-import GlobalContext from "./GlobalContext";
+import { Animated, BackHandler, Dimensions, StatusBar as RNStatusBar, SafeAreaView, StyleSheet, View } from "react-native";
 import Toast from "react-native-toast-message";
-
-import Menu from "./components/Menu";
 import Header from "./components/Header";
-import SettingsPage from "./pages/HelpSettings";
+import Menu from "./components/Menu";
+import GlobalContext from "./GlobalContext";
+import EditLevel from "./pages/EditLevel";
 import EditorPage from "./pages/EditorPage";
+import SettingsPage from "./pages/HelpSettings";
+import LevelsPage from "./pages/LevelsPage";
 import PlayLevel from "./pages/PlayLevel";
 import StorePage from "./pages/StorePage";
-import EditLevel from "./pages/EditLevel";
-import LevelsPage from "./pages/LevelsPage";
-import { UserCredential, signInWithEmailAndPassword } from "firebase/auth";
+import { colors } from "./Theme";
+import { UserAccountDocument, checkForOfficialLevelUpdates, getUserData } from "./util/database";
+import { doPageChange, eventEmitter } from "./util/events";
 import { auth } from "./util/firebase";
+import { useBooleanSetting, useNumberSetting } from "./util/hooks";
+import { createLevel, getData, getLevelData, getStoredLevels, metadataKeys, setData } from "./util/loader";
+import { Game, initializeGameObj } from "./util/logic";
+import { toastConfig } from "./util/toasts";
+import { Level, PageView, PlayMode, SharedLevel, UserLevel } from "./util/types";
 
 const win = Dimensions.get("window");
 

@@ -1,9 +1,8 @@
-import { View, Text, StyleSheet, Image } from "react-native";
 import { useContext } from "react";
-
-import { colors, graphics } from "../Theme";
+import { Image, StyleSheet, Text, View } from "react-native";
 import GlobalContext from "../GlobalContext";
 import TextStyles, { normalize } from "../TextStyles";
+import { colors, graphics } from "../Theme";
 import SubpageContainer from "../components/SubpageContainer";
 
 export default function HowToPlay() {

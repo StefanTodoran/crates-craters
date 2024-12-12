@@ -1,10 +1,9 @@
 import { useContext } from "react";
 import { ImageSourcePropType, StyleSheet, Text, View } from "react-native";
-
-import { Theme } from "../Theme";
-import MenuButton from "./MenuButton";
 import GlobalContext from "../GlobalContext";
 import TextStyles from "../TextStyles";
+import { Theme } from "../Theme";
+import MenuButton from "./MenuButton";
 
 export interface EmptyListProps {
   textLines: string[],

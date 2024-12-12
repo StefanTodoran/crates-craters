@@ -1,15 +1,13 @@
 import { useMemo } from "react";
-import { Level, PageView, SharedLevel } from "../util/types";
-import { graphics, purpleTheme } from "../Theme";
-import { refreshLevelsFromServer } from "../util/database";
-
-import LevelSelect from "./LevelSelect";
-import UserLevels from "./UserLevels";
-import Subpages from "../components/Subpages";
-
 import OfficialIcon from "../assets/main_theme/official.png";
 import SharedIcon from "../assets/main_theme/shared.png";
 import { IndicatorIcon } from "../components/LevelCard";
+import Subpages from "../components/Subpages";
+import { graphics, purpleTheme } from "../Theme";
+import { refreshLevelsFromServer } from "../util/database";
+import { Level, PageView, SharedLevel } from "../util/types";
+import LevelSelect from "./LevelSelect";
+import UserLevels from "./UserLevels";
 
 interface Props {
     viewCallback: (newView: PageView, newPage?: number) => void,
@@ -32,6 +30,7 @@ export default function LevelsPage({
 }: Props) {
     const pageComponents = [
         <LevelSelect
+            key={0}
             viewCallback={viewCallback}
             playLevelCallback={playLevelCallback}
             levels={levels}
@@ -49,6 +48,7 @@ export default function LevelsPage({
             allowResume
         />,
         <UserLevels
+            key={1}
             viewCallback={viewCallback}
             playLevelCallback={playSharedLevelCb}
             scrollTo={scrollTo}

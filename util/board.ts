@@ -1,6 +1,6 @@
 import { ScaledSize } from "react-native";
-import { BackgroundTile, Direction, EmptyTile, FlatTile, ForegroundTile, LayeredTile, OneWayTile, OutsideTile, TileType } from "./types";
 import { graphics } from "../Theme";
+import { BackgroundTile, Direction, EmptyTile, FlatTile, ForegroundTile, LayeredTile, OneWayTile, OutsideTile, TileType } from "./types";
 
 export const emptyTile: EmptyTile = { id: TileType.EMPTY };
 export const outsideTile: OutsideTile = { id: TileType.OUTSIDE };

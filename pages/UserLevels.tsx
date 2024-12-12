@@ -1,17 +1,15 @@
 import { useContext, useEffect, useRef, useState } from "react";
 import { FlatList, StyleSheet, View } from "react-native";
-
-import GlobalContext from "../GlobalContext";
-import { areSetsEqual } from "../util/Set";
-import { graphics, purpleTheme } from "../Theme";
-import { PageView, SharedLevel } from "../util/types";
-import { getData, metadataKeys, parseCompressedBoardData } from "../util/loader";
-import { ExplicitOrder, QueryFilter, attemptUserLevel, createFirebaseQuery, getEntriesFromQuery, getEntryCountFromQuery, likeUserLevel } from "../util/database";
-
-import LevelSelect from "./LevelSelect";
-import InputLine from "../components/InputLine";
-import FilterChip from "../components/FilterChip";
 import Toast from "react-native-toast-message";
+import FilterChip from "../components/FilterChip";
+import InputLine from "../components/InputLine";
+import GlobalContext from "../GlobalContext";
+import { graphics, purpleTheme } from "../Theme";
+import { ExplicitOrder, QueryFilter, attemptUserLevel, createFirebaseQuery, getEntriesFromQuery, getEntryCountFromQuery, likeUserLevel } from "../util/database";
+import { getData, metadataKeys, parseCompressedBoardData } from "../util/loader";
+import { areSetsEqual } from "../util/Set";
+import { PageView, SharedLevel } from "../util/types";
+import LevelSelect from "./LevelSelect";
 
 enum Filter {
     POPULAR = "Popular",

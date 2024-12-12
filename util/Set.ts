@@ -1,5 +1,5 @@
 export class AnySet<T> {
-  private set: Set<string>;
+  private readonly set: Set<string>;
 
   constructor() {
     this.set = new Set();
@@ -28,8 +28,8 @@ interface Position {
 }
 
 export class PositionSet {
-  private set: Set<number>;
-  private boardWidth: number;
+  private readonly set: Set<number>;
+  private readonly boardWidth: number;
 
   constructor(boardWidth: number) {
     this.set = new Set();

@@ -1,15 +1,13 @@
-import { Text, FlatList, StyleSheet, View, ImageSourcePropType } from "react-native";
 import { useCallback, useContext, useEffect, useRef, useState } from "react";
-
-import GlobalContext from "../GlobalContext";
-import { Level, PageView } from "../util/types";
-import { Theme, purpleTheme } from "../Theme";
-import TextStyles, { normalize } from "../TextStyles";
-
+import { FlatList, ImageSourcePropType, StyleSheet, Text, View } from "react-native";
 import Toast from "react-native-toast-message";
+import EmptyList, { EmptyListProps } from "../components/EmptyList";
 import LevelCard, { IndicatorIcon } from "../components/LevelCard";
 import SimpleButton from "../components/SimpleButton";
-import EmptyList, { EmptyListProps } from "../components/EmptyList";
+import GlobalContext from "../GlobalContext";
+import TextStyles, { normalize } from "../TextStyles";
+import { Theme, purpleTheme } from "../Theme";
+import { Level, PageView } from "../util/types";
 
 interface SecondButtonProps {
   text?: string | ((uuid: string, index: number) => string),

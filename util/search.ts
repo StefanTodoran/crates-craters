@@ -1,8 +1,8 @@
 import { MinQueue } from "heapify";
-import { Game, Position, canMoveTo, countInstancesInBoard, doGameMove } from "./logic";
-import { Direction, TileType } from "./types";
 import { LayeredBoard } from "./board";
+import { Game, Position, canMoveTo, countInstancesInBoard, doGameMove } from "./logic";
 import { AnySet } from "./Set";
+import { Direction, TileType } from "./types";
 
 /**
  * This represents a compressed version of the Game interface which

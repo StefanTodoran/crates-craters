@@ -1,12 +1,10 @@
 import { useContext } from "react";
-import { View, Dimensions, Image, Text, Platform, StyleSheet } from "react-native";
-
-import { colors } from "../Theme";
+import { Dimensions, Image, Platform, StyleSheet, Text, View } from "react-native";
 import GlobalContext from "../GlobalContext";
-
+import { colors } from "../Theme";
 import { TileIcon } from "../assets/Icons";
-import { TileType, BombTile, FlatTile, LayeredTile } from "../util/types";
 import { FlatBoard, LayeredBoard, calcBoardTileSize, getIconSrc } from "../util/board";
+import { BombTile, FlatTile, LayeredTile, TileType } from "../util/types";
 
 const win = Dimensions.get("window");
 

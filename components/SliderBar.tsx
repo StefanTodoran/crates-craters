@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { View, Animated, Text, StyleSheet, Dimensions, PanResponder, PanResponderGestureState, GestureResponderEvent } from "react-native";
+import { Animated, Dimensions, GestureResponderEvent, PanResponder, PanResponderGestureState, StyleSheet, Text, View } from "react-native";
 import { normalize } from "../TextStyles";
 import StepperArrow from "./StepperArrow";
 

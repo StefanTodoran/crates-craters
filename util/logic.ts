@@ -1,7 +1,7 @@
+import { FlatBoard, LayeredBoard, emptyTile, unsqueezeBoard } from "./board";
 import Queue from "./Queue";
 import { PositionSet } from "./Set";
-import { FlatBoard, LayeredBoard, emptyTile, unsqueezeBoard } from "./board";
-import { OneWayTile, Direction, TileType, SimpleTile, Level } from "./types";
+import { Direction, Level, OneWayTile, SimpleTile, TileType } from "./types";
 
 export enum SoundEvent {
   MOVE,

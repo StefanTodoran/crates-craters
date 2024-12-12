@@ -1,8 +1,8 @@
 import { useMemo } from "react";
 import { Dimensions } from "react-native";
+import { calcPreviewTileSize } from "../util/board";
 import { getSpawnPosition } from "../util/logic";
 import { Level } from "../util/types";
-import { calcPreviewTileSize } from "../util/board";
 import GameBoard from "./GameBoard";
 
 const win = Dimensions.get("window");

@@ -1,10 +1,8 @@
 import { useContext } from "react";
-import { Text, StyleSheet } from "react-native";
-
-import { Theme, purpleTheme } from "../Theme";
-import { normalize } from "../TextStyles";
+import { StyleSheet, Text } from "react-native";
 import GlobalContext from "../GlobalContext";
-
+import { normalize } from "../TextStyles";
+import { Theme, purpleTheme } from "../Theme";
 import ResponsivePressable from "./ResponsivePressable";
 
 interface Props {

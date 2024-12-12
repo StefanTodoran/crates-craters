@@ -1,17 +1,15 @@
+import { UserCredential, signOut } from "firebase/auth";
 import { useContext } from "react";
 import { StyleSheet, Text, View } from "react-native";
-
-import { colors, graphics } from "../Theme";
-import TextStyles, { normalize } from "../TextStyles";
-import GlobalContext from "../GlobalContext";
-import { UserCredential, signOut } from "firebase/auth";
-import { auth } from "../util/firebase";
-
-import SubpageContainer from "../components/SubpageContainer";
-import SimpleButton from "../components/SimpleButton";
 import Toast from "react-native-toast-message";
-import LoginPage from "./LoginPage";
+import SimpleButton from "../components/SimpleButton";
+import SubpageContainer from "../components/SubpageContainer";
+import GlobalContext from "../GlobalContext";
+import TextStyles, { normalize } from "../TextStyles";
+import { colors, graphics } from "../Theme";
+import { auth } from "../util/firebase";
 import { metadataKeys, setData } from "../util/loader";
+import LoginPage from "./LoginPage";
 
 interface Props {
     setUserCredential: (newCredential: UserCredential | undefined) => void,

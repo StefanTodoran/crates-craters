@@ -1,4 +1,4 @@
-import { Text, Image, ImageURISource, Dimensions, Pressable, StyleSheet, View } from "react-native";
+import { Dimensions, Image, ImageURISource, Pressable, StyleSheet, Text, View } from "react-native";
 import { normalize } from "../TextStyles";
 
 const win = Dimensions.get("window");

@@ -1,8 +1,8 @@
-import { BombTile, Level, OfficialLevel, OneWayTile, TileType, UserLevel, isLevelWellFormed } from "./types";
-import { doNotificationsUpdate, doStateStorageSync } from "./events";
-import { countInstancesInBoard } from "./logic";
 import { MMKV } from "react-native-mmkv";
 import { FlatBoard } from "./board";
+import { doNotificationsUpdate, doStateStorageSync } from "./events";
+import { countInstancesInBoard } from "./logic";
+import { BombTile, Level, OfficialLevel, OneWayTile, TileType, UserLevel, isLevelWellFormed } from "./types";
 
 export const storage = new MMKV();
 

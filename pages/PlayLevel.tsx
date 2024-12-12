@@ -1,26 +1,24 @@
-import { View, StyleSheet, Dimensions, PanResponder, Animated, SafeAreaView, Text, GestureResponderEvent, PanResponderGestureState } from "react-native";
-import { useState, useRef, useEffect, useContext, useMemo } from "react";
-import TextStyles, { normalize } from "../TextStyles";
-import GlobalContext from "../GlobalContext";
-import { Sound } from "expo-av/build/Audio";
 import { Audio } from "expo-av";
-
-import SimpleButton from "../components/SimpleButton";
-import MoveCounter from "../components/MoveCounter";
-import MenuButton from "../components/MenuButton";
+import { Sound } from "expo-av/build/Audio";
+import { useContext, useEffect, useMemo, useRef, useState } from "react";
+import { Animated, Dimensions, GestureResponderEvent, PanResponder, PanResponderGestureState, SafeAreaView, StyleSheet, Text, View } from "react-native";
+import BackButton from "../assets/BackButton";
 import GameBoard from "../components/GameBoard";
 import Inventory from "../components/Inventory";
+import MenuButton from "../components/MenuButton";
+import MoveCounter from "../components/MoveCounter";
 import Player from "../components/Player";
-import WinScreen from "./WinScreen";
-import BackButton from "../assets/BackButton";
-
-// import { aStarSearch, basicHeuristic, compoundHeuristic } from "../util/search";
-import { Game, SoundEvent, canMoveTo, doGameMove, initializeGameObj } from "../util/logic";
-import { Direction, Level, PageView, PlayMode } from "../util/types";
+import SimpleButton from "../components/SimpleButton";
+import GlobalContext from "../GlobalContext";
+import TextStyles, { normalize } from "../TextStyles";
+import { colors, graphics } from "../Theme";
+import { calcBoardTileSize } from "../util/board";
 import { markUserLevelCompleted, postSolutionData } from "../util/database";
 import { markLevelCompleted } from "../util/loader";
-import { calcBoardTileSize } from "../util/board";
-import { colors, graphics } from "../Theme";
+import { Game, SoundEvent, canMoveTo, doGameMove, initializeGameObj } from "../util/logic";
+// import { aStarSearch, basicHeuristic, compoundHeuristic } from "../util/search";
+import { Direction, Level, PageView, PlayMode } from "../util/types";
+import WinScreen from "./WinScreen";
 
 const win = Dimensions.get("window");
 
