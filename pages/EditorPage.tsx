@@ -34,8 +34,11 @@ export default function EditorPage({
   elementHeight,
   storeElementHeightCallback,
 }: Props) {
+  const existingLevelNames = levels.map(level => level.name.toLowerCase());
+
   const pageComponents = [
     <LevelSelect
+      key={0}
       viewCallback={viewCallback}
       playLevelCallback={playLevelCallback}
       secondButtonProps={{
@@ -51,7 +54,7 @@ export default function EditorPage({
       elementHeight={elementHeight}
       indicatorIcon={IndicatorIcon.SHARED}
       storeElementHeightCallback={storeElementHeightCallback}
-      headerComponent={<CreateLevel createLevelCallback={createNewLevelCallback}/>}
+      headerComponent={<CreateLevel createLevelCallback={createNewLevelCallback} existingLevelNames={existingLevelNames}/>}
       emptyListProps={{
         textLines: ["No custom levels created yet!"],
         // onPress: () => doPageChange(2),
@@ -62,11 +65,12 @@ export default function EditorPage({
     />,
 
     <ManageLevel 
-    level={editorLevel!} // The button to switch to this subpage is disabled if editorLevel is undefined.
-    viewCallback={viewCallback} 
-    playLevelCallback={playLevelCallback} 
+      key={1}
+      level={editorLevel!} // The button to switch to this subpage is disabled if editorLevel is undefined.
+      viewCallback={viewCallback} 
+      playLevelCallback={playLevelCallback} 
     />, 
-    <CreateLevel createLevelCallback={createNewLevelCallback} />,
+    <CreateLevel key={2} createLevelCallback={createNewLevelCallback} existingLevelNames={existingLevelNames}/>,
   ];
 
   const pageTabs = useMemo(() => {

@@ -1,15 +1,16 @@
 import { useState } from "react";
+import InputCard from "../components/InputCard";
+import { createBlankBoard } from "../util/board";
 import { doPageChange } from "../util/events";
 import { generateUUID } from "../util/loader";
 import { UserLevel } from "../util/types";
-import { createBlankBoard } from "../util/board";
-import InputCard from "../components/InputCard";
 
 interface Props {
   createLevelCallback: (newLevel: UserLevel) => void,
+  existingLevelNames: string[],
 }
 
-export default function CreateLevel({ createLevelCallback }: Props) {
+export default function CreateLevel({ createLevelCallback, existingLevelNames }: Props) {
   const [levelTitle, setLevelTitle] = useState("");
   const [levelDesigner, setLevelDesigner] = useState("");
   const levelCreated = new Date();
@@ -17,6 +18,7 @@ export default function CreateLevel({ createLevelCallback }: Props) {
   let inputHint = "Click create to get started!";
   if (!levelTitle && !levelDesigner) inputHint = "Both title and designer name are required!";
   else if (!levelTitle) inputHint = "Level title is required!";
+  else if (existingLevelNames.includes(levelTitle.toLowerCase())) inputHint = "Level title must be unique!";
   else if (!levelDesigner) inputHint = "Designer name required!";
 
   return (
@@ -46,6 +48,8 @@ export default function CreateLevel({ createLevelCallback }: Props) {
           designer: levelDesigner,
           created: levelCreated.toISOString(),
         });
+        setLevelTitle("");
+        setLevelDesigner("");
         doPageChange(0);
       }}
       buttonDisabled={!levelTitle || !levelDesigner}
