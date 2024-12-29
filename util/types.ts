@@ -98,6 +98,7 @@ export interface UserLevel extends LevelBase {
   designer: string,
   created: DateString, 
   shared?: DateString,
+  db_id?: string, // The document id in the database, if shared.
 }
 
 export interface SharedLevel extends Exclude<UserLevel, "created"> {
@@ -165,4 +166,9 @@ export enum PlayMode {
   STANDARD,
   SHARED,
   PLAYTEST,
+}
+
+export interface LocalUserData {
+  uuid: string,
+  joined: DateString,
 }

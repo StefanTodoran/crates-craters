@@ -132,11 +132,16 @@ export default function LevelSelect({
         />
       </View>}
 
-      {levels.length === 0 && !elementHeight && <EmptyList
-        {...emptyListProps}
-        onPress={emptyListProps.onPress || doRefresh}
-        buttonTheme={useTheme}
-      />}
+      {levels.length === 0 && !elementHeight &&
+        <>
+          {headerComponent}
+          <EmptyList
+            {...emptyListProps}
+            onPress={emptyListProps.onPress || doRefresh}
+            buttonTheme={useTheme}
+          />
+        </>
+      }
 
       {elementHeight !== 0 &&
         <FlatList

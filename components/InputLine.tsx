@@ -11,7 +11,8 @@ interface Props {
   disabled?: boolean,
   darkMode: boolean,
   isSensitive?: boolean,
-  filterSpecialChars?: boolean,
+  filterPattern?: RegExp,
+  doFilter?: boolean,
 }
 
 /**
@@ -26,7 +27,8 @@ export default function InputLine({
   disabled,
   darkMode,
   isSensitive,
-  filterSpecialChars,
+  filterPattern = /[^a-z0-9 ]/gi,
+  doFilter = true,
 }: Props) {
   const [focused, setFocus] = useState(false);
   const anim = useRef(new Animated.Value(0)).current;
@@ -64,7 +66,7 @@ export default function InputLine({
           onChangeText={(newVal) => {
             setFocus(true);
             // Matches and removes any non-alphanumeric characters (except space)
-            const filtered = filterSpecialChars ? newVal.replace(/[^a-z0-9 ]/gi, "") : newVal;
+            const filtered = doFilter ? newVal.replace(filterPattern, "") : newVal;
             onChange(filtered);
           }}
           onFocus={() => setFocus(true)}

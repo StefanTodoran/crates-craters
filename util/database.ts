@@ -1,7 +1,7 @@
 import { DocumentData, DocumentReference, Query, QuerySnapshot, Timestamp, WhereFilterOp, addDoc, collection, doc, getCountFromServer, getDocs, limit, orderBy, query, runTransaction, setDoc, updateDoc, where } from "firebase/firestore";
 import { doStateStorageSync } from "./events";
 import { db } from "./firebase";
-import { getData, getStoredLevelCount, metadataKeys, multiStoreLevels, parseCompressedBoardData, setData } from "./loader";
+import { getData, getLocalUserData, getStoredLevelCount, metadataKeys, multiStoreLevels, parseCompressedBoardData, setData } from "./loader";
 import { Direction, OfficialLevel } from "./types";
 
 // import { setLogLevel } from "firebase/firestore";
@@ -33,6 +33,7 @@ export interface UserLevelDocument {
   likes: number,
   best: number,
   keywords: string[], // Space-seperated contents of name and designer
+  public: boolean,
 }
 
 export interface UserAccountDocument {
@@ -41,6 +42,9 @@ export interface UserAccountDocument {
   attempted: string[],
   completed: string[],
   coins: number,
+  local_uuid: string,
+  local_joined: Timestamp,
+  online_joined: Timestamp,
 }
 
 // ==================== \\
@@ -160,6 +164,7 @@ export async function markUserLevelCompleted(
   user_email: string | null | undefined,
   moveHistory: Direction[],
 ) {
+  const userData = getLocalUserData();
   const completedLevels = getData(metadataKeys.completedLevels) || [];
   const firstCompletion = !completedLevels.includes(level_id);
   if (!user_email) {
@@ -180,6 +185,7 @@ export async function markUserLevelCompleted(
       transaction.set(levelSolnRef, {
         level_id: level_id,
         user_email: user_email,
+        local_uuid: userData.uuid,
         solution: moveHistory.join(""),
         moves: moveHistory.length,
       });
@@ -209,9 +215,11 @@ export async function postSolutionData(
   user_email: string | null | undefined,
   moveHistory: Direction[],
 ) {
+  const userData = getLocalUserData();
   return createDocument("levelSolutions", undefined, {
     level_id: level_id,
-    user_email: user_email,
+    user_email: user_email ?? "undefined",
+    local_uuid: userData.uuid,
     solution: moveHistory.join(""),
     moves: moveHistory.length,
   });

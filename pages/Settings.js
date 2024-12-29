@@ -4,11 +4,9 @@ import GlobalContext from "../GlobalContext";
 import TextStyles, { normalize } from "../TextStyles";
 import { colors, graphics } from "../Theme";
 import MenuButton from "../components/MenuButton";
-import SimpleButton from "../components/SimpleButton";
 import SliderBar from "../components/SliderBar";
 import SubpageContainer from "../components/SubpageContainer";
 import { useOnUnmount } from "../util/hooks";
-import { clearAllData, logAllKeys } from "../util/loader";
 
 /**
  * @typedef {object} Props
@@ -85,17 +83,6 @@ export default function Settings({
           icon={playAudio ? graphics.AUDIO_ON_ICON : graphics.AUDIO_OFF_ICON}
           theme={colors.GREEN_THEME}
           fillWidth
-        />
-        <View style={{ height: 15 }} />
-        <SimpleButton
-          onPress={clearAllData}
-          text="Clear Stored Data"
-          theme={colors.GREEN_THEME}
-        />
-        <SimpleButton
-          onPress={logAllKeys}
-          text="Log All Keys"
-          theme={colors.GREEN_THEME}
         />
       </View>
     </SubpageContainer>

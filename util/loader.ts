@@ -2,7 +2,7 @@ import { MMKV } from "react-native-mmkv";
 import { FlatBoard } from "./board";
 import { doNotificationsUpdate, doStateStorageSync } from "./events";
 import { countInstancesInBoard } from "./logic";
-import { BombTile, Level, OfficialLevel, OneWayTile, TileType, UserLevel, isLevelWellFormed } from "./types";
+import { BombTile, Level, LocalUserData, OfficialLevel, OneWayTile, TileType, UserLevel, isLevelWellFormed } from "./types";
 
 export const storage = new MMKV();
 
@@ -12,19 +12,12 @@ export enum metadataKeys {
   customLevelKeys = "customLevelKeys",
   coinBalance = "coinBalance",
   userCredentials = "userCredentials",
+  userData = "userData",
   
   // These reference the UUIDs of publicly shared user created levels.
   likedLevels = "likedLevels",
   attemptedLevels = "attemptedLevels",
   completedLevels = "completedLevels",
-}
-
-export function logAllKeys() {
-  console.log(storage.getAllKeys());
-}
-
-export function clearAllData() {
-  storage.clearAll();
 }
 
 export function setData(key: string, value: any) {
@@ -56,6 +49,20 @@ export function getLevelData(key: string) {
   const board = new FlatBoard(level.board.board);
   level.board = board;
   return level as Level;
+}
+
+export function getLocalUserData() {
+  const userData: LocalUserData = getData(metadataKeys.userData);
+  if (!userData) {
+    const newUserData: LocalUserData = {
+      uuid: generateUUID(),
+      joined: new Date().toISOString(),
+      // TODO: Maybe add "expo-device" package to get device info.
+    }
+    setData(metadataKeys.userData, newUserData);
+  }
+
+  return userData;
 }
 
 export function multiGetData(keys: string[]) {
@@ -288,7 +295,7 @@ export function compressBoardData(board: FlatBoard): string {
 }
 
 export function generateUUID() {
-  return (new Date().getTime().toString() + Math.random()).replace(".", "");
+  return new Date().getTime().toString() + Math.random().toString(16).slice(2);
 }
 
 // LEVEL IDEAS:

@@ -1,4 +1,5 @@
 import { UserCredential, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "firebase/auth";
+import { Timestamp } from "firebase/firestore";
 import { useContext, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import Toast from "react-native-toast-message";
@@ -10,7 +11,7 @@ import TextStyles, { normalize } from "../TextStyles";
 import { colors, graphics } from "../Theme";
 import { UserAccountDocument, createDocument } from "../util/database";
 import { auth } from "../util/firebase";
-import { getData, metadataKeys, setData } from "../util/loader";
+import { getData, getLocalUserData, metadataKeys, setData } from "../util/loader";
 
 const emailRegex = new RegExp(String.raw`^(\S+@\S+\.\S+)?$`);
 
@@ -21,23 +22,35 @@ interface Props {
 export default function LoginPage({ setUserCredential }: Props) {
     const { darkMode } = useContext(GlobalContext);
 
+    const [email, setEmail] = useState("");
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
 
     let hint;
     if (!password) hint = "Please input a password.";
     if (password && password.length < 6) hint = "Password must be at least 6 characters long!";
-    if (!username) hint = "Please provide a username.";
-    if (username && !emailRegex.test(username)) hint = "Username must be a valid email address!";
-    if (!username && !password) hint = "Please input a username and password.";
+    if (!username) hint = "A username is required.";
+    if (!email) hint = "An email address is required.";
+    if (email && !emailRegex.test(email)) hint = "Please use a valid email address!";
+    if (!email && !password) hint = "Please input an email, username, and password.";
+
+    const usernameRegex = /[^a-z0-9_$!]/gi;
 
     return (
         <SubpageContainer center>
+            <InputLine
+                label={"Email"}
+                value={email}
+                onChange={setEmail}
+                darkMode={darkMode}
+                fullBorder
+            />
             <InputLine
                 label={"Username"}
                 value={username}
                 onChange={setUsername}
                 darkMode={darkMode}
+                filterPattern={usernameRegex}
                 fullBorder
             />
             <InputLine
@@ -81,6 +94,7 @@ export default function LoginPage({ setUserCredential }: Props) {
                         const coinBalance = getData(metadataKeys.coinBalance) || 0;
                         const attemptedLevels = getData(metadataKeys.attemptedLevels) || [];
                         const completedLevels = getData(metadataKeys.completedLevels) || [];
+                        const userData = getLocalUserData();
 
                         createUserWithEmailAndPassword(auth, username, password)
                             .then((userCredential) => {
@@ -90,6 +104,9 @@ export default function LoginPage({ setUserCredential }: Props) {
                                     attempted: attemptedLevels,
                                     completed: completedLevels,
                                     coins: coinBalance,
+                                    online_joined: Timestamp.now(),
+                                    local_uuid: userData.uuid,
+                                    local_joined: Timestamp.fromDate(new Date(userData.joined)),
                                 };
                                 createDocument("userAccounts", username, accountDoc);
                                 setData(metadataKeys.userCredentials, { username: username, password: password });

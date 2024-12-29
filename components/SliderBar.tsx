@@ -19,10 +19,7 @@ interface Props {
   showSteppers?: boolean,
 }
 
-/**
- * InputLine is an augmentation of the basic TextInput that has
- * a fancy animation for the label.
- * 
+/** 
  * REQUIRED:
  * @param {string} label The label to above the slider bar.
  * @param {string} units A string to be displayed by the value (e.g. "%", "px", or "" if none desired)

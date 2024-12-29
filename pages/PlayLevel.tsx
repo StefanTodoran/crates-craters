@@ -13,11 +13,12 @@ import GlobalContext from "../GlobalContext";
 import TextStyles, { normalize } from "../TextStyles";
 import { colors, graphics } from "../Theme";
 import { calcBoardTileSize } from "../util/board";
-import { markUserLevelCompleted, postSolutionData } from "../util/database";
-import { markLevelCompleted } from "../util/loader";
+import { likeUserLevel, markUserLevelCompleted, postSolutionData } from "../util/database";
+import { getData, markLevelCompleted, metadataKeys } from "../util/loader";
 import { Game, SoundEvent, canMoveTo, doGameMove, initializeGameObj } from "../util/logic";
 // import { aStarSearch, basicHeuristic, compoundHeuristic } from "../util/search";
-import { Direction, Level, PageView, PlayMode } from "../util/types";
+import Toast from "react-native-toast-message";
+import { Direction, Level, PageView, PlayMode, SharedLevel } from "../util/types";
 import WinScreen from "./WinScreen";
 
 const win = Dimensions.get("window");
@@ -160,7 +161,14 @@ export default function PlayLevel({
   const [touchMove, setTouchMove] = useState({ y: 0, x: 0 });
   const panResponderEnabled = useRef(true);
 
-  
+  const [canLikeLevel, setCanLikeLevel] = useState(false);
+  useEffect(() => {
+    if (!level.hasOwnProperty("shared")) return;
+    
+    const likedLevels = getData(metadataKeys.likedLevels) || [];
+    setCanLikeLevel(!likedLevels.includes(level.uuid) && (level as SharedLevel).user_email != userCredential?.user.email);
+  }, []);
+
   useEffect(() => {
     panResponderEnabled.current = !game.won;
     if (game.won) {
@@ -168,7 +176,7 @@ export default function PlayLevel({
         markUserLevelCompleted(level.uuid, userCredential?.user.email, game.moveHistory);
       } else {
         markLevelCompleted(level.uuid, game.moveHistory.length);
-        
+
         // We want to collect solution data for official levels, even without a user account.
         if (mode === PlayMode.STANDARD) postSolutionData(level.uuid, userCredential?.user.email, game.moveHistory);
       }
@@ -398,8 +406,20 @@ export default function PlayLevel({
         fillWidth
       />;
       postWinActionBtn = <SimpleButton
-        onPress={() => {/* TODO: make this work! */ }}
-        text="Like Level"
+        onPress={async () => {
+          const success = await likeUserLevel(level.uuid, userCredential!.user.email!);
+          if (!success) {
+            Toast.show({
+              type: "error",
+              text1: "Couldn't like level.",
+              text2: "Please check your connection and try again.",
+            });
+          } else {
+            setCanLikeLevel(false);
+          }
+        }}
+        text={"Like Level"}
+        disabled={!canLikeLevel}
         main
       />;
       break;

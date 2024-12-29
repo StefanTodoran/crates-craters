@@ -171,7 +171,7 @@ export default function UserLevels({
             const count = await getEntryCountFromQuery(query);
 
             setMatchingCount(count);
-            setUserLevels(data.map(doc => {
+            setUserLevels(data.filter(doc => doc.public).map(doc => {
                 return {
                     ...doc,
                     board: parseCompressedBoardData(doc.board),

@@ -102,7 +102,7 @@ export default function EditLevel({
         setToolsModalState(false);
       }
     });
-  }, []);
+  }, [toolsModalOpen]);
 
   const [unsavedChanges, setUnsavedChanges] = useState(false);
   const [unmodifiedLevel, setUnmodifiedLevel] = useState<UserLevel>(level);
@@ -111,7 +111,7 @@ export default function EditLevel({
     updateLevel(level); // Stores changes to MMKV
     setUnmodifiedLevel(level);
     setUnsavedChanges(false);
-  },[]);
+  },[level]);
 
   const discardChanges = useCallback(() => {
     levelCallback(unmodifiedLevel);

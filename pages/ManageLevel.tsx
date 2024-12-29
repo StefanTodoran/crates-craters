@@ -11,7 +11,7 @@ import GlobalContext from "../GlobalContext";
 import TextStyles, { normalize } from "../TextStyles";
 import { colors, graphics } from "../Theme";
 import { calcPreviewTileSize } from "../util/board";
-import { UserLevelDocument, createDocument } from "../util/database";
+import { UserLevelDocument, createDocument, updateDocument } from "../util/database";
 import { doPageChange } from "../util/events";
 import { useForceRefresh } from "../util/hooks";
 import { compressBoardData, deleteLevel, updateLevel } from "../util/loader";
@@ -51,8 +51,8 @@ export default function ManageLevel({
 
   let hint;
   if (!userCredential) hint = "Log in to enable level sharing.";
-  if (userCredential && !level.completed) hint = "Complete one level run to enable sharing.";
-  if (level.shared) hint = "Congratulations! Your level is shared!";
+  if (userCredential && !level?.completed) hint = "Complete one level run to enable sharing.";
+  if (level?.shared) hint = "Congratulations! Your level is shared!";
 
   if (!level) return;
   return (
@@ -118,14 +118,25 @@ export default function ManageLevel({
               likes: 0,
               best: level.best!, // Guaranteed to be defined since button is disabled if !level.completed
               keywords: [...level.name.toLowerCase().split(/\s+/), ...level.designer.toLowerCase().split(/\s+/)],
+              public: true,
             };
-            createDocument("userLevels", undefined, userLevelDoc);
-            updateLevel({ ...level, shared: userLevelDoc.shared.toDate().toISOString() });
+            createDocument("userLevels", undefined, userLevelDoc)
+              .then(docRef => {
+                updateLevel({ ...level, shared: userLevelDoc.shared.toDate().toISOString(), db_id: docRef?.id });
+              })
+              .catch(error => {
+                Toast.show({
+                  type: "error",
+                  text1: "Level sharing failed.",
+                  text2: `Error code: ${error.code}. Please try again.`,
+                });
+              });
           }}
           label="Share Online"
           icon={graphics.SHARE_ICON}
-          disabled={!level.completed || !userCredential}
+          disabled={!level.completed || !userCredential || !!level.shared}
         />
+
         <MenuButton
           onPress={() => {
             playLevelCallback(level.uuid);
@@ -154,12 +165,26 @@ export default function ManageLevel({
           allowOverflow
         />
         <MenuButton
-          onPress={() => { }}
+          onPress={() => {
+            updateDocument("userLevels", level.db_id!, {
+              public: false,
+              user_email: userCredential!.user.email!,
+            })
+              .then(() => {
+                updateLevel({ ...level, shared: undefined, db_id: undefined });
+              })
+              .catch(error => {
+                Toast.show({
+                  type: "error",
+                  text1: "Level unsharing failed.",
+                  text2: `Error code: ${error.code}. Please try again.`,
+                });
+              });
+          }}
           icon={graphics.OPTIONS_ICON}
           theme={colors.RED_THEME}
           label={"Unshare Level"}
-          // disabled={!level.shared}
-          disabled
+          disabled={!level.shared}
         />
       </View>
 

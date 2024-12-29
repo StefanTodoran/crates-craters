@@ -34,6 +34,9 @@ export default function ProfilePage({ setUserCredential }: Props) {
             <Text style={[TextStyles.paragraph(darkMode), { textAlign: "center" }]}>
                 UID: {userCredential?.user.uid}
             </Text>
+            <Text style={[TextStyles.paragraph(darkMode), { textAlign: "center" }]}>
+                For Support: info@todoran.dev
+            </Text>
 
             <View style={styles.buttonsRow}>
                 <SimpleButton
