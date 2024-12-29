@@ -173,9 +173,9 @@ export default function PlayLevel({
     panResponderEnabled.current = !game.won;
     if (game.won) {
       if (mode === PlayMode.SHARED) {
-        markUserLevelCompleted(level.uuid, userCredential?.user.email, game.moveHistory);
+        markUserLevelCompleted((level as SharedLevel), userCredential?.user.email, game.moveHistory);
       } else {
-        markLevelCompleted(level.uuid, game.moveHistory.length);
+        markLevelCompleted(level.uuid, game.moveHistory);
 
         // We want to collect solution data for official levels, even without a user account.
         if (mode === PlayMode.STANDARD) postSolutionData(level.uuid, userCredential?.user.email, game.moveHistory);

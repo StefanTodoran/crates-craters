@@ -50,7 +50,7 @@ const LevelCard = memo(function ({
   useEffect(() => setAnimTo(1), []);
 
   let attributionText;
-  if (level.official && level.best) attributionText = `Best: ${level.best} moves`;
+  if (level.official && level.bestSolution) attributionText = `Best: ${level.bestSolution.length} moves`;
   else if (level.official) attributionText = "Standard Level";
   else if (Object.hasOwn(level, "user_name")) attributionText = `Designed by "${(level as SharedLevel).user_name}"`;
   else attributionText = "Designed by you";

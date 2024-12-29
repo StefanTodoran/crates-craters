@@ -14,6 +14,7 @@ interface Props {
   allowOverflow?: boolean, // Whether number of lines for the button text should cap at 1.
   theme?: Theme,
   fillWidth?: boolean,
+  flexGrow?: boolean,
 }
 
 /**
@@ -32,6 +33,7 @@ export default function MenuButton({
   allowOverflow,
   theme,
   fillWidth,
+  flexGrow,
 }: Props) {
   const { darkMode } = useContext(GlobalContext);
   const useTheme = theme || purpleTheme;
@@ -47,7 +49,7 @@ export default function MenuButton({
         styles.body,
         {
           width: fillWidth ? "100%" : undefined,
-          marginHorizontal: fillWidth ? normalize(5) : 0,
+          marginHorizontal: normalize(7.5),
           paddingRight: label ? normalize(17.5) : normalize(15),
           borderColor: useTheme.MAIN_COLOR,
           backgroundColor: backgroundColor,

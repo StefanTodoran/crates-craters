@@ -3,6 +3,7 @@ import { FlatList, StyleSheet, View } from "react-native";
 import Toast from "react-native-toast-message";
 import FilterChip from "../components/FilterChip";
 import InputLine from "../components/InputLine";
+import { IndicatorIcon } from "../components/LevelCard";
 import GlobalContext from "../GlobalContext";
 import { graphics, purpleTheme } from "../Theme";
 import { ExplicitOrder, QueryFilter, attemptUserLevel, createFirebaseQuery, getEntriesFromQuery, getEntryCountFromQuery, likeUserLevel } from "../util/database";
@@ -124,6 +125,7 @@ export default function UserLevels({
             orderFields.push({ field: "shared", order: filters.has(Filter.NEWEST) ? "desc" : "asc" });
 
             const filterFields: QueryFilter[] = [];
+            // filterFields.push({ field: "public", operator: "==", value: true });
             if (filters.has(Filter.UNBEATEN)) filterFields.push({ field: "wins", operator: "==", value: 0 });
 
             const filterInList = (operator: "in" | "not-in" | "array-contains-any", list: string[], field: string = "uuid") => {
@@ -166,6 +168,7 @@ export default function UserLevels({
                 }
             }
 
+            // console.log(filterFields);
             const query = createFirebaseQuery("userLevels", numLoaded, orderFields, filterFields);
             const data = await getEntriesFromQuery(query);
             const count = await getEntryCountFromQuery(query);
@@ -175,6 +178,7 @@ export default function UserLevels({
                 return {
                     ...doc,
                     board: parseCompressedBoardData(doc.board),
+                    completed: completedLevels.includes(doc.uuid),
                 };
             }));
 
@@ -238,16 +242,19 @@ export default function UserLevels({
             playLevelCallback={(uuid: string) => {
                 const level = filteredLevels.find(level => level.uuid === uuid)!;
                 playLevelCallback(level);
+                // TODO: Add attempt tracking for official levels too.
                 attemptUserLevel(uuid, userCredential?.user.email);
             }}
             secondButtonProps={{
-                text: (uuid: string) => likedLevels.includes(uuid) ? "Liked" : "Like",
+                text: (uuid: string) => {
+                    const likeCount = filteredLevels.find(lvl => lvl.uuid === uuid)!.likes;
+                    return (likedLevels.includes(uuid) ? "Liked" : "Like") + ` (${likeCount})`;
+                },
                 disabled: (uuid: string) => {
-                    return !userCredential || 
-                        likedLevels.includes(uuid) || 
+                    return !userCredential ||
+                        likedLevels.includes(uuid) ||
                         filteredLevels.find(lvl => lvl.uuid === uuid)!.user_email === userCredential.user.email
                 },
-                // disabled: (uuid: string, index: number) => !userCredential || likedLevels.includes(uuid) || filteredLevels[index].user_email === userCredential.user.email,
                 icon: graphics.LIKE_ICON,
                 callback: async (uuid: string) => {
                     const success = await likeUserLevel(uuid, userCredential!.user.email!);
@@ -267,14 +274,17 @@ export default function UserLevels({
             }
             // @ts-expect-error
             getStats={(targetLevel: SharedLevel) => {
-                const stats = [`${targetLevel.likes} likes`];
+                const stats = [];
 
                 let winrate = Math.round(100 * targetLevel.wins / targetLevel.attempts);
                 if (isNaN(winrate)) stats.push("No attempts yet!");
                 else if (targetLevel.wins === 0) stats.push("Never beaten!");
                 else stats.push(`${winrate}% solve rate (${getRange(winrate / 100, difficultyRanges)})`);
 
-                stats.push(getRange(targetLevel.best!, lengthRanges) + " solution");
+                const solnLen = targetLevel.bestSolution!.length;
+                stats.push(`${getRange(solnLen, lengthRanges)} solution`);
+                stats.push(`(Best: ${solnLen} moves)`);
+
                 if (userCredential && targetLevel.user_email === userCredential.user.email) {
                     stats.push("Made by you!");
                 }
@@ -286,6 +296,7 @@ export default function UserLevels({
             allowResume
             elementHeight={elementHeight}
             storeElementHeightCallback={storeElementHeightCallback}
+            indicatorIcon={IndicatorIcon.COMPLETION}
             onRefresh={fetchLevels}
             overrideRefreshing={loading}
             onEndReached={() => {

@@ -3,13 +3,13 @@ import { Animated, StyleSheet, TextInput, View } from "react-native";
 import { normalize } from "../TextStyles";
 import { colors } from "../Theme";
 
-interface Props {
+export interface InputLineProps {
   label: string,
   value: string,
-  onChange: (newValue: string) => void,
+  onChange?: (newValue: string) => void,
   fullBorder?: boolean,
   disabled?: boolean,
-  darkMode: boolean,
+  darkMode?: boolean,
   isSensitive?: boolean,
   filterPattern?: RegExp,
   doFilter?: boolean,
@@ -29,7 +29,7 @@ export default function InputLine({
   isSensitive,
   filterPattern = /[^a-z0-9 ]/gi,
   doFilter = true,
-}: Props) {
+}: InputLineProps) {
   const [focused, setFocus] = useState(false);
   const anim = useRef(new Animated.Value(0)).current;
 
@@ -43,7 +43,7 @@ export default function InputLine({
   }, [value, focused]); // so that on unmount the animation "state" isn't lost
 
   return (
-    <View style={[styles.container, fullBorder && styles.fullBorderContainer]}>
+    <View style={[styles.container, fullBorder && styles.fullBorderContainer, disabled && {borderColor: colors.DIM_GRAY_TRANSPARENT(0.1)}]}>
       <Animated.Text style={[styles.label(anim), fullBorder && styles.fullBorderLabel]} allowFontScaling={false}>
         {label}
       </Animated.Text>
@@ -67,7 +67,7 @@ export default function InputLine({
             setFocus(true);
             // Matches and removes any non-alphanumeric characters (except space)
             const filtered = doFilter ? newVal.replace(filterPattern, "") : newVal;
-            onChange(filtered);
+            onChange!(filtered); // TextInput will be disabled if onChange is not provided
           }}
           onFocus={() => setFocus(true)}
           onBlur={() => setFocus(false)}
@@ -76,7 +76,7 @@ export default function InputLine({
           cursorColor={colors.DIM_GRAY}
           maxLength={24}
           allowFontScaling={false}
-          editable={!disabled}
+          editable={!disabled && !!onChange}
           secureTextEntry={isSensitive}
         />
       </Animated.View>

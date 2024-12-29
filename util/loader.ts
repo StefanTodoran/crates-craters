@@ -2,7 +2,7 @@ import { MMKV } from "react-native-mmkv";
 import { FlatBoard } from "./board";
 import { doNotificationsUpdate, doStateStorageSync } from "./events";
 import { countInstancesInBoard } from "./logic";
-import { BombTile, Level, LocalUserData, OfficialLevel, OneWayTile, TileType, UserLevel, isLevelWellFormed } from "./types";
+import { BombTile, Direction, Level, LocalUserData, OfficialLevel, OneWayTile, TileType, UserLevel, isLevelWellFormed } from "./types";
 
 export const storage = new MMKV();
 
@@ -129,7 +129,7 @@ export function createLevel(level: UserLevel) {
   doStateStorageSync(level.uuid);
 }
 
-export function updateLevel(updatedLevel: UserLevel) {
+export function updateLevel(updatedLevel: UserLevel, boardChange: boolean = true) {
   const existingLevel: Level = getData(updatedLevel.uuid);
 
   if (!existingLevel) {
@@ -140,8 +140,12 @@ export function updateLevel(updatedLevel: UserLevel) {
   const level: Level = {
     ...existingLevel,
     ...updatedLevel,
-    completed: false,
   };
+
+  if (boardChange) {
+    level.completed = false;
+    level.bestSolution = undefined;
+  }
 
   setData(level.uuid, level);
   doStateStorageSync(level.uuid);
@@ -185,13 +189,14 @@ export function multiStoreLevels(levels: Level[]) {
   return true;
 }
 
-export function markLevelCompleted(uuid: string, moveCount: number) {
+export function markLevelCompleted(uuid: string, moveHistory: Direction[]) {
   const level = getLevelData(uuid);
   const wasCompleted = level.completed;
 
-  const prevBest = Number.isInteger(level.best) ? level.best : Infinity;
-  level.best = Math.min(prevBest!, moveCount);
+  const prevBest = level.bestSolution ? level.bestSolution.length : Infinity;
+  if (moveHistory.length < prevBest) level.bestSolution = moveHistory.join("");
   level.completed = true;
+  
   setData(uuid, level);
   doStateStorageSync(uuid);
 

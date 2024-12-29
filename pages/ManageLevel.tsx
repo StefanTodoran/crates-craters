@@ -19,7 +19,9 @@ import { PageView, UserLevel } from "../util/types";
 
 const win = Dimensions.get("window");
 
-const deleteLevelText = `Delete Level 
+const deleteLevelText = `Delete Level
+(Long Press)`;
+const unshareLevelText = `Make Private
 (Long Press)`;
 
 interface Props {
@@ -49,30 +51,30 @@ export default function ManageLevel({
   let hint;
   if (!userCredential) hint = "Log in to enable level sharing.";
   if (userCredential && !level?.completed) hint = "Complete one level run to enable sharing.";
-  if (level?.shared) hint = "Congratulations! Your level is shared!";
+  if (level?.shared) hint = "Congratulations! Your level is public!";
 
   if (!level) return;
   return (
     <SubpageContainer center>
       <InputCard
         title={level.name}
-        // TODO: Add level stats here once shared!
         hints={[
-          `Created on ${new Date(level.created).toDateString()}.`,
+          `Created ${new Date(level.created).toDateString()}.`,
           level.shared ? `Shared since ${new Date(level.shared).toDateString()}.` : "Not publicly shared.",
+          level.bestSolution ? `Best solution: ${level.bestSolution.length} moves.` : "Not yet solved.",
           // TODO: List the attempts, wins, and likes if shared and they are not all zero.
         ]}
         fields={[
           {
             label: "Level Title",
             value: levelTitle,
-            update: setLevelTitle
+            onChange: setLevelTitle
           },
         ]}
         buttonText="Save"
         buttonCallback={() => {
           // @ts-expect-error We just want to update these two properties, which both exist on UserLevel.
-          updateLevel({ uuid: level.uuid, name: levelTitle });
+          updateLevel({ uuid: level.uuid, name: levelTitle }, false);
           forceRefresh();
         }}
         buttonDisabled={levelTitle === level.name}
@@ -98,86 +100,108 @@ export default function ManageLevel({
       <View style={styles.buttonsRow}>
         <MenuButton
           onPress={() => {
-            const userLevelDoc: UserLevelDocument = {
-              name: level.name,
-              board: compressBoardData(level.board),
-              user_name: userData!.user_name,
-              user_email: userCredential!.user.email!,
-              shared: Timestamp.now(),
-              attempts: 0,
-              wins: 0,
-              winrate: 1,
-              likes: 0,
-              best: level.best!, // Guaranteed to be defined since button is disabled if !level.completed
-              keywords: [...level.name.toLowerCase().split(/\s+/), ...userData!.user_name.toLowerCase().split(/\s+/)],
-              public: true,
-            };
-            createDocument("userLevels", level.db_id, userLevelDoc)
-              .then(docRef => {
-                updateLevel({ ...level, shared: userLevelDoc.shared.toDate().toISOString(), db_id: docRef?.id });
-              })
-              .catch(error => {
-                Toast.show({
-                  type: "error",
-                  text1: "Level sharing failed.",
-                  text2: `Error code: ${error.code}. Please try again.`,
-                });
-              });
-          }}
-          label="Share Online"
-          icon={graphics.SHARE_ICON}
-          disabled={!level.completed || !userCredential || !!level.shared}
-        />
-
-        <MenuButton
-          onPress={() => {
             playLevelCallback(level.uuid);
             viewCallback(PageView.PLAY);
           }}
           label="Playtest Level"
           icon={graphics.PLAYER}
         />
+        <MenuButton
+          onPress={() => {}}
+          label="View Solution"
+          icon={graphics.KEY}
+          theme={colors.GREEN_THEME}
+          // disabled={!level.bestSolution}
+          disabled
+        />
       </View>
       <View style={styles.buttonsRow}>
-        <MenuButton
-          onLongPress={() => {
-            // TODO: Unpublish the level, maybe add a confirmation screen if they have likes?
-            deleteLevel(level);
-            doPageChange(0);
-            Toast.show({
-              type: "success",
-              text1: "Level deletion completed.",
-              text2: `"${level.name}" has been successfully deleted.`,
-            });
-          }}
-          disabled={!!level.shared}
-          icon={graphics.DELETE_ICON}
-          theme={colors.RED_THEME}
-          label={deleteLevelText}
-          allowOverflow
-        />
-        <MenuButton
-          onPress={() => {
-            updateDocument("userLevels", level.db_id!, {
-              public: false,
-              user_email: userCredential!.user.email!,
-            })
-              .then(() => {
-                updateLevel({ ...level, shared: undefined, db_id: undefined });
-              })
-              .catch(error => {
+        {level.shared ?
+          // If the level is not shared:
+          <>
+            <MenuButton
+              onLongPress={() => {
+                updateDocument("userLevels", level.db_id!, {
+                  public: false,
+                  user_email: userCredential!.user.email!,
+                })
+                  .then(() => {
+                    updateLevel({ ...level, shared: undefined }, false);
+                  })
+                  .catch(error => {
+                    Toast.show({
+                      type: "error",
+                      text1: "Level unsharing failed.",
+                      text2: `Error code: ${error.code}. Please try again.`,
+                    });
+                  });
+              }}
+              icon={graphics.OPTIONS_ICON}
+              theme={colors.RED_THEME}
+              label={unshareLevelText}
+              disabled={!userCredential}
+              allowOverflow
+            />
+            <MenuButton
+              // TODO: Implement this.
+              disabled
+              icon={graphics.SUPPORT_ICON}
+              theme={colors.GREEN_THEME}
+              label={"View Activity"}
+            />
+          </>
+          : // If the level is shared:
+          <>
+            <MenuButton
+              onPress={() => {
+                const userLevelDoc: UserLevelDocument = {
+                  name: level.name,
+                  board: compressBoardData(level.board),
+                  user_name: userData!.user_name,
+                  user_email: userCredential!.user.email!,
+                  shared: Timestamp.now(),
+                  attempts: 0,
+                  wins: 0,
+                  winrate: 1,
+                  likes: 0,
+                  best: level.bestSolution!.length,
+                  bestSolution: level.bestSolution!, // Guaranteed to be defined since button is disabled if !level.completed
+                  keywords: [...level.name.toLowerCase().split(/\s+/), ...userData!.user_name.toLowerCase().split(/\s+/)],
+                  public: true,
+                };
+                createDocument("userLevels", level.db_id, userLevelDoc)
+                  .then(docRef => {
+                    updateLevel({ ...level, shared: userLevelDoc.shared.toDate().toISOString(), db_id: docRef?.id }, false);
+                  })
+                  .catch(error => {
+                    Toast.show({
+                      type: "error",
+                      text1: "Level sharing failed.",
+                      text2: `Error code: ${error.code}. Please try again.`,
+                    });
+                  });
+              }}
+              label="Share Online"
+              icon={graphics.SHARE_ICON}
+              disabled={!level.completed || !userCredential || !!level.shared}
+            />
+            <MenuButton
+              onLongPress={() => {
+                deleteLevel(level);
+                doPageChange(0);
                 Toast.show({
-                  type: "error",
-                  text1: "Level unsharing failed.",
-                  text2: `Error code: ${error.code}. Please try again.`,
+                  type: "success",
+                  text1: "Level deletion completed.",
+                  text2: `"${level.name}" has been successfully deleted.`,
                 });
-              });
-          }}
-          icon={graphics.OPTIONS_ICON}
-          theme={colors.RED_THEME}
-          label={"Unshare Level"}
-          disabled={!level.shared || !userCredential}
-        />
+              }}
+              icon={graphics.DELETE_ICON}
+              theme={colors.RED_THEME}
+              label={deleteLevelText}
+              allowOverflow
+            />
+          </>
+        }
       </View>
 
       <View style={styles.hintWrap}>
@@ -202,6 +226,7 @@ const styles = StyleSheet.create({
     width: "100%",
     flexDirection: "row",
     justifyContent: "space-evenly",
+    // justifyContent: "space-between",
   },
   relative: {
     position: "relative",

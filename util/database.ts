@@ -2,7 +2,7 @@ import { DocumentData, DocumentReference, Query, QuerySnapshot, Timestamp, Where
 import { doStateStorageSync } from "./events";
 import { db } from "./firebase";
 import { getData, getLocalUserData, getStoredLevelCount, metadataKeys, multiStoreLevels, parseCompressedBoardData, setData } from "./loader";
-import { Direction, OfficialLevel } from "./types";
+import { Direction, OfficialLevel, SharedLevel } from "./types";
 
 // import { setLogLevel } from "firebase/firestore";
 // setLogLevel("debug");
@@ -32,6 +32,7 @@ export interface UserLevelDocument {
   winrate: number,
   likes: number,
   best: number,
+  bestSolution: string,
   keywords: string[], // Space-seperated contents of name and designer
   public: boolean,
 }
@@ -81,22 +82,20 @@ async function fetchOfficialLevelsFromServer() {
   const rawLevels: OfficialLevelDocument[] = await getAllEntries("officialLevels");
   const parsedLevels: OfficialLevel[] = [];
 
-  for (let i = 0; i < rawLevels.length; i++) {
-    const rawLevel = rawLevels[i];
+  rawLevels.forEach(rawLevel => {
     const existingLevel: OfficialLevel = getData(rawLevel.uuid);
-
     const updatedLevel: OfficialLevel = {
       uuid: rawLevel.uuid,
       name: rawLevel.name,
       board: parseCompressedBoardData(rawLevel.board),
       completed: existingLevel?.completed,
-      best: existingLevel?.best,
+      bestSolution: existingLevel?.bestSolution,
       official: true,
       order: rawLevel.order,
     };
 
     parsedLevels.push(updatedLevel);
-  }
+  });
 
   return parsedLevels;
 }
@@ -147,7 +146,7 @@ export async function attemptUserLevel(level_id: string, user_email?: string | n
       attemptedLevels.push(level_id);
 
       transaction.update(userLevelRef, { attempts: userLevelData.attempts + 1 });
-      transaction.update(userAccountRef, { attempts: attemptedLevels });
+      transaction.update(userAccountRef, { attempted: attemptedLevels });
       setData(metadataKeys.attemptedLevels, attemptedLevels);
       return true;
     });
@@ -160,43 +159,47 @@ export async function attemptUserLevel(level_id: string, user_email?: string | n
 }
 
 export async function markUserLevelCompleted(
-  level_id: string,
+  level: SharedLevel,
   user_email: string | null | undefined,
   moveHistory: Direction[],
 ) {
   const userData = getLocalUserData();
   const completedLevels = getData(metadataKeys.completedLevels) || [];
-  const firstCompletion = !completedLevels.includes(level_id);
+  const firstCompletion = !completedLevels.includes(level.uuid);
   if (!user_email) {
-    completedLevels.push(level_id);
+    completedLevels.push(level.uuid);
     setData(metadataKeys.completedLevels, completedLevels);
     return;
   }
 
   try {
     const success = await runTransaction(db, async (transaction) => {
-      const userLevelRef = doc(db, "userLevels", level_id);
+      const userLevelRef = doc(db, "userLevels", level.uuid);
       const userLevelDoc = await transaction.get(userLevelRef);
       const userLevelData = userLevelDoc.data() as UserLevelDocument;
-
       const userAccountRef = doc(db, "userAccounts", user_email);
 
       const levelSolnRef = doc(collection(db, "levelSolutions"));
       transaction.set(levelSolnRef, {
-        level_id: level_id,
+        level_id: level.uuid,
         user_email: user_email,
-        local_uuid: userData.uuid,
+        local_uuid: userData?.uuid,
         solution: moveHistory.join(""),
         moves: moveHistory.length,
         type: "user_level",
       });
 
-      if (!firstCompletion) {
-        completedLevels.push(level_id);
-        transaction.update(userLevelRef, {
+      if (firstCompletion) {
+        completedLevels.push(level.uuid);
+        const updateData: Partial<UserLevelDocument> = {
           wins: userLevelData.wins + 1,
           winrate: (userLevelData.wins + 1) / userLevelData.attempts,
-        });
+        };
+        if (moveHistory.length < level.best) {
+          updateData.best = moveHistory.length;
+          updateData.bestSolution = moveHistory.join("");
+        }
+        transaction.update(userLevelRef, updateData);
       }
 
       transaction.update(userAccountRef, { completed: completedLevels });
@@ -206,7 +209,7 @@ export async function markUserLevelCompleted(
 
     return success;
   } catch (error) {
-    console.error("Error marking level completed:", level_id, error);
+    console.error("Error marking level completed:", level.uuid, error);
     return false;
   }
 }
@@ -217,14 +220,18 @@ export async function postSolutionData(
   moveHistory: Direction[],
 ) {
   const userData = getLocalUserData();
-  return createDocument("levelSolutions", undefined, {
-    level_id: level_id,
-    user_email: user_email ?? "undefined",
-    local_uuid: userData.uuid,
-    solution: moveHistory.join(""),
-    moves: moveHistory.length,
-    type: "official_level",
-  });
+  try {
+    createDocument("levelSolutions", undefined, {
+      level_id: level_id,
+      user_email: user_email ?? "undefined",
+      local_uuid: userData.uuid,
+      solution: moveHistory.join(""),
+      moves: moveHistory.length,
+      type: "official_level",
+    });
+  } catch (error) {
+    console.error("Error posting solution data:", level_id, error);
+  }
 }
 
 export async function getUserData(username: string) {
@@ -323,20 +330,15 @@ export async function createDocument(
   collectionName: string,
   docName: string | undefined,
   docContent: any,
-): Promise<DocumentReference | null> {
+): Promise<DocumentReference> {
   let newDoc;
 
-  try {
-    if (docName) {
-      newDoc = doc(db, collectionName, docName);
-      await setDoc(newDoc, docContent);
-    } else {
-      // If no document name provided, use auto generated firestore document id
-      newDoc = await addDoc(collection(db, collectionName), docContent);
-    }
-  } catch (error) {
-    console.error("Error creating document:", error);
-    return null;
+  if (docName) {
+    newDoc = doc(db, collectionName, docName);
+    await setDoc(newDoc, docContent);
+  } else {
+    // If no document name provided, use auto generated firestore document id
+    newDoc = await addDoc(collection(db, collectionName), docContent);
   }
 
   return newDoc;
@@ -346,16 +348,9 @@ export async function updateDocument(
   collectionName: string,
   docName: string,
   updateContent: any,
-): Promise<boolean> {
+): Promise<void> {
   const documentRef = doc(db, collectionName, docName);
-
-  try {
-    await updateDoc(documentRef, updateContent);
-    return true;
-  } catch (error) {
-    console.error("Error updating document:", error);
-    return false;
-  }
+  return await updateDoc(documentRef, updateContent);
 }
 
 // ================ \\

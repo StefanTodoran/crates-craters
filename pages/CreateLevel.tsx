@@ -1,6 +1,5 @@
-import { useContext, useState } from "react";
+import { useState } from "react";
 import InputCard from "../components/InputCard";
-import GlobalContext from "../GlobalContext";
 import { createBlankBoard } from "../util/board";
 import { doPageChange } from "../util/events";
 import { generateUUID } from "../util/loader";
@@ -12,8 +11,6 @@ interface Props {
 }
 
 export default function CreateLevel({ createLevelCallback, existingLevelNames }: Props) {
-  const { userData } = useContext(GlobalContext);
-  
   const [levelTitle, setLevelTitle] = useState("");
   const levelCreated = new Date();
 
@@ -29,7 +26,7 @@ export default function CreateLevel({ createLevelCallback, existingLevelNames }:
         {
           label: "Level Title",
           value: levelTitle,
-          update: setLevelTitle
+          onChange: setLevelTitle
         },
       ]}
       buttonText="Create"

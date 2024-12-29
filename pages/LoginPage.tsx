@@ -62,6 +62,7 @@ export default function LoginPage({ setUserCredential }: Props) {
                 value={password}
                 onChange={setPassword}
                 darkMode={darkMode}
+                doFilter={false}
                 fullBorder
                 isSensitive
             />
@@ -166,5 +167,6 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         justifyContent: "center",
         marginTop: normalize(10),
+        marginBottom: normalize(100),
     },
 });

@@ -84,7 +84,7 @@ interface LevelBase {
   board: FlatBoard,
   official: boolean,
   completed: boolean,
-  best?: number, // Guaranteed to be defined if completed, represents the minimum moves the user has used to beat the level.
+  bestSolution?: string, // If completed, the shortest solution found by the user.
 }
 
 export interface OfficialLevel extends LevelBase {

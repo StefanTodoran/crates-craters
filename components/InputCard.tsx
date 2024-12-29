@@ -3,21 +3,15 @@ import { Dimensions, StyleSheet, Text, View } from "react-native";
 import GlobalContext from "../GlobalContext";
 import TextStyles, { normalize } from "../TextStyles";
 import { Theme, colors } from "../Theme";
-import InputLine from "./InputLine";
+import InputLine, { InputLineProps } from "./InputLine";
 import SimpleButton from "./SimpleButton";
 
 const win = Dimensions.get("window");
 
-interface InputField {
-  label: string,
-  value: string,
-  update: (value: string) => void,
-}
-
 interface PropsBase {
   title: string,
   hints?: string[],
-  fields?: InputField[],
+  fields?: InputLineProps[],
 }
 
 interface PropsWithoutButton extends PropsBase {
@@ -67,10 +61,8 @@ export default function InputCard({
       <View style={styles.inputContainer}>
         {fields?.map((field, idx) =>
           <InputLine
+            {...field}
             key={idx}
-            label={field.label}
-            value={field.value}
-            onChange={field.update}
             darkMode={darkMode}
           />
         )}
