@@ -13,18 +13,18 @@
     "prune-exports": "ts-prune"
   },
   "dependencies": {
-    "expo": "^49.0.0",
-    "expo-av": "~13.4.1",
-    "expo-font": "~11.4.0",
-    "expo-navigation-bar": "~2.3.0",
-    "expo-splash-screen": "~0.20.5",
-    "expo-status-bar": "~1.6.0",
+    "expo": "^50.0.0",
+    "expo-av": "~13.10.6",
+    "expo-font": "~11.10.3",
+    "expo-navigation-bar": "~2.8.1",
+    "expo-splash-screen": "~0.26.5",
+    "expo-status-bar": "~1.11.1",
     "firebase": "^10.6.0",
     "heapify": "github:StefanTodoran/javascript-minqueue#release",
     "react": "18.2.0",
-    "react-native": "0.72.6",
+    "react-native": "0.73.6",
     "react-native-mmkv": "^2.11.0",
-    "react-native-svg": "13.9.0",
+    "react-native-svg": "14.1.0",
     "react-native-toast-message": "^2.2.0"
   },
   "devDependencies": {
@@ -32,8 +32,8 @@
     "@types/firebase": "^3.2.1",
     "@types/react": "~18.2.14",
     "@types/react-native": "^0.73.0",
-    "expo-dev-client": "~2.4.12",
-    "expo-updates": "~0.18.19",
+    "expo-dev-client": "~3.3.12",
+    "expo-updates": "~0.24.13",
     "graphql": "^16.8.1",
     "ts-prune": "^0.10.3",
     "typescript": "^5.1.3"
