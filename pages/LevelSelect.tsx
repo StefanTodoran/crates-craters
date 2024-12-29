@@ -116,7 +116,7 @@ export default function LevelSelect({
   return (
     <>
       {/* This component exists just to calculate the height of level cards. */}
-      {!elementHeight && <View
+      {levels.length > 0 && !elementHeight && <View
         onLayout={(event) => {
           let { height } = event.nativeEvent.layout;
           storeElementHeightCallback(height);
@@ -132,10 +132,16 @@ export default function LevelSelect({
         />
       </View>}
 
+      {levels.length === 0 && !elementHeight && <EmptyList
+        {...emptyListProps}
+        onPress={emptyListProps.onPress || doRefresh}
+        buttonTheme={useTheme}
+      />}
+
       {elementHeight !== 0 &&
         <FlatList
           ref={scrollRef}
-          overScrollMode="never"
+          // overScrollMode="never"
           contentContainerStyle={styles.container}
           showsVerticalScrollIndicator={false}
 

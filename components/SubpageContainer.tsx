@@ -11,7 +11,7 @@ interface Props {
 export default function SubpageContainer({ center, noWidthPad, children }: Props) {
   return (
     <ScrollView
-      overScrollMode="never"
+      // overScrollMode="never"
       showsVerticalScrollIndicator={false}
       style={styles.scrollContainer}
       contentContainerStyle={[

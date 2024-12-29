@@ -19,6 +19,14 @@ export enum metadataKeys {
   completedLevels = "completedLevels",
 }
 
+export function logAllKeys() {
+  console.log(storage.getAllKeys());
+}
+
+export function clearAllData() {
+  storage.clearAll();
+}
+
 export function setData(key: string, value: any) {
   const jsonValue = JSON.stringify(value);
   try {
@@ -44,6 +52,7 @@ export function getData(key: string) {
 
 export function getLevelData(key: string) {
   const level = getData(key);
+  console.log("getLevelData", key, level);
   const board = new FlatBoard(level.board.board);
   level.board = board;
   return level as Level;
@@ -81,6 +90,8 @@ export function getStoredLevels() {
   const levels: Level[] = [];
   keys.forEach(key => {
     const level = getData(key);
+    console.log(key, Object.keys(level));
+
     if (isLevelWellFormed(level)) {
       // @ts-expect-error The next two lines turn level.board from an object to a class instance.
       const board = new FlatBoard(level.board.board);
@@ -147,18 +158,27 @@ export function deleteLevel(level: UserLevel) {
 }
 
 export function multiStoreLevels(levels: Level[]) {
-  const keys = JSON.stringify(levels.map(level => level.uuid));
+  const keys = levels.map(level => level.uuid);
 
   try {
     levels.forEach(level => {
       storage.set(level.uuid, JSON.stringify(level));
     });
-    storage.set(metadataKeys.officialLevelKeys, keys);
-    return true;
+    storage.set(metadataKeys.officialLevelKeys, JSON.stringify(keys));
   } catch (err) {
     console.error("Error completing multiStoreLevels command:", err);
     return false;
   }
+
+  const storedKeys = storage.getAllKeys();
+  console.log("storedKeys", storedKeys);
+  const missingKeys = keys.filter(key => !storedKeys.includes(key));
+  if (missingKeys.length > 0) {
+    console.error("Missing keys after multiStoreLevels command:", missingKeys);
+    return false;
+  }
+
+  return true;
 }
 
 export function markLevelCompleted(uuid: string, moveCount: number) {

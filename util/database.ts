@@ -79,6 +79,7 @@ async function fetchOfficialLevelsFromServer() {
   for (let i = 0; i < rawLevels.length; i++) {
     const rawLevel = rawLevels[i];
     const existingLevel: OfficialLevel = getData(rawLevel.uuid);
+    console.log("rawLevel", rawLevel.uuid, rawLevel);
 
     const updatedLevel: OfficialLevel = {
       uuid: rawLevel.uuid,

@@ -81,7 +81,7 @@ export default function Menu({ notificationCounts, openPage }: Props) {
         horizontal
         pagingEnabled
         showsHorizontalScrollIndicator={false}
-        overScrollMode="never"
+        // overScrollMode="never"
         onScroll={(evt) => {
           anim.setValue(evt.nativeEvent.contentOffset.x / win.width);
         }}

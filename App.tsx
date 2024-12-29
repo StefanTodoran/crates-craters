@@ -175,6 +175,7 @@ export default function App() {
   }, []);
 
   const changePlayLevel = useCallback((uuid: string) => {
+    console.log("changePlayLevel", uuid);
     const levelObject = getLevelData(uuid);
     playLevelFromObj(levelObject);
   }, []);

@@ -216,7 +216,7 @@ export default function UserLevels({
                 <FlatList
                     horizontal
                     ref={scrollRef}
-                    overScrollMode="never"
+                    // overScrollMode="never"
                     showsHorizontalScrollIndicator={false}
                     style={{ flexGrow: 0 }}
                     contentContainerStyle={styles.filterChipsRow}
