@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useContext, useState } from "react";
 import InputCard from "../components/InputCard";
+import GlobalContext from "../GlobalContext";
 import { createBlankBoard } from "../util/board";
 import { doPageChange } from "../util/events";
 import { generateUUID } from "../util/loader";
@@ -11,15 +12,14 @@ interface Props {
 }
 
 export default function CreateLevel({ createLevelCallback, existingLevelNames }: Props) {
+  const { userData } = useContext(GlobalContext);
+  
   const [levelTitle, setLevelTitle] = useState("");
-  const [levelDesigner, setLevelDesigner] = useState("");
   const levelCreated = new Date();
 
   let inputHint = "Click create to get started!";
-  if (!levelTitle && !levelDesigner) inputHint = "Both title and designer name are required!";
-  else if (!levelTitle) inputHint = "Level title is required!";
+  if (!levelTitle) inputHint = "Level title is required!";
   else if (existingLevelNames.includes(levelTitle.toLowerCase())) inputHint = "Level title must be unique!";
-  else if (!levelDesigner) inputHint = "Designer name required!";
 
   return (
     <InputCard
@@ -31,11 +31,6 @@ export default function CreateLevel({ createLevelCallback, existingLevelNames }:
           value: levelTitle,
           update: setLevelTitle
         },
-        {
-          label: "Designer Name",
-          value: levelDesigner,
-          update: setLevelDesigner
-        },
       ]}
       buttonText="Create"
       buttonCallback={() => {
@@ -45,14 +40,12 @@ export default function CreateLevel({ createLevelCallback, existingLevelNames }:
           board: createBlankBoard(),
           completed: false,
           official: false,
-          designer: levelDesigner,
           created: levelCreated.toISOString(),
         });
         setLevelTitle("");
-        setLevelDesigner("");
         doPageChange(0);
       }}
-      buttonDisabled={!levelTitle || !levelDesigner}
+      buttonDisabled={!levelTitle}
     />
   );
 }

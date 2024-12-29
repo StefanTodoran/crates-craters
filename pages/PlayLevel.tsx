@@ -163,10 +163,10 @@ export default function PlayLevel({
 
   const [canLikeLevel, setCanLikeLevel] = useState(false);
   useEffect(() => {
-    if (!level.hasOwnProperty("shared")) return;
+    if (!level.hasOwnProperty("shared") || !userCredential) return;
     
     const likedLevels = getData(metadataKeys.likedLevels) || [];
-    setCanLikeLevel(!likedLevels.includes(level.uuid) && (level as SharedLevel).user_email != userCredential?.user.email);
+    setCanLikeLevel(!likedLevels.includes(level.uuid) && (level as SharedLevel).user_email != userCredential.user.email);
   }, []);
 
   useEffect(() => {

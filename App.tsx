@@ -104,7 +104,7 @@ export default function App() {
       const savedCredentials = getData(metadataKeys.userCredentials);
       if (!savedCredentials) return;
 
-      signInWithEmailAndPassword(auth, savedCredentials.username, savedCredentials.password)
+      signInWithEmailAndPassword(auth, savedCredentials.email, savedCredentials.password)
         .then((userCredential) => setUserCredential(userCredential))
         .catch((error) => {
           console.error("Failed to sign in with saved credentials:", error.code);
@@ -175,7 +175,6 @@ export default function App() {
   }, []);
 
   const changePlayLevel = useCallback((uuid: string) => {
-    console.log("changePlayLevel", uuid);
     const levelObject = getLevelData(uuid);
     playLevelFromObj(levelObject);
   }, []);
@@ -277,7 +276,7 @@ export default function App() {
                 playLevelCallback={beginPlaytesting}
                 startEditingCallback={startEditingLevel}
                 createNewLevelCallback={createNewLevel}
-                levels={levels.filter(lvl => !lvl.official)} // TODO: and level.designer === the current user
+                levels={levels.filter(lvl => !lvl.official)}
                 editorLevel={editorLevel}
                 elementHeight={levelElementHeight}
                 storeElementHeightCallback={setElementHeight}

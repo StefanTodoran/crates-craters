@@ -155,7 +155,7 @@ export default function UserLevels({
             }
 
             const lengths: lengthFilter[] = [Filter.SHORT, Filter.NORMAL, Filter.LONG];
-            for (let i = 0; i < difficulties.length; i++) {
+            for (let i = 0; i < lengths.length; i++) {
                 const length = lengths[i];
                 const range = lengthRanges[length];
 
@@ -194,7 +194,7 @@ export default function UserLevels({
     // }, [filters, numLoaded, searchQuery]);
 
     let filteredLevels = userLevels;
-    if (searchQuery) filteredLevels = userLevels.filter(level => level.name.includes(searchQuery) || level.designer.includes(searchQuery));
+    if (searchQuery) filteredLevels = userLevels.filter(level => level.name.includes(searchQuery) || level.user_name.includes(searchQuery));
 
     return (
         <LevelSelect

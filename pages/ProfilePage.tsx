@@ -26,7 +26,7 @@ export default function ProfilePage({ setUserCredential }: Props) {
             </Text>
 
             <Text style={[TextStyles.paragraph(darkMode), { textAlign: "center" }]}>
-                {userCredential?.user.email}
+                Email: {userCredential?.user.email}
             </Text>
             <Text style={[TextStyles.paragraph(darkMode), { textAlign: "center" }]}>
                 Email verified? {!!userCredential?.user.emailVerified ? "true" : "false"}

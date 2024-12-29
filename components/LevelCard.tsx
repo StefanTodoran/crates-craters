@@ -52,7 +52,8 @@ const LevelCard = memo(function ({
   let attributionText;
   if (level.official && level.best) attributionText = `Best: ${level.best} moves`;
   else if (level.official) attributionText = "Standard Level";
-  else /* if (!level.official) */ attributionText = `Designed by "${level.designer}"`;
+  else if (Object.hasOwn(level, "user_name")) attributionText = `Designed by "${(level as SharedLevel).user_name}"`;
+  else attributionText = "Designed by you";
 
   let iconSource;
   if (level.official || useTheme.NAME === "PURPLE") iconSource = level.completed ? graphics.CRATER : graphics.CRATE;

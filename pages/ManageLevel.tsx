@@ -33,17 +33,14 @@ export default function ManageLevel({
   viewCallback,
   playLevelCallback,
 }: Props) {
-  const { darkMode, userCredential } = useContext(GlobalContext);
+  const { darkMode, userData, userCredential } = useContext(GlobalContext);
 
   const [levelTitle, setLevelTitle] = useState<string>("");
-  const [levelDesigner, setLevelDesigner] = useState<string>("");
   const [refreshed, forceRefresh] = useForceRefresh();
 
   useEffect(() => {
     if (!level) return;
-
     setLevelTitle(level.name);
-    setLevelDesigner(level.designer);
   }, [level, refreshed]);
 
   const previewWidth = 0.9;
@@ -62,7 +59,7 @@ export default function ManageLevel({
         // TODO: Add level stats here once shared!
         hints={[
           `Created on ${new Date(level.created).toDateString()}.`,
-          level.shared ? `Shared on ${new Date(level.shared).toDateString()}.` : "Not publicly shared.",
+          level.shared ? `Shared since ${new Date(level.shared).toDateString()}.` : "Not publicly shared.",
           // TODO: List the attempts, wins, and likes if shared and they are not all zero.
         ]}
         fields={[
@@ -71,19 +68,14 @@ export default function ManageLevel({
             value: levelTitle,
             update: setLevelTitle
           },
-          {
-            label: "Designer Name",
-            value: levelDesigner,
-            update: setLevelDesigner
-          },
         ]}
         buttonText="Save"
         buttonCallback={() => {
           // @ts-expect-error We just want to update these two properties, which both exist on UserLevel.
-          updateLevel({ uuid: level.uuid, name: levelTitle, designer: levelDesigner });
+          updateLevel({ uuid: level.uuid, name: levelTitle });
           forceRefresh();
         }}
-        buttonDisabled={levelTitle === level.name && levelDesigner === level.designer}
+        buttonDisabled={levelTitle === level.name}
       />
 
       <ResponsivePressable
@@ -109,7 +101,7 @@ export default function ManageLevel({
             const userLevelDoc: UserLevelDocument = {
               name: level.name,
               board: compressBoardData(level.board),
-              designer: level.designer,
+              user_name: userData!.user_name,
               user_email: userCredential!.user.email!,
               shared: Timestamp.now(),
               attempts: 0,
@@ -117,10 +109,10 @@ export default function ManageLevel({
               winrate: 1,
               likes: 0,
               best: level.best!, // Guaranteed to be defined since button is disabled if !level.completed
-              keywords: [...level.name.toLowerCase().split(/\s+/), ...level.designer.toLowerCase().split(/\s+/)],
+              keywords: [...level.name.toLowerCase().split(/\s+/), ...userData!.user_name.toLowerCase().split(/\s+/)],
               public: true,
             };
-            createDocument("userLevels", undefined, userLevelDoc)
+            createDocument("userLevels", level.db_id, userLevelDoc)
               .then(docRef => {
                 updateLevel({ ...level, shared: userLevelDoc.shared.toDate().toISOString(), db_id: docRef?.id });
               })
@@ -184,7 +176,7 @@ export default function ManageLevel({
           icon={graphics.OPTIONS_ICON}
           theme={colors.RED_THEME}
           label={"Unshare Level"}
-          disabled={!level.shared}
+          disabled={!level.shared || !userCredential}
         />
       </View>
 

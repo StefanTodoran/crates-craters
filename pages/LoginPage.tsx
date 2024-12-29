@@ -13,7 +13,7 @@ import { UserAccountDocument, createDocument } from "../util/database";
 import { auth } from "../util/firebase";
 import { getData, getLocalUserData, metadataKeys, setData } from "../util/loader";
 
-const emailRegex = new RegExp(String.raw`^(\S+@\S+\.\S+)?$`);
+const emailRegex = /^(\S+@\S+\.\S+)?$/;
 
 interface Props {
     setUserCredential: (newCredential: UserCredential) => void,
@@ -25,16 +25,19 @@ export default function LoginPage({ setUserCredential }: Props) {
     const [email, setEmail] = useState("");
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
+    const [loading, setLoading] = useState(false);
 
     let hint;
     if (!password) hint = "Please input a password.";
     if (password && password.length < 6) hint = "Password must be at least 6 characters long!";
-    if (!username) hint = "A username is required.";
     if (!email) hint = "An email address is required.";
     if (email && !emailRegex.test(email)) hint = "Please use a valid email address!";
     if (!email && !password) hint = "Please input an email, username, and password.";
 
     const usernameRegex = /[^a-z0-9_$!]/gi;
+
+    const canLogin = email && emailRegex.test(email) && password && password.length >= 6;
+    const canCreateAccount = username && canLogin;
 
     return (
         <SubpageContainer center>
@@ -43,6 +46,7 @@ export default function LoginPage({ setUserCredential }: Props) {
                 value={email}
                 onChange={setEmail}
                 darkMode={darkMode}
+                doFilter={false}
                 fullBorder
             />
             <InputLine
@@ -68,10 +72,11 @@ export default function LoginPage({ setUserCredential }: Props) {
                     icon={graphics.SIGNUP_ICON}
                     theme={colors.YELLOW_THEME}
                     onPress={() => {
-                        signInWithEmailAndPassword(auth, username, password)
+                        setLoading(true);
+                        signInWithEmailAndPassword(auth, email, password)
                             .then((userCredential) => {
                                 setUserCredential(userCredential);
-                                setData(metadataKeys.userCredentials, { username: username, password: password });
+                                setData(metadataKeys.userCredentials, { email: email, password: password });
                                 Toast.show({
                                     type: "success",
                                     text1: "Account login succeeded!",
@@ -84,8 +89,10 @@ export default function LoginPage({ setUserCredential }: Props) {
                                     text1: "Account login failed.",
                                     text2: `Error code: ${error.code}. Please try again.`,
                                 });
-                            });
+                            })
+                            .finally(() => setLoading(false));
                     }}
+                    disabled={!canLogin || loading}
                     main
                 />
                 <SimpleButton
@@ -96,10 +103,12 @@ export default function LoginPage({ setUserCredential }: Props) {
                         const completedLevels = getData(metadataKeys.completedLevels) || [];
                         const userData = getLocalUserData();
 
-                        createUserWithEmailAndPassword(auth, username, password)
+                        setLoading(true);
+                        createUserWithEmailAndPassword(auth, email, password)
                             .then((userCredential) => {
                                 const accountDoc: UserAccountDocument = {
-                                    user_email: username,
+                                    user_email: email,
+                                    user_name: username,
                                     likes: [],
                                     attempted: attemptedLevels,
                                     completed: completedLevels,
@@ -108,16 +117,23 @@ export default function LoginPage({ setUserCredential }: Props) {
                                     local_uuid: userData.uuid,
                                     local_joined: Timestamp.fromDate(new Date(userData.joined)),
                                 };
-                                createDocument("userAccounts", username, accountDoc);
-                                setData(metadataKeys.userCredentials, { username: username, password: password });
-                                // TODO: Failure to create this document should be handled somehow.
-
-                                setUserCredential(userCredential);
-                                Toast.show({
-                                    type: "success",
-                                    text1: "Account creation succeeded!",
-                                    text2: `You are now logged in as ${userCredential.user.email}.`,
-                                });
+                                createDocument("userAccounts", email, accountDoc)
+                                    .then(() => {
+                                        setData(metadataKeys.userCredentials, { email: email, password: password });
+                                        setUserCredential(userCredential);
+                                        Toast.show({
+                                            type: "success",
+                                            text1: "Account creation succeeded!",
+                                            text2: `You are now logged in as ${userCredential.user.email}.`,
+                                        });
+                                    })
+                                    .catch((error) => {
+                                        Toast.show({
+                                            type: "error",
+                                            text1: "Account creation failed.",
+                                            text2: `Error code: ${error.code}. Please try again.`,
+                                        });
+                                    });
                             })
                             .catch((error) => {
                                 Toast.show({
@@ -125,9 +141,11 @@ export default function LoginPage({ setUserCredential }: Props) {
                                     text1: "Account creation failed.",
                                     text2: `Error code: ${error.code}. Please try again.`,
                                 });
-                            });
+                            })
+                            .finally(() => setLoading(false));
                     }}
                     theme={colors.YELLOW_THEME}
+                    disabled={!canCreateAccount || loading}
                     extraMargin
                 />
             </View>

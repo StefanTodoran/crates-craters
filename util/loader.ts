@@ -45,7 +45,6 @@ export function getData(key: string) {
 
 export function getLevelData(key: string) {
   const level = getData(key);
-  console.log("getLevelData", key, level);
   const board = new FlatBoard(level.board.board);
   level.board = board;
   return level as Level;
@@ -97,7 +96,6 @@ export function getStoredLevels() {
   const levels: Level[] = [];
   keys.forEach(key => {
     const level = getData(key);
-    console.log(key, Object.keys(level));
 
     if (isLevelWellFormed(level)) {
       // @ts-expect-error The next two lines turn level.board from an object to a class instance.
@@ -178,7 +176,6 @@ export function multiStoreLevels(levels: Level[]) {
   }
 
   const storedKeys = storage.getAllKeys();
-  console.log("storedKeys", storedKeys);
   const missingKeys = keys.filter(key => !storedKeys.includes(key));
   if (missingKeys.length > 0) {
     console.error("Missing keys after multiStoreLevels command:", missingKeys);

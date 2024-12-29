@@ -95,7 +95,6 @@ export interface OfficialLevel extends LevelBase {
 type DateString = string; // In the form Date().toISOString();
 export interface UserLevel extends LevelBase {
   official: false,
-  designer: string,
   created: DateString, 
   shared?: DateString,
   db_id?: string, // The document id in the database, if shared.
@@ -103,6 +102,7 @@ export interface UserLevel extends LevelBase {
 
 export interface SharedLevel extends Exclude<UserLevel, "created"> {
   user_email: string,
+  user_name: string,
   shared: DateString,
   downloads: number,
   attempts: number,

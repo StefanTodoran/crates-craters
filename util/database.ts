@@ -24,7 +24,7 @@ export interface OfficialLevelDocument {
 export interface UserLevelDocument {
   name: string,
   board: string,
-  designer: string,
+  user_name: string,
   user_email: string,
   shared: Timestamp,
   attempts: number,
@@ -38,6 +38,7 @@ export interface UserLevelDocument {
 
 export interface UserAccountDocument {
   user_email: string,
+  user_name: string,
   likes: string[],
   attempted: string[],
   completed: string[],
@@ -83,7 +84,6 @@ async function fetchOfficialLevelsFromServer() {
   for (let i = 0; i < rawLevels.length; i++) {
     const rawLevel = rawLevels[i];
     const existingLevel: OfficialLevel = getData(rawLevel.uuid);
-    console.log("rawLevel", rawLevel.uuid, rawLevel);
 
     const updatedLevel: OfficialLevel = {
       uuid: rawLevel.uuid,
@@ -188,6 +188,7 @@ export async function markUserLevelCompleted(
         local_uuid: userData.uuid,
         solution: moveHistory.join(""),
         moves: moveHistory.length,
+        type: "user_level",
       });
 
       if (!firstCompletion) {
@@ -222,6 +223,7 @@ export async function postSolutionData(
     local_uuid: userData.uuid,
     solution: moveHistory.join(""),
     moves: moveHistory.length,
+    type: "official_level",
   });
 }
 
