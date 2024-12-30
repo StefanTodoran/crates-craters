@@ -24,6 +24,7 @@ export default function FilterChip({
     const useTheme = theme || purpleTheme;
     const buttonColor = darkMode ? useTheme.DARK_COLOR : useTheme.MAIN_COLOR;
     const borderColor = darkMode ? useTheme.MAIN_COLOR : useTheme.DARK_COLOR;
+    const bgColor = darkMode ? useTheme.NEAR_BLACK : useTheme.OFF_WHITE;
 
     return (
         <ResponsivePressable
@@ -33,7 +34,7 @@ export default function FilterChip({
                 styles.container,
                 {
                     borderColor: borderColor,
-                    backgroundColor: active ? buttonColor : useTheme.OFF_WHITE,
+                    backgroundColor: active ? buttonColor : bgColor,
                 },
             ]}
         >

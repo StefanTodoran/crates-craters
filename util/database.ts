@@ -4,8 +4,8 @@ import { db } from "./firebase";
 import { getData, getLocalUserData, getStoredLevelCount, metadataKeys, multiStoreLevels, parseCompressedBoardData, setData } from "./loader";
 import { Direction, OfficialLevel, SharedLevel } from "./types";
 
-// import { setLogLevel } from "firebase/firestore";
-// setLogLevel("debug");
+import { setLogLevel } from "firebase/firestore";
+setLogLevel("debug");
 
 // ======================== \\
 // DOCUMENT TYPE INTERFACES \\

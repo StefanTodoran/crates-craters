@@ -39,6 +39,7 @@ const mainGraphics = {
   FLAG_ICON: require("./assets/main_theme/flag_icon.png"),
   LIKE_ICON: require("./assets/main_theme/like_icon.png"),
   SIGNUP_ICON: require("./assets/main_theme/signup_icon.png"),
+  MAIL_ICON: require("./assets/main_theme/mail_icon.png"),
 
   WIN_BANNER: require("./assets/main_theme/win_banner.png"),
   LOGO: require("./assets/main_theme/logo.png"),

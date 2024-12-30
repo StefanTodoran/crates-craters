@@ -65,9 +65,6 @@ export default function ProfilePage({ setUserCredential }: Props) {
             <Text style={[TextStyles.subtitle(darkMode), { color: colors.YELLOW_THEME.MAIN_COLOR, textAlign: "center" }]}>
                 Under Construction
             </Text>
-            <Text style={[TextStyles.paragraph(darkMode), { textAlign: "center" }]}>
-                For Support: info@todoran.dev
-            </Text>
 
             {/* <View style={styles.buttonsRow}>
                 <SimpleButton

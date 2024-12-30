@@ -1,5 +1,5 @@
 import { useContext, useState } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { Linking, StyleSheet, Text, View } from "react-native";
 import GlobalContext from "../GlobalContext";
 import TextStyles, { normalize } from "../TextStyles";
 import { colors, graphics } from "../Theme";
@@ -81,6 +81,12 @@ export default function Settings({
           onPress={audioModeCallback}
           label="Toggle Sounds"
           icon={playAudio ? graphics.AUDIO_ON_ICON : graphics.AUDIO_OFF_ICON}
+          theme={colors.GREEN_THEME}
+          fillWidth
+        />
+        <MenuButton onPress={() => Linking.openURL("mailto:info@todoran.dev?subject=Crates%20%26%20Craters")}
+          label="Contact Support"
+          icon={graphics.MAIL_ICON}
           theme={colors.GREEN_THEME}
           fillWidth
         />

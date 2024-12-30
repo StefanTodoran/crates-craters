@@ -14,7 +14,7 @@ import LevelSelect from "./LevelSelect";
 
 enum Filter {
     POPULAR = "Popular",
-    UNBEATEN = "Unbeaten",
+    UNBEATEN = "Unsolved",
     UNPLAYED = "New to You",
     LIKED = "Liked",
     NEWEST = "Newest",
@@ -26,6 +26,7 @@ enum Filter {
     LONG = "Long",
     COMPLETED = "Completed",
     PLAYED = "Played Before",
+    UNATTEMPTED = "No Attempts",
 }
 
 const mutualExclusions = [
@@ -125,8 +126,14 @@ export default function UserLevels({
             orderFields.push({ field: "shared", order: filters.has(Filter.NEWEST) ? "desc" : "asc" });
 
             const filterFields: QueryFilter[] = [];
-            // filterFields.push({ field: "public", operator: "==", value: true });
-            if (filters.has(Filter.UNBEATEN)) filterFields.push({ field: "wins", operator: "==", value: 0 });
+            filterFields.push({ field: "public", operator: "==", value: true });
+            if (filters.has(Filter.UNATTEMPTED)) {
+                filterFields.push({ field: "attempts", operator: "==", value: 0 });
+            }
+            if (filters.has(Filter.UNBEATEN)) {
+                filterFields.push({ field: "wins", operator: "==", value: 0 });
+                filterFields.push({ field: "attempts", operator: "!=", value: 0 });
+            }
 
             const filterInList = (operator: "in" | "not-in" | "array-contains-any", list: string[], field: string = "uuid") => {
                 if (list.length === 0) return;
@@ -192,13 +199,14 @@ export default function UserLevels({
 
     useEffect(() => { fetchLevels(); }, []);
     useEffect(() => {
+        // TODO: Add some debouncing here.
         if (!areSetsEqual(filters, prevFilters.current)) fetchLevels();
         prevFilters.current = filters;
     }, [filters, numLoaded]);
     // }, [filters, numLoaded, searchQuery]);
 
     let filteredLevels = userLevels;
-    if (searchQuery) filteredLevels = userLevels.filter(level => level.name.includes(searchQuery) || level.user_name.includes(searchQuery));
+    if (searchQuery) filteredLevels = userLevels.filter(level => level.name.toLowerCase().includes(searchQuery.toLowerCase()) || level.user_name.toLowerCase().includes(searchQuery.toLowerCase()));
 
     return (
         <LevelSelect
@@ -231,7 +239,7 @@ export default function UserLevels({
                         text={item}
                         active={filters.has(item)}
                         onPress={() => toggleFilter(item)}
-                    // disabled={filteredLevels.length === 0}
+                        disabled={loading}
                     />}
                 />
             </>}

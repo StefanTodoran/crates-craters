@@ -132,7 +132,7 @@ export default function LoginPage({ setUserCredential }: Props) {
                                         Toast.show({
                                             type: "error",
                                             text1: "Account creation failed.",
-                                            text2: `Error code: ${error.code}. Please try again.`,
+                                            text2: `Error code: ${error.code}. Please contact support.`,
                                         });
                                     });
                             })
