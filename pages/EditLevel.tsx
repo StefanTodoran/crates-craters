@@ -290,12 +290,14 @@ export default function EditLevel({
           <View style={styles.section}>
             <View style={styles.row}>
               <SimpleButton
-                onLongPress={discardChanges}
+                onPress={discardChanges}
+                doConfirmation="Are you sure you want to discard your unsaved changes?"
                 text="Discard Changes"
                 icon={graphics.EXPLOSION}
                 theme={colors.RED_THEME}
                 disabled={!unsavedChanges}
                 fillWidth
+                square
                 extraMargin
               />
               <SimpleButton

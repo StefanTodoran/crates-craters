@@ -1,26 +1,31 @@
-import { UserCredential, signOut } from "firebase/auth";
+import { UserCredential, sendEmailVerification, signOut } from "firebase/auth";
 import { useContext } from "react";
-import { StyleSheet, Text } from "react-native";
+import { Linking, StyleSheet, View } from "react-native";
 import Toast from "react-native-toast-message";
 import InputCard from "../components/InputCard";
+import MenuButton from "../components/MenuButton";
 import SubpageContainer from "../components/SubpageContainer";
 import GlobalContext from "../GlobalContext";
-import TextStyles, { normalize } from "../TextStyles";
-import { colors } from "../Theme";
+import { normalize } from "../TextStyles";
+import { colors, graphics } from "../Theme";
 import { auth } from "../util/firebase";
 import { metadataKeys, setData } from "../util/loader";
 import LoginPage from "./LoginPage";
 
 interface Props {
+    attemptSignIn: () => Promise<void>,
     setUserCredential: (newCredential: UserCredential | undefined) => void,
 }
 
-export default function ProfilePage({ setUserCredential }: Props) {
-    const { darkMode, userData, userCredential } = useContext(GlobalContext);
+export default function ProfilePage({ attemptSignIn, setUserCredential }: Props) {
+    const { userData, userCredential } = useContext(GlobalContext);
+    const refreshCredentials = (onFinish: () => void) => {
+        attemptSignIn().then(onFinish);
+    }
 
     if (!userCredential) return <LoginPage setUserCredential={setUserCredential} />;
     return (
-        <SubpageContainer center>
+        <SubpageContainer onRefresh={refreshCredentials} center>
             <InputCard
                 title={"Profile"}
                 hints={[
@@ -61,47 +66,48 @@ export default function ProfilePage({ setUserCredential }: Props) {
                         });
                 }}
             />
-            
-            <Text style={[TextStyles.subtitle(darkMode), { color: colors.YELLOW_THEME.MAIN_COLOR, textAlign: "center" }]}>
-                Under Construction
-            </Text>
 
-            {/* <View style={styles.buttonsRow}>
-                <SimpleButton
-                    text="Sign Out"
-                    icon={graphics.SIGNUP_ICON}
-                    theme={colors.YELLOW_THEME}
-                    onPress={() => {
-                        signOut(auth)
-                            .then(() => {
-                                setUserCredential(undefined);
-                                setData(metadataKeys.userCredentials, null);
-
-                                Toast.show({
-                                    type: "success",
-                                    text1: "Account logout succeeded!",
-                                    text2: "You are no longer logged in.",
-                                });
-                            })
-                            .catch((error) => {
-                                Toast.show({
-                                    type: "error",
-                                    text1: "Account logout failed.",
-                                    text2: `Error code: ${error.code}. Please try again.`,
-                                });
+            <View style={styles.buttonsRow}>
+                <MenuButton onPress={() => {
+                    const user = userCredential.user;
+                    sendEmailVerification(user)
+                        .then(() => {
+                            Toast.show({
+                                type: "success",
+                                text1: "Email verification sent!",
+                                text2: `Please verify your email at ${user.email}.`,
                             });
-                    }}
-                    main
+                        })
+                        .catch((error) => {
+                            Toast.show({
+                                type: "error",
+                                text1: "Send verification failed.",
+                                text2: `Unable to send verification email. Error code: ${error.code}.`,
+                            });
+                        });
+                }}
+                    label="Resend Verification"
+                    icon={graphics.MAIL_ICON}
+                    theme={colors.YELLOW_THEME}
+                    disabled={userCredential.user.emailVerified}
                 />
-            </View> */}
+                <MenuButton onPress={() => Linking.openURL("mailto:info@todoran.dev?subject=Crates%20%26%20Craters")}
+                    label="Contact Support"
+                    icon={graphics.GET_SUPPORT_ICON}
+                    theme={colors.YELLOW_THEME}
+                />
+            </View>
+
         </SubpageContainer>
     );
 }
 
 const styles = StyleSheet.create({
     buttonsRow: {
-        flexDirection: "row",
+        // alignItems: "center",
         justifyContent: "center",
+        // width: "100%",
+        paddingHorizontal: "20%",
     },
     hintRow: {
         flexDirection: "row",

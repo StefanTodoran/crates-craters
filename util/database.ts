@@ -265,11 +265,14 @@ export function createFirebaseQuery(
   return q;
 }
 
-// export async function doesEntryExist(collectionName: string, docName: string): Promise<boolean> {
-//   const q = query(collection(db, collectionName), where(documentId(), "==", docName)); // TODO: evaluate difference between documentId() and "__name__"
-//   const snap = await getCountFromServer(q);
-//   return !!snap.data().count;
-// }
+/**
+ * @param fieldName Use "__name__" to match document name.
+ */
+export async function doesEntryExist(collectionName: string, fieldName: string, fieldValue: string): Promise<boolean> {
+  const q = query(collection(db, collectionName), where(fieldName, "==", fieldValue));
+  const snap = await getCountFromServer(q);
+  return !!snap.data().count;
+}
 
 // export async function getEntryCount(collectionName: string): Promise<number> {
 //   const q = query(collection(db, collectionName));

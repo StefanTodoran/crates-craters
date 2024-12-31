@@ -96,6 +96,7 @@ type DateString = string; // In the form Date().toISOString();
 export interface UserLevel extends LevelBase {
   official: false,
   created: DateString, 
+  user_name: string,
   shared?: DateString,
   db_id?: string, // The document id in the database, if shared.
 }

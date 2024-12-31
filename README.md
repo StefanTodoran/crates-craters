@@ -175,6 +175,7 @@ Built with JavaScript and React Native, Crates and Craters is a single player pu
 * Use a hitRect to give stepperArrows bigger hitboxes without overlapping SliderBar
 * Make notifications persist using MMKV?
 * Back action should be more useful, actually returning to previous screen
+* Improve firestore security rules
 
 <h2 style="display: flex; align-items: center;">
   Known Bugs

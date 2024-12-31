@@ -99,23 +99,27 @@ export default function App() {
   const [userCredential, setUserCredential] = useState<UserCredential>();
   const [userData, setUserData] = useState<UserAccountDocument>();
 
+  const attemptSignIn = useCallback(async () => {
+    // Grab the saved email and password from storage.
+    const savedCredentials = getData(metadataKeys.userCredentials);
+    if (!savedCredentials) return;
+
+    signInWithEmailAndPassword(auth, savedCredentials.email, savedCredentials.password)
+      .then((userCredential) => setUserCredential(userCredential))
+      .catch((error) => {
+        console.error("Failed to sign in with saved credentials:", error.code);
+        if (error.code === "auth/invalid-credential") setData(metadataKeys.userCredentials, undefined);
+      });
+    return;
+  }, []);
+
   useEffect(() => {
     if (!userCredential) {
-      const savedCredentials = getData(metadataKeys.userCredentials);
-      if (!savedCredentials) return;
-
-      signInWithEmailAndPassword(auth, savedCredentials.email, savedCredentials.password)
-        .then((userCredential) => setUserCredential(userCredential))
-        .catch((error) => {
-          console.error("Failed to sign in with saved credentials:", error.code);
-          if (error.code === "auth/invalid-credential") setData(metadataKeys.userCredentials, undefined);
-        });
+      attemptSignIn();
       return;
     }
 
-    getUserData(userCredential.user.email!)
-      .then((data) => setUserData(data));
-    // .catch((err) => console.log(">>>", err));
+    getUserData(userCredential.user.email!).then((data) => setUserData(data));
     // TODO: Put a Toast message here? What to do if fail?
   }, [userCredential]);
 
@@ -276,7 +280,7 @@ export default function App() {
                 playLevelCallback={beginPlaytesting}
                 startEditingCallback={startEditingLevel}
                 createNewLevelCallback={createNewLevel}
-                levels={levels.filter(lvl => !lvl.official)}
+                levels={levels.filter(lvl => !lvl.official && lvl.user_name === userData?.user_name)}
                 editorLevel={editorLevel}
                 elementHeight={levelElementHeight}
                 storeElementHeightCallback={setElementHeight}
@@ -294,6 +298,7 @@ export default function App() {
 
             {view === PageView.STORE &&
               <StorePage
+                attemptSignIn={attemptSignIn}
                 setUserCredential={setUserCredential}
               />
             }

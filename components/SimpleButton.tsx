@@ -1,5 +1,5 @@
 import { useContext } from "react";
-import { Image, ImageSourcePropType, StyleSheet, Text, View } from "react-native";
+import { Alert, Image, ImageSourcePropType, StyleSheet, Text } from "react-native";
 import GlobalContext from "../GlobalContext";
 import TextStyles, { normalize } from "../TextStyles";
 import { Theme, purpleTheme } from "../Theme";
@@ -14,7 +14,6 @@ interface SVGProps {
 interface Props {
   text?: string,
   onPress?: () => void,
-  onLongPress?: () => void,
   icon?: ImageSourcePropType,
   Svg?: React.FC<SVGProps>,
   disabled?: boolean,
@@ -24,11 +23,11 @@ interface Props {
   square?: boolean,
   fillWidth?: boolean,
   extraMargin?: boolean,
+  doConfirmation?: string,
 }
 
 export default function SimpleButton({
   onPress,
-  onLongPress,
   text,
   icon,
   Svg,
@@ -39,10 +38,11 @@ export default function SimpleButton({
   square,
   fillWidth,
   extraMargin,
+  doConfirmation,
 }: Props) {
   const { darkMode } = useContext(GlobalContext);
   const useTheme = theme || purpleTheme;
-  
+
   const hasIcon: boolean = !!icon || !!Svg;
   const buttonColor = darkMode ? useTheme.DARK_COLOR : useTheme.MAIN_COLOR;
 
@@ -53,12 +53,21 @@ export default function SimpleButton({
   if (wide) paddingHorizontal = normalize(50);
 
   let paddingVertical = square ? paddingHorizontal : normalize(5);
-  if (!!onLongPress) paddingVertical = normalize(10);
+
+  function handleOnPress() {
+    if (doConfirmation) {
+      Alert.alert("Confirm Action", doConfirmation, [
+        { text: "Cancel", style: "cancel" },
+        { text: "Confirm", onPress: onPress },
+      ], { cancelable: true, userInterfaceStyle: darkMode ? "dark" : "light" });
+    } else {
+      onPress?.();
+    }
+  }
 
   return (
     <ResponsivePressable
-      onPress={onPress}
-      onLongPress={onLongPress}
+      onPress={handleOnPress}
       disabled={disabled}
       customStyle={[
         staticStyles.simpleButton,
@@ -78,23 +87,13 @@ export default function SimpleButton({
       {icon && <Image style={staticStyles.bigIcon} source={icon} />}
       {!!Svg && <Svg width={staticStyles.bigIcon.width} height={staticStyles.bigIcon.height} fillColor={useTheme.MAIN_COLOR} />}
 
-      {text && <View>
-        <Label
-          text={text}
-          darkMode={darkMode}
-          hasIcon={hasIcon}
-          theme={useTheme}
-          main={main}
-        />
-
-        {onLongPress && <Label
-          text={"(Long Press)"}
-          darkMode={darkMode}
-          hasIcon={hasIcon}
-          theme={useTheme}
-          main={main}
-        />}
-      </View>}
+      {text && <Label
+        text={text}
+        darkMode={darkMode}
+        hasIcon={hasIcon}
+        theme={useTheme}
+        main={main}
+      />}
     </ResponsivePressable>
   );
 }

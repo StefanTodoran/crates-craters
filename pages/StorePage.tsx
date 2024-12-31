@@ -11,16 +11,17 @@ import { useCoinBalance } from "../util/loader";
 import ProfilePage from "./ProfilePage";
 
 interface Props {
+  attemptSignIn: () => Promise<void>,
   setUserCredential: (newCredential: UserCredential | undefined) => void,
 }
 
-export default function StorePage({ setUserCredential }: Props) {
+export default function StorePage({ attemptSignIn, setUserCredential }: Props) {
   const { darkMode } = useContext(GlobalContext);
   const [balance, _modifyBalance] = useCoinBalance();
 
   const pageComponents = useMemo(() => {
     return [
-      <ProfilePage setUserCredential={setUserCredential} />,
+      <ProfilePage attemptSignIn={attemptSignIn} setUserCredential={setUserCredential} />,
       <>
         <Text style={[TextStyles.subtitle(darkMode), { color: colors.YELLOW_THEME.MAIN_COLOR }]}>
           Coming Soon

@@ -4,8 +4,8 @@ import { Dimensions, StyleSheet, Text, View } from "react-native";
 import Toast from "react-native-toast-message";
 import BoardPreview from "../components/BoardPreview";
 import InputCard from "../components/InputCard";
-import MenuButton from "../components/MenuButton";
 import ResponsivePressable from "../components/ResponsivePressable";
+import SimpleButton from "../components/SimpleButton";
 import SubpageContainer from "../components/SubpageContainer";
 import GlobalContext from "../GlobalContext";
 import TextStyles, { normalize } from "../TextStyles";
@@ -18,11 +18,6 @@ import { compressBoardData, deleteLevel, updateLevel } from "../util/loader";
 import { PageView, UserLevel } from "../util/types";
 
 const win = Dimensions.get("window");
-
-const deleteLevelText = `Delete Level
-(Long Press)`;
-const unshareLevelText = `Make Private
-(Long Press)`;
 
 interface Props {
   level: UserLevel,
@@ -50,12 +45,40 @@ export default function ManageLevel({
 
   let hint;
   if (!userCredential) hint = "Log in to enable level sharing.";
+  if (userCredential && !userCredential.user.emailVerified) hint = "Verify your email to enable level sharing.";
   if (userCredential && !level?.completed) hint = "Complete one level run to enable sharing.";
   if (level?.shared) hint = "Congratulations! Your level is public!";
 
+  function unshareLevel() {
+    updateDocument("userLevels", level.db_id!, {
+      public: false,
+      user_email: userCredential!.user.email!,
+    })
+      .then(() => {
+        updateLevel({ ...level, shared: undefined }, false);
+      })
+      .catch(error => {
+        Toast.show({
+          type: "error",
+          text1: "Level unsharing failed.",
+          text2: `Error code: ${error.code}. Please try again.`,
+        });
+      });
+  }
+
+  function handleDeleteLevel() {
+    deleteLevel(level);
+    doPageChange(0);
+    Toast.show({
+      type: "success",
+      text1: "Level deletion completed.",
+      text2: `"${level.name}" has been successfully deleted.`,
+    });
+  }
+
   if (!level) return;
   return (
-    <SubpageContainer center>
+    <SubpageContainer center lessTopPad>
       <InputCard
         title={level.name}
         hints={[
@@ -97,62 +120,50 @@ export default function ManageLevel({
         ]}>Edit Board</Text>
       </ResponsivePressable>
 
+      <View style={{ marginTop: normalize(10) }} />
       <View style={styles.buttonsRow}>
-        <MenuButton
+        <SimpleButton
           onPress={() => {
             playLevelCallback(level.uuid);
             viewCallback(PageView.PLAY);
           }}
-          label="Playtest Level"
-          icon={graphics.PLAYER}
+          text="Playtest Level"
+          icon={graphics.PLAY_ICON}
+          fillWidth
+          extraMargin
+          square
+          main
         />
-        <MenuButton
-          onPress={() => {}}
-          label="View Solution"
+        <SimpleButton
+          onPress={() => { }}
+          text="View Solution"
           icon={graphics.KEY}
           theme={colors.GREEN_THEME}
+          // TODO: Implement a solution viewer.
           // disabled={!level.bestSolution}
           disabled
+          fillWidth
+          extraMargin
+          square
         />
       </View>
+
       <View style={styles.buttonsRow}>
         {level.shared ?
-          // If the level is not shared:
+          <SimpleButton
+            doConfirmation="Are you sure you want to make this level private? All likes and attempts will be lost permanently."
+            onPress={unshareLevel}
+            icon={graphics.OPTIONS_ICON}
+            theme={colors.RED_THEME}
+            text={"Make Private"}
+            disabled={!userCredential}
+            fillWidth
+            extraMargin
+            square
+          />
+          :
           <>
-            <MenuButton
-              onLongPress={() => {
-                updateDocument("userLevels", level.db_id!, {
-                  public: false,
-                  user_email: userCredential!.user.email!,
-                })
-                  .then(() => {
-                    updateLevel({ ...level, shared: undefined }, false);
-                  })
-                  .catch(error => {
-                    Toast.show({
-                      type: "error",
-                      text1: "Level unsharing failed.",
-                      text2: `Error code: ${error.code}. Please try again.`,
-                    });
-                  });
-              }}
-              icon={graphics.OPTIONS_ICON}
-              theme={colors.RED_THEME}
-              label={unshareLevelText}
-              disabled={!userCredential}
-              allowOverflow
-            />
-            <MenuButton
-              // TODO: Implement this.
-              disabled
-              icon={graphics.SUPPORT_ICON}
-              theme={colors.GREEN_THEME}
-              label={"View Activity"}
-            />
-          </>
-          : // If the level is shared:
-          <>
-            <MenuButton
+            <SimpleButton
               onPress={() => {
                 const userLevelDoc: UserLevelDocument = {
                   name: level.name,
@@ -181,27 +192,25 @@ export default function ManageLevel({
                     });
                   });
               }}
-              label="Share Online"
+              text="Share Online"
               icon={graphics.SHARE_ICON}
-              disabled={!level.completed || !userCredential || !!level.shared}
-            />
-            <MenuButton
-              onLongPress={() => {
-                deleteLevel(level);
-                doPageChange(0);
-                Toast.show({
-                  type: "success",
-                  text1: "Level deletion completed.",
-                  text2: `"${level.name}" has been successfully deleted.`,
-                });
-              }}
-              icon={graphics.DELETE_ICON}
-              theme={colors.RED_THEME}
-              label={deleteLevelText}
-              allowOverflow
+              disabled={!level.completed || !userCredential || !userCredential.user.emailVerified || !!level.shared}
+              fillWidth
+              extraMargin
+              square
             />
           </>
         }
+        <SimpleButton
+          doConfirmation="Are you sure you want to delete this level? This action is irreversible."
+          onPress={handleDeleteLevel}
+          icon={graphics.DELETE_ICON}
+          theme={colors.RED_THEME}
+          text={"Delete Level"}
+          fillWidth
+          extraMargin
+          square
+        />
       </View>
 
       <View style={styles.hintWrap}>
@@ -223,10 +232,11 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
   },
   buttonsRow: {
-    width: "100%",
+    marginTop: normalize(5),
     flexDirection: "row",
-    justifyContent: "space-evenly",
-    // justifyContent: "space-between",
+    justifyContent: "center",
+    width: win.width * 0.45,
+    marginHorizontal: win.width * 0.225,
   },
   relative: {
     position: "relative",
