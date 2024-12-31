@@ -3,10 +3,12 @@ import { colors, purpleTheme } from "../Theme";
 import { PageView } from "../util/types";
 import Banner from "./Banner";
 import HomeButton from "./HomeButton";
+import SkipDownButton from "./SkipDownButton";
 
 interface Props {
   pageView: PageView,
   returnHome: () => void,
+  scrollToBottom: () => void,
 }
 
 export enum PageTheme {
@@ -57,7 +59,7 @@ export function pageViewToPageTheme(pageView: PageView) {
   }
 }
 
-export default function Header({ pageView, returnHome }: Props) {
+export default function Header({ pageView, returnHome, scrollToBottom }: Props) {
   const pageTheme = pageViewToPageTheme(pageView);
   const theme = pageThemeData[pageTheme];
 
@@ -66,7 +68,13 @@ export default function Header({ pageView, returnHome }: Props) {
     <>
       <Banner bannerImage={theme.banner} widthPercent={90} />
 
-      <View style={styles.menuButton}>
+      {pageView === PageView.LEVELS && <View style={styles.leftMenuButton}>
+        <SkipDownButton
+          color={theme.color}
+          onPress={scrollToBottom}
+        />
+      </View>}
+      <View style={styles.rightMenuButton}>
         <HomeButton
           color={theme.color}
           onPress={returnHome}
@@ -77,7 +85,12 @@ export default function Header({ pageView, returnHome }: Props) {
 }
 
 const styles = StyleSheet.create<any>({
-  menuButton: {
+  leftMenuButton: {
+    position: "absolute",
+    top: StatusBar.currentHeight!,
+    left: "3%",
+  },
+  rightMenuButton: {
     position: "absolute",
     top: StatusBar.currentHeight!,
     right: "3%",

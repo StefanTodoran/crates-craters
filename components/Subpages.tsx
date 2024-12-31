@@ -33,6 +33,7 @@ export default function Subpages({ pageTabs, pageComponents, disabledPages }: Pr
     setAnimTo(0, () => {
       setPage(newPageState);
       setAnimTo(1);
+      eventEmitter.emit("pageWasChanged");
     });
   }
 

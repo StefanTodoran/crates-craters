@@ -49,6 +49,12 @@ export default function App() {
   }
 
   const [view, setView] = useState(PageView.MENU);
+  const [scrollToBottom, setScrollToBottom] = useState(false);
+
+  useEffect(() => {
+    const listener = eventEmitter.addListener("pageWasChanged", () => setScrollToBottom(false));
+    return () => listener.remove();
+  }, []);
 
   const openPageView = useCallback((newView: PageView, pageNum?: number) => {
     setView(newView);
@@ -62,6 +68,7 @@ export default function App() {
   }, []);
 
   const switchView = useCallback((newView: PageView, pageNum?: number) => {
+    setScrollToBottom(false);
     if (view === PageView.PLAY && newView === PageView.EDITOR) {
       // If we are coming from PageView.PLAY, playLevel must not be undefined.
       startEditingLevel(playLevel!.uuid);
@@ -245,7 +252,14 @@ export default function App() {
           pointerEvents={view === PageView.MENU ? "none" : "auto"}
         >
           {![PageView.PLAY, PageView.EDITOR].includes(view) && <Animated.View style={styles.header(pageAnim)}>
-            <Header pageView={view} returnHome={() => switchView(PageView.MENU)} />
+            <Header
+              pageView={view}
+              returnHome={() => switchView(PageView.MENU)}
+              scrollToBottom={() => {
+                setScrollToBottom(false);
+                setTimeout(() => setScrollToBottom(true), 100);
+              }}
+            />
           </Animated.View>}
 
           <View style={styles.page}>
@@ -254,7 +268,7 @@ export default function App() {
                 viewCallback={switchView}
                 playLevelCallback={changePlayLevel}
                 playSharedLevelCb={playSharedLevel}
-                scrollTo={!currentGame?.won ? playLevel?.uuid : undefined}
+                scrollTo={scrollToBottom ? "last" : (!currentGame?.won ? playLevel?.uuid : undefined)}
                 levels={levels.filter(lvl => lvl.official)}
                 elementHeight={levelElementHeight}
                 storeElementHeightCallback={setElementHeight}

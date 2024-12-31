@@ -1,11 +1,14 @@
-import { useEffect, useRef, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import { Animated, Dimensions, GestureResponderEvent, PanResponder, PanResponderGestureState, StyleSheet, Text, View } from "react-native";
+import GlobalContext from "../GlobalContext";
 import { normalize } from "../TextStyles";
+import { purpleTheme, Theme } from "../Theme";
 import StepperArrow from "./StepperArrow";
 
 const win = Dimensions.get("window");
 const barWidth = win.width / 2;
-const sensitivityDampen = win.width / 40;
+const leftGutterWidth = (win.width - barWidth) / 2;
+
 
 interface Props {
   label: string,
@@ -14,9 +17,8 @@ interface Props {
   minValue: number,
   maxValue: number,
   changeCallback: (newValue: number) => void,
-  mainColor?: string,
-  knobColor?: string,
   showSteppers?: boolean,
+  theme?: Theme,
 }
 
 /** 
@@ -28,10 +30,6 @@ interface Props {
  * @param {number} maxValue
  * @param {Function} changeCallback The callback to use when the value inside is changed.
  * @param {boolean} showSteppers
- * 
- * OPTIONAL:
- * @params mainColor, knobColor
- * Overrides for the various colors of the slider bar.
  */
 export default function SliderBar({
   label,
@@ -39,11 +37,15 @@ export default function SliderBar({
   value,
   minValue, maxValue,
   changeCallback,
-  mainColor,
-  knobColor,
   showSteppers,
+  theme,
 }: Props) {
+  const { darkMode } = useContext(GlobalContext);
   const [pressed, setPressed] = useState(false);
+  const useTheme = theme || purpleTheme;
+
+  const mainColor = useTheme.MAIN_COLOR;
+  const knobColor = darkMode ? useTheme.NEAR_BLACK : useTheme.OFF_WHITE;
 
   function calcOffsetFromValue() {
     let offset = barWidth * ((value - minValue) / (maxValue - minValue));
@@ -51,21 +53,18 @@ export default function SliderBar({
     return offset;
   }
 
-  const calcValueFromGesture = useRef((_dx: number) => value);
+  const calcValueFromGesture = useRef((_gestureState: PanResponderGestureState) => value);
   useEffect(() => {
-    calcValueFromGesture.current = (dx: number) => {
-      // While this is just a magic number value that gave decent results, we
-      // base this on the range since larger ranges require higher sensitivity.
-      const sensitivity = (maxValue - minValue) / sensitivityDampen;
-      // const sensitivity = (maxValue - minValue) / normalize(10);
-
-      const newValue = Math.max(minValue, Math.min(maxValue, Math.round(value + (dx * sensitivity))));
-      return newValue;
+    calcValueFromGesture.current = (gestureState: PanResponderGestureState) => {
+      const fractionalPos = (gestureState.moveX - leftGutterWidth) / barWidth;
+      const newValue = fractionalPos * (maxValue - minValue) + minValue;
+      const boundedNewValue = Math.max(minValue, Math.min(maxValue, Math.round(newValue)));
+      return boundedNewValue;
     };
   }, [value, minValue, maxValue]);
 
   function onGestureMove(_evt: GestureResponderEvent, gestureState: PanResponderGestureState) {
-    const newValue = calcValueFromGesture.current(gestureState.vx);
+    const newValue = calcValueFromGesture.current(gestureState);
     changeCallback(newValue);
   }
 

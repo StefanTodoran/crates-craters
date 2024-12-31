@@ -22,7 +22,7 @@ interface Props {
   theme?: Theme,
   square?: boolean,
   fillWidth?: boolean,
-  extraMargin?: boolean,
+  extraMargin?: number | number[],
   doConfirmation?: string,
 }
 
@@ -52,7 +52,29 @@ export default function SimpleButton({
   let paddingHorizontal = hasIcon ? normalize(10) : normalize(25);
   if (wide) paddingHorizontal = normalize(50);
 
-  let paddingVertical = square ? paddingHorizontal : normalize(5);
+  const paddingVertical = square ? paddingHorizontal : normalize(5);
+
+  let marginArray;
+  if (extraMargin) {
+    if (typeof extraMargin === "number") {
+      marginArray = [extraMargin, extraMargin, extraMargin, extraMargin];
+    } else {
+      if (extraMargin.length === 2) {
+        marginArray = [extraMargin[0], extraMargin[0], extraMargin[1], extraMargin[1]];
+      }
+      else if (extraMargin.length === 4) {
+        marginArray = extraMargin;
+      } else {
+        throw new Error("Invalid extraMargin value, should be a number, or an array of 2 or 4 numbers.");
+      }
+    }
+  }
+
+  // [left, right, top, bottom]
+  const marginLeft = marginArray && marginArray[0];
+  const marginRight = marginArray && marginArray[1];
+  const marginTop = marginArray && marginArray[2];
+  const marginBottom = marginArray && marginArray[3];
 
   function handleOnPress() {
     if (doConfirmation) {
@@ -78,7 +100,12 @@ export default function SimpleButton({
           paddingVertical: paddingVertical,
         },
         fillWidth ? staticStyles.fillWidth : {},
-        extraMargin ? staticStyles.extraMargin : {},
+        extraMargin ? {
+          marginTop: normalize(marginTop!),
+          marginRight: normalize(marginRight!),
+          marginBottom: normalize(marginBottom!),
+          marginLeft: normalize(marginLeft!),
+        } : {},
       ]}
       pressedStyle={{
         opacity: 0.75,
@@ -131,10 +158,6 @@ const staticStyles = StyleSheet.create({
     // TODO: Maybe optionally allow flex here? For when there is only a single
     // button in a level card, since it looks somewhat empty.
     // flex: 1,
-  },
-  extraMargin: {
-    marginVertical: normalize(6),
-    marginHorizontal: normalize(6),
   },
   bigIcon: {
     height: normalize(30),

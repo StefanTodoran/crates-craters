@@ -76,3 +76,36 @@ export function useProfiler(rounds: number) {
     }
   });
 }
+
+type Timer = ReturnType<typeof setTimeout>;
+type AnyFunc = (...args: any[]) => void;
+
+/**
+ *
+ * @param func The original, non debounced function (can accept any number of args)
+ * @param delay The delay (in ms) for the function to return
+ * @returns The debounced function, which will run only if the debounced function has not been called in the last (delay) ms
+ */
+export function useDebounce<Func extends AnyFunc>(
+  func: Func,
+  delay = 1000
+) {
+  const timer = useRef<Timer>();
+
+  useEffect(() => {
+    return () => {
+      if (!timer.current) return;
+      clearTimeout(timer.current);
+    };
+  }, []);
+
+  const debouncedFunction = ((...args) => {
+    const newTimer = setTimeout(() => {
+      func(...args);
+    }, delay);
+    clearTimeout(timer.current);
+    timer.current = newTimer;
+  }) as Func;
+
+  return debouncedFunction;
+}

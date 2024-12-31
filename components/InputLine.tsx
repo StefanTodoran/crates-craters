@@ -13,6 +13,7 @@ export interface InputLineProps {
   isSensitive?: boolean,
   filterPattern?: RegExp,
   doFilter?: boolean,
+  doFlex?: boolean,
 }
 
 /**
@@ -29,6 +30,7 @@ export default function InputLine({
   isSensitive,
   filterPattern = /[^a-z0-9 ]/gi,
   doFilter = true,
+  doFlex,
 }: InputLineProps) {
   const [focused, setFocus] = useState(false);
   const anim = useRef(new Animated.Value(0)).current;
@@ -43,7 +45,12 @@ export default function InputLine({
   }, [value, focused]); // so that on unmount the animation "state" isn't lost
 
   return (
-    <View style={[styles.container, fullBorder && styles.fullBorderContainer, disabled && {borderColor: colors.DIM_GRAY_TRANSPARENT(0.1)}]}>
+    <View style={[
+      styles.container, 
+      fullBorder && styles.fullBorderContainer, 
+      disabled && { borderColor: colors.DIM_GRAY_TRANSPARENT(0.1) }, 
+      doFlex && { flex: 1, marginBottom: 0 },
+    ]}>
       <Animated.Text style={[styles.label(anim), fullBorder && styles.fullBorderLabel]} allowFontScaling={false}>
         {label}
       </Animated.Text>
@@ -58,8 +65,8 @@ export default function InputLine({
         <TextInput
           style={[
             styles.input,
-            { 
-              color: (darkMode) ? "#fff" : "#000", 
+            {
+              color: (darkMode) ? "#fff" : "#000",
               opacity: disabled ? 0.75 : 1,
             },
           ]}

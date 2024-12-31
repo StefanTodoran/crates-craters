@@ -10,6 +10,7 @@ interface Props {
     active: boolean,
     onPress: () => void,
     disabled?: boolean,
+    verticalMargin?: boolean,
     theme?: Theme,
 }
 
@@ -19,6 +20,7 @@ export default function FilterChip({
     onPress,
     disabled,
     theme,
+    verticalMargin,
 }: Props) {
     const { darkMode } = useContext(GlobalContext);
     const useTheme = theme || purpleTheme;
@@ -35,6 +37,7 @@ export default function FilterChip({
                 {
                     borderColor: borderColor,
                     backgroundColor: active ? buttonColor : bgColor,
+                    marginVertical: verticalMargin ? normalize(6) : 0,
                 },
             ]}
         >

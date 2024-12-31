@@ -68,13 +68,11 @@ export default function Settings({
         <View style={{ height: 15 }} />
         <SliderBar label="Drag Sensitivity" value={newDragSens} units={"%"}
           minValue={10} maxValue={200} changeCallback={setNewDragSens}
-          mainColor={colors.GREEN_THEME.DARK_COLOR}
-          knobColor={darkMode ? "#000" : "#fff"}
+          theme={colors.GREEN_THEME}
         />
         <SliderBar label="Double Tap Delay" value={newTapDelay} units={"ms"}
           minValue={100} maxValue={500} changeCallback={setNewTapDelay}
-          mainColor={colors.GREEN_THEME.DARK_COLOR}
-          knobColor={darkMode ? "#000" : "#fff"}
+          theme={colors.GREEN_THEME}
         />
 
         <MenuButton

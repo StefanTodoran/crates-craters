@@ -130,7 +130,7 @@ export default function ManageLevel({
           text="Playtest Level"
           icon={graphics.PLAY_ICON}
           fillWidth
-          extraMargin
+          extraMargin={[6, 5]}
           square
           main
         />
@@ -143,7 +143,7 @@ export default function ManageLevel({
           // disabled={!level.bestSolution}
           disabled
           fillWidth
-          extraMargin
+          extraMargin={[6, 5]}
           square
         />
       </View>
@@ -158,7 +158,7 @@ export default function ManageLevel({
             text={"Make Private"}
             disabled={!userCredential}
             fillWidth
-            extraMargin
+            extraMargin={[6, 5]}
             square
           />
           :
@@ -196,7 +196,7 @@ export default function ManageLevel({
               icon={graphics.SHARE_ICON}
               disabled={!level.completed || !userCredential || !userCredential.user.emailVerified || !!level.shared}
               fillWidth
-              extraMargin
+              extraMargin={[6, 5]}
               square
             />
           </>
@@ -208,7 +208,7 @@ export default function ManageLevel({
           theme={colors.RED_THEME}
           text={"Delete Level"}
           fillWidth
-          extraMargin
+          extraMargin={[6, 5]}
           square
         />
       </View>

@@ -234,7 +234,7 @@ export default function EditLevel({
         <SimpleButton onPress={() => {
           saveChanges();
           viewCallback(PageView.MANAGE);
-        }} text={unsavedChanges ? "Save & Exit" : "Exit"} />
+        }} text={unsavedChanges ? "Save & Exit" : "Exit"}/>
         <View style={{ width: normalize(15) }} />
         <SimpleButton onPress={toggleToolsModal} text="Change Tool" main={true} />
       </Animated.View>
@@ -271,8 +271,7 @@ export default function EditLevel({
               <SliderBar
                 label="Fuse Timer" value={fuseTimer} units={" turns"}
                 minValue={1} maxValue={100} changeCallback={setFuseTimer}
-                mainColor={darkMode ? "#F79B9B" : "#FB6C6C"} // TODO: Replace this with colors.RED_THEME
-                knobColor={darkMode ? "#1E0D0D" : "#FFFAFA"}
+                theme={colors.RED_THEME}
                 showSteppers
               />
             </View>
@@ -298,7 +297,7 @@ export default function EditLevel({
                 disabled={!unsavedChanges}
                 fillWidth
                 square
-                extraMargin
+                extraMargin={6}
               />
               <SimpleButton
                 onPress={saveChanges}
@@ -307,7 +306,7 @@ export default function EditLevel({
                 theme={colors.GREEN_THEME}
                 disabled={!unsavedChanges}
                 fillWidth
-                extraMargin
+                extraMargin={6}
                 main
               />
             </View>
@@ -318,7 +317,7 @@ export default function EditLevel({
                 Svg={BackButton}
                 text="Close Menu"
                 fillWidth
-                extraMargin
+                extraMargin={6}
               />
               <SimpleButton
                 onPress={() => {
@@ -330,7 +329,7 @@ export default function EditLevel({
                 icon={graphics.PLAY_ICON}
                 square
                 fillWidth
-                extraMargin
+                extraMargin={6}
                 main
               />
             </View>
@@ -368,6 +367,7 @@ const styles = StyleSheet.create({
   buttonsRow: {
     flexDirection: "row",
     height: normalize(50),
+    marginTop: normalize(15),
   },
   singleButton: {
     paddingHorizontal: "22.5%",

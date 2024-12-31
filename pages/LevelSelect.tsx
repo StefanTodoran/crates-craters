@@ -78,6 +78,11 @@ export default function LevelSelect({
   useEffect(() => setLoadedLevels(scrollIndex + cardsPerScreen), [levels]);
   const displayLevels = levels.slice(0, loadedLevels);
 
+  useEffect(() => {
+    if (levels.length === 0) return;
+    if (scrollTo === "last") scrollRef.current.scrollToIndex({ index: displayLevels.length - 1, animated: true });
+  }, [scrollTo, loadedLevels]);
+
   const doRefresh = useCallback(() => {
     setRefreshing(true);
     // @ts-expect-error We won't call doRefresh if onRefresh isn't defined.
