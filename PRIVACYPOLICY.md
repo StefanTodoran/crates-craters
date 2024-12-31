@@ -2,11 +2,11 @@
 
 ## Information We Collect
 
-We do not collect any information about our users. This may change in the future if we decide to support an online server for level sharing, but users will be notified about any modifications to the privacy policy.
+We do not collect any personal information about our users. In order to sign up for an account, users must provide a valid email address, but this is used only for account verification and is completely optional. We also track level attempts and solutions.
 
 ## How The Information Is Used
 
-No information is collected, so this seciton does not apply. We will never share or sell your data.
+Data on level attempts and solutions is used to improve level design. If a users elects to create an account (which is not required to play levels, only for level sharing), we use the provided email address to verify their account. Besides this verification being done through Google's Firebase platform, user emails are never shared with any third parties. We will never share or sell your data.
 
 ## Questions
 
