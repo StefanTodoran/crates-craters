@@ -1,3 +1,17 @@
+import { UserCredential } from "firebase/auth";
+import { FlatBoard } from "./board";
+
+export interface UserData extends UserCredential {
+  data: {
+    id: string,
+    username: string,
+    likes: [],
+    attempted: [],
+    completed: [],
+    coins: [],
+  }
+}
+
 // ============= \\
 // TILES & BOARD \\
 
@@ -25,6 +39,18 @@ export enum Direction {
   LEFT,
 }
 
+export interface EmptyTile {
+  id: TileType.EMPTY,
+}
+
+export interface OutsideTile {
+  id: TileType.OUTSIDE,
+}
+
+export interface WallTile {
+  id: TileType.WALL,
+}
+
 export interface OneWayTile {
   id: TileType.ONEWAY,
   orientation: Direction,
@@ -35,25 +61,18 @@ export interface BombTile {
   fuse: number,
 }
 
+// A SimpleTile is a tile which only has an id and no other properties.
 export interface SimpleTile {
   id: Exclude<TileType, TileType.ONEWAY | TileType.BOMB>,
 }
 
-export type BoardTile = SimpleTile | OneWayTile | BombTile;
-export type Board = BoardTile[][];
+export type ForegroundTile = SimpleTile | BombTile;
+export type BackgroundTile = EmptyTile | OutsideTile | OneWayTile | WallTile;
 
-export function createBlankBoard() {
-  const blankBoard: Board = [];
-  for (let i = 0; i < 14; i++) {
-    const row = [];
-    for (let j = 0; j < 8; j++) {
-      row.push({ id: 0 });
-    }
-    blankBoard.push(row);
-  }
-  blankBoard[1][1] = { id: TileType.SPAWN };
-  blankBoard[2][6] = { id: TileType.FLAG };
-  return blankBoard;
+export type FlatTile = ForegroundTile | BackgroundTile;
+export interface LayeredTile {
+  foreground: ForegroundTile,
+  background: BackgroundTile,
 }
 
 // ============= \\
@@ -62,10 +81,10 @@ export function createBlankBoard() {
 interface LevelBase {
   uuid: string,
   name: string,
-  board: Board,
+  board: FlatBoard,
   official: boolean,
   completed: boolean,
-  best?: number, // Guaranteed to be defined if completed, represents the minimum moves the user has used to beat the level.
+  bestSolution?: string, // If completed, the shortest solution found by the user.
 }
 
 export interface OfficialLevel extends LevelBase {
@@ -76,14 +95,22 @@ export interface OfficialLevel extends LevelBase {
 type DateString = string; // In the form Date().toISOString();
 export interface UserLevel extends LevelBase {
   official: false,
-  designer: string,
-  created: DateString,
+  created: DateString, 
+  user_name: string,
   shared?: DateString,
+  db_id?: string, // The document id in the database, if shared.
 }
 
-export interface SharedLevel extends UserLevel {
+export interface SharedLevel extends Exclude<UserLevel, "created"> {
+  user_email: string,
+  user_name: string,
   shared: DateString,
   downloads: number,
+  attempts: number,
+  wins: number,
+  likes: number,
+  winrate: number,
+  best: number,
 }
 
 export type Level = OfficialLevel | UserLevel | SharedLevel;
@@ -96,7 +123,7 @@ enum LevelObjectType {
 }
 
 type levelObjectPropSet = { [key: string]: string };
-const levelObjectProps: { [key in LevelObjectType]: levelObjectPropSet} = {
+const levelObjectProps: { [key in LevelObjectType]: levelObjectPropSet } = {
   [LevelObjectType.BASE]: {
     "uuid": "string",
     "name": "string",
@@ -112,7 +139,7 @@ const levelObjectProps: { [key in LevelObjectType]: levelObjectPropSet} = {
 
 export function isLevelWellFormed(target: any, check: LevelObjectType = LevelObjectType.BASE): target is Level {
   if (target === null || target === undefined) return false;
-  
+
   const props = levelObjectProps[check];
   for (const [key, type] of Object.entries(props)) {
     if (!(key in target)) return false;
@@ -136,8 +163,13 @@ export enum PageView {
   EDITOR,
 }
 
-export enum EditorView {
-  LIST,
-  CREATE,
-  EDIT,
+export enum PlayMode {
+  STANDARD,
+  SHARED,
+  PLAYTEST,
+}
+
+export interface LocalUserData {
+  uuid: string,
+  joined: DateString,
 }

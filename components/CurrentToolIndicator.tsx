@@ -1,6 +1,6 @@
-import { View, Text, Image, StyleSheet } from "react-native";
-import { colors, purpleTheme } from "../Theme";
+import { Image, StyleSheet, Text, View } from "react-native";
 import { normalize } from "../TextStyles";
+import { colors, purpleTheme } from "../Theme";
 import { Tool } from "../util/tools";
 
 interface Props {

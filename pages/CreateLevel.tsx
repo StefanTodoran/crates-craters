@@ -1,58 +1,54 @@
-import { useState } from "react";
-import { View } from "react-native";
-
-import { normalize } from "../TextStyles";
+import { useContext, useState } from "react";
+import InputCard from "../components/InputCard";
+import GlobalContext from "../GlobalContext";
+import { createBlankBoard } from "../util/board";
 import { doPageChange } from "../util/events";
 import { generateUUID } from "../util/loader";
-import { UserLevel, createBlankBoard } from "../util/types";
-
-import InputCard from "../components/InputCard";
-import SubpageContainer from "../components/SubpageContainer";
+import { UserLevel } from "../util/types";
 
 interface Props {
   createLevelCallback: (newLevel: UserLevel) => void,
+  existingLevelNames: string[],
 }
 
-export default function CreateLevel({ createLevelCallback }: Props) {
+export default function CreateLevel({ createLevelCallback, existingLevelNames }: Props) {
+  const { userData, userCredential } = useContext(GlobalContext);
+
   const [levelTitle, setLevelTitle] = useState("");
-  const [levelDesigner, setLevelDesigner] = useState("");
   const levelCreated = new Date();
-  // const nameTaken = levels.some(lvl => lvl.name === levelTitle);
+
+  let inputHint = "Click create to get started!";
+  if (!userCredential) inputHint = "Log in to start creating levels!";
+  else if (!levelTitle) inputHint = "Level title is required!";
+  else if (existingLevelNames.includes(levelTitle.toLowerCase())) inputHint = "Level title must be unique!";
 
   return (
-    <SubpageContainer center>
-      <InputCard
-        title={"Create New Level"}
-        hints={[`Created ${levelCreated.toDateString()}`]}
-        fields={[
-          {
-            label: "Level Title",
-            value: levelTitle,
-            update: setLevelTitle
-          },
-          {
-            label: "Designer Name",
-            value: levelDesigner,
-            update: setLevelDesigner
-          },
-        ]}
-        buttonText="Create"
-        buttonCallback={() => {
-          createLevelCallback({
-            name: levelTitle,
-            uuid: generateUUID(),
-            board: createBlankBoard(),
-            completed: false,
-            official: false,
-            designer: levelDesigner,
-            created: levelCreated.toISOString(),
-          });
-
-          doPageChange(0);
-        }}
-        buttonDisabled={!levelTitle || !levelDesigner}
-      />
-      <View style={{ height: normalize(60) }} />
-    </SubpageContainer>
+    <InputCard
+      title={"Create New Level"}
+      hints={[inputHint]}
+      fields={[
+        {
+          label: "Level Title",
+          value: levelTitle,
+          onChange: setLevelTitle,
+          disabled: !userCredential
+        },
+      ]}
+      buttonText="Create"
+      buttonCallback={() => {
+        createLevelCallback({
+          name: levelTitle,
+          uuid: generateUUID(),
+          board: createBlankBoard(),
+          completed: false,
+          official: false,
+          created: levelCreated.toISOString(),
+          user_name: userData!.user_name,
+        });
+        setLevelTitle("");
+        doPageChange(1);
+      }}
+      buttonDisabled={!levelTitle || !userCredential}
+    />
   );
 }

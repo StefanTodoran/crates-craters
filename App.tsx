@@ -1,28 +1,28 @@
-import { StatusBar } from "expo-status-bar";
 import { useFonts } from "expo-font";
 import * as NavigationBar from "expo-navigation-bar";
+import { StatusBar } from "expo-status-bar";
+import { UserCredential, signInWithEmailAndPassword } from "firebase/auth";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Dimensions, Animated, BackHandler, SafeAreaView, StatusBar as RNStatusBar, View, StyleSheet } from "react-native";
-
-import { createLevel, getData, getStoredLevels, updateLevel } from "./util/loader";
-import { useBooleanSetting, useNumberSetting } from "./util/hooks";
-import { checkForOfficialLevelUpdates } from "./util/database";
-import { Level, PageView, UserLevel } from "./util/types";
-import { Game, initializeGameObj } from "./util/logic";
-import { eventEmitter } from "./util/events";
-import GlobalContext from "./GlobalContext";
+import { Animated, BackHandler, Dimensions, StatusBar as RNStatusBar, SafeAreaView, StyleSheet, View } from "react-native";
 import Toast from "react-native-toast-message";
-import { toastConfig } from "./util/toasts";
-import { colors } from "./Theme";
-
-import Menu from "./components/Menu";
 import Header from "./components/Header";
-import SettingsPage from "./pages/HelpSettings";
-import LevelSelect from "./pages/LevelSelect";
+import Menu from "./components/Menu";
+import GlobalContext from "./GlobalContext";
+import EditLevel from "./pages/EditLevel";
 import EditorPage from "./pages/EditorPage";
+import SettingsPage from "./pages/HelpSettings";
+import LevelsPage from "./pages/LevelsPage";
 import PlayLevel from "./pages/PlayLevel";
 import StorePage from "./pages/StorePage";
-import EditLevel from "./pages/EditLevel";
+import { colors } from "./Theme";
+import { UserAccountDocument, checkForOfficialLevelUpdates, getUserData } from "./util/database";
+import { doPageChange, eventEmitter } from "./util/events";
+import { auth } from "./util/firebase";
+import { useBooleanSetting, useNumberSetting } from "./util/hooks";
+import { createLevel, getData, getLevelData, getStoredLevels, metadataKeys, setData } from "./util/loader";
+import { Game, initializeGameObj } from "./util/logic";
+import { toastConfig } from "./util/toasts";
+import { Level, PageView, PlayMode, SharedLevel, UserLevel } from "./util/types";
 
 const win = Dimensions.get("window");
 
@@ -50,17 +50,18 @@ export default function App() {
 
   const [view, setView] = useState(PageView.MENU);
 
-  const openPageView = useCallback((newView: PageView) => {
+  const openPageView = useCallback((newView: PageView, pageNum?: number) => {
     setView(newView);
-    setAnimTo(1);
+    setAnimTo(1, () => {
+      if (pageNum !== undefined) doPageChange(pageNum);
+    });
 
-    // To playtest a level, the child component must call beginPlaytesting(),
-    // which will change the view to the play view. Therefore we need to clear
-    // it for the child once the user leaves the play view.
-    if (newView !== PageView.PLAY) setPlaytesting(false);
+    // Non-standard play modes are set when calling App.tsx to 
+    // begin play, and therefore should be cleared when play is left.
+    if (newView !== PageView.PLAY) setPlayMode(PlayMode.STANDARD);
   }, []);
 
-  const switchView = useCallback((newView: PageView) => {
+  const switchView = useCallback((newView: PageView, pageNum?: number) => {
     if (view === PageView.PLAY && newView === PageView.EDITOR) {
       // If we are coming from PageView.PLAY, playLevel must not be undefined.
       startEditingLevel(playLevel!.uuid);
@@ -73,9 +74,9 @@ export default function App() {
     if (newView === PageView.MENU) { // PAGE -> MENU
       setAnimTo(0, () => setView(newView));
     } else if (view === PageView.MENU) { // MENU -> PAGE
-      openPageView(newView);
+      openPageView(newView, pageNum);
     } else { // PAGE -> PAGE
-      setAnimTo(0, () => openPageView(newView));
+      setAnimTo(0, () => openPageView(newView, pageNum));
     }
   }, [view]);
 
@@ -95,15 +96,41 @@ export default function App() {
 
   const [levels, setLevels] = useState<Level[]>([]);
   const [notificationCounts, setNotificationCounts] = useState([0, 0, 0, 0]);
+  const [userCredential, setUserCredential] = useState<UserCredential>();
+  const [userData, setUserData] = useState<UserAccountDocument>();
+
+  const attemptSignIn = useCallback(async () => {
+    // Grab the saved email and password from storage.
+    const savedCredentials = getData(metadataKeys.userCredentials);
+    if (!savedCredentials) return;
+
+    signInWithEmailAndPassword(auth, savedCredentials.email, savedCredentials.password)
+      .then((userCredential) => setUserCredential(userCredential))
+      .catch((error) => {
+        console.error("Failed to sign in with saved credentials:", error.code);
+        if (error.code === "auth/invalid-credential") setData(metadataKeys.userCredentials, undefined);
+      });
+    return;
+  }, []);
+
+  useEffect(() => {
+    if (!userCredential) {
+      attemptSignIn();
+      return;
+    }
+
+    getUserData(userCredential.user.email!).then((data) => setUserData(data));
+    // TODO: Put a Toast message here? What to do if fail?
+  }, [userCredential]);
 
   const syncLevelStateWithStorage = useRef((_uuid?: string) => { });
   const updateNotificationCounts = useRef((_index: number, _change: number) => { });
 
-  const [playLevel, setPlayLevel] = useState<Level>();             // The level currently being played.
-  const [currentGame, setGameState] = useState<Game>();            // The game state of the level being played.
-  const [gameHistory, setGameHistory] = useState<Game[]>();        // The past game states, used for undoing moves.
-  const [editorLevel, setEditorLevel] = useState<UserLevel>();     // The level object being edited.
-  const [playtesting, setPlaytesting] = useState<boolean>(false);  // Whether playtestingmode is requested.
+  const [playLevel, setPlayLevel] = useState<Level>(); // The level currently being played.
+  const [currentGame, setGameState] = useState<Game>(); // The game state of the level being played.
+  const [gameHistory, setGameHistory] = useState<Game[]>([]); // The past game states, used for undoing moves.
+  const [editorLevel, setEditorLevel] = useState<UserLevel>(); // The level object being edited.
+  const [playMode, setPlayMode] = useState<PlayMode>(PlayMode.STANDARD); // Different level types may require slightly different behavior.
 
   useEffect(() => {
     syncLevelStateWithStorage.current = (uuid?: string) => {
@@ -115,12 +142,12 @@ export default function App() {
         return;
       } // else if uuid is defined:
 
-      const updatedLevel = getData(uuid);
+      const updatedLevel = getLevelData(uuid);
       const levelIndex = levels.findIndex(level => level.uuid === updatedLevel.uuid);
       levels[levelIndex] = updatedLevel;
 
       // Refresh this additional state variable if necessary.
-      if (uuid === editorLevel?.uuid) setEditorLevel(updatedLevel);
+      if (uuid === editorLevel?.uuid) setEditorLevel(updatedLevel as UserLevel);
     };
   }, [levels, editorLevel]);
 
@@ -141,10 +168,10 @@ export default function App() {
 
     const handleSyncRequest = (uuid?: string) => syncLevelStateWithStorage.current(uuid);
     const syncListener = eventEmitter.addListener("doStateStorageSync", handleSyncRequest);
-    
+
     const handleNotificationRequest = (event: any) => updateNotificationCounts.current(event.index, event.change);
     const notificationListener = eventEmitter.addListener("doNotificationsUpdate", handleNotificationRequest);
-    
+
     return () => {
       syncListener.remove();
       notificationListener.remove();
@@ -152,10 +179,13 @@ export default function App() {
   }, []);
 
   const changePlayLevel = useCallback((uuid: string) => {
-    const levelObject = getData(uuid);
-    setPlayLevel(levelObject);
+    const levelObject = getLevelData(uuid);
+    playLevelFromObj(levelObject);
+  }, []);
 
-    const newGame = initializeGameObj(levelObject);
+  const playLevelFromObj = useCallback((level: Level) => {
+    setPlayLevel(level);
+    const newGame = initializeGameObj(level);
     setGameState(newGame);
     setGameHistory([]);
   }, []);
@@ -163,34 +193,34 @@ export default function App() {
   const getNextLevel = useCallback(() => {
     const nextIndex = levels.findIndex(level => level.uuid === playLevel!.uuid) + 1;
     const nextLevel = levels[nextIndex];
-
-    if (nextLevel) {
-      setPlayLevel(nextLevel);
-      setGameState(initializeGameObj(nextLevel));
-      setGameHistory([]);
-    }
+    if (nextLevel) playLevelFromObj(nextLevel);
   }, [levels, playLevel]);
 
   const startEditingLevel = useCallback((uuid: string) => {
-    const levelObject = getData(uuid);
-    setEditorLevel(levelObject);
+    const levelObject = getLevelData(uuid);
+    setEditorLevel(levelObject as UserLevel);
   }, []);
 
   const createNewLevel = useCallback((level: UserLevel) => {
     setEditorLevel(level);
     createLevel(level);
-
     const levels = getStoredLevels();
     setLevels(levels);
   }, []);
 
+  const playSharedLevel = useCallback((level: SharedLevel | undefined) => {
+    if (level) playLevelFromObj(level); // If undefined we simply resume.
+    setPlayMode(PlayMode.SHARED);
+  }, []);
+
   const beginPlaytesting = useCallback((uuid: string) => {
     changePlayLevel(uuid);
-    setPlaytesting(true);
+    setPlayMode(PlayMode.PLAYTEST);
   }, []);
 
   useEffect(() => { // TODO: update this method?
     const backAction = () => {
+      if (view === PageView.PLAY || view === PageView.EDITOR) return true;
       if (view !== PageView.MENU) switchView(PageView.MENU);
       return true;
     }
@@ -205,7 +235,7 @@ export default function App() {
 
   if (!fontsLoaded) return <></>;
   return (
-    <GlobalContext.Provider value={{ darkMode, dragSensitivity, doubleTapDelay, playAudio }}>
+    <GlobalContext.Provider value={{ darkMode, dragSensitivity, doubleTapDelay, playAudio, userCredential, userData }}>
       <SafeAreaView style={styles.container}>
 
         <Menu notificationCounts={notificationCounts} openPage={switchView} />
@@ -220,15 +250,14 @@ export default function App() {
 
           <View style={styles.page}>
             {view === PageView.LEVELS &&
-              <LevelSelect
+              <LevelsPage
                 viewCallback={switchView}
                 playLevelCallback={changePlayLevel}
-                // editorLevelCallback={startEditingLevel}
-                levels={levels.filter(lvl => lvl.official)}
+                playSharedLevelCb={playSharedLevel}
                 scrollTo={!currentGame?.won ? playLevel?.uuid : undefined}
+                levels={levels.filter(lvl => lvl.official)}
                 elementHeight={levelElementHeight}
                 storeElementHeightCallback={setElementHeight}
-                mode={PageView.LEVELS}
               />
             }
 
@@ -241,7 +270,7 @@ export default function App() {
                 level={playLevel!}
                 game={currentGame!}
                 history={gameHistory!}
-                playtest={playtesting}
+                mode={playMode}
               />
             }
 
@@ -251,7 +280,7 @@ export default function App() {
                 playLevelCallback={beginPlaytesting}
                 startEditingCallback={startEditingLevel}
                 createNewLevelCallback={createNewLevel}
-                levels={levels.filter(lvl => !lvl.official)} // TODO: and level.designer === the current user
+                levels={levels.filter(lvl => !lvl.official && lvl.user_name === userData?.user_name)}
                 editorLevel={editorLevel}
                 elementHeight={levelElementHeight}
                 storeElementHeightCallback={setElementHeight}
@@ -263,16 +292,15 @@ export default function App() {
                 viewCallback={switchView}
                 level={editorLevel!}
                 levelCallback={setEditorLevel}
-                playtestLevel={() => {
-                  beginPlaytesting(editorLevel!.uuid);
-                  switchView(PageView.PLAY);
-                }}
-                storeChanges={updateLevel}
+                playtestLevel={beginPlaytesting}
               />
             }
 
             {view === PageView.STORE &&
-              <StorePage />
+              <StorePage
+                attemptSignIn={attemptSignIn}
+                setUserCredential={setUserCredential}
+              />
             }
 
             {view === PageView.SETTINGS &&

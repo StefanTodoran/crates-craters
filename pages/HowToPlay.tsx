@@ -1,9 +1,8 @@
-import { View, Text, StyleSheet, Image } from "react-native";
 import { useContext } from "react";
-
-import { colors, graphics } from "../Theme";
+import { Image, StyleSheet, Text, View } from "react-native";
 import GlobalContext from "../GlobalContext";
 import TextStyles, { normalize } from "../TextStyles";
+import { colors, graphics } from "../Theme";
 import SubpageContainer from "../components/SubpageContainer";
 
 export default function HowToPlay() {
@@ -11,7 +10,7 @@ export default function HowToPlay() {
 
   return (
     <SubpageContainer>
-      <Text style={TextStyles.subtitle(darkMode, colors.GREEN_THEME.MAIN_COLOR)}>
+      <Text style={[TextStyles.subtitle(darkMode, colors.GREEN_THEME.MAIN_COLOR), { marginTop: "-5%"}]}>
         Controls
       </Text>
       <Text style={TextStyles.paragraph(darkMode)}>
@@ -41,7 +40,7 @@ export default function HowToPlay() {
       </Text>
       <Text style={TextStyles.paragraph(darkMode)}>
         The first obstacle are doors. Any key can unlock any door, but each key
-        is single use.
+        is single use. An opened door is replaced by an empty tile.
       </Text>
       <View style={styles.row}>
         <Image style={styles.icon} source={graphics.DOOR} />
@@ -60,9 +59,9 @@ export default function HowToPlay() {
       </View>
 
       <Text style={TextStyles.paragraph(darkMode)}>
-        Another obstacle are one-way tiles. Only the player can pass through these tiles,
-        pushable tiles cannot. The player can enter them from any side except the side the arrow is
-        pointing towards.
+        Another obstacle are one-way tiles. These tiles cannot be entered from 
+        the side with the bar (opposite direction of the arrow), but can be entered 
+        from every other side.
       </Text>
       <View style={styles.row}>
         <Image style={styles.icon} source={graphics.ONE_WAY_LEFT} />

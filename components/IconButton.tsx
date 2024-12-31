@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
-import { ImageSourcePropType, StyleSheet, Animated } from "react-native";
-import ResponsivePressable from "./ResponsivePressable";
+import { Animated, ImageSourcePropType, StyleSheet } from "react-native";
 import { normalize } from "../TextStyles";
+import ResponsivePressable from "./ResponsivePressable";
 
 interface Props {
   icon: ImageSourcePropType, // The image to be displayed in the button.

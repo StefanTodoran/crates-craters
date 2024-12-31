@@ -24,19 +24,24 @@ const mainGraphics = {
   HAMMER_ICON_RED: require("./assets/main_theme/hammer_icon_red.png"),
   WALL_ICON: require("./assets/main_theme/wall_icon.png"),
   SAVE_ICON: require("./assets/main_theme/save_icon.png"),
-  LOAD_ICON: require("./assets/main_theme/load_icon.png"),
   DELETE_ICON: require("./assets/main_theme/delete_icon.png"),
   OPTIONS_ICON: require("./assets/main_theme/options_icon.png"),
   SHARE_ICON: require("./assets/main_theme/share_icon.png"),
+  SHARE_ICON_RED: require("./assets/main_theme/share_icon_red.png"),
   SUPPORT_ICON: require("./assets/main_theme/support_icon.png"),
   AUDIO_ON_ICON: require("./assets/main_theme/audio_on_icon.png"),
   AUDIO_OFF_ICON: require("./assets/main_theme/audio_off_icon.png"),
   PLAY_ICON: require("./assets/main_theme/play_icon.png"),
   MENU_ICON: require("./assets/main_theme/menu_icon.png"),
   BACK_ICON: require("./assets/main_theme/back_icon.png"),
+  YELLOW_BACK_ICON: require("./assets/main_theme/yellow_back_icon.png"),
   DOOR_ICON: require("./assets/main_theme/door_icon.png"),
   KEY_ICON: require("./assets/main_theme/key_icon.png"),
   FLAG_ICON: require("./assets/main_theme/flag_icon.png"),
+  LIKE_ICON: require("./assets/main_theme/like_icon.png"),
+  SIGNUP_ICON: require("./assets/main_theme/signup_icon.png"),
+  MAIL_ICON: require("./assets/main_theme/mail_icon.png"),
+  GET_SUPPORT_ICON: require("./assets/main_theme/get_support_icon.png"),
 
   WIN_BANNER: require("./assets/main_theme/win_banner.png"),
   LOGO: require("./assets/main_theme/logo.png"),
@@ -50,6 +55,7 @@ export interface Theme {
   DARK_COLOR: string,
   NEAR_BLACK: string,
   MAIN_TRANSPARENT: (opacity: number) => string,
+  NAME: string,
 }
 
 export const purpleTheme: Theme = {
@@ -60,6 +66,7 @@ export const purpleTheme: Theme = {
   DARK_COLOR: "#B19CD8",
   NEAR_BLACK: "#15101A",
   MAIN_TRANSPARENT: (opacity: number) => `rgba(204, 183, 229, ${opacity})`,
+  NAME: "PURPLE",
 }
 
 const blueTheme: Theme = {
@@ -70,6 +77,7 @@ const blueTheme: Theme = {
   DARK_COLOR: "#6AA7FD",
   NEAR_BLACK: "#101219",
   MAIN_TRANSPARENT: (opacity: number) => `rgba(129, 181, 254, ${opacity})`,
+  NAME: "BLUE",
 }
 
 const greenTheme: Theme = {
@@ -80,6 +88,7 @@ const greenTheme: Theme = {
   DARK_COLOR: "#8AD092",
   NEAR_BLACK: "#0E160E",
   MAIN_TRANSPARENT: (opacity: number) => `rgba(184, 229, 185, ${opacity})`,
+  NAME: "GREEN",
 }
 
 const yellowTheme: Theme = {
@@ -90,6 +99,7 @@ const yellowTheme: Theme = {
   DARK_COLOR: "#FBC86A",
   NEAR_BLACK: "#17150D",
   MAIN_TRANSPARENT: (opacity: number) => `rgba(247, 220, 156, ${opacity})`,
+  NAME: "YELLOW",
 }
 
 const redTheme: Theme = {
@@ -100,6 +110,7 @@ const redTheme: Theme = {
   DARK_COLOR: "#FA6B6B",
   NEAR_BLACK: "#170D0D",
   MAIN_TRANSPARENT: (opacity: number) => `rgba(247, 156, 156, ${opacity})`,
+  NAME: "RED",
 }
 
 const mainColors = {

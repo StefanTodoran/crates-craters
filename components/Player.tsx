@@ -1,8 +1,8 @@
-import { StyleSheet, Image, Animated } from "react-native";
-import { useRef, useEffect, useMemo } from "react";
-import { Direction, TileType } from "../util/types";
-import { Game, boundTileAt } from "../util/logic";
+import { useEffect, useMemo, useRef } from "react";
+import { Animated, Image, StyleSheet } from "react-native";
 import { colors, graphics } from "../Theme";
+import { Game } from "../util/logic";
+import { Direction, TileType } from "../util/types";
 
 interface Offset {
   dx: number,
@@ -79,21 +79,23 @@ function shouldHighlightTile(game: Game, offset: Offset) {
   const xPos = game.player.x + offset.dx;
   const yPos = game.player.y + offset.dy;
 
-  const tile = boundTileAt(yPos, xPos, game.board);
-  if ([TileType.OUTSIDE, TileType.CRATER, TileType.WALL].includes(tile.id)) return false;
-
+  const background = game.board.getBackground(yPos, xPos, true);
+  if ([TileType.OUTSIDE, TileType.WALL].includes(background.id)) return false;
+  
+  const tile = game.board.getTile(yPos, xPos, true);
+  if (tile.id === TileType.CRATER) return false;
   if (tile.id === TileType.DOOR && game.keys === 0) return false;
   if (tile.id === TileType.FLAG && game.coins !== game.maxCoins) return false;
 
-  if (tile.id === TileType.ONEWAY) {
-    if (tile.orientation === Direction.LEFT && xPos > game.player.x) return false;
-    if (tile.orientation === Direction.RIGHT && xPos < game.player.x) return false;
-    if (tile.orientation === Direction.UP && yPos > game.player.y) return false;
-    if (tile.orientation === Direction.DOWN && yPos < game.player.y) return false;
+  if (background.id === TileType.ONEWAY) {
+    if (background.orientation === Direction.LEFT && xPos > game.player.x) return false;
+    if (background.orientation === Direction.RIGHT && xPos < game.player.x) return false;
+    if (background.orientation === Direction.UP && yPos > game.player.y) return false;
+    if (background.orientation === Direction.DOWN && yPos < game.player.y) return false;
   }
 
   if (tile.id === TileType.CRATE || tile.id === TileType.BOMB) {
-    const nextTile = boundTileAt(yPos + offset.dy, xPos + offset.dx, game.board);
+    const nextTile = game.board.getTile(yPos + offset.dy, xPos + offset.dx, true);
     if (tile.id === TileType.CRATE && nextTile.id !== TileType.EMPTY && nextTile.id !== TileType.CRATER) return false;
     if (tile.id === TileType.BOMB && nextTile.id !== TileType.EMPTY) return false;
   }

@@ -1,5 +1,5 @@
 export class AnySet<T> {
-  private set: Set<string>;
+  private readonly set: Set<string>;
 
   constructor() {
     this.set = new Set();
@@ -28,8 +28,8 @@ interface Position {
 }
 
 export class PositionSet {
-  private set: Set<number>;
-  private boardWidth: number;
+  private readonly set: Set<number>;
+  private readonly boardWidth: number;
 
   constructor(boardWidth: number) {
     this.set = new Set();
@@ -55,4 +55,12 @@ export class PositionSet {
   private hash(element: Position) {
     return element.y * this.boardWidth + element.x;
   }
+}
+
+export function areSetsEqual<T>(setA: Set<T>, setB: Set<T>) {
+  if (setA.size !== setB.size) return false;
+  for (const a of setA) {
+    if (!setB.has(a)) return false;
+  }
+  return true;
 }

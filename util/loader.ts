@@ -1,7 +1,8 @@
-import { Board, BoardTile, BombTile, Level, OfficialLevel, OneWayTile, TileType, UserLevel, isLevelWellFormed } from "./types";
+import { MMKV } from "react-native-mmkv";
+import { FlatBoard } from "./board";
 import { doNotificationsUpdate, doStateStorageSync } from "./events";
 import { countInstancesInBoard } from "./logic";
-import { MMKV } from "react-native-mmkv";
+import { BombTile, Direction, Level, LocalUserData, OfficialLevel, OneWayTile, TileType, UserLevel, isLevelWellFormed } from "./types";
 
 export const storage = new MMKV();
 
@@ -10,6 +11,13 @@ export enum metadataKeys {
   officialLevelKeys = "officialLevelKeys",
   customLevelKeys = "customLevelKeys",
   coinBalance = "coinBalance",
+  userCredentials = "userCredentials",
+  userData = "userData",
+  
+  // These reference the UUIDs of publicly shared user created levels.
+  likedLevels = "likedLevels",
+  attemptedLevels = "attemptedLevels",
+  completedLevels = "completedLevels",
 }
 
 export function setData(key: string, value: any) {
@@ -33,6 +41,27 @@ export function getData(key: string) {
   }
 
   return rawValue ? JSON.parse(rawValue) : undefined;
+}
+
+export function getLevelData(key: string) {
+  const level = getData(key);
+  const board = new FlatBoard(level.board.board);
+  level.board = board;
+  return level as Level;
+}
+
+export function getLocalUserData() {
+  const userData: LocalUserData = getData(metadataKeys.userData);
+  if (!userData) {
+    const newUserData: LocalUserData = {
+      uuid: generateUUID(),
+      joined: new Date().toISOString(),
+      // TODO: Maybe add "expo-device" package to get device info.
+    }
+    setData(metadataKeys.userData, newUserData);
+  }
+
+  return userData;
 }
 
 export function multiGetData(keys: string[]) {
@@ -67,7 +96,12 @@ export function getStoredLevels() {
   const levels: Level[] = [];
   keys.forEach(key => {
     const level = getData(key);
+
     if (isLevelWellFormed(level)) {
+      // @ts-expect-error The next two lines turn level.board from an object to a class instance.
+      const board = new FlatBoard(level.board.board);
+      level.board = board;
+      
       levels.push(level);
     } else {
       // TODO: If the level is malformed, then the key needs to be deleted.
@@ -89,10 +123,13 @@ export function createLevel(level: UserLevel) {
   const customLevelKeys = getData(metadataKeys.customLevelKeys) || [];
   customLevelKeys.push(level.uuid);
   setData(metadataKeys.customLevelKeys, customLevelKeys);
+  
+  // TODO: All state storage sync functions could maybe be replaced with
+  // a number of event listeners on MMKV.
   doStateStorageSync(level.uuid);
 }
 
-export function updateLevel(updatedLevel: UserLevel) {
+export function updateLevel(updatedLevel: UserLevel, boardChange: boolean = true) {
   const existingLevel: Level = getData(updatedLevel.uuid);
 
   if (!existingLevel) {
@@ -103,8 +140,12 @@ export function updateLevel(updatedLevel: UserLevel) {
   const level: Level = {
     ...existingLevel,
     ...updatedLevel,
-    completed: false,
   };
+
+  if (boardChange) {
+    level.completed = false;
+    level.bestSolution = undefined;
+  }
 
   setData(level.uuid, level);
   doStateStorageSync(level.uuid);
@@ -126,27 +167,36 @@ export function deleteLevel(level: UserLevel) {
 }
 
 export function multiStoreLevels(levels: Level[]) {
-  const keys = JSON.stringify(levels.map(level => level.uuid));
+  const keys = levels.map(level => level.uuid);
 
   try {
     levels.forEach(level => {
       storage.set(level.uuid, JSON.stringify(level));
     });
-    storage.set(metadataKeys.officialLevelKeys, keys);
-    return true;
+    storage.set(metadataKeys.officialLevelKeys, JSON.stringify(keys));
   } catch (err) {
     console.error("Error completing multiStoreLevels command:", err);
     return false;
   }
+
+  const storedKeys = storage.getAllKeys();
+  const missingKeys = keys.filter(key => !storedKeys.includes(key));
+  if (missingKeys.length > 0) {
+    console.error("Missing keys after multiStoreLevels command:", missingKeys);
+    return false;
+  }
+
+  return true;
 }
 
-export function markLevelCompleted(uuid: string, moveCount: number) {
-  const level = getData(uuid) as Level;
+export function markLevelCompleted(uuid: string, moveHistory: Direction[]) {
+  const level = getLevelData(uuid);
   const wasCompleted = level.completed;
 
-  const prevBest = Number.isInteger(level.best) ? level.best : Infinity;
-  level.best = Math.min(prevBest!, moveCount);
+  const prevBest = level.bestSolution ? level.bestSolution.length : Infinity;
+  if (moveHistory.length < prevBest) level.bestSolution = moveHistory.join("");
   level.completed = true;
+  
   setData(uuid, level);
   doStateStorageSync(uuid);
 
@@ -174,15 +224,14 @@ const split = {
   tile: ".",
 }
 
-export function parseCompressedBoardData(raw: string): Board {
+export function parseCompressedBoardData(raw: string): FlatBoard {
   const rawBoard = raw.split(split.row);
-  const board: Board = [];
+  const board = new FlatBoard(FlatBoard.createEmptyBoard());
 
-  rawBoard.forEach(strRow => {
+  rawBoard.forEach((strRow, yPos) => {
     const rawRow = strRow.split(split.column);
-    const row: BoardTile[] = [];
 
-    rawRow.forEach(strTile => {
+    rawRow.forEach((strTile, xPos) => {
       if (strTile.includes(split.tile)) {
         const tileData = strTile.split(split.tile).map(substr => parseInt(substr));
         const tile = { id: tileData[0] };
@@ -198,13 +247,11 @@ export function parseCompressedBoardData(raw: string): Board {
           (tile as BombTile).fuse = tileData[1];
         }
 
-        row.push(tile);
+        board.setTile(yPos, xPos, tile);
       } else {
-        row.push({ id: parseInt(strTile) });
+        board.setTile(yPos, xPos, { id: parseInt(strTile) });
       }
     });
-
-    board.push(row);
   });
 
   return board;
@@ -217,21 +264,23 @@ export function parseCompressedBoardData(raw: string): Board {
  * for packed levels, the compressed representation of a board will rarely
  * exceed 300 bytes.
  */
-export function compressBoardData(board: Board): string {
+export function compressBoardData(board: FlatBoard): string {
   let result = "";
 
-  for (let y = 0; y < board.length; y++) {
+  for (let y = 0; y < board.height; y++) {
     let row = "";
 
-    for (let x = 0; x < board[0].length; x++) {
-      const tile = board[y][x];
+    for (let x = 0; x < board.width; x++) {
+      const tile = board.getTile(y, x);
       const keys = Object.keys(tile);
 
       let encoding = "";
       keys.forEach(key => {
         // TODO: These seem to always be in the right order, but need to
         // make sure that this is a guarantee and not environment dependent.
-        encoding += tile[key as keyof BoardTile].toString() + split.tile;
+
+        // @ts-expect-error
+        encoding += tile[key].toString() + split.tile;
       });
       encoding = encoding.slice(0, -1);
 
@@ -248,7 +297,7 @@ export function compressBoardData(board: Board): string {
 }
 
 export function generateUUID() {
-  return (new Date().getTime().toString() + Math.random()).replace(".", "");
+  return new Date().getTime().toString() + Math.random().toString(16).slice(2);
 }
 
 // LEVEL IDEAS:

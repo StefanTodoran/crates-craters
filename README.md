@@ -174,6 +174,8 @@ Built with JavaScript and React Native, Crates and Craters is a single player pu
 * Consider making bombs destroy keys and coins?
 * Use a hitRect to give stepperArrows bigger hitboxes without overlapping SliderBar
 * Make notifications persist using MMKV?
+* Back action should be more useful, actually returning to previous screen
+* Improve firestore security rules
 
 <h2 style="display: flex; align-items: center;">
   Known Bugs
@@ -184,7 +186,6 @@ Built with JavaScript and React Native, Crates and Craters is a single player pu
   * Was reproducibly happening due to id issues, fixed that bug, now is less frequent
   * Occured when going from level to next level (fixed)
   * See Player.tsx
-* On galaxy s24 the victory screen animation doesn't work
 * Long level names may overflow card title
   * See ManageLevel.tsx
 * There are sometimes tiny 1px gaps between board tiles that vary by screen dimensions

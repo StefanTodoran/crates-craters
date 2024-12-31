@@ -1,22 +1,21 @@
-import { View, StyleSheet, Dimensions, Animated, Text, SafeAreaView, PanResponder, GestureResponderEvent, PanResponderGestureState } from "react-native";
-import { useState, useRef, useEffect, useContext, useMemo } from "react";
-import { Sound } from "expo-av/build/Audio";
 import { Audio } from "expo-av";
-
+import { Sound } from "expo-av/build/Audio";
+import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { Animated, Dimensions, GestureResponderEvent, PanResponder, PanResponderGestureState, SafeAreaView, StyleSheet, Text, View } from "react-native";
 import BackButton from "../assets/BackButton";
-import SliderBar from "../components/SliderBar";
+import CurrentToolIndicator from "../components/CurrentToolIndicator";
 import GameBoard from "../components/GameBoard";
 import MenuButton from "../components/MenuButton";
 import SimpleButton from "../components/SimpleButton";
-import CurrentToolIndicator from "../components/CurrentToolIndicator";
-
+import SliderBar from "../components/SliderBar";
 import GlobalContext from "../GlobalContext";
 import TextStyles, { normalize } from "../TextStyles";
-import { PageView, TileType, UserLevel } from "../util/types";
-import { boundTileAt, cloneBoard, getSpawnPosition } from "../util/logic";
 import { colors, graphics } from "../Theme";
 import { calcBoardTileSize } from "../util/board";
+import { updateLevel } from "../util/loader";
+import { getSpawnPosition } from "../util/logic";
 import { Tool, tools, wallTool } from "../util/tools";
+import { PageView, TileType, UserLevel } from "../util/types";
 
 const win = Dimensions.get("window");
 
@@ -42,9 +41,7 @@ interface Props {
   viewCallback: (newView: PageView) => void, // Sets the current view of the application. 
   level: UserLevel, // The level currently being edited. The uuid must not change.
   levelCallback: (newState: UserLevel) => void, // Updates the level (usually board changes).
-
-  playtestLevel: () => void,
-  storeChanges: (newState: UserLevel) => void,
+  playtestLevel: (uuid: string) => void,
 }
 
 export default function EditLevel({
@@ -52,7 +49,6 @@ export default function EditLevel({
   level,
   levelCallback,
   playtestLevel,
-  storeChanges,
 }: Props) {
   const { darkMode, playAudio } = useContext(GlobalContext);
 
@@ -87,7 +83,7 @@ export default function EditLevel({
   const [toolsModalOpen, setToolsModalState] = useState(false);
 
   const fadeToolsAnim = useRef(new Animated.Value(0)).current;
-  function toggleToolsModal() {
+  const toggleToolsModal = useCallback(() => {
     const start = (toolsModalOpen) ? 1 : 0;
     const end = (toolsModalOpen) ? 0 : 1;
     const modalWasOpen = toolsModalOpen;
@@ -106,26 +102,26 @@ export default function EditLevel({
         setToolsModalState(false);
       }
     });
-  }
+  }, [toolsModalOpen]);
 
   const [unsavedChanges, setUnsavedChanges] = useState(false);
   const [unmodifiedLevel, setUnmodifiedLevel] = useState<UserLevel>(level);
 
-  function saveChanges() {
-    storeChanges(level);
+  const saveChanges = useCallback(() => {
+    updateLevel(level); // Stores changes to MMKV
     setUnmodifiedLevel(level);
     setUnsavedChanges(false);
-  }
+  },[level]);
 
-  function discardChanges() {
+  const discardChanges = useCallback(() => {
     levelCallback(unmodifiedLevel);
     setUnsavedChanges(false);
-  }
+  }, []);
 
   const gestureStartMode = useRef<GestureMode>();
   const gestureStartTile = useRef<TileType>();
 
-  const tileSize = calcBoardTileSize(level.board[0].length, level.board.length, win);
+  const tileSize = calcBoardTileSize(level.board.width, level.board.height, win);
   const xCorrect = -0.5 * tileSize;
   const yCorrect = -1.5 * tileSize;
 
@@ -133,8 +129,8 @@ export default function EditLevel({
 
   useEffect(() => { // TODO: This useEffect may be unnecessary. Evaluate if it is needed, potentially remove.
     changeTile.current = (y: number, x: number) => {
-      const newBoard = cloneBoard(level.board);
-      const tileType = boundTileAt(y, x, level.board).id;
+      const newBoard = level.board.clone();
+      const tileType = level.board.getTile(y, x, true).id;
       if (tileType === TileType.OUTSIDE) return;
 
       // Clear current spawn position, as we cannot allow multiple spawn locations!
@@ -142,12 +138,12 @@ export default function EditLevel({
         if (gestureStartMode.current !== undefined) return; // Only want to trigger from onGestureStart.
 
         const spawnPos = getSpawnPosition(level.board);
-        if (tileType === TileType.EMPTY) newBoard[spawnPos.y][spawnPos.x] = { id: 0 }; // Clear the old spawn position.
+        if (tileType === TileType.EMPTY) newBoard.setTile(spawnPos.y, spawnPos.x, { id: 0 }); // Clear the old spawn position.
         gestureStartMode.current = GestureMode.PLACE;
       }
 
       if (tileType === TileType.EMPTY && gestureStartMode.current !== GestureMode.ERASE) {
-        newBoard[y][x] = currentTool.tile;
+        newBoard.setTile(y, x, currentTool.tile);
         if (playAudio) playSuccessSound();
         gestureStartMode.current = GestureMode.PLACE;
 
@@ -156,7 +152,7 @@ export default function EditLevel({
         gestureStartMode.current !== GestureMode.PLACE
       ) {
         // Never allow deletion of spawn tile, only replacement to somewhere else.
-        if (tileType !== TileType.SPAWN) newBoard[y][x] = { id: 0 };
+        if (tileType !== TileType.SPAWN) newBoard.setTile(y, x, { id: 0 });
         if (tileType !== TileType.EMPTY && playAudio) playErrorSound();
         gestureStartMode.current = GestureMode.ERASE;
         gestureStartTile.current = tileType;
@@ -235,12 +231,12 @@ export default function EditLevel({
           }),
         },
       ]}>
-        <SimpleButton onPress={toggleToolsModal} text="Change Tool" main={true} />
-        <View style={{ width: normalize(15) }} />
         <SimpleButton onPress={() => {
           saveChanges();
           viewCallback(PageView.MANAGE);
-        }} text="Save & Exit" />
+        }} text={unsavedChanges ? "Save & Exit" : "Exit"} />
+        <View style={{ width: normalize(15) }} />
+        <SimpleButton onPress={toggleToolsModal} text="Change Tool" main={true} />
       </Animated.View>
 
       {/* START MODAL */}
@@ -294,12 +290,14 @@ export default function EditLevel({
           <View style={styles.section}>
             <View style={styles.row}>
               <SimpleButton
-                onLongPress={discardChanges}
+                onPress={discardChanges}
+                doConfirmation="Are you sure you want to discard your unsaved changes?"
                 text="Discard Changes"
                 icon={graphics.EXPLOSION}
                 theme={colors.RED_THEME}
                 disabled={!unsavedChanges}
                 fillWidth
+                square
                 extraMargin
               />
               <SimpleButton
@@ -325,7 +323,8 @@ export default function EditLevel({
               <SimpleButton
                 onPress={() => {
                   saveChanges();
-                  playtestLevel();
+                  playtestLevel(level.uuid);
+                  viewCallback(PageView.PLAY);
                 }}
                 text="Playtest"
                 icon={graphics.PLAY_ICON}

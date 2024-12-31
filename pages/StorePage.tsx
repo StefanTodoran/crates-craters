@@ -1,24 +1,27 @@
+import { UserCredential } from "firebase/auth";
 import { useContext, useMemo } from "react";
 import { Image, StyleSheet, Text, View } from "react-native";
-
+import CartIcon from "../assets/main_theme/cart.png";
+import ProfileIcon from "../assets/main_theme/profile.png";
+import Subpages from "../components/Subpages";
 import GlobalContext from "../GlobalContext";
 import TextStyles, { normalize } from "../TextStyles";
 import { colors, graphics } from "../Theme";
 import { useCoinBalance } from "../util/loader";
-import Subpages from "../components/Subpages";
-
-import CartIcon from "../assets/main_theme/cart.png";
-import ProfileIcon from "../assets/main_theme/profile.png";
-import DownloadIcon from "../assets/main_theme/download.png";
 import ProfilePage from "./ProfilePage";
-import DownloadLevelsPage from "./DownloadLevelsPage";
 
-export default function ({ }) {
+interface Props {
+  attemptSignIn: () => Promise<void>,
+  setUserCredential: (newCredential: UserCredential | undefined) => void,
+}
+
+export default function StorePage({ attemptSignIn, setUserCredential }: Props) {
   const { darkMode } = useContext(GlobalContext);
   const [balance, _modifyBalance] = useCoinBalance();
 
   const pageComponents = useMemo(() => {
     return [
+      <ProfilePage attemptSignIn={attemptSignIn} setUserCredential={setUserCredential} />,
       <>
         <Text style={[TextStyles.subtitle(darkMode), { color: colors.YELLOW_THEME.MAIN_COLOR }]}>
           Coming Soon
@@ -29,27 +32,20 @@ export default function ({ }) {
           <Image style={styles.icon} source={graphics.COIN} />
         </View>
       </>,
-      <ProfilePage />,
-      <DownloadLevelsPage />,
     ];
   }, []);
 
   const pageTabs = useMemo(() => {
     return [
       {
-        label: "Store",
-        color: colors.YELLOW_THEME.MAIN_COLOR,
-        icon: CartIcon,
-      },
-      {
         label: "Profile",
         color: colors.YELLOW_THEME.MAIN_COLOR,
         icon: ProfileIcon,
       },
       {
-        label: "Levels",
+        label: "Store",
         color: colors.YELLOW_THEME.MAIN_COLOR,
-        icon: DownloadIcon,
+        icon: CartIcon,
       },
     ];
   }, []);

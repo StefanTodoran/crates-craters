@@ -33,7 +33,7 @@
         "backgroundColor": "#FFFFFF"
       },
       "package": "com.stefantodoran.cratesncraters",
-      "versionCode": 17,
+      "versionCode": 21,
       "runtimeVersion": "1.0.0"
     },
     "web": {
@@ -43,6 +43,9 @@
       "eas": {
         "projectId": "35521822-b82a-4a39-9244-5560ebf3d2bb"
       }
-    }
+    },
+    "plugins": [
+      "expo-font"
+    ]
   }
 }
