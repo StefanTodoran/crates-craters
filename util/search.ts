@@ -1,7 +1,8 @@
 import { MinQueue } from "heapify";
-import { Game, Position, boundTileAt, canMoveTo, countInstancesInBoard, doGameMove } from "./logic";
-import { Board, Direction, TileType } from "./types";
+import { LayeredBoard } from "./board";
+import { Game, Position, canMoveTo, countInstancesInBoard, doGameMove } from "./logic";
 import { AnySet } from "./Set";
+import { Direction, TileType } from "./types";
 
 /**
  * This represents a compressed version of the Game interface which
@@ -12,7 +13,7 @@ import { AnySet } from "./Set";
  * so this property must be removed.
  */
 interface BaseGameState {
-  board: Board,
+  board: LayeredBoard,
   player: Position,
   maxCoins: number,
   coins: number,
@@ -46,10 +47,12 @@ function areGameStatesEqual(stateA: BaseGameState, stateB: BaseGameState): boole
   return areBoardStatesEqual(stateA.board, stateB.board);
 }
 
-function areBoardStatesEqual(boardA: Board, boardB: Board): boolean {
-  for (let y = 0; y < boardA.length; y++) {
-    for (let x = 0; x < boardA[0].length; x++) {
-      if (boardA[y][x] !== boardB[y][x]) return false;
+function areBoardStatesEqual(boardA: LayeredBoard, boardB: LayeredBoard): boolean {
+  for (let y = 0; y < boardA.height; y++) {
+    for (let x = 0; x < boardA.width; x++) {
+      // TODO: figure out equality check here
+      // const tileA = boardA.
+      // if (boardA[y][x] !== boardB[y][x]) return false;
     }
   }
 
@@ -114,15 +117,17 @@ interface SearchNode {
   path: Direction[],
 }
 
-function printBoard(board: Board, player: Position) {
-  const dimensions = [board.length, board[0].length];
+function printBoard(board: LayeredBoard, player: Position) {
+  const dimensions = [board.height, board.width];
 
-  for (let i = 0; i < dimensions[0]; i++) {
+  for (let i = 0; i < board.height; i++) {
     let row = "[";
-    for (let j = 0; j < dimensions[1]; j++) {
-      row += " " + board[i][j].id;
+    for (let j = 0; j < board.width; j++) {
+      row += " ";
+      if (i === player.y && j === player.x) row = row.slice(0, -2) + "P";
 
-      if (i === player.y && j === player.x) row = row.slice(0, -2) + " P";
+      const layer = board.getLayer(i, j);
+      row += layer.foreground + "," + layer.background;
     }
 
     console.log(row + " ]");
@@ -197,13 +202,13 @@ export function aStarSearch(start: Game, heuristic: HeuristicFunction): Directio
   return null;
 }
 
-function getTilePositions(board: Board, type: TileType): Position[] {
-  const dimensions = [board.length, board[0].length];
+function getTilePositions(board: LayeredBoard, type: TileType): Position[] {
   const positions = [];
 
-  for (let i = 0; i < dimensions[0]; i++) {
-    for (let j = 0; j < dimensions[1]; j++) {
-      if (board[i][j].id === type) {
+  for (let i = 0; i < board.height; i++) {
+    for (let j = 0; j < board.width; j++) {
+      const layer = board.getLayer(i, j);
+      if (layer.foreground.id === type || layer.background.id == type) {
         positions.push({ y: i, x: j });
       }
     }
@@ -219,11 +224,10 @@ function getTilePositions(board: Board, type: TileType): Position[] {
  */
 function isDeadEnd(state: BaseGameState): boolean {
   const mustReachTiles = [TileType.COIN, TileType.FLAG];
-  const dimensions = [state.board.length, state.board[0].length];
 
-  for (let i = 0; i < dimensions[0]; i++) {
-    for (let j = 0; j < dimensions[1]; j++) {
-      if (mustReachTiles.includes(state.board[i][j].id)) {
+  for (let i = 0; i < state.board.height; i++) {
+    for (let j = 0; j < state.board.width; j++) {
+      if (mustReachTiles.includes(state.board.getLayer(i, j).foreground.id)) {
         const checkPosition = { y: i, x: j };
         if (!isTileReachable(state.board, checkPosition)) return true;
       }
@@ -233,7 +237,7 @@ function isDeadEnd(state: BaseGameState): boolean {
   return false;
 }
 
-function isTileReachable(board: Board, tile: Position) {
+function isTileReachable(board: LayeredBoard, tile: Position) {
   const clearable = [
     TileType.EMPTY,
     TileType.BOMB,
@@ -243,38 +247,39 @@ function isTileReachable(board: Board, tile: Position) {
     TileType.CRATER,
     TileType.EXPLOSION,
     TileType.LITTLE_EXPLOSION,
-
-    // TODO: Remove this, after adding oneway tile logic.
-    TileType.ONEWAY,
   ];
 
   for (let i = -1; i < 2; i++) {
     for (let j = -1; j < 2; j++) {
       if (i === 0 && j === 0) continue;
       const checkPosition = { y: tile.y + i, x: tile.x + j };
-      const adjacentTile = boundTileAt(checkPosition.y, checkPosition.x, board);
+      const adjacentLayer = board.getLayer(checkPosition.y, checkPosition.x, true);
 
-      if (clearable.includes(adjacentTile.id)) return true;
+      if (adjacentLayer.background.id === TileType.EMPTY && clearable.includes(adjacentLayer.foreground.id)) return true;
       // if (something) TODO: some kind of logic for oneway tiles
-      if (adjacentTile.id === TileType.CRATE && isCrateMoveable(board, checkPosition)) return true;
+      if (adjacentLayer.foreground.id === TileType.CRATE && isCrateMoveable(board, checkPosition)) return true;
     }
   }
 
   return true;
 }
 
-function isCrateMoveable(board: Board, tile: Position) {
-  const pushableTargets = [TileType.EMPTY, TileType.CRATER];
+// TODO: double check what exactly is going on with this function
+function isCrateMoveable(board: LayeredBoard, tile: Position) {
+  // const pushableTargets = [TileType.EMPTY, TileType.CRATER];
 
   for (let i = -1; i < 2; i++) {
     for (let j = -1; j < 2; j++) {
       if (i === 0 && j === 0) continue;
 
-      const adjacentTile = boundTileAt(tile.y + i, tile.x + j, board);
-      const oppositeTile = boundTileAt(tile.y - i, tile.x - j, board);
+      const adjacentLayer = board.getLayer(tile.y + i, tile.x + j, true);
+      const oppositeLayer = board.getLayer(tile.y - i, tile.x - j, true);
+
       if (
-        pushableTargets.includes(oppositeTile.id) &&
-        adjacentTile.id === TileType.EMPTY
+        oppositeLayer.foreground.id === TileType.CRATE &&
+        oppositeLayer.background.id === TileType.EMPTY &&
+        adjacentLayer.foreground.id === TileType.EMPTY &&
+        adjacentLayer.background.id === TileType.EMPTY
       ) return true;
     }
   }
@@ -316,8 +321,8 @@ function keysDoorsHeuristic(state: BaseGameState) {
 }
 
 export function compoundHeuristic(state: BaseGameState) {
-  const maxDistance = state.board.length + state.board[0].length;
-  const stepSize = maxDistance * (state.board.length * state.board[0].length);
+  const maxDistance = state.board.height + state.board.width;
+  const stepSize = maxDistance * (state.board.height * state.board.width);
 
   const componentHeuristics = [
     countInstancesInBoard(state.board, TileType.COIN),

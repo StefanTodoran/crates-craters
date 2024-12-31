@@ -1,12 +1,10 @@
-import { Text, StyleSheet, Dimensions, Linking, View } from "react-native";
 import { useContext } from "react";
-
-import { colors, graphics } from "../Theme";
-import MenuButton from "../components/MenuButton";
+import { Linking, StyleSheet, Text, View } from "react-native";
 import GlobalContext from "../GlobalContext";
 import TextStyles, { normalize } from "../TextStyles";
+import { colors, graphics } from "../Theme";
+import MenuButton from "../components/MenuButton";
 import SubpageContainer from "../components/SubpageContainer";
-const win = Dimensions.get("window");
 
 export default function About() {
   const { darkMode } = useContext(GlobalContext);
@@ -23,12 +21,8 @@ export default function About() {
       </Text>
 
       <Text style={TextStyles.paragraph(darkMode)}>
-        If you're looking to check out some of my other work or get in contact, click the button below.
-        Please also use that button if you encounter any bugs or have any suggestions.
-      </Text>
-
-      <Text style={TextStyles.paragraph(darkMode)}>
-        It links to my portfolio website. Click the mail icon to scroll to the contact section at the bottom of the page.
+        If you're looking to check out some of my other work or get in contact, click the button below to go to my portfolio, then click the mail icon.
+        Please also use that button if you encounter bugs or have any suggestions.
       </Text>
 
       <View style={styles.buttonsContainer}>

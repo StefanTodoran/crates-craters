@@ -1,9 +1,9 @@
 import { useMemo } from "react";
 import { Dimensions } from "react-native";
+import { calcPreviewTileSize } from "../util/board";
 import { getSpawnPosition } from "../util/logic";
 import { Level } from "../util/types";
 import GameBoard from "./GameBoard";
-import { calcPreviewTileSize } from "../util/board";
 
 const win = Dimensions.get("window");
 
@@ -12,6 +12,7 @@ interface Props {
   previewSize: number,
   previewWidth: number,
   // rowCorrect?: number,
+  children?: React.ReactNode,
 }
 
 export default function BoardPreview({
@@ -19,17 +20,18 @@ export default function BoardPreview({
   previewSize,
   previewWidth,
   // rowCorrect,
+  children,
 }: Props) {
-  const tileSize = calcPreviewTileSize(level.board[0].length, previewWidth, win);
+  const tileSize = calcPreviewTileSize(level.board.width, previewWidth, win);
   const previewCenter = useMemo(() => getSpawnPosition(level.board).y, [level]);
 
   let previewTop, previewBottom;
   if (previewCenter - previewSize < 0) {
     previewTop = 0;
     previewBottom = (previewSize * 2);
-  } else if (previewCenter + previewSize > level.board.length) {
-    previewTop = level.board.length - (previewSize * 2);
-    previewBottom = level.board.length;
+  } else if (previewCenter + previewSize > level.board.height) {
+    previewTop = level.board.height - (previewSize * 2);
+    previewBottom = level.board.height;
   } else {
     previewTop = previewCenter - previewSize;
     previewBottom = previewCenter + previewSize;
@@ -40,6 +42,7 @@ export default function BoardPreview({
       board={level.board.slice(previewTop, previewBottom)}
       overrideTileSize={tileSize}
       // rowCorrect={rowCorrect}
+      children={children}
     />
   );
 }

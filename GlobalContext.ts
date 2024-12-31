@@ -1,4 +1,6 @@
+import { UserCredential } from "firebase/auth";
 import { createContext } from "react";
+import { UserAccountDocument } from "./util/database";
 
 /**
  * @param {boolean} darkMode
@@ -20,6 +22,8 @@ interface GlobalContext {
   dragSensitivity: number,
   doubleTapDelay: number,
   playAudio: boolean,
+  userCredential?: UserCredential,
+  userData?: UserAccountDocument,
 }
 
 export const defaultSettings = {

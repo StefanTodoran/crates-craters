@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { View, Animated, Text, StyleSheet, Dimensions, PanResponder, PanResponderGestureState, GestureResponderEvent } from "react-native";
+import { Animated, Dimensions, GestureResponderEvent, PanResponder, PanResponderGestureState, StyleSheet, Text, View } from "react-native";
 import { normalize } from "../TextStyles";
 import StepperArrow from "./StepperArrow";
 
@@ -19,10 +19,7 @@ interface Props {
   showSteppers?: boolean,
 }
 
-/**
- * InputLine is an augmentation of the basic TextInput that has
- * a fancy animation for the label.
- * 
+/** 
  * REQUIRED:
  * @param {string} label The label to above the slider bar.
  * @param {string} units A string to be displayed by the value (e.g. "%", "px", or "" if none desired)

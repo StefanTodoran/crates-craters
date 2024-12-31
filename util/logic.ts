@@ -1,6 +1,7 @@
+import { FlatBoard, LayeredBoard, emptyTile, unsqueezeBoard } from "./board";
 import Queue from "./Queue";
 import { PositionSet } from "./Set";
-import { OneWayTile, Direction, TileType, Board, SimpleTile, Level, BoardTile } from "./types";
+import { Direction, Level, OneWayTile, SimpleTile, TileType } from "./types";
 
 export enum SoundEvent {
   MOVE,
@@ -17,46 +18,24 @@ export interface Position {
 }
 
 export interface Game {
-  uuid: string,
-  name: string,
-  board: Board,
-  // official: boolean,
-
+  board: LayeredBoard,
   player: Position,
   maxCoins: number, // The number of coins needed to complete the level.
   coins: number,
   keys: number,
   won: boolean, // Whether the curren run of the level has been completed.
   soundEvent?: SoundEvent,
-  moveCount: number,
+  moveHistory: Direction[],
 }
 
 // Deep copy of a game object.
 function cloneGameObj(game: Game): Game {
   return {
     ...game,
-    board: cloneBoard(game.board),
+    board: game.board.clone(),
     player: { y: game.player.y, x: game.player.x },
+    moveHistory: [...game.moveHistory],
   }
-}
-
-export function cloneBoard(board: Board): Board {
-  const newBoard = [];
-
-  for (let i = 0; i < board.length; i++) {
-    const newRow = [];
-    for (let j = 0; j < board[i].length; j++) {
-      const newTile = { ...board[i][j] };
-      newRow.push(newTile);
-    }
-    newBoard[i] = newRow;
-  }
-
-  return newBoard;
-}
-
-export function validTile(yPos: number, xPos: number, board: Board) {
-  return (yPos >= 0 && yPos < board.length && xPos >= 0 && xPos < board[0].length);
 }
 
 /**
@@ -66,21 +45,21 @@ export function validTile(yPos: number, xPos: number, board: Board) {
  * of oneway can be walked on.
  */
 export function canWalkTile(yPos: number, xPos: number, game: Game, extra?: TileType[], direction?: Direction) {
-  if (validTile(yPos, xPos, game.board)) {
-    let walkable = [TileType.EMPTY, TileType.SPAWN];
+  if (game.board.inBounds(yPos, xPos)) {
+    let walkable = [TileType.EMPTY, TileType.SPAWN, TileType.LITTLE_EXPLOSION, TileType.EXPLOSION];
     if (extra) walkable = walkable.concat(extra);
 
-    const targetTile = tileAt(yPos, xPos, game.board);
-    if (targetTile.id === TileType.FLAG && game.coins === game.maxCoins) {
+    const targetSpace = game.board.getLayer(yPos, xPos);
+    if (targetSpace.foreground.id === TileType.FLAG && game.coins === game.maxCoins) {
       return true; // We can only walk on the flag if we have all the coins!
     }
 
-    let canWalk = walkable.includes(targetTile.id);
+    let canWalk = walkable.includes(targetSpace.foreground.id) && walkable.includes(targetSpace.background.id);
     if (
       canWalk &&
       direction !== undefined &&
-      targetTile.id === TileType.ONEWAY &&
-      !canWalkOneWay(direction, targetTile)
+      targetSpace.background.id === TileType.ONEWAY &&
+      !canWalkOneWay(direction, targetSpace.background)
     ) {
       canWalk = false;
     }
@@ -100,34 +79,14 @@ export function canWalkOneWay(direction: Direction, tile: OneWayTile) {
 }
 
 /**
- * Queries the target position without bounds checking.
- */
-export function tileAt(yPos: number, xPos: number, board: Board) {
-  return board[yPos][xPos];
-}
-
-/**
- * Queries the target position with bounds checking, returning
- * the special outside tile type if the query is out of bounds.
- */
-export function boundTileAt(yPos: number, xPos: number, board: Board): BoardTile {
-  if (validTile(yPos, xPos, board)) {
-    return board[yPos][xPos];
-  }
-  return { id: TileType.OUTSIDE };
-}
-
-/**
  * Returns the player spawn position in the given level.
- * @param {Board} board The board[][] you wish to search. 
+ * @param {LayeredBoard} board The board[][] you wish to search. 
  * @returns {Position} Returns a position of the form {y: number, x: number}
  */
-export function getSpawnPosition(board: Board): Position {
-  const dimensions = [board.length, board[0].length];
-
-  for (let i = 0; i < dimensions[0]; i++) {
-    for (let j = 0; j < dimensions[1]; j++) {
-      if (board[i][j].id === TileType.SPAWN) {
+export function getSpawnPosition(board: FlatBoard | LayeredBoard): Position {
+  for (let i = 0; i < board.height; i++) {
+    for (let j = 0; j < board.width; j++) {
+      if (board.getTile(i, j).id === TileType.SPAWN) {
         return { y: i, x: j };
       }
     }
@@ -139,13 +98,12 @@ export function getSpawnPosition(board: Board): Position {
 /**
  * Returns the number of time some value shows up in an array.
  */
-export function countInstancesInBoard(board: Board, target: TileType) {
-  const dimensions = [board.length, board[0].length];
+export function countInstancesInBoard(board: FlatBoard | LayeredBoard, target: TileType) {
   let count = 0;
 
-  for (let i = 0; i < dimensions[0]; i++) {
-    for (let j = 0; j < dimensions[1]; j++) {
-      if (board[i][j].id === target) {
+  for (let i = 0; i < board.height; i++) {
+    for (let j = 0; j < board.width; j++) {
+      if (board.getTile(i, j).id === target) {
         count++;
       }
     }
@@ -153,9 +111,6 @@ export function countInstancesInBoard(board: Board, target: TileType) {
 
   return count;
 }
-
-const emptyTile: SimpleTile = { id: TileType.EMPTY };
-const crateTile: SimpleTile = { id: TileType.CRATE };
 
 /**
  * Checks if the destination position can be reached from the current position
@@ -176,7 +131,7 @@ export function canMoveTo(game: Game, tileX: number, tileY: number): Direction[]
     path: Direction[],
   }
 
-  const visited = new PositionSet(game.board[0].length);
+  const visited = new PositionSet(game.board.width);
   const queue = new Queue<SearchNode>();
   queue.enqueue({ x: game.player.x, y: game.player.y, path: [] });
 
@@ -226,6 +181,10 @@ export function canMoveTo(game: Game, tileX: number, tileY: number): Direction[]
   return null;
 }
 
+const crateTile: SimpleTile = { id: TileType.CRATE };
+const explosionTile: SimpleTile = { id: TileType.EXPLOSION };
+const littleExplosion: SimpleTile = { id: TileType.LITTLE_EXPLOSION };
+
 /**
  * Attempts to do a move, return the successor state. If the move
  * is invalid, successor state may be identical to current state,
@@ -252,20 +211,20 @@ export function doGameMove(game: Game, move: Direction): [Game, boolean] {
   }
 
   next.soundEvent = undefined; // Clear the previous sound event.
-  if (!validTile(moveTo.y, moveTo.x, next.board)) {
+  if (!next.board.inBounds(moveTo.y, moveTo.x)) {
     // The user attempted to move outside the board.
     return [game, false];
   }
 
   // Clear explosion tiles.
-  const dimensions = [next.board.length, next.board[0].length];
+  const dimensions = [next.board.height, next.board.width];
   for (let i = 0; i < dimensions[0]; i++) {
     for (let j = 0; j < dimensions[1]; j++) {
       if (
-        tileAt(i, j, next.board).id === TileType.EXPLOSION ||
-        tileAt(i, j, next.board).id === TileType.LITTLE_EXPLOSION
+        next.board.getTile(i, j).id === TileType.EXPLOSION ||
+        next.board.getTile(i, j).id === TileType.LITTLE_EXPLOSION
       ) {
-        next.board[i][j] = emptyTile;
+        next.board.setTile(i, j, emptyTile);
       }
     }
   }
@@ -276,48 +235,53 @@ export function doGameMove(game: Game, move: Direction): [Game, boolean] {
   // logic, we run attemptMove which only succeeds and moves the player if moveTo is now
   // empty (e.g. the coin tile was collected & cleared or the door was opened & cleared)
 
-  const moveToTile = tileAt(moveTo.y, moveTo.x, next.board);
-  const oneFurtherTile = boundTileAt(oneFurther.y, oneFurther.x, next.board);
+  const moveToLayer = next.board.getLayer(moveTo.y, moveTo.x);
+  const oneFurtherLayer = next.board.getLayer(oneFurther.y, oneFurther.x, true);
 
   // If we walked onto a collectable, add it to the inventory
   // and clear the tile on the new board object.
-  if (moveToTile.id === TileType.COIN) {
+  if (moveToLayer.foreground.id === TileType.COIN) {
     next.coins += 1;
-    next.board[moveTo.y][moveTo.x] = emptyTile;
+    next.board.setTile(moveTo.y, moveTo.x, emptyTile);
     next.soundEvent = SoundEvent.COLLECT;
   }
-  if (moveToTile.id === TileType.KEY) {
+  if (moveToLayer.foreground.id === TileType.KEY) {
     next.keys += 1;
-    next.board[moveTo.y][moveTo.x] = emptyTile;
+    next.board.setTile(moveTo.y, moveTo.x, emptyTile);
     next.soundEvent = SoundEvent.COLLECT;
   }
 
   // If we walked into a door and have the means to open it, do so.
-  if (game.keys > 0 && moveToTile.id === TileType.DOOR) {
+  if (game.keys > 0 && moveToLayer.foreground.id === TileType.DOOR) {
     next.keys -= 1;
-    next.board[moveTo.y][moveTo.x] = emptyTile;
+    next.board.setTile(moveTo.y, moveTo.x, emptyTile);
     next.soundEvent = SoundEvent.DOOR;
   }
 
-  // Pushing a crate onto an empty tile.
-  if (moveToTile.id === TileType.CRATE && oneFurtherTile.id === TileType.EMPTY) {
-    next.board[moveTo.y][moveTo.x] = emptyTile;
-    next.board[oneFurther.y][oneFurther.x] = crateTile;
-    next.soundEvent = SoundEvent.PUSH;
-  }
+  if (
+    oneFurtherLayer.background.id === TileType.EMPTY ||
+    (oneFurtherLayer.background.id === TileType.ONEWAY && canWalkOneWay(move, oneFurtherLayer.background))
+  ) {
+    // Pushing a crate onto an empty tile.
+    if (moveToLayer.foreground.id === TileType.CRATE && oneFurtherLayer.foreground.id === TileType.EMPTY) {
+      next.board.setTile(moveTo.y, moveTo.x, emptyTile);
+      next.board.setTile(oneFurther.y, oneFurther.x, crateTile);
+      next.soundEvent = SoundEvent.PUSH;
+    }
 
-  // Pushing a crate into a crater.
-  if (moveToTile.id === TileType.CRATE && oneFurtherTile.id === TileType.CRATER) {
-    next.board[moveTo.y][moveTo.x] = emptyTile;
-    next.board[oneFurther.y][oneFurther.x] = emptyTile;
-    next.soundEvent = SoundEvent.FILL;
-  }
+    // Pushing a crate into a crater.
+    if (moveToLayer.foreground.id === TileType.CRATE && oneFurtherLayer.foreground.id === TileType.CRATER) {
+      next.board.setTile(moveTo.y, moveTo.x, emptyTile);
+      next.board.setTile(oneFurther.y, oneFurther.x, emptyTile);
+      next.soundEvent = SoundEvent.FILL;
+    }
 
-  // Pushing a bomb onto an empty tile.
-  if (moveToTile.id === TileType.BOMB && oneFurtherTile.id === TileType.EMPTY) {
-    next.board[moveTo.y][moveTo.x] = emptyTile;
-    next.board[oneFurther.y][oneFurther.x] = moveToTile;
-    next.soundEvent = SoundEvent.PUSH;
+    // Pushing a bomb onto an empty tile.
+    if (moveToLayer.foreground.id === TileType.BOMB && oneFurtherLayer.foreground.id === TileType.EMPTY) {
+      next.board.setTile(oneFurther.y, oneFurther.x, moveToLayer.foreground);
+      next.board.setTile(moveTo.y, moveTo.x, emptyTile);
+      next.soundEvent = SoundEvent.PUSH;
+    }
   }
 
   const moved = attemptMove(moveTo.y, moveTo.x, next, move);
@@ -328,28 +292,27 @@ export function doGameMove(game: Game, move: Direction): [Game, boolean] {
 
   for (let i = 0; i < dimensions[0]; i++) {
     for (let j = 0; j < dimensions[1]; j++) {
-      const tile = tileAt(i, j, next.board);
+      const tile = next.board.getTile(i, j);
 
       if (tile.id === TileType.BOMB) {
         tile.fuse--;
 
         if (tile.fuse === 0) {
-          const littleExplosion: SimpleTile = { id: TileType.LITTLE_EXPLOSION };
-          if (boundTileAt(i - 1, j, next.board).id === TileType.CRATE) { next.board[i - 1][j] = littleExplosion; }
-          if (boundTileAt(i + 1, j, next.board).id === TileType.CRATE) { next.board[i + 1][j] = littleExplosion; }
-          if (boundTileAt(i, j - 1, next.board).id === TileType.CRATE) { next.board[i][j - 1] = littleExplosion; }
-          if (boundTileAt(i, j + 1, next.board).id === TileType.CRATE) { next.board[i][j + 1] = littleExplosion; }
+          if (next.board.getTile(i - 1, j, true).id === TileType.CRATE) next.board.setTile(i - 1, j, littleExplosion);
+          if (next.board.getTile(i + 1, j, true).id === TileType.CRATE) next.board.setTile(i + 1, j, littleExplosion);
+          if (next.board.getTile(i, j - 1, true).id === TileType.CRATE) next.board.setTile(i, j - 1, littleExplosion);
+          if (next.board.getTile(i, j + 1, true).id === TileType.CRATE) next.board.setTile(i, j + 1, littleExplosion);
 
-          next.board[i][j] = { id: TileType.EXPLOSION };
+          next.board.setTile(i, j, explosionTile);
           next.soundEvent = SoundEvent.EXPLOSION;
         }
       }
     }
   }
-  
+
   next.won = winCondition(next);
-  next.moveCount++;
-  
+  next.moveHistory.push(move);
+
   if (!next.soundEvent && !next.won) {
     next.soundEvent = SoundEvent.MOVE;
   }
@@ -367,7 +330,7 @@ function attemptMove(yPos: number, xPos: number, next: Game, direction?: Directi
 }
 
 function winCondition(next: Game) {
-  return tileAt(next.player.y, next.player.x, next.board).id === TileType.FLAG && (next.coins === next.maxCoins);
+  return next.board.getTile(next.player.y, next.player.x).id === TileType.FLAG && (next.coins === next.maxCoins);
 }
 
 /**
@@ -375,21 +338,18 @@ function winCondition(next: Game) {
  * @returns A Game object properly set up for game start.
  */
 export function initializeGameObj(level: Level): Game {
-  const board = cloneBoard(level.board);
-  const numberOfCoins = countInstancesInBoard(board, TileType.COIN);
-
+  const board = new LayeredBoard(unsqueezeBoard(level.board));
   const startPos = getSpawnPosition(board);
-  board[startPos.y][startPos.x] = emptyTile;
+  board.setTile(startPos.y, startPos.x, emptyTile);
 
+  const numberOfCoins = countInstancesInBoard(board, TileType.COIN);
   return {
-    uuid: level.uuid,
-    name: level.name,
     board: board,
     player: startPos,
     maxCoins: numberOfCoins,
     coins: 0,
     keys: 0,
     won: false,
-    moveCount: 0,
+    moveHistory: [],
   };
 }

@@ -1,9 +1,9 @@
-import { StyleSheet, Image, Animated } from "react-native";
-import { useContext, useEffect, useRef } from "react";
 import { Audio } from "expo-av";
-import { graphics } from "../Theme";
+import { useContext, useEffect, useRef } from "react";
+import { Animated, Image, StyleSheet } from "react-native";
 import GlobalContext from "../GlobalContext";
 import { sizeFromWidthPercent } from "../TextStyles";
+import { graphics } from "../Theme";
 
 export default function WinScreen() {
   const { darkMode, playAudio } = useContext(GlobalContext);

@@ -1,14 +1,12 @@
 import { useMemo } from "react";
-import { colors } from "../Theme";
-
-import About from "./About";
-import Settings from "./Settings";
-import HowToPlay from "./HowToPlay";
-import Subpages from "../components/Subpages";
-
+import AboutIcon from "../assets/main_theme/about.png";
 import GuideIcon from "../assets/main_theme/help.png";
 import SettingsIcon from "../assets/main_theme/settings.png";
-import AboutIcon from "../assets/main_theme/about.png";
+import Subpages from "../components/Subpages";
+import { colors } from "../Theme";
+import About from "./About";
+import HowToPlay from "./HowToPlay";
+import Settings from "./Settings";
 
 interface Props {
   darkModeCallback: () => void,

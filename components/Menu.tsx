@@ -1,14 +1,13 @@
-import { Animated, Dimensions, ScrollView, StyleSheet, View } from "react-native";
 import { useRef } from "react";
-import MenuPage from "./MenuPage";
-
-import CrateGraphic from "../assets/crates.png";
+import { Animated, Dimensions, ScrollView, StyleSheet, View } from "react-native";
 import BombGraphic from "../assets/bomb.png";
-import DoorGraphic from "../assets/door_n_keys.png";
 import CoinGraphic from "../assets/coin_stack.png";
+import CrateGraphic from "../assets/crates.png";
+import DoorGraphic from "../assets/door_n_keys.png";
 import { normalize } from "../TextStyles";
 import { PageView } from "../util/types";
 import { PageTheme } from "./Header";
+import MenuPage from "./MenuPage";
 
 const win = Dimensions.get("window");
 const scrn = Dimensions.get("screen");
@@ -37,7 +36,7 @@ export const menuPages = [
     darkColor: "#b88700",
     banner: PageTheme.YELLOW,
     source: CoinGraphic,
-    text: "STORE",
+    text: "PROFILE",
     target: PageView.STORE,
   },
   {
@@ -82,7 +81,7 @@ export default function Menu({ notificationCounts, openPage }: Props) {
         horizontal
         pagingEnabled
         showsHorizontalScrollIndicator={false}
-        overScrollMode="never"
+        // overScrollMode="never"
         onScroll={(evt) => {
           anim.setValue(evt.nativeEvent.contentOffset.x / win.width);
         }}

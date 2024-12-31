@@ -1,43 +1,40 @@
 import { useContext } from "react";
-import { StyleSheet, Text, View } from "react-native";
-
-import { PageView } from "../util/types";
-import { doPageChange } from "../util/events";
-import { colors, graphics } from "../Theme";
-import MenuButton from "./MenuButton";
+import { ImageSourcePropType, StyleSheet, Text, View } from "react-native";
 import GlobalContext from "../GlobalContext";
-import TextStyles, { normalize } from "../TextStyles";
+import TextStyles from "../TextStyles";
+import { Theme } from "../Theme";
+import MenuButton from "./MenuButton";
 
-interface Props {
-  mode: PageView.LEVELS | PageView.MANAGE,
-  refreshCallback?: () => void,
+export interface EmptyListProps {
+  textLines: string[],
+  onPress?: () => void,
+  buttonLabel?: string,
+  buttonIcon?: ImageSourcePropType,
+  buttonTheme?: Theme,
 }
 
-export default function EmptyList({ mode, refreshCallback }: Props) {
+export default function EmptyList({
+  textLines,
+  onPress,
+  buttonLabel,
+  buttonIcon,
+  buttonTheme,
+}: EmptyListProps) {
   const { darkMode } = useContext(GlobalContext);
 
-  if (mode === PageView.LEVELS) return (
+  return (
     <View style={styles.container}>
-      <Text style={TextStyles.paragraph(darkMode)}>Levels not downloaded yet!</Text>
-      <Text style={TextStyles.paragraph(darkMode)}>Check your internet connection, then try again.</Text>
-      <MenuButton
-        onPress={refreshCallback}
-        label="Retry Download"
-        icon={graphics.CRATE}
-      />
-      <View style={styles.padding}/>
-    </View>
-  );
-
-  if (mode === PageView.MANAGE) return (
-    <View style={styles.container}>
-      <Text style={TextStyles.paragraph(darkMode)}>No custom levels created yet!</Text>
-      <MenuButton
-        onPress={() => doPageChange(2)}
-        label="Create New Level"
-        icon={graphics.METAL_CRATE}
-        theme={colors.RED_THEME}
-      />
+      <Text style={TextStyles.paragraph(darkMode)}>
+        {textLines.join("\n\n")}
+      </Text>
+      <View style={styles.buttonWrap}>
+        {buttonLabel && <MenuButton
+          onPress={onPress}
+          label={buttonLabel}
+          icon={buttonIcon}
+          theme={buttonTheme}
+        />}
+      </View>
     </View>
   );
 }
@@ -46,10 +43,11 @@ const styles = StyleSheet.create({
   container: {
     alignItems: "center",
     justifyContent: "center",
-    paddingHorizontal: "22.5%",
-    width: "100%",
+    paddingHorizontal: "11.25%",
+    paddingVertical: "11.25%",
+    flex: 1,
   },
-  padding: {
-    height: normalize(80),
-  }
+  buttonWrap: {
+    paddingHorizontal: "11.25%",
+  },
 });

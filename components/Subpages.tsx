@@ -1,7 +1,7 @@
-import { Animated, View, StyleSheet, ImageURISource } from "react-native";
 import { useEffect, useRef, useState } from "react";
-import { colors } from "../Theme";
+import { Animated, ImageURISource, StyleSheet, View } from "react-native";
 import { normalize } from "../TextStyles";
+import { colors } from "../Theme";
 import { eventEmitter } from "../util/events";
 import IconButton from "./IconButton";
 

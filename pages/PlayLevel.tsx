@@ -1,30 +1,30 @@
-import { View, StyleSheet, Dimensions, PanResponder, Animated, SafeAreaView, Text, GestureResponderEvent, PanResponderGestureState } from "react-native";
-import { useState, useRef, useEffect, useContext, useMemo } from "react";
-import TextStyles, { normalize } from "../TextStyles";
-import GlobalContext from "../GlobalContext";
-import { Sound } from "expo-av/build/Audio";
 import { Audio } from "expo-av";
-
-import SimpleButton from "../components/SimpleButton";
-import MoveCounter from "../components/MoveCounter";
-import MenuButton from "../components/MenuButton";
+import { Sound } from "expo-av/build/Audio";
+import { useContext, useEffect, useMemo, useRef, useState } from "react";
+import { Animated, Dimensions, GestureResponderEvent, PanResponder, PanResponderGestureState, SafeAreaView, StyleSheet, Text, View } from "react-native";
+import BackButton from "../assets/BackButton";
 import GameBoard from "../components/GameBoard";
 import Inventory from "../components/Inventory";
+import MenuButton from "../components/MenuButton";
+import MoveCounter from "../components/MoveCounter";
 import Player from "../components/Player";
-import WinScreen from "./WinScreen";
-
-// import { aStarSearch, basicHeuristic, compoundHeuristic } from "../util/search";
-import { Game, SoundEvent, canMoveTo, doGameMove, initializeGameObj } from "../util/logic";
-import { Direction, Level, PageView } from "../util/types";
-import { markLevelCompleted } from "../util/loader";
-import { calcBoardTileSize } from "../util/board";
+import SimpleButton from "../components/SimpleButton";
+import GlobalContext from "../GlobalContext";
+import TextStyles, { normalize } from "../TextStyles";
 import { colors, graphics } from "../Theme";
-import BackButton from "../assets/BackButton";
+import { calcBoardTileSize } from "../util/board";
+import { likeUserLevel, markUserLevelCompleted, postSolutionData } from "../util/database";
+import { getData, markLevelCompleted, metadataKeys } from "../util/loader";
+import { Game, SoundEvent, canMoveTo, doGameMove, initializeGameObj } from "../util/logic";
+// import { aStarSearch, basicHeuristic, compoundHeuristic } from "../util/search";
+import Toast from "react-native-toast-message";
+import { Direction, Level, PageView, PlayMode, SharedLevel } from "../util/types";
+import WinScreen from "./WinScreen";
 
 const win = Dimensions.get("window");
 
 interface Props {
-  viewCallback: (newView: PageView) => void, // Sets the current view of the application. 
+  viewCallback: (newView: PageView, newPage?: number) => void, // Sets the current view of the application. 
   nextLevelCallback: (uuid: string) => void, // Request the parent update the level to the next level. 
   gameStateCallback: (newState: Game) => void, // Updates the state of the game, stored in the parent for resumeability.
   gameHistoryCallback: (newHistory: Game[]) => void, // Updates the history of the state of the game, stored in the parent for resumeability.
@@ -32,7 +32,7 @@ interface Props {
   level: Level, // The level currently being played. 
   game: Game, // The current game state.
   history: Game[],
-  playtest: boolean, // Whether or not the play screen has been opened from the level creation menu. If so the navigation buttons should show return to level creation, not levels.
+  mode: PlayMode,
 }
 
 interface Position {
@@ -63,9 +63,9 @@ export default function PlayLevel({
   level,
   game,
   history,
-  playtest,
+  mode,
 }: Props) {
-  const { darkMode, dragSensitivity, doubleTapDelay, playAudio } = useContext(GlobalContext);
+  const { darkMode, dragSensitivity, doubleTapDelay, playAudio, userCredential } = useContext(GlobalContext);
 
   function updateGameState(newState: Game) {
     gameStateCallback(newState);
@@ -161,9 +161,26 @@ export default function PlayLevel({
   const [touchMove, setTouchMove] = useState({ y: 0, x: 0 });
   const panResponderEnabled = useRef(true);
 
+  const [canLikeLevel, setCanLikeLevel] = useState(false);
+  useEffect(() => {
+    if (!level.hasOwnProperty("shared") || !userCredential) return;
+    
+    const likedLevels = getData(metadataKeys.likedLevels) || [];
+    setCanLikeLevel(!likedLevels.includes(level.uuid) && (level as SharedLevel).user_email != userCredential.user.email);
+  }, []);
+
   useEffect(() => {
     panResponderEnabled.current = !game.won;
-    if (game.won) markLevelCompleted(game.uuid, history.length);
+    if (game.won) {
+      if (mode === PlayMode.SHARED) {
+        markUserLevelCompleted((level as SharedLevel), userCredential?.user.email, game.moveHistory);
+      } else {
+        markLevelCompleted(level.uuid, game.moveHistory);
+
+        // We want to collect solution data for official levels, even without a user account.
+        if (mode === PlayMode.STANDARD) postSolutionData(level.uuid, userCredential?.user.email, game.moveHistory);
+      }
+    }
   }, [game]);
 
   // More player input state, we use these to keep track of double taps. We need to know
@@ -179,27 +196,21 @@ export default function PlayLevel({
     handleGesture.current = (gesture: Gesture) => {
       const [up, down, left, right] = gesture;
       // Exactly one of up, down, left, right must be true!
-      if (bti(up) + bti(down) + bti(left) + bti(right) !== 1) {
-        return;
-      }
+      if (bti(up) + bti(down) + bti(left) + bti(right) !== 1) return;
 
-      let newState, stateChanged;
-      if (up) {
-        [newState, stateChanged] = doGameMove(game, Direction.UP);
-      } else if (down) {
-        [newState, stateChanged] = doGameMove(game, Direction.DOWN);
-      } else if (left) {
-        [newState, stateChanged] = doGameMove(game, Direction.LEFT);
-      } else { // if (right) {
-        [newState, stateChanged] = doGameMove(game, Direction.RIGHT);
-      }
+      let move;
+      if (up) move = Direction.UP;
+      else if (down) move = Direction.DOWN;
+      else if (left) move = Direction.LEFT;
+      else move = Direction.RIGHT;
+      const [newState, stateChanged] = doGameMove(game, move);
 
       playSoundEffect(newState.soundEvent);
       if (stateChanged) updateGameState(newState);
     }
   }, [game]);
 
-  const tileSize = calcBoardTileSize(game.board[0].length, game.board.length, win);
+  const tileSize = calcBoardTileSize(game.board.width, game.board.height, win);
   const xCorrect = -0.5 * tileSize;
   const yCorrect = -1.5 * tileSize;
 
@@ -350,11 +361,75 @@ export default function PlayLevel({
     }
   }
 
+  const toEditor = () => viewCallback(PageView.EDITOR);
+  const toLevelSelect = () => viewCallback(PageView.LEVELS);
+  const toLevelSearch = () => viewCallback(PageView.LEVELS, 1);
+  const modeToBackPage = {
+    [PlayMode.STANDARD]: toLevelSelect,
+    [PlayMode.PLAYTEST]: () => viewCallback(PageView.MANAGE),
+    [PlayMode.SHARED]: toLevelSearch,
+  };
+
+  let returnMenuButton, postWinActionBtn;
+  switch (mode) {
+    case PlayMode.STANDARD:
+      returnMenuButton = <MenuButton
+        label={"Level Select"}
+        icon={graphics.DOOR_ICON}
+        onPress={toLevelSelect}
+        fillWidth
+      />;
+      postWinActionBtn = <SimpleButton
+        onPress={() => nextLevelCallback(level.uuid)}
+        icon={graphics.PLAY_ICON}
+        text="Next Level" main
+      />;
+      break;
+    case PlayMode.PLAYTEST:
+      returnMenuButton = <MenuButton
+        label={"Keep Editing"}
+        icon={graphics.HAMMER_ICON}
+        onPress={toEditor}
+        fillWidth
+      />;
+      postWinActionBtn = <SimpleButton
+        onPress={toEditor}
+        text="Keep Editing"
+        main
+      />;
+      break;
+    case PlayMode.SHARED:
+      returnMenuButton = <MenuButton
+        label={"Level Search"}
+        icon={graphics.DOOR_ICON}
+        onPress={toLevelSearch}
+        fillWidth
+      />;
+      postWinActionBtn = <SimpleButton
+        onPress={async () => {
+          const success = await likeUserLevel(level.uuid, userCredential!.user.email!);
+          if (!success) {
+            Toast.show({
+              type: "error",
+              text1: "Couldn't like level.",
+              text2: "Please check your connection and try again.",
+            });
+          } else {
+            setCanLikeLevel(false);
+          }
+        }}
+        text={"Like Level"}
+        disabled={!canLikeLevel}
+        main
+      />;
+      break;
+  }
+
   return (
     <SafeAreaView style={staticStyles.container}>
       {/* GAMEPLAY COMPONENTS */}
       <View>
-        <MoveCounter moveCount={game.moveCount} />
+        <MoveCounter moveCount={game.moveHistory.length} />
 
         <View style={staticStyles.centerContents} {...panResponder.panHandlers}>
           <GameBoard board={game.board} overrideTileSize={tileSize}>
@@ -392,21 +467,7 @@ export default function PlayLevel({
           disabled={history.length === 0}
           fillWidth
         />
-        {playtest ?
-          <MenuButton
-            label={"Keep Editing"}
-            icon={graphics.HAMMER_ICON}
-            onPress={() => viewCallback(PageView.EDITOR)}
-            fillWidth
-          />
-          :
-          <MenuButton
-            label={"Level Select"}
-            icon={graphics.DOOR_ICON}
-            onPress={() => viewCallback(PageView.LEVELS)}
-            fillWidth
-          />
-        }
+        {returnMenuButton}
         <MenuButton
           label="Resume Game"
           icon={graphics.KEY}
@@ -426,14 +487,11 @@ export default function PlayLevel({
       </Animated.View>}
 
       <Animated.View style={dynamicStyles.buttonsRow(anim)}>
-        <SimpleButton onPress={() => viewCallback(playtest ? PageView.MANAGE : PageView.LEVELS)} Svg={BackButton} square />
+        <SimpleButton onPress={modeToBackPage[mode]} Svg={BackButton} square />
         <View style={staticStyles.buttonGap} />
 
         {!game.won && <SimpleButton onPress={toggleModal} icon={graphics.MENU_ICON} text="Menu" main />}
-        {game.won && <>
-          {playtest && <SimpleButton onPress={() => viewCallback(PageView.EDITOR)} text="Keep Editing" main={true} />}
-          {!playtest && <SimpleButton onPress={() => nextLevelCallback(level.uuid)} icon={graphics.PLAY_ICON} text="Next Level" main={true} />}
-        </>}
+        {game.won && postWinActionBtn}
       </Animated.View>
     </SafeAreaView>
   );
