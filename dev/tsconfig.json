@@ -1,0 +1,29 @@
+{
+    "compilerOptions": {
+        "allowSyntheticDefaultImports": true,
+        "esModuleInterop": true,
+        "target": "ESNext",
+        "module": "CommonJS",
+        "lib": ["es6"],
+        "skipLibCheck": true,
+        "moduleResolution": "Node",
+        "resolveJsonModule": true,
+        "isolatedModules": true,
+        "jsx": "react-native",
+        "allowJs": false,
+        "strict": true,
+        "outDir": "build",
+        "noUnusedLocals": true,
+        "noUnusedParameters": true,
+        "noFallthroughCasesInSwitch": true,
+        "noImplicitAny": true,
+        "strictNullChecks": true,
+        "alwaysStrict": true,
+        "noImplicitReturns": true,
+        "allowUnreachableCode": false,
+        "removeComments": true,
+    },
+    "exclude": [
+      "node_modules"
+    ],
+}
