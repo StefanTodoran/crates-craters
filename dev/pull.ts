@@ -38,5 +38,5 @@ async function main() {
     }
 }
 
-log("\nFetching official levels from server...");
+log("\nPulling official levels from server...");
 main();

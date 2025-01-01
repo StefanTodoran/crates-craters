@@ -4,12 +4,14 @@
   "description": "",
   "main": "index.ts",
   "scripts": {
-    "pull-levels": "tsc && node build/pull.js"
+    "pull-levels": "tsc && node build/pull.js",
+    "push-levels": "tsc && node build/push.js"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
     "firebase": "^11.1.0",
+    "firebase-admin": "^13.0.2",
     "fs-extra": "^11.2.0"
   },
   "devDependencies": {

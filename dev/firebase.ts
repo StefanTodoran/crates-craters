@@ -2,6 +2,10 @@ import { initializeApp } from "firebase/app";
 import { initializeAuth } from "firebase/auth";
 import { collection, DocumentData, getDocs, getFirestore, QuerySnapshot } from "firebase/firestore";
 
+import serviceAccount from "./serviceAccountKey.json";
+export const admin = require("firebase-admin");
+admin.initializeApp({ credential: admin.credential.cert(serviceAccount) });
+
 const firebaseConfig = {
     apiKey: "AIzaSyASxDTiQ2ahy8fhVtllCnQ4Lbh2bhqsr9A",
     authDomain: "crates-n-craters.firebaseapp.com",
