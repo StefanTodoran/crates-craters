@@ -31,12 +31,21 @@ export default function About() {
           label="My Portfolio"
           icon={graphics.LOGO}
           theme={colors.GREEN_THEME}
+          fillWidth
         />
         <MenuButton
           onPress={() => { Linking.openURL("https://www.paypal.com/donate/?business=5EGAWXCBNDGHC&no_recurring=0&item_name=Help+support+the+future+development+of+Crates+%26+Craters%21+If+you+have+any+suggestions+for+the+game%2C+please+reach+out+to+me%21&currency_code=USD") }}
           label="Support C&C"
           icon={graphics.SUPPORT_ICON}
           theme={colors.GREEN_THEME}
+          fillWidth
+        />
+        <MenuButton
+          onPress={() => { Linking.openURL("https://github.com/StefanTodoran/crates-craters/blob/master/PRIVACYPOLICY.md") }}
+          label="Privacy Policy"
+          icon={graphics.KEY}
+          theme={colors.GREEN_THEME}
+          fillWidth
         />
       </View>
     </SubpageContainer>
@@ -45,9 +54,10 @@ export default function About() {
 
 const styles = StyleSheet.create({
   buttonsContainer: {
-    marginBottom: normalize(32),
-    flexDirection: "row",
-    justifyContent: "space-evenly",
+    alignItems: "center",
+    justifyContent: "center",
     width: "100%",
+    paddingHorizontal: "20%",
+    marginBottom: normalize(32),
   },
 });
