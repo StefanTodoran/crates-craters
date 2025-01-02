@@ -3,7 +3,8 @@ import { admin } from "./firebase";
 import { log } from "./logging";
 
 async function main() {
-    const rawLevels = fse.readdirSync("./levels").map(file => fse.readFileSync(`./levels/${file}`, "utf8"));
+    const allFiles = fse.readdirSync("./levels").filter(file => file !== "metadata.txt");
+    const rawLevels = allFiles.map(file => fse.readFileSync(`./levels/${file}`, "utf8"));
     const parsedLevels = rawLevels.map(level => JSON.parse(level));
 
     // Delete all existing levels

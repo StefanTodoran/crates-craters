@@ -29,6 +29,11 @@ async function main() {
     
     if (successCount === rawLevels.length) {
         log(`Successfully wrote all ${successCount} raw levels to levels folder!\n`, LogStatus.GOOD);
+
+        // Write a timestamp file to record when this pull occurred
+        const timestamp = new Date().toISOString();
+        fse.writeFileSync("./levels/metadata.txt", timestamp);
+
         // @ts-ignore This method exists... not sure why TypeScript is bugging out.
         process.exit(0);
     } else {

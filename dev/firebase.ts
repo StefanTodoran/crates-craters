@@ -36,3 +36,11 @@ function parseQuerySnapshot(snapshot: QuerySnapshot<DocumentData, DocumentData>)
 
     return docs;
 }
+
+export interface OfficialLevelDocument {
+    id: string,
+    uuid: string,
+    name: string,
+    board: string,
+    order: number,
+}
