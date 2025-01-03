@@ -112,7 +112,7 @@ export default function EditLevel({
     updateLevel(level); // Stores changes to MMKV
     setUnmodifiedLevel(level);
     setUnsavedChanges(false);
-  },[level]);
+  }, [level]);
 
   const discardChanges = useCallback(() => {
     levelCallback(unmodifiedLevel);
@@ -123,10 +123,8 @@ export default function EditLevel({
   const gestureStartTile = useRef<TileType>();
 
   const tileSize = calcBoardTileSize(level.board.width, level.board.height, win);
-  const xCorrect = -0.5 * tileSize;
-  const yCorrect = -1.5 * tileSize;
-
   const changeTile = useRef<(_y: number, _x: number) => void>(() => undefined);
+  const boardPosition = useRef({ x: 0, y: 0 });
 
   useEffect(() => { // TODO: This useEffect may be unnecessary. Evaluate if it is needed, potentially remove.
     changeTile.current = (y: number, x: number) => {
@@ -169,8 +167,8 @@ export default function EditLevel({
 
   const panResponder = useMemo(() => {
     function onGestureStart(_evt: GestureResponderEvent, gestureState: PanResponderGestureState) {
-      const pressX = pressToIndex(gestureState.x0, tileSize, xCorrect);
-      const pressY = pressToIndex(gestureState.y0, tileSize, yCorrect);
+      const pressX = pressToIndex(gestureState.x0, tileSize, -boardPosition.current.x);
+      const pressY = pressToIndex(gestureState.y0, tileSize, -boardPosition.current.y);
 
       gestureStartMode.current = undefined;
       gestureStartTile.current = undefined;
@@ -178,8 +176,8 @@ export default function EditLevel({
     }
 
     function onGestureMove(_evt: GestureResponderEvent, gestureState: PanResponderGestureState) {
-      const pressX = pressToIndex(gestureState.moveX, tileSize, xCorrect);
-      const pressY = pressToIndex(gestureState.moveY, tileSize, yCorrect);
+      const pressX = pressToIndex(gestureState.moveX, tileSize, -boardPosition.current.x);
+      const pressY = pressToIndex(gestureState.moveY, tileSize, -boardPosition.current.y);
       changeTile.current(pressY, pressX);
     }
 
@@ -217,9 +215,20 @@ export default function EditLevel({
 
   return (
     <SafeAreaView style={styles.container}>
-      <View {...panResponder.panHandlers}>
+      <View {...panResponder.panHandlers} onLayout={(event) => {
+        event.persist();
+        setTimeout(() => {
+          // For some reason right after the layout event is fired, the measure
+          // function doesn't return the correct values. So we need to wait a bit
+          // before calling it.
+          event.target.measure(
+            (_x, _y, _width, _height, pageX, pageY) => {
+              boardPosition.current = { x: pageX, y: pageY };
+            },
+          );
+        }, 1000);
+      }}>
         <GameBoard board={level.board} overrideTileSize={tileSize} />
-        {/* Like invertory but show current tool */}
       </View>
       <CurrentToolIndicator tool={currentTool} />
 
@@ -235,7 +244,7 @@ export default function EditLevel({
         <SimpleButton onPress={() => {
           saveChanges();
           viewCallback(PageView.MANAGE, 1);
-        }} text={unsavedChanges ? "Save & Exit" : "Exit"}/>
+        }} text={unsavedChanges ? "Save & Exit" : "Exit"} />
         <View style={{ width: normalize(15) }} />
         <SimpleButton onPress={toggleToolsModal} text="Change Tool" main={true} />
       </Animated.View>
@@ -248,94 +257,94 @@ export default function EditLevel({
           backgroundColor: darkMode ? "rgba(0, 0, 0, 0.85)" : "rgba(255, 255, 255, 0.85)",
         },
       ]}>
-          <View style={styles.section}>
-            {toolPairs.map((pair, index) =>
-              <View key={index} style={styles.row}>
-                <MenuButton
-                  label={pair.left.label}
-                  icon={pair.left.icon}
-                  onPress={() => changeTool(pair.left)}
-                  theme={pair.left.theme}
-                  fillWidth
-                />
-                <MenuButton
-                  label={pair.right.label}
-                  icon={pair.right.icon}
-                  onPress={() => changeTool(pair.right)}
-                  theme={pair.right.theme}
-                  fillWidth
-                />
-              </View>
-            )}
-            <View style={{ height: 15 }} />
-            <View style={styles.row}>
-              <SliderBar
-                label="Fuse Timer" value={fuseTimer} units={" turns"}
-                minValue={1} maxValue={100} changeCallback={setFuseTimer}
-                theme={colors.RED_THEME}
-                showSteppers
-              />
-            </View>
-            <View style={styles.row}>
+        <View style={styles.section}>
+          {toolPairs.map((pair, index) =>
+            <View key={index} style={styles.row}>
               <MenuButton
-                label="Bomb"
-                icon={bombTool.icon}
-                onPress={() => changeTool(bombTool)}
-                theme={bombTool.theme}
+                label={pair.left.label}
+                icon={pair.left.icon}
+                onPress={() => changeTool(pair.left)}
+                theme={pair.left.theme}
+                fillWidth
+              />
+              <MenuButton
+                label={pair.right.label}
+                icon={pair.right.icon}
+                onPress={() => changeTool(pair.right)}
+                theme={pair.right.theme}
                 fillWidth
               />
             </View>
+          )}
+          <View style={{ height: 15 }} />
+          <View style={styles.row}>
+            <SliderBar
+              label="Fuse Timer" value={fuseTimer} units={" turns"}
+              minValue={1} maxValue={100} changeCallback={setFuseTimer}
+              theme={colors.RED_THEME}
+              showSteppers
+            />
+          </View>
+          <View style={styles.row}>
+            <MenuButton
+              label="Bomb"
+              icon={bombTool.icon}
+              onPress={() => changeTool(bombTool)}
+              theme={bombTool.theme}
+              fillWidth
+            />
+          </View>
+        </View>
+
+        <View style={styles.section}>
+          <View style={styles.row}>
+            <SimpleButton
+              onPress={discardChanges}
+              doConfirmation="Are you sure you want to discard your unsaved changes?"
+              text="Discard Changes"
+              icon={graphics.EXPLOSION}
+              theme={colors.RED_THEME}
+              disabled={!unsavedChanges}
+              fillWidth
+              square
+              extraMargin={6}
+            />
+            <SimpleButton
+              onPress={saveChanges}
+              text="Save Changes"
+              icon={graphics.SAVE_ICON}
+              theme={colors.GREEN_THEME}
+              disabled={!unsavedChanges}
+              fillWidth
+              extraMargin={6}
+              main
+            />
           </View>
 
-          <View style={styles.section}>
-            <View style={styles.row}>
-              <SimpleButton
-                onPress={discardChanges}
-                doConfirmation="Are you sure you want to discard your unsaved changes?"
-                text="Discard Changes"
-                icon={graphics.EXPLOSION}
-                theme={colors.RED_THEME}
-                disabled={!unsavedChanges}
-                fillWidth
-                square
-                extraMargin={6}
-              />
-              <SimpleButton
-                onPress={saveChanges}
-                text="Save Changes"
-                icon={graphics.SAVE_ICON}
-                theme={colors.GREEN_THEME}
-                disabled={!unsavedChanges}
-                fillWidth
-                extraMargin={6}
-                main
-              />
-            </View>
-
-            <View style={styles.row}>
-              <SimpleButton
-                onPress={toggleToolsModal}
-                Svg={BackButton}
-                text="Close Menu"
-                fillWidth
-                extraMargin={6}
-              />
-              <SimpleButton
-                onPress={() => {
-                  saveChanges();
-                  playtestLevel(level.uuid);
-                  viewCallback(PageView.PLAY);
-                }}
-                text="Playtest"
-                icon={graphics.PLAY_ICON}
-                square
-                fillWidth
-                disabled={unsavedChanges}
-                extraMargin={6}
-                main
-              />
-            </View>
+          <View style={styles.row}>
+            <SimpleButton
+              onPress={toggleToolsModal}
+              Svg={BackButton}
+              text="Close Menu"
+              fillWidth
+              extraMargin={6}
+            />
+            <SimpleButton
+              onPress={() => {
+                saveChanges();
+                playtestLevel(level.uuid);
+                viewCallback(PageView.PLAY);
+              }}
+              text="Playtest"
+              icon={graphics.PLAY_ICON}
+              square
+              fillWidth
+              disabled={unsavedChanges}
+              extraMargin={6}
+              main
+            />
           </View>
+        </View>
       </Animated.View>}
       {/* END MODAL */}
     </SafeAreaView>

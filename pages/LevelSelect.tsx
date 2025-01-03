@@ -225,7 +225,6 @@ export default function LevelSelect({
             { length: elementHeight, offset: elementHeight * index, index }
           )}
           onLayout={() => {
-            console.log("scrollIndex", scrollIndex);
             if (scrollIndex) scrollRef.current.scrollToIndex({ index: scrollIndex, animated: false });
           }}
           removeClippedSubviews

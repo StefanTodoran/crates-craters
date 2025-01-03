@@ -214,16 +214,15 @@ export default function PlayLevel({
   }, [game]);
 
   const tileSize = calcBoardTileSize(game.board.width, game.board.height, win);
-  const xCorrect = -0.5 * tileSize; // TODO: Add a way to recalibrate this?
-  const yCorrect = -2 * tileSize;
-
+  const boardPosition = useRef({ x: 0, y: 0 });
+  
   const onGestureStart = useRef((_evt: GestureResponderEvent, _gestureState: PanResponderGestureState) => { });
   useEffect(() => {
     onGestureStart.current = (_evt: GestureResponderEvent, gestureState: PanResponderGestureState) => {
       setTouchMove({ y: 0, x: 0 });
 
-      const pressX = pressToIndex(gestureState.x0, tileSize, xCorrect);
-      const pressY = pressToIndex(gestureState.y0, tileSize, yCorrect);
+      const pressX = pressToIndex(gestureState.x0, tileSize, -boardPosition.current.x);
+      const pressY = pressToIndex(gestureState.y0, tileSize, -boardPosition.current.y);
 
       if (
         Date.now() - prevTouchTime.current < doubleTapDelay &&
@@ -258,8 +257,8 @@ export default function PlayLevel({
         });
       } else {
         prevTouchPos.current = {
-          x: pressToIndex(gestureState.x0, tileSize, xCorrect),
-          y: pressToIndex(gestureState.y0, tileSize, yCorrect),
+          x: pressX,
+          y: pressY,
         };
         const touchTime = Date.now();
         prevTouchTime.current = touchTime;
@@ -442,10 +441,23 @@ export default function PlayLevel({
     <>
       <SafeAreaView style={staticStyles.container}>
         {/* GAMEPLAY COMPONENTS */}
-        <View>
+        <View {...panResponder.panHandlers}>
           <MoveCounter moveCount={game.moveHistory.length} />
 
-          <View style={staticStyles.centerContents} {...panResponder.panHandlers}>
+          <View style={staticStyles.centerContents} onLayout={(event) => {
+            event.persist();
+            setTimeout(() => {
+              // For some reason right after the layout event is fired, the measure
+              // function doesn't return the correct values. So we need to wait a bit
+              // before calling it. Since this is only used for double tap detection,
+              // it's not a big deal if we need to wait a second.
+              event.target.measure(
+                (_x, _y, _width, _height, pageX, pageY) => {
+                  boardPosition.current = { x: pageX, y: pageY };
+                },
+              );
+            }, 1000);
+          }}>
             <GameBoard board={game.board} overrideTileSize={tileSize}>
               <Player game={game} touch={touchMove} darkMode={darkMode} tileSize={tileSize} />
 
@@ -504,7 +516,7 @@ export default function PlayLevel({
           <SimpleButton onPress={modeToBackPage[mode]} Svg={BackButton} square extraMargin={[7.5, 0]} />
 
           {Object.hasOwn(level, "introduces") && !game.won &&
-            <SimpleButton onPress={() => setShowTutorial(true)} icon={graphics.LIGHTBULB_ICON} square main extraMargin={[7.5, 0]}/>}
+            <SimpleButton onPress={() => setShowTutorial(true)} icon={graphics.LIGHTBULB_ICON} square main extraMargin={[7.5, 0]} />}
 
           {!game.won && <SimpleButton onPress={toggleModal} icon={graphics.MENU_ICON} text="Menu" main extraMargin={[7.5, 0]} />}
           {game.won && postWinActionBtn}
