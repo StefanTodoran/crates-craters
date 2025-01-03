@@ -1,0 +1,59 @@
+#root {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  width: 100%;
+  padding: 3em;
+}
+
+.header-banner {
+  width: 25em;
+}
+
+.page-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+}
+
+.menu-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.menu-container button {
+  width: 100%;
+}
+
+.buttons-container {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.level-cards-list {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+  margin-top: 1em;
+}
+
+.level-card {
+  background-color: var(--near--black);
+  border: 1px solid var(--main--color);
+  border-radius: 1em;
+  padding: 1em;
+  margin: 1em;
+}
+
+.level-card h2 {
+  margin: 0;
+}

@@ -1,0 +1,73 @@
+:root {
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  color-scheme: light dark;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+  /* Exported from Figma */
+  --light--tile: rgba(204, 183, 229, 0.01);
+  --dark--tile: rgba(204, 183, 229, 0.075);
+  --off--white: rgba(250, 255, 250, 1);
+  --light--color: rgba(249, 240, 252, 1);
+  --main--color: rgba(204, 183, 229, 1);
+  --middle--color: rgba(190, 169, 223, 1);
+  --dark--color: rgba(177, 156, 216, 1);
+  --shadow: rgba(190, 169, 223, 0.5);
+  --dark--shadow: rgba(177, 156, 216, 0.5);
+  --near--black: rgba(21, 16, 26, 1);
+
+  color: var(--off--white);
+  background-color: var(black);
+}
+
+body {
+  margin: 0;
+  display: flex;
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+h1 {
+  font-size: 3.2em;
+  line-height: 1.1;
+  margin-bottom: .2em;
+}
+
+button {
+  border-radius: 8px;
+  border: 1px solid transparent;
+  padding: 0.6em 1.2em;
+  margin: .5em;
+  font-size: 1em;
+  font-weight: 500;
+  font-family: inherit;
+  background-color: var(--dark--color);
+  color: var(--off--white);
+  cursor: pointer;
+  transition: background-color 0.25s, outline 0.25s;
+}
+button:hover {
+  background-color: var(--main--color);
+}
+button:focus,
+button:focus-visible {
+  outline: 4px auto var(--off--white);
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    color: var(--near--black);
+    background-color: var(--off-white);
+  }
+  a:hover {
+    color: #747bff;
+  }
+  button {
+    background-color: #f9f9f9;
+  }
+}
