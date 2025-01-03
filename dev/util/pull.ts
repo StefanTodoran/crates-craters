@@ -12,13 +12,15 @@ async function main() {
     const rawLevels = await getOrderedRawLevels();
     log(`Successfully received ${rawLevels.length} levels from server.`, LogStatus.GOOD);
     
-    fse.removeSync("./levels");
-    fse.mkdirSync("./levels");
+    const levelsPath = process.env.LEVELS_PATH!;
+    console.log("process.env.LEVELS_PATH", process.env.LEVELS_PATH);
+    fse.removeSync(levelsPath);
+    fse.mkdirSync(levelsPath);
 
     // Write each level to a file in the levels folder, as a json.
     let successCount = 0;
     rawLevels.forEach(level => {
-        const levelFile = `./levels/${level.id}.json`;
+        const levelFile = `${levelsPath}/${level.id}.json`;
         fse.writeFileSync(levelFile, JSON.stringify(level, Object.keys(level).sort(), 4));
 
         if (!fse.existsSync(levelFile)) {
@@ -33,7 +35,7 @@ async function main() {
 
         // Write a timestamp file to record when this pull occurred
         const timestamp = new Date().toISOString();
-        fse.writeFileSync("./levels/metadata.txt", timestamp);
+        fse.writeFileSync(`${levelsPath}/metadata.txt`, timestamp);
 
         // @ts-ignore This method exists... not sure why TypeScript is bugging out.
         process.exit(0);

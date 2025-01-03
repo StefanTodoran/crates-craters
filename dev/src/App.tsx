@@ -16,14 +16,14 @@ function App() {
   useEffect(() => {
     // This uses Vite's glob import feature
     const loadLevels = async () => {
-      const levelModules = import.meta.glob("../../levels/*.json");
+      const levelModules = import.meta.glob("../levels/*.json");
       const loadedLevels = [];
 
       for (const path in levelModules) {
         const levelModule: any = await levelModules[path]();
         loadedLevels.push({
           ...levelModule.default,
-          filename: path.replace("../../levels/", "").replace(".json", "")
+          filename: path.replace("../levels/", "").replace(".json", "")
         });
       }
 

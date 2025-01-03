@@ -1,4 +1,4 @@
-import { OfficialLevelDocument } from "../../firebase";
+import { OfficialLevelDocument } from "../util/firebase";
 
 interface Props {
   levelData: OfficialLevelDocument,
