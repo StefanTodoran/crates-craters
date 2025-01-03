@@ -3,9 +3,11 @@ import { OfficialLevelDocument } from "../util/firebase";
 interface Props {
   levelData: OfficialLevelDocument,
   setLevelData: (levelData: OfficialLevelDocument) => void,
+  swapUp: () => void,
+  swapDown: () => void,
 }
 
-export default function Level({ levelData, setLevelData }: Props) {
+export default function Level({ levelData, setLevelData, swapUp, swapDown }: Props) {
   return (
     <div className="level-card">
       <h2>Level {levelData.order}</h2>
@@ -51,18 +53,8 @@ export default function Level({ levelData, setLevelData }: Props) {
           }}
         />
       </div>
-      <button onClick={() => {
-        const json = JSON.stringify(levelData, null, 4);
-        const blob = new Blob([json], { type: "application/json" });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = `${levelData.uuid}.json`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-      }}>Save</button>
+      <button onClick={swapUp}>Swap Up</button>
+      <button onClick={swapDown}>Swap Down</button>
     </div>
   );
 }

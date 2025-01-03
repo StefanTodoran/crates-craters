@@ -41,7 +41,8 @@ function App() {
     // Add each level to the zip
     levels.forEach(level => {
       const { filename, ...levelData } = level;
-      const json = JSON.stringify(levelData, null, 4);
+      levelData.id = levelData.uuid;
+      const json = JSON.stringify(levelData, Object.keys(levelData).sort(), 4);
       zip.file(`${filename}.json`, json);
     });
     
@@ -61,6 +62,17 @@ function App() {
       name: "New Level",
       uuid: generateUUID()
     }]);
+  };
+
+  const swapLevels = (uuid: string, direction: number) => {
+    const index = levels.findIndex(level => level.uuid === uuid);
+    const newLevels = [...levels];
+    const [level] = newLevels.splice(index, 1);
+    newLevels.splice(index + direction, 0, level);
+    newLevels.forEach((level, index) => {
+      level.order = index + 1;
+    });
+    setLevels(newLevels);
   };
 
   useEffect(() => {
@@ -93,11 +105,16 @@ function App() {
 
           <div className="level-cards-list">
             {levels.map((level) => (
-              <Level key={level.filename} levelData={level} setLevelData={(updatedLevel) => {
-                setLevels(levels.map(lvl =>
-                  lvl.uuid === level.uuid ? updatedLevel : lvl
-                ));
-              }} />
+              <Level key={level.filename} 
+                levelData={level} 
+                setLevelData={(updatedLevel) => {
+                  setLevels(levels.map(lvl =>
+                    lvl.uuid === level.uuid ? updatedLevel : lvl
+                  ));
+                }}
+                swapUp={() => swapLevels(level.uuid, -1)}
+                swapDown={() => swapLevels(level.uuid, 1)}
+              />
             ))}
           </div>
         </>}
