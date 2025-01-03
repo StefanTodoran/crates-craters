@@ -19,7 +19,8 @@ async function main() {
     let successCount = 0;
     rawLevels.forEach(level => {
         const levelFile = `./levels/${level.id}.json`;
-        fse.writeFileSync(levelFile, JSON.stringify(level, undefined, 4));
+        fse.writeFileSync(levelFile, JSON.stringify(level, Object.keys(level).sort(), 4));
+
         if (!fse.existsSync(levelFile)) {
             log(`Write to ${levelFile} failed! Levels have not been saved.\n`, LogStatus.ERROR);
         } else {
