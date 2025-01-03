@@ -51,6 +51,18 @@ export default function Level({ levelData, setLevelData }: Props) {
           }}
         />
       </div>
+      <button onClick={() => {
+        const json = JSON.stringify(levelData, null, 4);
+        const blob = new Blob([json], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `${levelData.uuid}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }}>Save</button>
     </div>
   );
 }

@@ -1,3 +1,5 @@
+import { saveAs } from "file-saver";
+import JSZip from "jszip";
 import { useEffect, useState } from "react";
 import "./App.css";
 import PurpleBanner from "./assets/purple_banner.png";
@@ -34,26 +36,28 @@ function App() {
   }, []);
 
   const saveLevels = async () => {
-    // Create a folder containing all level JSONs
+    const zip = new JSZip();
+    
+    // Add each level to the zip
     levels.forEach(level => {
       const { filename, ...levelData } = level;
       const json = JSON.stringify(levelData, null, 4);
-      const blob = new Blob([json], { type: "application/json" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `${filename}.json`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      zip.file(`${filename}.json`, json);
     });
+    
+    // Generate and download the zip
+    const content = await zip.generateAsync({ type: "blob" });
+    saveAs(content, "levels.zip");
   };
 
   const addNewLevel = () => {
-    setLevels([...levels, {
+    const bumpedLevels = levels.map(level => ({
+      ...level,
+      order: level.order + 1
+    }));
+    setLevels([...bumpedLevels, {
       filename: generateUUID(),
-      order: levels.length + 1,
+      order: 1,
       name: "New Level",
       uuid: generateUUID()
     }]);
