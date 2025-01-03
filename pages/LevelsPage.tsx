@@ -16,6 +16,8 @@ interface Props {
     scrollTo?: string,
     levels: Level[],
     elementHeight: number,
+    userLevels: SharedLevel[],
+    setUserLevels: (levels: SharedLevel[]) => void,
     storeElementHeightCallback: (height: number) => void,
 }
 
@@ -26,6 +28,8 @@ export default function LevelsPage({
     scrollTo,
     levels,
     elementHeight,
+    userLevels,
+    setUserLevels,
     storeElementHeightCallback,
 }: Props) {
     const pageComponents = [
@@ -52,6 +56,8 @@ export default function LevelsPage({
             viewCallback={viewCallback}
             playLevelCallback={playSharedLevelCb}
             scrollTo={scrollTo}
+            userLevels={userLevels}
+            setUserLevels={setUserLevels}
             elementHeight={elementHeight}
             storeElementHeightCallback={storeElementHeightCallback}
         />,

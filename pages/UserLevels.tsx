@@ -69,6 +69,8 @@ interface Props {
     playLevelCallback: (level?: SharedLevel) => void,
     scrollTo?: string,
     elementHeight: number,
+    userLevels: SharedLevel[],
+    setUserLevels: (levels: SharedLevel[]) => void,
     storeElementHeightCallback: (height: number) => void,
 }
 
@@ -77,6 +79,8 @@ export default function UserLevels({
     playLevelCallback,
     scrollTo,
     elementHeight,
+    userLevels,
+    setUserLevels,
     storeElementHeightCallback,
 }: Props) {
     const { darkMode, userCredential } = useContext(GlobalContext);
@@ -140,8 +144,7 @@ export default function UserLevels({
     const [matchingCount, setMatchingCount] = useState(0);
     const [searchQuery, setSearchQuery] = useState("");
 
-    const [loading, setLoading] = useState(true);
-    const [userLevels, setUserLevels] = useState<SharedLevel[]>([]);
+    const [loading, setLoading] = useState(false);
 
     const inactiveFilters = new Set(Object.values(Filter).filter(item => !filters.has(item)));
     mutualExclusions.forEach(exclusionSet => {
@@ -247,7 +250,9 @@ export default function UserLevels({
     };
 
     const debouncedFetchLevels = useDebounce(parametrizedFetchLevels, 1000);
-    useEffect(() => { parametrizedFetchLevels(); }, []); // Fetch levels on mount.
+    useEffect(() => { 
+        if (userLevels.length === 0) parametrizedFetchLevels();
+    }, []); // Fetch levels on mount.
     useEffect(() => {
         if (modalOpen) return;
         if (didParamsChange()) debouncedFetchLevels();

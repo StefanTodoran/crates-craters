@@ -2,12 +2,13 @@ import { MMKV } from "react-native-mmkv";
 import { FlatBoard } from "./board";
 import { doNotificationsUpdate, doStateStorageSync } from "./events";
 import { countInstancesInBoard } from "./logic";
-import { BombTile, Direction, Level, LocalUserData, OfficialLevel, OneWayTile, TileType, UserLevel, isLevelWellFormed } from "./types";
+import { BombTile, Direction, Level, LevelObjectType, LocalUserData, OfficialLevel, OneWayTile, TileType, UserLevel, isLevelWellFormed } from "./types";
 
 export const storage = new MMKV();
 
 export enum metadataKeys {
   lastUpdatedOfficialLevels = "lastUpdatedOfficialLevels",
+  lastDataVersionCode = "lastDataVersionCode",
   officialLevelKeys = "officialLevelKeys",
   customLevelKeys = "customLevelKeys",
   coinBalance = "coinBalance",
@@ -96,8 +97,9 @@ export function getStoredLevels() {
   const levels: Level[] = [];
   keys.forEach(key => {
     const level = getData(key);
+    const expectedType = olKeys.includes(key) ? LevelObjectType.OFFICIAL : LevelObjectType.USER;
 
-    if (isLevelWellFormed(level)) {
+    if (isLevelWellFormed(level, expectedType)) {
       // @ts-expect-error The next two lines turn level.board from an object to a class instance.
       const board = new FlatBoard(level.board.board);
       level.board = board;
@@ -106,6 +108,7 @@ export function getStoredLevels() {
     } else {
       // TODO: If the level is malformed, then the key needs to be deleted.
       console.warn("Malformed level detected for key: ", key);
+      deleteLevel(level, olKeys.includes(key) ? metadataKeys.officialLevelKeys : metadataKeys.customLevelKeys);
     }
   });
 
@@ -151,16 +154,16 @@ export function updateLevel(updatedLevel: UserLevel, boardChange: boolean = true
   doStateStorageSync(level.uuid);
 }
 
-export function deleteLevel(level: UserLevel) {
+export function deleteLevel(level: Level, keySet: metadataKeys = metadataKeys.customLevelKeys) {
   storage.delete(level.uuid);
-  const customLevelKeys: string[] = getData(metadataKeys.customLevelKeys) || [];
-  const levelIndex = customLevelKeys.findIndex(key => key === level.uuid);
+  const keys: string[] = getData(keySet) || [];
+  const levelIndex = keys.findIndex(key => key === level.uuid);
 
   if (levelIndex !== -1) {
-    customLevelKeys.splice(levelIndex, 1);
-    setData(metadataKeys.customLevelKeys, customLevelKeys);
+    keys.splice(levelIndex, 1);
+    setData(keySet, keys);
   } else {
-    console.error(`Attempted delete of level with uuid ${level.uuid} but no corresponding key was found in "metadataKeys.customLevelKeys"!`)
+    console.error(`Attempted delete of level with uuid ${level.uuid} but no corresponding key was found in "${keySet}"!`)
   }
 
   doStateStorageSync();

@@ -6,6 +6,7 @@ import { Direction, OfficialLevel, SharedLevel, UserLevel } from "./types";
 
 import { UserCredential } from "firebase/auth";
 import { setLogLevel } from "firebase/firestore";
+import { Tutorial } from "../components/TutorialHint";
 setLogLevel("debug");
 
 // ======================== \\
@@ -13,6 +14,7 @@ setLogLevel("debug");
 
 interface MetadataDocument {
   officialLevelsUpdated: Timestamp,
+  dataVersionCode: number,
 }
 
 export interface OfficialLevelDocument {
@@ -20,6 +22,7 @@ export interface OfficialLevelDocument {
   name: string,
   board: string,
   order: number,
+  introduces: Tutorial,
 }
 
 export interface UserLevelDocument {
@@ -64,6 +67,7 @@ export async function checkForOfficialLevelUpdates(): Promise<number> {
 
     multiStoreLevels(levels);
     setData(metadataKeys.lastUpdatedOfficialLevels, metadata.officialLevelsUpdated);
+    setData(metadataKeys.lastDataVersionCode, metadata.dataVersionCode);
 
     return levels.length - prevCount;
   }
@@ -93,6 +97,7 @@ async function fetchOfficialLevelsFromServer() {
       bestSolution: existingLevel?.bestSolution,
       official: true,
       order: rawLevel.order,
+      introduces: rawLevel.introduces,
     };
 
     parsedLevels.push(updatedLevel);

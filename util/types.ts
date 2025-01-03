@@ -1,4 +1,5 @@
 import { UserCredential } from "firebase/auth";
+import { Tutorial } from "../components/TutorialHint";
 import { FlatBoard } from "./board";
 
 export interface UserData extends UserCredential {
@@ -90,12 +91,13 @@ interface LevelBase {
 export interface OfficialLevel extends LevelBase {
   official: true,
   order: number,
+  introduces?: Tutorial,
 }
 
 type DateString = string; // In the form Date().toISOString();
 export interface UserLevel extends LevelBase {
   official: false,
-  created: DateString, 
+  created: DateString,
   user_name: string,
   shared?: DateString,
   db_id?: string, // The document id in the database, if shared.
@@ -103,7 +105,6 @@ export interface UserLevel extends LevelBase {
 
 export interface SharedLevel extends Exclude<UserLevel, "created"> {
   user_email: string,
-  user_name: string,
   shared: DateString,
   downloads: number,
   attempts: number,
@@ -115,37 +116,84 @@ export interface SharedLevel extends Exclude<UserLevel, "created"> {
 
 export type Level = OfficialLevel | UserLevel | SharedLevel;
 
-enum LevelObjectType {
+export enum LevelObjectType {
   BASE,
   OFFICIAL,
   USER,
   SHARED,
 }
 
-type levelObjectPropSet = { [key: string]: string };
+type levelObjectPropSet = {
+  required: { [key: string]: string },
+  optional: { [key: string]: string },
+};
+
 const levelObjectProps: { [key in LevelObjectType]: levelObjectPropSet } = {
   [LevelObjectType.BASE]: {
-    "uuid": "string",
-    "name": "string",
-    "board": "object",
-    // TODO: Figure out why completed doesn't always exist?
-    // "completed": "boolean", 
-    "official": "boolean",
+    required: {
+      "uuid": "string",
+      "name": "string",
+      "board": "object",
+      "official": "boolean",
+    },
+    optional: {
+      "completed": "boolean", // TODO: Figure out why completed doesn't always exist?
+      "bestSolution": "string",
+    },
   },
-  [LevelObjectType.OFFICIAL]: {}, // TODO: Add the appropriate keys here.
-  [LevelObjectType.USER]: {},
-  [LevelObjectType.SHARED]: {},
+  [LevelObjectType.OFFICIAL]: {
+    required: {
+      "order": "number",
+    },
+    optional: {
+      "introduces": "number",
+    },
+  },
+  [LevelObjectType.USER]: {
+    required: {
+      "created": "string",
+      "user_name": "string",
+    },
+    optional: {
+      "shared": "string",
+      "db_id": "string",
+    },
+  },
+  [LevelObjectType.SHARED]: {
+    required: {
+      "user_email": "string",
+      "user_name": "string",
+      "shared": "string",
+      "downloads": "number",
+      "attempts": "number",
+      "wins": "number",
+      "likes": "number",
+      "winrate": "number",
+      "best": "number",
+    },
+    optional: {},
+  },
 }
 
 export function isLevelWellFormed(target: any, check: LevelObjectType = LevelObjectType.BASE): target is Level {
   if (target === null || target === undefined) return false;
-
   const props = levelObjectProps[check];
-  for (const [key, type] of Object.entries(props)) {
-    if (!(key in target)) return false;
-    if (typeof target[key] !== type) return false;
+  const incorrectKeys: string[] = [];
+
+  for (const [key, type] of Object.entries(props.required)) {
+    if (!(key in target)) incorrectKeys.push(key);
+    else if (typeof target[key] !== type) incorrectKeys.push(key);
+  }
+  
+  for (const [key, type] of Object.entries(props.optional)) {
+    if (!(key in target)) continue;
+    if (typeof target[key] !== type) incorrectKeys.push(key);
   }
 
+  if (incorrectKeys.length > 0) {
+    console.warn(`Level ${target.uuid} is malformed. Offending keys: ${incorrectKeys.join(", ")}`);
+    return false;
+  }
   return true;
 }
 

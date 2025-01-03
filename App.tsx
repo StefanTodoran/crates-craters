@@ -74,6 +74,11 @@ export default function App() {
       startEditingLevel(playLevel!.uuid);
     }
 
+    if (view === PageView.PLAY && newView === PageView.LEVELS && playMode === PlayMode.SHARED) {
+      // If we were playing a shared level and are now returning to the search page, we need to clear the userLevels state to trigger a refresh on mount..
+      setUserLevels([]);
+    }
+
     if (newView < notificationCounts.length) {
       updateNotificationCounts.current(newView, 0);
     }
@@ -102,6 +107,7 @@ export default function App() {
   }, []);
 
   const [levels, setLevels] = useState<Level[]>([]);
+  const [userLevels, setUserLevels] = useState<SharedLevel[]>([]); // We store this here so that the fetch doesn't need to be called every time the shared levels page is mounted.
   const [notificationCounts, setNotificationCounts] = useState([0, 0, 0, 0]);
   const [userCredential, setUserCredential] = useState<UserCredential>();
   const [userData, setUserData] = useState<UserAccountDocument>();
@@ -270,6 +276,8 @@ export default function App() {
                 playSharedLevelCb={playSharedLevel}
                 scrollTo={scrollToBottom ? "last" : (!currentGame?.won ? playLevel?.uuid : undefined)}
                 levels={levels.filter(lvl => lvl.official)}
+                userLevels={userLevels}
+                setUserLevels={setUserLevels}
                 elementHeight={levelElementHeight}
                 storeElementHeightCallback={setElementHeight}
               />

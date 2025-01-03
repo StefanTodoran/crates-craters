@@ -9,6 +9,7 @@ interface SVGProps {
   width: number,
   height: number,
   fillColor: string,
+  flipped?: boolean,
 }
 
 interface Props {
@@ -16,6 +17,7 @@ interface Props {
   onPress?: () => void,
   icon?: ImageSourcePropType,
   Svg?: React.FC<SVGProps>,
+  svgProps?: Partial<SVGProps>,
   disabled?: boolean,
   main?: boolean,
   wide?: boolean,
@@ -31,6 +33,7 @@ export default function SimpleButton({
   text,
   icon,
   Svg,
+  svgProps,
   disabled,
   main,
   wide,
@@ -112,7 +115,7 @@ export default function SimpleButton({
       }}
     >
       {icon && <Image style={staticStyles.bigIcon} source={icon} />}
-      {!!Svg && <Svg width={staticStyles.bigIcon.width} height={staticStyles.bigIcon.height} fillColor={useTheme.MAIN_COLOR} />}
+      {!!Svg && <Svg width={staticStyles.bigIcon.width} height={staticStyles.bigIcon.height} fillColor={useTheme.MAIN_COLOR} {...svgProps} />}
 
       {text && <Label
         text={text}

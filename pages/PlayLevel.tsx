@@ -18,7 +18,8 @@ import { getData, markLevelCompleted, metadataKeys } from "../util/loader";
 import { Game, SoundEvent, canMoveTo, doGameMove, initializeGameObj } from "../util/logic";
 // import { aStarSearch, basicHeuristic, compoundHeuristic } from "../util/search";
 import Toast from "react-native-toast-message";
-import { Direction, Level, PageView, PlayMode, SharedLevel } from "../util/types";
+import TutorialHint from "../components/TutorialHint";
+import { Direction, Level, OfficialLevel, PageView, PlayMode, SharedLevel } from "../util/types";
 import WinScreen from "./WinScreen";
 
 const win = Dimensions.get("window");
@@ -164,7 +165,7 @@ export default function PlayLevel({
   const [canLikeLevel, setCanLikeLevel] = useState(false);
   useEffect(() => {
     if (!level.hasOwnProperty("shared") || !userCredential) return;
-    
+
     const likedLevels = getData(metadataKeys.likedLevels) || [];
     setCanLikeLevel(!likedLevels.includes(level.uuid) && (level as SharedLevel).user_email != userCredential.user.email);
   }, []);
@@ -205,14 +206,16 @@ export default function PlayLevel({
       else move = Direction.RIGHT;
       const [newState, stateChanged] = doGameMove(game, move);
 
-      playSoundEffect(newState.soundEvent);
-      if (stateChanged) updateGameState(newState);
+      if (stateChanged) {
+        playSoundEffect(newState.soundEvent);
+        updateGameState(newState);
+      }
     }
   }, [game]);
 
   const tileSize = calcBoardTileSize(game.board.width, game.board.height, win);
-  const xCorrect = -0.5 * tileSize;
-  const yCorrect = -1.5 * tileSize;
+  const xCorrect = -0.5 * tileSize; // TODO: Add a way to recalibrate this?
+  const yCorrect = -2 * tileSize;
 
   const onGestureStart = useRef((_evt: GestureResponderEvent, _gestureState: PanResponderGestureState) => { });
   useEffect(() => {
@@ -350,6 +353,7 @@ export default function PlayLevel({
 
     gameStateCallback(prevState);
     gameHistoryCallback(newHistory);
+    playSoundEffect(prevState.soundEvent);
   }
 
   function toggleModal() {
@@ -360,6 +364,8 @@ export default function PlayLevel({
       setAnimTo(1);
     }
   }
+
+  const [showTutorial, setShowTutorial] = useState(Object.hasOwn(level, "introduces"));
 
   const toEditor = () => viewCallback(PageView.EDITOR);
   const toLevelSelect = () => viewCallback(PageView.LEVELS);
@@ -426,56 +432,57 @@ export default function PlayLevel({
   }
 
   return (
-    <SafeAreaView style={staticStyles.container}>
-      {/* GAMEPLAY COMPONENTS */}
-      <View>
-        <MoveCounter moveCount={game.moveHistory.length} />
+    <>
+      <SafeAreaView style={staticStyles.container}>
+        {/* GAMEPLAY COMPONENTS */}
+        <View>
+          <MoveCounter moveCount={game.moveHistory.length} />
 
-        <View style={staticStyles.centerContents} {...panResponder.panHandlers}>
-          <GameBoard board={game.board} overrideTileSize={tileSize}>
-            <Player game={game} touch={touchMove} darkMode={darkMode} tileSize={tileSize} />
+          <View style={staticStyles.centerContents} {...panResponder.panHandlers}>
+            <GameBoard board={game.board} overrideTileSize={tileSize}>
+              <Player game={game} touch={touchMove} darkMode={darkMode} tileSize={tileSize} />
 
-            {touchPos && <Animated.View style={[
-              staticStyles.indicator,
-              dynamicStyles.indicator(touchPos.x, touchPos.y, tileSize, pressAnim, darkMode),
-            ]} />}
-          </GameBoard>
+              {touchPos && <Animated.View style={[
+                staticStyles.indicator,
+                dynamicStyles.indicator(touchPos.x, touchPos.y, tileSize, pressAnim, darkMode),
+              ]} />}
+            </GameBoard>
+          </View>
+
+          <Inventory coins={game.coins} maxCoins={game.maxCoins} keys={game.keys} />
+          {game.won && <WinScreen />}
         </View>
 
-        <Inventory coins={game.coins} maxCoins={game.maxCoins} keys={game.keys} />
-        {game.won && <WinScreen />}
-      </View>
-
-      {/* PAUSE MENU COMPONENTS */}
-      {modalOpen && <Animated.View style={[
-        staticStyles.modal,
-        dynamicStyles.modal(anim, darkMode),
-      ]}>
-        <Text style={dynamicStyles.subtitle(darkMode)}>Menu</Text>
-        <MenuButton
-          label="Restart Level"
-          icon={graphics.BOMB}
-          theme={colors.RED_THEME}
-          onPress={restartLevel}
-          fillWidth
-        />
-        <MenuButton
-          label="Undo Move"
-          icon={graphics.ONE_WAY_LEFT}
-          theme={colors.BLUE_THEME}
-          onPress={undoMove}
-          disabled={history.length === 0}
-          fillWidth
-        />
-        {returnMenuButton}
-        <MenuButton
-          label="Resume Game"
-          icon={graphics.KEY}
-          theme={colors.GREEN_THEME}
-          onPress={toggleModal}
-          fillWidth
-        />
-        {/* <MenuButton
+        {/* PAUSE MENU COMPONENTS */}
+        {modalOpen && <Animated.View style={[
+          staticStyles.modal,
+          dynamicStyles.modal(anim, darkMode),
+        ]}>
+          <Text style={dynamicStyles.subtitle(darkMode)}>Menu</Text>
+          <MenuButton
+            label="Restart Level"
+            icon={graphics.BOMB}
+            theme={colors.RED_THEME}
+            onPress={restartLevel}
+            fillWidth
+          />
+          <MenuButton
+            label="Undo Move"
+            icon={graphics.ONE_WAY_LEFT}
+            theme={colors.BLUE_THEME}
+            onPress={undoMove}
+            disabled={history.length === 0}
+            fillWidth
+          />
+          {returnMenuButton}
+          <MenuButton
+            label="Resume Game"
+            icon={graphics.KEY}
+            theme={colors.GREEN_THEME}
+            onPress={toggleModal}
+            fillWidth
+          />
+          {/* <MenuButton
           label="Get Hint"
           icon={graphics.SUPPORT_ICON}
           theme={colors.GREEN_THEME}
@@ -484,16 +491,19 @@ export default function PlayLevel({
             aStarSearch(game, basicHeuristic);
           }}
         /> */}
-      </Animated.View>}
+        </Animated.View>}
 
-      <Animated.View style={dynamicStyles.buttonsRow(anim)}>
-        <SimpleButton onPress={modeToBackPage[mode]} Svg={BackButton} square />
-        <View style={staticStyles.buttonGap} />
+        <Animated.View style={dynamicStyles.buttonsRow(anim)}>
+          <SimpleButton onPress={modeToBackPage[mode]} Svg={BackButton} square />
+          <View style={staticStyles.buttonGap} />
 
-        {!game.won && <SimpleButton onPress={toggleModal} icon={graphics.MENU_ICON} text="Menu" main />}
-        {game.won && postWinActionBtn}
-      </Animated.View>
-    </SafeAreaView>
+          {!game.won && <SimpleButton onPress={toggleModal} icon={graphics.MENU_ICON} text="Menu" main />}
+          {game.won && postWinActionBtn}
+        </Animated.View>
+
+      </SafeAreaView>
+      {showTutorial && <TutorialHint hint={(level as OfficialLevel).introduces!} hideTutorial={() => setShowTutorial(false)} />}
+    </>
   );
 }
 
