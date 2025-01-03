@@ -366,6 +366,10 @@ export default function PlayLevel({
   }
 
   const [showTutorial, setShowTutorial] = useState(Object.hasOwn(level, "introduces"));
+  const goNextLevel = () => {
+    setShowTutorial(Object.hasOwn(level, "introduces"));
+    nextLevelCallback(level.uuid);
+  };
 
   const toEditor = () => viewCallback(PageView.EDITOR);
   const toLevelSelect = () => viewCallback(PageView.LEVELS);
@@ -386,9 +390,10 @@ export default function PlayLevel({
         fillWidth
       />;
       postWinActionBtn = <SimpleButton
-        onPress={() => nextLevelCallback(level.uuid)}
+        onPress={goNextLevel}
         icon={graphics.PLAY_ICON}
         text="Next Level" main
+        extraMargin={[7.5, 0]}
       />;
       break;
     case PlayMode.PLAYTEST:
@@ -402,6 +407,7 @@ export default function PlayLevel({
         onPress={toEditor}
         text="Keep Editing"
         main
+        extraMargin={[7.5, 0]}
       />;
       break;
     case PlayMode.SHARED:
@@ -426,6 +432,7 @@ export default function PlayLevel({
         }}
         text={"Like Level"}
         disabled={!canLikeLevel}
+        extraMargin={[7.5, 0]}
         main
       />;
       break;
@@ -494,10 +501,12 @@ export default function PlayLevel({
         </Animated.View>}
 
         <Animated.View style={dynamicStyles.buttonsRow(anim)}>
-          <SimpleButton onPress={modeToBackPage[mode]} Svg={BackButton} square />
-          <View style={staticStyles.buttonGap} />
+          <SimpleButton onPress={modeToBackPage[mode]} Svg={BackButton} square extraMargin={[7.5, 0]} />
 
-          {!game.won && <SimpleButton onPress={toggleModal} icon={graphics.MENU_ICON} text="Menu" main />}
+          {Object.hasOwn(level, "introduces") && !game.won &&
+            <SimpleButton onPress={() => setShowTutorial(true)} icon={graphics.LIGHTBULB_ICON} square main extraMargin={[7.5, 0]}/>}
+
+          {!game.won && <SimpleButton onPress={toggleModal} icon={graphics.MENU_ICON} text="Menu" main extraMargin={[7.5, 0]} />}
           {game.won && postWinActionBtn}
         </Animated.View>
 

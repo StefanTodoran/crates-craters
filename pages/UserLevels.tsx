@@ -321,7 +321,7 @@ export default function UserLevels({
                         />}
                     />
                 </View>}
-                footerText={`Showing ${filteredLevels.length} of ${matchingCount} levels`}
+                footerText={`Showing ${filteredLevels.length} of ${Math.max(matchingCount, filteredLevels.length)} levels`}
 
                 viewCallback={(newView: PageView) => viewCallback(newView, 1)}
                 resumeLevelCallback={playLevelCallback}

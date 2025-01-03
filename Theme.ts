@@ -45,6 +45,7 @@ const mainGraphics = {
   FILTER_ICON: require("./assets/main_theme/filter_icon.png"),
   MOVEMENT_HINT_ICON: require("./assets/main_theme/movement_hint_icon.png"),
   SKIP_HINT_ICON: require("./assets/main_theme/skip_hint_icon.png"),
+  LIGHTBULB_ICON: require("./assets/main_theme/lightbulb_icon.png"),
 
   WIN_BANNER: require("./assets/main_theme/win_banner.png"),
   LOGO: require("./assets/main_theme/logo.png"),

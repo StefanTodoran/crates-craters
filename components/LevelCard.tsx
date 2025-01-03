@@ -24,6 +24,7 @@ interface LevelCardProps {
   noNumber?: boolean,
   indicatorIcon?: IndicatorIcon,
   stats?: string[],
+  isLocked?: boolean,
   children?: React.ReactNode,
 }
 
@@ -37,6 +38,7 @@ const LevelCard = memo(function ({
   noNumber,
   indicatorIcon,
   stats,
+  isLocked,
   children,
 }: LevelCardProps) {
   const anim = useRef(new Animated.Value(0)).current;
@@ -134,6 +136,7 @@ const LevelCard = memo(function ({
             main={true}
             theme={useTheme}
             onPress={playCallback}
+            disabled={isLocked}
           />}
 
           {resumeCallback && <SimpleButton

@@ -11,7 +11,6 @@ export enum Tutorial {
   CRATES_CRATERS,  // Crates, craters
   DOORS_KEYS,  // Doors, keys
   BOMBS,  // Bombs
-  MISC,  // Skipping, undos
 }
 
 interface TutorialContentPage {
@@ -61,6 +60,12 @@ const tutorials: { [key in Tutorial]: TutorialContentPage[] } = {
       content: "Doors are a solid tile, like walls. The player can unlock any door using any key by walking into the door, consuming the key. An opened door is replaced by an empty tile.",
       images: [graphics.DOOR, graphics.KEY],
     },
+    {
+      title: "Miscellaneous",
+      titleColor: colors.MAIN_PURPLE,
+      content: "From the main menu you can undo any number of moves. Also, if there is a tile you could navigate to you can double tap on that tile to skip to that position.",
+      images: [graphics.SKIP_HINT_ICON],
+    },
   ],
   [Tutorial.BOMBS]: [
     {
@@ -69,14 +74,6 @@ const tutorials: { [key in Tutorial]: TutorialContentPage[] } = {
       theme: colors.RED_THEME,
       content: "Bombs can be pushed similarly to crates, but cannot fill in craters. After a set number of turns, the fuse expires and the bomb explodes directly (not diagonally) adjacent crates.",
       images: [graphics.LITTLE_EXPLOSION, graphics.BOMB, graphics.EXPLOSION],
-    },
-  ],
-  [Tutorial.MISC]: [
-    {
-      title: "Miscellaneous",
-      titleColor: colors.MAIN_PURPLE,
-      content: "From the main menu you can undo any number of moves. Also, if there is a tile you could navigate to you can double tap on that tile to skip to that position.",
-      images: [graphics.SKIP_HINT_ICON],
     },
   ],
 };
@@ -98,8 +95,13 @@ export default function TutorialHint({ hint, hideTutorial }: Props) {
     }).start(callback);
   }
   useEffect(() => {
-    setTimeout(() => setAnimTo(1), 500);
+    setAnimTo(1);
   }, []);
+
+  if (hint > Object.keys(tutorials).length - 1) {
+    console.warn("Tutorial hint out of bounds");
+    return <></>;
+  }
 
   const tutorial = tutorials[hint];
   const [page, setPage] = useState(0);

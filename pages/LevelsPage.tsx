@@ -49,6 +49,7 @@ export default function LevelsPage({
                 buttonIcon: graphics.CRATE,
             }}
             indicatorIcon={IndicatorIcon.COMPLETION}
+            isOfficial
             allowResume
         />,
         <UserLevels

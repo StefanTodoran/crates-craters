@@ -1,4 +1,4 @@
-import { useCallback, useContext, useEffect, useRef, useState } from "react";
+import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { FlatList, ImageSourcePropType, StyleSheet, Text, View } from "react-native";
 import Toast from "react-native-toast-message";
 import EmptyList, { EmptyListProps } from "../components/EmptyList";
@@ -32,6 +32,7 @@ interface Props {
 
   scrollTo?: string, // The index in levels of the level currently being played (if a level is being played). 
   allowResume?: boolean,
+  isOfficial?: boolean,
   indicatorIcon?: IndicatorIcon,
 
   onRefresh?: () => Promise<boolean>,
@@ -59,6 +60,7 @@ export default function LevelSelect({
   getStats,
   scrollTo,
   allowResume,
+  isOfficial,
   indicatorIcon,
   onRefresh,
   overrideRefreshing,
@@ -71,8 +73,22 @@ export default function LevelSelect({
   const [refreshing, setRefreshing] = useState(false);
   const useTheme = theme || purpleTheme;
 
+  const lastBeatenLevel = useMemo(() => {
+    let lastBeaten = -1;
+    for (let i = 0; i < levels.length; i++) {
+      if (levels[i].completed) {
+        lastBeaten = i;
+      } else {
+        break;
+      }
+    }
+    return lastBeaten;
+  }, [levels]);
+
   const scrollRef = useRef<any>();
-  let scrollIndex = Math.max(0, levels.findIndex(level => level.uuid === scrollTo));
+  let scrollIndex = levels.findIndex(level => level.uuid === scrollTo);
+  if (scrollIndex === -1) scrollIndex = lastBeatenLevel;  // If a level is not currently in progress/resumable, scroll to the last beaten level.
+  scrollIndex = Math.max(0, scrollIndex);
 
   const [loadedLevels, setLoadedLevels] = useState(scrollIndex + cardsPerScreen);
   useEffect(() => setLoadedLevels(scrollIndex + cardsPerScreen), [levels]);
@@ -178,6 +194,8 @@ export default function LevelSelect({
             const playCallback = () => openLevel(index);
             const sbCallback = () => secondButtonOnPress(index);
 
+            const isLocked = isOfficial && index > lastBeatenLevel + 1;
+
             let showResumeOption = item.uuid === scrollTo;
             if (!allowResume) showResumeOption = false;
 
@@ -191,6 +209,7 @@ export default function LevelSelect({
               useTheme={useTheme}
               noNumber={noNumber}
               indicatorIcon={indicatorIcon}
+              isLocked={isLocked}
             >
               {secondButtonProps && <SimpleButton
                 text={typeof secondButtonProps.text === "function" ? secondButtonProps.text(item.uuid, index) : secondButtonProps.text}
@@ -206,6 +225,7 @@ export default function LevelSelect({
             { length: elementHeight, offset: elementHeight * index, index }
           )}
           onLayout={() => {
+            console.log("scrollIndex", scrollIndex);
             if (scrollIndex) scrollRef.current.scrollToIndex({ index: scrollIndex, animated: false });
           }}
           removeClippedSubviews
