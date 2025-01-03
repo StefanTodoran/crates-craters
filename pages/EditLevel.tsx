@@ -104,6 +104,7 @@ export default function EditLevel({
     });
   }, [toolsModalOpen]);
 
+  // TODO: Actually compare board state to unmodified level.
   const [unsavedChanges, setUnsavedChanges] = useState(false);
   const [unmodifiedLevel, setUnmodifiedLevel] = useState<UserLevel>(level);
 
@@ -329,6 +330,7 @@ export default function EditLevel({
                 icon={graphics.PLAY_ICON}
                 square
                 fillWidth
+                disabled={unsavedChanges}
                 extraMargin={6}
                 main
               />
