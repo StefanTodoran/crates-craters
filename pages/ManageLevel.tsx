@@ -11,10 +11,10 @@ import GlobalContext from "../GlobalContext";
 import TextStyles, { normalize } from "../TextStyles";
 import { colors, graphics } from "../Theme";
 import { calcPreviewTileSize } from "../util/board";
-import { UserLevelDocument, createDocument, updateDocument } from "../util/database";
+import { publishUserLevel, updateDocument } from "../util/database";
 import { doPageChange } from "../util/events";
 import { useForceRefresh } from "../util/hooks";
-import { compressBoardData, deleteLevel, updateLevel } from "../util/loader";
+import { deleteLevel, updateLevel } from "../util/loader";
 import { PageView, UserLevel } from "../util/types";
 
 const win = Dimensions.get("window");
@@ -47,7 +47,26 @@ export default function ManageLevel({
   if (!userCredential) hint = "Log in to enable level sharing.";
   if (userCredential && !userCredential.user.emailVerified) hint = "Verify your email to enable level sharing.";
   if (userCredential && !level?.completed) hint = "Complete one level run to enable sharing.";
-  if (level?.shared) hint = "Congratulations! Your level is public!";
+
+  function shareLevel() {
+    const shared = Timestamp.now();
+    publishUserLevel(level, userData!, userCredential!, shared)
+      .then(docRef => {
+        updateLevel({ ...level, shared: shared.toDate().toISOString(), db_id: docRef?.id }, false);
+        Toast.show({
+          type: "success",
+          text1: "Congratulations!",
+          text2: `Your level is now public!`,
+        });
+      })
+      .catch(error => {
+        Toast.show({
+          type: "error",
+          text1: "Level sharing failed.",
+          text2: `Error code: ${error.code}. Please try again.`,
+        });
+      });
+  }
 
   function unshareLevel() {
     updateDocument("userLevels", level.db_id!, {
@@ -164,34 +183,7 @@ export default function ManageLevel({
           :
           <>
             <SimpleButton
-              onPress={() => {
-                const userLevelDoc: UserLevelDocument = {
-                  name: level.name,
-                  board: compressBoardData(level.board),
-                  user_name: userData!.user_name,
-                  user_email: userCredential!.user.email!,
-                  shared: Timestamp.now(),
-                  attempts: 0,
-                  wins: 0,
-                  winrate: 1,
-                  likes: 0,
-                  best: level.bestSolution!.length,
-                  bestSolution: level.bestSolution!, // Guaranteed to be defined since button is disabled if !level.completed
-                  keywords: [...level.name.toLowerCase().split(/\s+/), ...userData!.user_name.toLowerCase().split(/\s+/)],
-                  public: true,
-                };
-                createDocument("userLevels", level.db_id, userLevelDoc)
-                  .then(docRef => {
-                    updateLevel({ ...level, shared: userLevelDoc.shared.toDate().toISOString(), db_id: docRef?.id }, false);
-                  })
-                  .catch(error => {
-                    Toast.show({
-                      type: "error",
-                      text1: "Level sharing failed.",
-                      text2: `Error code: ${error.code}. Please try again.`,
-                    });
-                  });
-              }}
+              onPress={shareLevel}
               text="Share Online"
               icon={graphics.SHARE_ICON}
               disabled={!level.completed || !userCredential || !userCredential.user.emailVerified || !!level.shared}

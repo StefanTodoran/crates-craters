@@ -1,9 +1,10 @@
 import { DocumentData, DocumentReference, Query, QuerySnapshot, Timestamp, WhereFilterOp, addDoc, collection, doc, getCountFromServer, getDocs, limit, orderBy, query, runTransaction, setDoc, updateDoc, where } from "firebase/firestore";
 import { doStateStorageSync } from "./events";
 import { db } from "./firebase";
-import { getData, getLocalUserData, getStoredLevelCount, metadataKeys, multiStoreLevels, parseCompressedBoardData, setData } from "./loader";
-import { Direction, OfficialLevel, SharedLevel } from "./types";
+import { compressBoardData, getData, getLocalUserData, getStoredLevelCount, metadataKeys, multiStoreLevels, parseCompressedBoardData, setData } from "./loader";
+import { Direction, OfficialLevel, SharedLevel, UserLevel } from "./types";
 
+import { UserCredential } from "firebase/auth";
 import { setLogLevel } from "firebase/firestore";
 setLogLevel("debug");
 
@@ -99,6 +100,7 @@ async function fetchOfficialLevelsFromServer() {
 
   return parsedLevels;
 }
+
 export async function likeUserLevel(level_id: string, user_email: string) {
   const likedLevels = getData(metadataKeys.likedLevels) || [];
   if (likedLevels.includes(level_id)) return false;
@@ -160,13 +162,13 @@ export async function attemptUserLevel(level_id: string, user_email?: string | n
 
 export async function markUserLevelCompleted(
   level: SharedLevel,
-  user_email: string | null | undefined,
+  userEmail: string | null | undefined,
   moveHistory: Direction[],
 ) {
   const userData = getLocalUserData();
   const completedLevels = getData(metadataKeys.completedLevels) || [];
   const firstCompletion = !completedLevels.includes(level.uuid);
-  if (!user_email) {
+  if (!userEmail) {
     completedLevels.push(level.uuid);
     setData(metadataKeys.completedLevels, completedLevels);
     return;
@@ -177,12 +179,12 @@ export async function markUserLevelCompleted(
       const userLevelRef = doc(db, "userLevels", level.uuid);
       const userLevelDoc = await transaction.get(userLevelRef);
       const userLevelData = userLevelDoc.data() as UserLevelDocument;
-      const userAccountRef = doc(db, "userAccounts", user_email);
+      const userAccountRef = doc(db, "userAccounts", userEmail);
 
       const levelSolnRef = doc(collection(db, "levelSolutions"));
       transaction.set(levelSolnRef, {
         level_id: level.uuid,
-        user_email: user_email,
+        user_email: userEmail,
         local_uuid: userData?.uuid,
         solution: moveHistory.join(""),
         moves: moveHistory.length,
@@ -212,6 +214,48 @@ export async function markUserLevelCompleted(
     console.error("Error marking level completed:", level.uuid, error);
     return false;
   }
+}
+
+export async function publishUserLevel(
+  level: UserLevel,
+  userData: UserAccountDocument,
+  userCredential: UserCredential,
+  shared: Timestamp,
+) {
+  const userLevelRef = await runTransaction(db, async (transaction) => {
+    // Use the existing document name if we are publishing again, otherwise create a new document.
+    const userLevelRef = level.db_id ? doc(db, "userLevels", level.db_id) : doc(collection(db, "userLevels"));
+    const userLevelDoc: UserLevelDocument = {
+      name: level.name,
+      board: compressBoardData(level.board),
+      user_name: userData!.user_name,
+      user_email: userCredential!.user.email!,
+      shared: shared,
+      attempts: 0,
+      wins: 0,
+      winrate: 1,
+      likes: 0,
+      best: level.bestSolution!.length,
+      bestSolution: level.bestSolution!, // Guaranteed to be defined since button is disabled if !level.completed
+      keywords: [...level.name.toLowerCase().split(/\s+/), ...userData!.user_name.toLowerCase().split(/\s+/)],
+      public: true,
+    };
+    transaction.set(userLevelRef, userLevelDoc);
+
+    const levelSolnRef = doc(collection(db, "levelSolutions"));
+    transaction.set(levelSolnRef, {
+      level_id: level.uuid,
+      user_email: userCredential.user.email!,
+      local_uuid: userData!.local_uuid,
+      solution: level.bestSolution!,
+      moves: level.bestSolution!.length,
+      type: "user_level",
+    });
+
+    return userLevelRef;
+  });
+
+  return userLevelRef;
 }
 
 export async function postSolutionData(

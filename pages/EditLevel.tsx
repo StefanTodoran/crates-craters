@@ -38,7 +38,7 @@ enum GestureMode {
 }
 
 interface Props {
-  viewCallback: (newView: PageView) => void, // Sets the current view of the application. 
+  viewCallback: (newView: PageView, pageNum?: number) => void, // Sets the current view of the application. 
   level: UserLevel, // The level currently being edited. The uuid must not change.
   levelCallback: (newState: UserLevel) => void, // Updates the level (usually board changes).
   playtestLevel: (uuid: string) => void,
@@ -233,7 +233,7 @@ export default function EditLevel({
       ]}>
         <SimpleButton onPress={() => {
           saveChanges();
-          viewCallback(PageView.MANAGE);
+          viewCallback(PageView.MANAGE, 1);
         }} text={unsavedChanges ? "Save & Exit" : "Exit"}/>
         <View style={{ width: normalize(15) }} />
         <SimpleButton onPress={toggleToolsModal} text="Change Tool" main={true} />
