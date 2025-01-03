@@ -46,7 +46,7 @@ export default function ManageLevel({
   let hint;
   if (!userCredential) hint = "Log in to enable level sharing.";
   if (userCredential && !userCredential.user.emailVerified) hint = "Verify your email to enable level sharing.";
-  if (userCredential && !level?.completed) hint = "Complete one level run to enable sharing.";
+  if (userCredential && !level?.completed && !level?.shared) hint = "Complete one level run to enable sharing.";
 
   function shareLevel() {
     const shared = Timestamp.now();

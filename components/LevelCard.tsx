@@ -131,7 +131,7 @@ const LevelCard = memo(function ({
 
         <View style={styles.buttonsContainer}>
           {playCallback && <SimpleButton
-            text="Play"
+            text={isLocked ? "Locked" : "Play"}
             icon={graphics.PLAY_ICON}
             main={true}
             theme={useTheme}

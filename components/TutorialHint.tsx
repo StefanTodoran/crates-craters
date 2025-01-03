@@ -11,6 +11,7 @@ export enum Tutorial {
   CRATES_CRATERS,  // Crates, craters
   DOORS_KEYS,  // Doors, keys
   BOMBS,  // Bombs
+  // FILTERS,  // Metal crates, filters
 }
 
 interface TutorialContentPage {
@@ -75,6 +76,15 @@ const tutorials: { [key in Tutorial]: TutorialContentPage[] } = {
       content: "Bombs can be pushed similarly to crates, but cannot fill in craters. After a set number of turns, the fuse expires and the bomb explodes directly (not diagonally) adjacent crates.",
       images: [graphics.LITTLE_EXPLOSION, graphics.BOMB, graphics.EXPLOSION],
     },
+  // ],
+  // [Tutorial.FILTERS]: [
+    // {
+    //   title: "Metal Crates",
+    //   titleColor: colors.RED_THEME.MAIN_COLOR,
+    //   theme: colors.RED_THEME,
+    //   content: "Metal crates are solid pushable tiles similar to crates, but they cannot be blown up by bombs and cannot fill in craters.",
+    //   images: [graphics.METAL_CRATE, graphics.EXPLOSION],
+    // },
   ],
 };
 

@@ -280,7 +280,7 @@ export default function EditLevel({
           <View style={styles.row}>
             <SliderBar
               label="Fuse Timer" value={fuseTimer} units={" turns"}
-              minValue={1} maxValue={100} changeCallback={setFuseTimer}
+              minValue={1} maxValue={99} changeCallback={setFuseTimer}
               theme={colors.RED_THEME}
               showSteppers
             />
