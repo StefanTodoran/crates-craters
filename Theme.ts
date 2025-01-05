@@ -17,6 +17,7 @@ const mainGraphics = {
   PLAYER_OUTLINED: require("./assets/main_theme/player_outlined.png"),
   PLAYER_OUTLINED_DARK: require("./assets/main_theme/player_outlined_dark.png"),
   METAL_CRATE: require("./assets/main_theme/metal_crate.png"),
+  ICE_BLOCK: require("./assets/main_theme/ice_block.png"),
 
   THEME_ICON: require("./assets/main_theme/theme_icon.png"),
   NIGHT_MODE_ICON: require("./assets/main_theme/night_icon.png"),

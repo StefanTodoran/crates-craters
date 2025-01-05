@@ -30,7 +30,9 @@ export enum TileType {
   EXPLOSION,
   LITTLE_EXPLOSION,
   ONEWAY,
-  OUTSIDE, // Used for out of bounds board queries.
+  METAL_CRATE,
+  ICE_BLOCK,
+  OUTSIDE, // Used for out of bounds board queries. Other enum values shouldn't be reordered but this one can be.
 }
 
 export enum Direction {
@@ -66,6 +68,10 @@ export interface BombTile {
 export interface SimpleTile {
   id: Exclude<TileType, TileType.ONEWAY | TileType.BOMB>,
 }
+
+export const pushableTiles = [TileType.CRATE, TileType.METAL_CRATE, TileType.BOMB];
+export const fillCapableTiles = [TileType.CRATE, TileType.ICE_BLOCK];
+export const explodableTiles = [TileType.CRATE, TileType.ICE_BLOCK];
 
 export type ForegroundTile = SimpleTile | BombTile;
 export type BackgroundTile = EmptyTile | OutsideTile | OneWayTile | WallTile;

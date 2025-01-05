@@ -17,6 +17,8 @@ export const outsideTile: OutsideTile = { id: TileType.OUTSIDE };
 //   TileType.BOMB,
 //   TileType.EXPLOSION,
 //   TileType.LITTLE_EXPLOSION,
+//   TileType.METAL_CRATE,
+//   TileType.ICE_BLOCK,
 //   TileType.OUTSIDE,
 // ];
 
@@ -235,6 +237,8 @@ export function getIconSrc(tile: FlatTile) {
   if (tile.id === TileType.BOMB) return graphics.BOMB;
   if (tile.id === TileType.EXPLOSION) return graphics.EXPLOSION;
   if (tile.id === TileType.LITTLE_EXPLOSION) return graphics.LITTLE_EXPLOSION;
+  if (tile.id === TileType.METAL_CRATE) return graphics.METAL_CRATE;
+  if (tile.id === TileType.ICE_BLOCK) return graphics.ICE_BLOCK;
 
   const oneway = (tile as OneWayTile);
   if (tile.id === TileType.ONEWAY && oneway.orientation === Direction.UP) return graphics.ONE_WAY_UP;
