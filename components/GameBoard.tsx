@@ -3,19 +3,22 @@ import { Dimensions, Image, Platform, StyleSheet, Text, View } from "react-nativ
 import GlobalContext from "../GlobalContext";
 import { colors } from "../Theme";
 import { TileIcon } from "../assets/Icons";
-import { FlatBoard, LayeredBoard, calcBoardTileSize, getIconSrc } from "../util/board";
+import { calcBoardTileSize, FlatBoard, getIconSrc, LayeredBoard } from "../util/board";
+import { isPushable, Position } from "../util/logic";
 import { BombTile, FlatTile, LayeredTile, TileType } from "../util/types";
 
 const win = Dimensions.get("window");
 
 interface Props {
   board: FlatBoard | LayeredBoard,
+  playerPosition?: Position,  // If provided, this means the adjacent tiles will be displayed by the player component.
   overrideTileSize?: number,
   children?: React.ReactNode,
 }
 
 export default function GameBoard({
   board,
+  playerPosition,
   overrideTileSize,
   children,
 }: Props) {
@@ -52,7 +55,8 @@ export default function GameBoard({
     const icon = getIconSrc(tile);
     const bgColor = oddTile ? colors.BLUE_THEME.MAIN_TRANSPARENT(0.03) : colors.BLUE_THEME.MAIN_TRANSPARENT(0.14);
 
-    if (tile.id === TileType.EMPTY) {
+    // Render an empty tile if we are directly adjacent to the player's position. Board will be a LayeredBoard since this won't be used for EditLevel.
+    if (tile.id === TileType.EMPTY || willPlayerComponentHandleRender(board as LayeredBoard, j, i, playerPosition, tile.id)) {
       return <View key={j} style={styles.tile(bgColor, tileSize)} />;
     }
 
@@ -107,6 +111,21 @@ export default function GameBoard({
 }
 
 function isEven(num: number) { return num % 2 === 0; }
+
+function willPlayerComponentHandleRender(board: LayeredBoard, x: number, y: number, playerPosition: Position | undefined, tile_id: TileType) {
+  return (
+    !!playerPosition &&
+    isAdjacent(x, y, playerPosition.x, playerPosition.y) &&
+    [TileType.CRATE, TileType.METAL_CRATE, TileType.BOMB, TileType.ICE_BLOCK].includes(tile_id) &&
+    isPushable(board, { x, y }, { dx: x - playerPosition.x, dy: y - playerPosition.y })
+  );
+}
+
+function isAdjacent(x1: number, y1: number, x2: number, y2: number) {
+  const dx = Math.abs(x1 - x2);
+  const dy = Math.abs(y1 - y2);
+  return (dx === 1 && dy === 0) || (dx === 0 && dy === 1);
+}
 
 const styles = StyleSheet.create<any>({
   board: {

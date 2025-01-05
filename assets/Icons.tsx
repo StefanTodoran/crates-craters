@@ -3,13 +3,14 @@ import Svg, { Circle, Defs, G, LinearGradient, Mask, Path, Stop } from "react-na
 import { Direction, FlatTile, TileType } from "../util/types";
 
 interface Props {
-  bgColor: string,
+  bgColor?: string,
   tileSize: number,
   tileData: FlatTile,
 }
 
 export function TileIcon({ bgColor, tileSize, tileData }: Props) {
   let Icon;
+  const _bgColor = !!bgColor ? bgColor : "transparent";
 
   switch (tileData.id) {
     case TileType.CRATE:
@@ -54,7 +55,7 @@ export function TileIcon({ bgColor, tileSize, tileData }: Props) {
   }
 
   if (!Icon) return <></>;
-  return <Icon tileSize={tileSize} styleProp={styles.tile(bgColor, tileSize)}/>;
+  return <Icon tileSize={tileSize} styleProp={styles.tile(_bgColor, tileSize)}/>;
 }
 
 interface IconProps {
