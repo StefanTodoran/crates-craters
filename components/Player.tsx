@@ -78,6 +78,8 @@ export default function Player({
 
   return (
     <>
+      {!game.won && options}
+      
       <Animated.View style={styles.adjacentTileContainer(game.player.x, game.player.y - 1, tileSize, touch.y, false, false)}>
         {pushables[0]}
       </Animated.View>
@@ -91,7 +93,6 @@ export default function Player({
         {pushables[3]}
       </Animated.View>
 
-      {!game.won && options}
       <Animated.View style={styles.playerContainer(game.player.x, game.player.y, tileSize, touch.x, touch.y)}>
         <Image style={tileStyle} source={playerSrc} />
       </Animated.View>

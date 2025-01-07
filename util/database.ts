@@ -22,7 +22,7 @@ export interface OfficialLevelDocument {
   name: string,
   board: string,
   order: number,
-  introduces: Tutorial,
+  introduces: Tutorial[],
 }
 
 export interface UserLevelDocument {

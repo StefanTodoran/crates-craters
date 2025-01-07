@@ -107,6 +107,17 @@ const yellowTheme: Theme = {
   NAME: "YELLOW",
 }
 
+const orangeTheme: Theme = {
+  OFF_WHITE: "#FFFDFC",
+  LIGHT_COLOR: "#FFF2F0",
+  MAIN_COLOR: "#F7B69B",
+  MIDDLE_COLOR: "#F9A784",
+  DARK_COLOR: "#FB976C",
+  NEAR_BLACK: "#0E0A09",
+  MAIN_TRANSPARENT: (opacity: number) => `rgba(247, 182, 155, ${opacity})`,
+  NAME: "ORANGE",
+}
+
 const redTheme: Theme = {
   OFF_WHITE: "#FFFCFC",
   LIGHT_COLOR: "#FFF0F0",
@@ -131,8 +142,9 @@ const mainColors = {
 
   BLUE_THEME: blueTheme,
   GREEN_THEME: greenTheme,
-  RED_THEME: redTheme,
   YELLOW_THEME: yellowTheme,
+  ORANGE_THEME: orangeTheme,
+  RED_THEME: redTheme,
 
   MAIN_PURPLE_TRANSPARENT: purpleTheme.MAIN_TRANSPARENT,
   NEAR_BLACK_TRANSPARENT: (opacity: number) => `rgba(21, 16, 26, ${opacity})`,

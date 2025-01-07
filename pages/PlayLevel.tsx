@@ -523,7 +523,7 @@ export default function PlayLevel({
         </Animated.View>
 
       </SafeAreaView>
-      {showTutorial && <TutorialHint hint={(level as OfficialLevel).introduces!} hideTutorial={() => setShowTutorial(false)} />}
+      {showTutorial && <TutorialHint introduces={(level as OfficialLevel).introduces!} hideTutorial={() => setShowTutorial(false)} />}
     </>
   );
 }

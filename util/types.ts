@@ -97,7 +97,7 @@ interface LevelBase {
 export interface OfficialLevel extends LevelBase {
   official: true,
   order: number,
-  introduces?: Tutorial,
+  introduces?: Tutorial[],
 }
 
 type DateString = string; // In the form Date().toISOString();
@@ -152,7 +152,7 @@ const levelObjectProps: { [key in LevelObjectType]: levelObjectPropSet } = {
       "order": "number",
     },
     optional: {
-      "introduces": "number",
+      "introduces": "array",
     },
   },
   [LevelObjectType.USER]: {
@@ -187,13 +187,24 @@ export function isLevelWellFormed(target: any, check: LevelObjectType = LevelObj
   const incorrectKeys: string[] = [];
 
   for (const [key, type] of Object.entries(props.required)) {
-    if (!(key in target)) incorrectKeys.push(key);
+    if (!(key in target)) {
+      incorrectKeys.push(key);
+      continue;
+    }
+    
+    if (type === "array") {
+      if (!Array.isArray(target[key])) incorrectKeys.push(key);
+    }
     else if (typeof target[key] !== type) incorrectKeys.push(key);
   }
   
   for (const [key, type] of Object.entries(props.optional)) {
     if (!(key in target)) continue;
-    if (typeof target[key] !== type) incorrectKeys.push(key);
+
+    if (type === "array") {
+      if (!Array.isArray(target[key])) incorrectKeys.push(key);
+    }
+    else if (typeof target[key] !== type) incorrectKeys.push(key);
   }
 
   if (incorrectKeys.length > 0) {
