@@ -30,7 +30,9 @@ export enum TileType {
   EXPLOSION,
   LITTLE_EXPLOSION,
   ONEWAY,
-  OUTSIDE, // Used for out of bounds board queries.
+  METAL_CRATE,
+  ICE_BLOCK,
+  OUTSIDE, // Used for out of bounds board queries. Other enum values shouldn't be reordered but this one can be.
 }
 
 export enum Direction {
@@ -67,6 +69,10 @@ export interface SimpleTile {
   id: Exclude<TileType, TileType.ONEWAY | TileType.BOMB>,
 }
 
+export const pushableTiles = [TileType.CRATE, TileType.METAL_CRATE, TileType.BOMB];
+export const fillCapableTiles = [TileType.CRATE, TileType.ICE_BLOCK];
+export const explodableTiles = [TileType.CRATE, TileType.ICE_BLOCK];
+
 export type ForegroundTile = SimpleTile | BombTile;
 export type BackgroundTile = EmptyTile | OutsideTile | OneWayTile | WallTile;
 
@@ -91,7 +97,7 @@ interface LevelBase {
 export interface OfficialLevel extends LevelBase {
   official: true,
   order: number,
-  introduces?: Tutorial,
+  introduces?: Tutorial[],
 }
 
 type DateString = string; // In the form Date().toISOString();
@@ -146,7 +152,7 @@ const levelObjectProps: { [key in LevelObjectType]: levelObjectPropSet } = {
       "order": "number",
     },
     optional: {
-      "introduces": "number",
+      "introduces": "array",
     },
   },
   [LevelObjectType.USER]: {
@@ -181,13 +187,24 @@ export function isLevelWellFormed(target: any, check: LevelObjectType = LevelObj
   const incorrectKeys: string[] = [];
 
   for (const [key, type] of Object.entries(props.required)) {
-    if (!(key in target)) incorrectKeys.push(key);
+    if (!(key in target)) {
+      incorrectKeys.push(key);
+      continue;
+    }
+    
+    if (type === "array") {
+      if (!Array.isArray(target[key])) incorrectKeys.push(key);
+    }
     else if (typeof target[key] !== type) incorrectKeys.push(key);
   }
   
   for (const [key, type] of Object.entries(props.optional)) {
     if (!(key in target)) continue;
-    if (typeof target[key] !== type) incorrectKeys.push(key);
+
+    if (type === "array") {
+      if (!Array.isArray(target[key])) incorrectKeys.push(key);
+    }
+    else if (typeof target[key] !== type) incorrectKeys.push(key);
   }
 
   if (incorrectKeys.length > 0) {

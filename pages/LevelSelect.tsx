@@ -154,14 +154,14 @@ export default function LevelSelect({
       </View>}
 
       {levels.length === 0 && !elementHeight &&
-        <>
+        <View style={styles.container}>
           {headerComponent}
           <EmptyList
             {...emptyListProps}
             onPress={emptyListProps.onPress || doRefresh}
             buttonTheme={useTheme}
           />
-        </>
+        </View>
       }
 
       {elementHeight !== 0 &&

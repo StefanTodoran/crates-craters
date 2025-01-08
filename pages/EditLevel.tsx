@@ -14,7 +14,7 @@ import { colors, graphics } from "../Theme";
 import { calcBoardTileSize } from "../util/board";
 import { updateLevel } from "../util/loader";
 import { getSpawnPosition } from "../util/logic";
-import { Tool, tools, wallTool } from "../util/tools";
+import { metalCrateTool, spawnTool, Tool, tools, wallTool } from "../util/tools";
 import { PageView, TileType, UserLevel } from "../util/types";
 
 const win = Dimensions.get("window");
@@ -276,6 +276,14 @@ export default function EditLevel({
               />
             </View>
           )}
+          <View style={styles.row}>
+          <MenuButton
+              label={spawnTool.label}
+              icon={spawnTool.icon}
+              onPress={() => changeTool(spawnTool)}
+              fillWidth
+            />
+          </View>
           <View style={{ height: 15 }} />
           <View style={styles.row}>
             <SliderBar
@@ -291,6 +299,13 @@ export default function EditLevel({
               icon={bombTool.icon}
               onPress={() => changeTool(bombTool)}
               theme={bombTool.theme}
+              fillWidth
+            />
+            <MenuButton
+              label={metalCrateTool.label}
+              icon={metalCrateTool.icon}
+              onPress={() => changeTool(metalCrateTool)}
+              theme={metalCrateTool.theme}
               fillWidth
             />
           </View>

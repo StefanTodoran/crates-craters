@@ -13,25 +13,23 @@ export const wallTool: Tool = {
     label: "Wall",
     icon: graphics.WALL_ICON,
     tile: { id: TileType.WALL },
+    theme: colors.BLUE_THEME,
+};
+
+export const metalCrateTool: Tool = {
+    label: "Metal Crate",
+    icon: graphics.METAL_CRATE,
+    tile: { id: TileType.METAL_CRATE },
+    theme: colors.RED_THEME,
+};
+
+export const spawnTool: Tool = {
+    label: "Spawn",
+    icon: graphics.PLAYER,
+    tile: { id: TileType.SPAWN },
 };
 
 export const tools: Tool[] = [
-    {
-        label: "Crate",
-        icon: graphics.CRATE,
-        tile: { id: TileType.CRATE },
-    },
-    {
-        label: "Crater",
-        icon: graphics.CRATER,
-        tile: { id: TileType.CRATER },
-    },
-    wallTool,
-    {
-        label: "Spawn",
-        icon: graphics.PLAYER,
-        tile: { id: TileType.SPAWN },
-    },
     {
         label: "Door",
         icon: graphics.DOOR,
@@ -79,5 +77,22 @@ export const tools: Tool[] = [
         icon: graphics.ONE_WAY_DOWN,
         tile: { id: TileType.ONEWAY, orientation: Direction.DOWN },
         theme: colors.BLUE_THEME,
+    },
+    wallTool,
+    {
+        label: "Ice Block",
+        icon: graphics.ICE_BLOCK,
+        tile: { id: TileType.ICE_BLOCK },
+        theme: colors.BLUE_THEME,
+    },
+    {
+        label: "Crate",
+        icon: graphics.CRATE,
+        tile: { id: TileType.CRATE },
+    },
+    {
+        label: "Crater",
+        icon: graphics.CRATER,
+        tile: { id: TileType.CRATER },
     },
 ];

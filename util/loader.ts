@@ -108,7 +108,8 @@ export function getStoredLevels() {
     } else {
       // TODO: If the level is malformed, then the key needs to be deleted.
       console.warn("Malformed level detected for key: ", key);
-      deleteLevel(level, olKeys.includes(key) ? metadataKeys.officialLevelKeys : metadataKeys.customLevelKeys);
+      // deleteLevel(level, olKeys.includes(key) ? metadataKeys.officialLevelKeys : metadataKeys.customLevelKeys);
+      // levels.splice(levels.findIndex(level => level.uuid === key), 1);
     }
   });
 
