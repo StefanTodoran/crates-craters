@@ -1,7 +1,7 @@
-import { FlatBoard, LayeredBoard, emptyTile, unsqueezeBoard } from "./board";
+import { emptyTile, FlatBoard, LayeredBoard, unsqueezeBoard } from "./board";
 import Queue from "./Queue";
 import { PositionSet } from "./Set";
-import { Direction, Level, OneWayTile, SimpleTile, TileType } from "./types";
+import { Direction, explodableTiles, fillCapableTiles, Level, OneWayTile, pushableTiles, SimpleTile, TileType } from "./types";
 
 export enum SoundEvent {
   MOVE,
@@ -59,7 +59,7 @@ export function canWalkTile(yPos: number, xPos: number, game: Game, extra?: Tile
       canWalk &&
       direction !== undefined &&
       targetSpace.background.id === TileType.ONEWAY &&
-      !canWalkOneWay(direction, targetSpace.background)
+      !canEnterOneWay(direction, targetSpace.background)
     ) {
       canWalk = false;
     }
@@ -69,7 +69,7 @@ export function canWalkTile(yPos: number, xPos: number, game: Game, extra?: Tile
   return false; // If it is outside the board, the player can't walk there.
 }
 
-export function canWalkOneWay(direction: Direction, tile: OneWayTile) {
+export function canEnterOneWay(direction: Direction, tile: OneWayTile) {
   if (direction === Direction.UP && tile.orientation === Direction.DOWN) return false;
   if (direction === Direction.DOWN && tile.orientation === Direction.UP) return false;
   if (direction === Direction.LEFT && tile.orientation === Direction.RIGHT) return false;
@@ -181,7 +181,6 @@ export function canMoveTo(game: Game, tileX: number, tileY: number): Direction[]
   return null;
 }
 
-const crateTile: SimpleTile = { id: TileType.CRATE };
 const explosionTile: SimpleTile = { id: TileType.EXPLOSION };
 const littleExplosion: SimpleTile = { id: TileType.LITTLE_EXPLOSION };
 
@@ -196,19 +195,22 @@ export function doGameMove(game: Game, move: Direction): [Game, boolean] {
   const moveTo = { y: game.player.y, x: game.player.x }; // Where the player is attempting to move.
   const oneFurther = { y: game.player.y, x: game.player.x }; // One tile further that that in the same direction.
 
+  let dx = 0;
+  let dy = 0;
   if (move === Direction.UP) {
-    moveTo.y -= 1;
-    oneFurther.y -= 2;
+    dy = -1;
   } else if (move === Direction.DOWN) {
-    moveTo.y += 1;
-    oneFurther.y += 2;
+    dy = 1;
   } else if (move === Direction.LEFT) {
-    moveTo.x -= 1;
-    oneFurther.x -= 2;
+    dx = -1;
   } else if (move === Direction.RIGHT) {
-    moveTo.x += 1;
-    oneFurther.x += 2;
+    dx = 1;
   }
+
+  moveTo.x += dx;
+  moveTo.y += dy;
+  oneFurther.x += dx * 2;
+  oneFurther.y += dy * 2;
 
   next.soundEvent = undefined; // Clear the previous sound event.
   if (!next.board.inBounds(moveTo.y, moveTo.x)) {
@@ -260,27 +262,58 @@ export function doGameMove(game: Game, move: Direction): [Game, boolean] {
 
   if (
     oneFurtherLayer.background.id === TileType.EMPTY ||
-    (oneFurtherLayer.background.id === TileType.ONEWAY && canWalkOneWay(move, oneFurtherLayer.background))
+    (oneFurtherLayer.background.id === TileType.ONEWAY && canEnterOneWay(move, oneFurtherLayer.background))
   ) {
-    // Pushing a crate onto an empty tile.
-    if (moveToLayer.foreground.id === TileType.CRATE && oneFurtherLayer.foreground.id === TileType.EMPTY) {
-      next.board.setTile(moveTo.y, moveTo.x, emptyTile);
-      next.board.setTile(oneFurther.y, oneFurther.x, crateTile);
-      next.soundEvent = SoundEvent.PUSH;
-    }
-
-    // Pushing a crate into a crater.
-    if (moveToLayer.foreground.id === TileType.CRATE && oneFurtherLayer.foreground.id === TileType.CRATER) {
+    // Pushing a fill capable tile into a crater.
+    if (fillCapableTiles.includes(moveToLayer.foreground.id) && oneFurtherLayer.foreground.id === TileType.CRATER) {
       next.board.setTile(moveTo.y, moveTo.x, emptyTile);
       next.board.setTile(oneFurther.y, oneFurther.x, emptyTile);
       next.soundEvent = SoundEvent.FILL;
     }
 
-    // Pushing a bomb onto an empty tile.
-    if (moveToLayer.foreground.id === TileType.BOMB && oneFurtherLayer.foreground.id === TileType.EMPTY) {
+    // Pushing a pushable tile to an empty tile.
+    if (pushableTiles.includes(moveToLayer.foreground.id) && oneFurtherLayer.foreground.id === TileType.EMPTY) {
       next.board.setTile(oneFurther.y, oneFurther.x, moveToLayer.foreground);
       next.board.setTile(moveTo.y, moveTo.x, emptyTile);
       next.soundEvent = SoundEvent.PUSH;
+    }
+
+    // Pushing an ice block into an empty tile (slides until it hits a non-empty tile).
+    if (moveToLayer.foreground.id === TileType.ICE_BLOCK && oneFurtherLayer.foreground.id === TileType.EMPTY) {
+      // Start from one tile further in the direction of movement.
+      let currX = oneFurther.x;
+      let currY = oneFurther.y;
+      let prevX = currX;
+      let prevY = currY;
+
+      // Keep sliding until we hit something.
+      while (currX >= -1 && currX < dimensions[1] + 1 && currY >= -1 && currY < dimensions[0] + 1) {
+        const currLayer = next.board.getLayer(currY, currX, true);
+
+        // If we hit a crater, fill it
+        if (currLayer.foreground.id === TileType.CRATER) {
+          next.board.setTile(currY, currX, emptyTile);
+          next.soundEvent = SoundEvent.FILL;
+          break;
+        }
+        
+        if (
+          (currLayer.foreground.id !== TileType.EMPTY) || // Stop if we hit a solid tile.
+          (currLayer.background.id === TileType.ONEWAY && !canEnterOneWay(move, currLayer.background)) || // Stop if we hit a one way tile from wrong direction.
+          ([TileType.OUTSIDE, TileType.WALL].includes(currLayer.background.id)) // Stop if we hit a wall or the edge of the board.
+        ) {
+          next.board.setTile(prevY, prevX, moveToLayer.foreground);
+          next.soundEvent = SoundEvent.PUSH; // TODO: Add ice block sliding sound.
+          break;
+        }
+        
+        // Move to next position
+        prevX = currX;
+        prevY = currY;
+        currX += dx;
+        currY += dy;
+      }
+      next.board.setTile(moveTo.y, moveTo.x, emptyTile);
     }
   }
 
@@ -298,10 +331,10 @@ export function doGameMove(game: Game, move: Direction): [Game, boolean] {
         tile.fuse--;
 
         if (tile.fuse === 0) {
-          if (next.board.getTile(i - 1, j, true).id === TileType.CRATE) next.board.setTile(i - 1, j, littleExplosion);
-          if (next.board.getTile(i + 1, j, true).id === TileType.CRATE) next.board.setTile(i + 1, j, littleExplosion);
-          if (next.board.getTile(i, j - 1, true).id === TileType.CRATE) next.board.setTile(i, j - 1, littleExplosion);
-          if (next.board.getTile(i, j + 1, true).id === TileType.CRATE) next.board.setTile(i, j + 1, littleExplosion);
+          if (explodableTiles.includes(next.board.getTile(i - 1, j, true).id)) next.board.setTile(i - 1, j, littleExplosion);
+          if (explodableTiles.includes(next.board.getTile(i + 1, j, true).id)) next.board.setTile(i + 1, j, littleExplosion);
+          if (explodableTiles.includes(next.board.getTile(i, j - 1, true).id)) next.board.setTile(i, j - 1, littleExplosion);
+          if (explodableTiles.includes(next.board.getTile(i, j + 1, true).id)) next.board.setTile(i, j + 1, littleExplosion);
 
           next.board.setTile(i, j, explosionTile);
           next.soundEvent = SoundEvent.EXPLOSION;
@@ -352,4 +385,73 @@ export function initializeGameObj(level: Level): Game {
     won: false,
     moveHistory: [],
   };
+}
+
+interface Offset {
+  dx: number,
+  dy: number,
+}
+
+export function isValidMove(game: Game, offset: Offset) {
+  const xPos = game.player.x + offset.dx;
+  const yPos = game.player.y + offset.dy;
+
+  const background = game.board.getBackground(yPos, xPos, true);
+  if ([TileType.OUTSIDE, TileType.WALL].includes(background.id)) return false;
+
+  const tile = game.board.getTile(yPos, xPos, true);
+  if (tile.id === TileType.CRATER) return false;
+  if (tile.id === TileType.DOOR && game.keys === 0) return false;
+  if (tile.id === TileType.FLAG && game.coins !== game.maxCoins) return false;
+
+  if (background.id === TileType.ONEWAY) {
+    if (background.orientation === Direction.LEFT && xPos > game.player.x) return false;
+    if (background.orientation === Direction.RIGHT && xPos < game.player.x) return false;
+    if (background.orientation === Direction.UP && yPos > game.player.y) return false;
+    if (background.orientation === Direction.DOWN && yPos < game.player.y) return false;
+  }
+
+  if ([...pushableTiles, TileType.ICE_BLOCK].includes(tile.id)) {
+    return isPushable(game.board, {x: xPos, y: yPos}, offset);
+  }
+
+  return true;
+}
+
+export function isPushable(board: LayeredBoard, position: Position, offset: Offset) {
+  const moveToLayer = board.getLayer(position.y, position.x);
+  const oneFurtherLayer = board.getLayer(position.y + offset.dy, position.x + offset.dx, true);
+
+  let move;
+  if (offset.dy === -1) {
+    move = Direction.UP;
+  } else if (offset.dy === 1) {
+    move = Direction.DOWN;
+  } else if (offset.dx === -1) {
+    move = Direction.LEFT;
+  } else {
+    move = Direction.RIGHT;
+  }
+
+  if (
+    oneFurtherLayer.background.id === TileType.EMPTY ||
+    (oneFurtherLayer.background.id === TileType.ONEWAY && canEnterOneWay(move, oneFurtherLayer.background))
+  ) {
+    // Pushing a fill capable tile into a crater.
+    if (fillCapableTiles.includes(moveToLayer.foreground.id) && oneFurtherLayer.foreground.id === TileType.CRATER) {
+      return true;
+    }
+
+    // Pushing a pushable tile to an empty tile.
+    if (pushableTiles.includes(moveToLayer.foreground.id) && oneFurtherLayer.foreground.id === TileType.EMPTY) {
+      return true;
+    }
+
+    // Pushing an ice block into an empty tile (slides until it hits a non-empty tile).
+    if (moveToLayer.foreground.id === TileType.ICE_BLOCK && oneFurtherLayer.foreground.id === TileType.EMPTY) {
+      return true;
+    }
+  }
+
+  return false;
 }

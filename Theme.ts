@@ -17,6 +17,7 @@ const mainGraphics = {
   PLAYER_OUTLINED: require("./assets/main_theme/player_outlined.png"),
   PLAYER_OUTLINED_DARK: require("./assets/main_theme/player_outlined_dark.png"),
   METAL_CRATE: require("./assets/main_theme/metal_crate.png"),
+  ICE_BLOCK: require("./assets/main_theme/ice_block.png"),
 
   THEME_ICON: require("./assets/main_theme/theme_icon.png"),
   NIGHT_MODE_ICON: require("./assets/main_theme/night_icon.png"),
@@ -106,6 +107,17 @@ const yellowTheme: Theme = {
   NAME: "YELLOW",
 }
 
+const orangeTheme: Theme = {
+  OFF_WHITE: "#FFFDFC",
+  LIGHT_COLOR: "#FFF2F0",
+  MAIN_COLOR: "#F7B69B",
+  MIDDLE_COLOR: "#F9A784",
+  DARK_COLOR: "#FB976C",
+  NEAR_BLACK: "#0E0A09",
+  MAIN_TRANSPARENT: (opacity: number) => `rgba(247, 182, 155, ${opacity})`,
+  NAME: "ORANGE",
+}
+
 const redTheme: Theme = {
   OFF_WHITE: "#FFFCFC",
   LIGHT_COLOR: "#FFF0F0",
@@ -130,8 +142,9 @@ const mainColors = {
 
   BLUE_THEME: blueTheme,
   GREEN_THEME: greenTheme,
-  RED_THEME: redTheme,
   YELLOW_THEME: yellowTheme,
+  ORANGE_THEME: orangeTheme,
+  RED_THEME: redTheme,
 
   MAIN_PURPLE_TRANSPARENT: purpleTheme.MAIN_TRANSPARENT,
   NEAR_BLACK_TRANSPARENT: (opacity: number) => `rgba(21, 16, 26, ${opacity})`,

@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useRef } from "react";
-import { Animated, Image, StyleSheet } from "react-native";
+import { Animated, Image, StyleProp, StyleSheet, View } from "react-native";
 import { colors, graphics } from "../Theme";
-import { Game } from "../util/logic";
-import { Direction, TileType } from "../util/types";
+import { getIconSrc } from "../util/board";
+import { Game, isValidMove } from "../util/logic";
+import { TileType } from "../util/types";
+import BombBoardTile from "./BombBoardTile";
 
 interface Offset {
   dx: number,
@@ -40,18 +42,25 @@ export default function Player({
     ).start();
   }, [game.won]);
 
-  const options = useMemo(() => {
+  const playerSrc = (darkMode) ? graphics.PLAYER_OUTLINED_DARK : graphics.PLAYER_OUTLINED;
+  const tileStyle = {
+    width: tileSize,
+    height: tileSize,
+  };
+
+  const [options, pushables] = useMemo(() => {
     // We only add selectors on adjacent tiles where the player could actually move.
     const newOptions: JSX.Element[] = [];
+    const newPushables: JSX.Element[] = [];
     const offsets: Offset[] = [
-      { dx: -1, dy: 0 },
       { dx: 0, dy: -1 },
+      { dx: -1, dy: 0 },
       { dx: 1, dy: 0 },
       { dx: 0, dy: 1 },
     ];
 
     offsets.forEach((offset, index) => {
-      const shouldHighlight = shouldHighlightTile(game, offset);
+      const shouldHighlight = isValidMove(game, offset);
 
       // It would make sense to not add the Animated.View if it isn't over a shouldHighlight tile.
       // However this results in the animation breaking sometimes, even if we add dummy Animated.View
@@ -59,66 +68,84 @@ export default function Player({
       // which break the Animated.loop, but not all.
       const optionStyle = styles.optionTile(game.player.x + offset.dx, game.player.y + offset.dy, tileSize, optionsAnim, shouldHighlight, darkMode);
       newOptions.push(<Animated.View key={index} style={optionStyle}></Animated.View>);
+
+      const pushable = getAdjacentTile(game, offset, tileSize, tileStyle, shouldHighlight);
+      newPushables.push(pushable);
     });
 
-    return newOptions;
+    return [newOptions, newPushables];
   }, [game, tileSize, darkMode]);
 
-  const player_src = (darkMode) ? graphics.PLAYER_OUTLINED_DARK : graphics.PLAYER_OUTLINED;
   return (
     <>
       {!game.won && options}
-      <Animated.View style={styles.player(game.player.x, game.player.y, tileSize, touch.x, touch.y)}>
-        <Image style={styles.tile("#00000000", tileSize)} source={player_src} />
+      
+      <Animated.View style={styles.adjacentTileContainer(game.player.x, game.player.y - 1, tileSize, touch.y, false, false)}>
+        {pushables[0]}
+      </Animated.View>
+      <Animated.View style={styles.adjacentTileContainer(game.player.x - 1, game.player.y, tileSize, touch.x, true, false)}>
+        {pushables[1]}
+      </Animated.View>
+      <Animated.View style={styles.adjacentTileContainer(game.player.x + 1, game.player.y, tileSize, touch.x, true, true)}>
+        {pushables[2]}
+      </Animated.View>
+      <Animated.View style={styles.adjacentTileContainer(game.player.x, game.player.y + 1, tileSize, touch.y, false, true)}>
+        {pushables[3]}
+      </Animated.View>
+
+      <Animated.View style={styles.playerContainer(game.player.x, game.player.y, tileSize, touch.x, touch.y)}>
+        <Image style={tileStyle} source={playerSrc} />
       </Animated.View>
     </>
   );
 }
 
-function shouldHighlightTile(game: Game, offset: Offset) {
+function getAdjacentTile(game: Game, offset: Offset, tileSize: number, tileStyle: StyleProp<any>, isValidMove: boolean) {
   const xPos = game.player.x + offset.dx;
   const yPos = game.player.y + offset.dy;
 
-  const background = game.board.getBackground(yPos, xPos, true);
-  if ([TileType.OUTSIDE, TileType.WALL].includes(background.id)) return false;
-  
   const tile = game.board.getTile(yPos, xPos, true);
-  if (tile.id === TileType.CRATER) return false;
-  if (tile.id === TileType.DOOR && game.keys === 0) return false;
-  if (tile.id === TileType.FLAG && game.coins !== game.maxCoins) return false;
-
-  if (background.id === TileType.ONEWAY) {
-    if (background.orientation === Direction.LEFT && xPos > game.player.x) return false;
-    if (background.orientation === Direction.RIGHT && xPos < game.player.x) return false;
-    if (background.orientation === Direction.UP && yPos > game.player.y) return false;
-    if (background.orientation === Direction.DOWN && yPos < game.player.y) return false;
+  if ([TileType.CRATE, TileType.METAL_CRATE, TileType.ICE_BLOCK].includes(tile.id) && isValidMove) {
+    return <Image style={tileStyle} source={getIconSrc(tile)} />;
+  }
+  if (tile.id === TileType.BOMB && isValidMove) {
+    return <BombBoardTile tile={tile} icon={getIconSrc(tile)} tileSize={tileSize} />;
   }
 
-  if (tile.id === TileType.CRATE || tile.id === TileType.BOMB) {
-    const nextTile = game.board.getTile(yPos + offset.dy, xPos + offset.dx, true);
-    if (tile.id === TileType.CRATE && nextTile.id !== TileType.EMPTY && nextTile.id !== TileType.CRATER) return false;
-    if (tile.id === TileType.BOMB && nextTile.id !== TileType.EMPTY) return false;
-  }
-
-  return true;
+  return <View style={tileStyle} />;
 }
 
 const styles = StyleSheet.create<any>({
-  tile: (bgColor: string, size: number) => ({
-    width: size,
-    height: size,
-    backgroundColor: bgColor,
-  }),
-  player: (xPos: number, yPos: number, tileSize: number, touchX: number, touchY: number) => ({
+  // tile: (size: number) => ({
+  //   width: size,
+  //   height: size,
+  // }),
+  playerContainer: (xPos: number, yPos: number, tileSize: number, touchX: number, touchY: number) => ({
     position: "absolute",
     left: xPos * tileSize,
     top: yPos * tileSize,
     transform: [
       {
-        translateY: Math.abs(touchY) > tileSize ? Math.sign(touchY) * tileSize : touchY
+        translateY: Math.abs(touchY) > tileSize ? Math.sign(touchY) * tileSize : touchY,
       },
       {
-        translateX: Math.abs(touchX) > tileSize ? Math.sign(touchX) * tileSize : touchX
+        translateX: Math.abs(touchX) > tileSize ? Math.sign(touchX) * tileSize : touchX,
+      },
+    ],
+  }),
+  adjacentTileContainer: (xPos: number, yPos: number, tileSize: number, touchMove: number, isHorizontal: boolean, clampPositive: boolean) => ({
+    position: "absolute",
+    left: xPos * tileSize,
+    top: yPos * tileSize,
+    transform: [
+      isHorizontal ? {
+        translateX: clampPositive ?
+          Math.max(0, Math.abs(touchMove) > tileSize ? Math.sign(touchMove) * tileSize : touchMove) :
+          Math.min(0, Math.abs(touchMove) > tileSize ? Math.sign(touchMove) * tileSize : touchMove),
+      } : {
+        translateY: clampPositive ?
+          Math.max(0, Math.abs(touchMove) > tileSize ? Math.sign(touchMove) * tileSize : touchMove) :
+          Math.min(0, Math.abs(touchMove) > tileSize ? Math.sign(touchMove) * tileSize : touchMove),
       },
     ],
   }),

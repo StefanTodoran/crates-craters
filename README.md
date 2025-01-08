@@ -159,23 +159,29 @@ Built with JavaScript and React Native, Crates and Craters is a single player pu
   <img src="assets/main_theme/flag.png" style="height: 1em;"/>
 </h2>
 
+Higher priority:
+
 * Improve VirtualizedList performance especially as content length increases
-* Do benchmarking to determine if the use of useCallback in App.tsx is worthwhile
-* Use cloud service to allow storage and sharing of user-created levels
-  * Allow account creation
-  * Require a user solves their level to upload it
+* Improve firestore security rules, rely less on frontend logic
+
+Lower priority:
+
+* Back action should be more useful, actually returning to previous screen
 * Refactor play and edit screen pause menu container into separate component
   * Menu should close when the user presses on it (not on a button)
 * Design and add many, many more levels, perhaps with new tile types
   * Review level 16, might be too easy for where it is
-* Create a proper tutorial with live instruction, as opposed to simply an easy level
-* Could [react native web assembly](https://github.com/cawfree/react-native-webassembly) help improve performance? 
-* Add metal crate tile type and associated logic
+* Do benchmarking to determine if the use of useCallback in App.tsx is worthwhile
+* Could [react native web assembly](https://github.com/cawfree/react-native-webassembly) help improve performance?
+
+Potential tasks:
+
+* Upgrade oneways from being single direction to being any combination of all four directions
+  * Add variants which filter different things (just pushables or just the player) if there is a good way to graphically indicate what is filtered
 * Consider making bombs destroy keys and coins?
-* Use a hitRect to give stepperArrows bigger hitboxes without overlapping SliderBar
 * Make notifications persist using MMKV?
-* Back action should be more useful, actually returning to previous screen
-* Improve firestore security rules
+* Add enemy tile and associated logic
+* Snow / glue tiles?
 
 <h2 style="display: flex; align-items: center;">
   Known Bugs

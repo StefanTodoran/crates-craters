@@ -215,7 +215,7 @@ export default function PlayLevel({
 
   const tileSize = calcBoardTileSize(game.board.width, game.board.height, win);
   const boardPosition = useRef({ x: 0, y: 0 });
-  
+
   const onGestureStart = useRef((_evt: GestureResponderEvent, _gestureState: PanResponderGestureState) => { });
   useEffect(() => {
     onGestureStart.current = (_evt: GestureResponderEvent, gestureState: PanResponderGestureState) => {
@@ -458,7 +458,7 @@ export default function PlayLevel({
               );
             }, 1000);
           }}>
-            <GameBoard board={game.board} overrideTileSize={tileSize}>
+            <GameBoard board={game.board} overrideTileSize={tileSize} playerPosition={game.player}>
               <Player game={game} touch={touchMove} darkMode={darkMode} tileSize={tileSize} />
 
               {touchPos && <Animated.View style={[
@@ -523,7 +523,7 @@ export default function PlayLevel({
         </Animated.View>
 
       </SafeAreaView>
-      {showTutorial && <TutorialHint hint={(level as OfficialLevel).introduces!} hideTutorial={() => setShowTutorial(false)} />}
+      {showTutorial && <TutorialHint introduces={(level as OfficialLevel).introduces!} hideTutorial={() => setShowTutorial(false)} />}
     </>
   );
 }
