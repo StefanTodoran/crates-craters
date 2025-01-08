@@ -54,8 +54,9 @@ const tutorials: { [key in Tutorial]: TutorialContentPage } = {
     titleColor: colors.BLUE_THEME.MAIN_COLOR,
     theme: colors.BLUE_THEME,
     content: "One-way tiles cannot be entered from the sides with the bar (opposite direction of the arrows), but can be entered from every other side. Crates can also be pushed through following the same rules as the player.",
-    images: [graphics.ONE_WAY_ONE_DIR, graphics.ONE_WAY_OPPOSITE_SIDES, graphics.ONE_WAY_CORNER],
-    spaceImages: true,
+    images: [graphics.ONE_WAY_LEFT, graphics.ONE_WAY_UP, graphics.ONE_WAY_DOWN, graphics.ONE_WAY_RIGHT],
+    // images: [graphics.ONE_WAY_ONE_DIR, graphics.ONE_WAY_OPPOSITE_SIDES, graphics.ONE_WAY_CORNER],
+    // spaceImages: true,
   },
   // [Tutorial.FILTERS]: {
   //   title: "Filters",
