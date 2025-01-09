@@ -91,7 +91,7 @@ const tutorials: { [key in Tutorial]: TutorialContentPage } = {
     titleColor: colors.BLUE_THEME.MAIN_COLOR,
     theme: colors.BLUE_THEME,
     content: "Ice blocks are solid pushable tiles similar to crates, but when pushed they slide until they come into contact with a non-empty tile.",
-    images: [graphics.ICE_BLOCK, graphics.ICE_BLOCK],
+    images: [graphics.ICE_BLOCK, graphics.ONE_WAY_RIGHT],
   },
   [Tutorial.MISC]: {
     title: "Miscellaneous",
@@ -104,9 +104,10 @@ const tutorials: { [key in Tutorial]: TutorialContentPage } = {
 interface Props {
   introduces: Tutorial[],
   hideTutorial: () => void,
+  onlyContent?: boolean,
 }
 
-export default function TutorialHint({ introduces, hideTutorial }: Props) {
+export default function TutorialHint({ introduces, hideTutorial, onlyContent }: Props) {
   const { darkMode } = useContext(GlobalContext);
 
   const anim = useRef(new Animated.Value(0)).current;
@@ -133,6 +134,27 @@ export default function TutorialHint({ introduces, hideTutorial }: Props) {
   const maxPage = tutorial.length - 1;
 
   if (tutorial.length === 0) return <></>;
+  if (onlyContent) {
+    return (
+      <>
+        <Text style={TextStyles.subtitle(darkMode, tutorial[page].titleColor)}>
+          {tutorial[page].title}
+        </Text>
+        <Text style={TextStyles.paragraph(darkMode)}>
+          {tutorial[page].content}
+        </Text>
+
+        <View style={styles.row}>
+          {tutorial[page].images.map((image, index) => {
+            let iconStyle: ImageStyle = styles.icon;
+            if (tutorial[page].images.length === 1) iconStyle = styles.bigIcon;
+            if (index > 0 && tutorial[page].spaceImages) iconStyle = styles.spacedIcon;
+            return <Image key={index} style={iconStyle} source={image} />;
+          })}
+        </View>
+      </>
+    );
+  }
   return (
     <Animated.View style={[
       styles.container,
