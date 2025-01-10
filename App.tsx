@@ -103,7 +103,7 @@ export default function App() {
   useEffect(() => {
     NavigationBar.setPositionAsync("absolute");
     NavigationBar.setBehaviorAsync("overlay-swipe");
-    NavigationBar.setBackgroundColorAsync("#ffffff00");
+    NavigationBar.setBackgroundColorAsync("transparent");
   }, []);
 
   const [levels, setLevels] = useState<Level[]>([]);
@@ -174,6 +174,7 @@ export default function App() {
   }, [notificationCounts]);
 
   useEffect(() => {
+    syncLevelStateWithStorage.current();
     checkForOfficialLevelUpdates().then((numUpdated) => {
       updateNotificationCounts.current(0, numUpdated);
       syncLevelStateWithStorage.current();
@@ -342,10 +343,8 @@ export default function App() {
           config={toastConfig}
         />
       </SafeAreaView>
-      <StatusBar translucent={true} />
 
-      {/* For some reason hidden makes translucent no longer work? */}
-      {/* <StatusBar translucent={true} hidden={true} /> */}
+      <StatusBar translucent={true} hidden={true} />
     </GlobalContext.Provider>
   );
 }
