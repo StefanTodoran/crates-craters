@@ -239,8 +239,8 @@ export default function App() {
       return true;
     }
 
-    BackHandler.addEventListener("hardwareBackPress", backAction);
-    return () => BackHandler.removeEventListener("hardwareBackPress", backAction);
+    const subscription = BackHandler.addEventListener("hardwareBackPress", backAction);
+    return () => subscription.remove();
   }, [view]);
 
   // This is used so that the level select component only needs to calculate
