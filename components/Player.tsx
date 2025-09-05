@@ -6,6 +6,8 @@ import { Game, isValidMove } from "../util/logic";
 import { TileType } from "../util/types";
 import BombBoardTile from "./BombBoardTile";
 
+const MAX_PLAYER_ROTATION_DEG = 5;
+
 interface Offset {
   dx: number,
   dy: number,
@@ -115,6 +117,10 @@ function getAdjacentTile(game: Game, offset: Offset, tileSize: number, tileStyle
   return <View style={tileStyle} />;
 }
 
+function unsignedMax(num: number, max: number) {
+  return Math.abs(num) > max ? Math.sign(num) * max : num;
+}
+
 const styles = StyleSheet.create<any>({
   // tile: (size: number) => ({
   //   width: size,
@@ -126,10 +132,13 @@ const styles = StyleSheet.create<any>({
     top: yPos * tileSize,
     transform: [
       {
-        translateY: Math.abs(touchY) > tileSize ? Math.sign(touchY) * tileSize : touchY,
+        translateY: unsignedMax(touchY, tileSize),
       },
       {
-        translateX: Math.abs(touchX) > tileSize ? Math.sign(touchX) * tileSize : touchX,
+        translateX: unsignedMax(touchX, tileSize),
+      },
+      {
+        rotate: `${(unsignedMax(touchX, tileSize) / tileSize) * MAX_PLAYER_ROTATION_DEG}deg`,
       },
     ],
   }),
@@ -165,11 +174,13 @@ const styles = StyleSheet.create<any>({
     borderStyle: "solid",
     borderWidth: 1,
 
-    transform: [{
-      scale: anim.interpolate({
-        inputRange: [0, 1],
-        outputRange: [0.8, 0.95],
-      })
-    }],
+    transform: [
+      {
+        scale: anim.interpolate({
+          inputRange: [0, 1],
+          outputRange: [0.8, 0.95],
+        }),
+      },
+    ],
   }),
 });

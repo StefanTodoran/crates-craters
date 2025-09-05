@@ -12,6 +12,7 @@ Built with JavaScript and React Native, Crates and Craters is a single player pu
 <h2 style="display: flex; align-items: center;">
   Features
   <img src="assets/main_theme/theme_icon.png" style="height: 1em;"/>
+  <img src="assets/main_theme/about.png" style="height: 1em;"/>
 </h2>
 
 * Dozens of puzzling levels
@@ -114,7 +115,7 @@ Built with JavaScript and React Native, Crates and Craters is a single player pu
       <h2 style="display: flex; align-items: center;">
         Running Locally
         <img src="assets/main_theme/player.png" style="height: 1em;"/>
-        <img src="assets/main_theme/left_icon.png" style="width: 1em;"/>
+        <img src="assets/main_theme/door_icon.png" style="width: 1em;"/>
       </h2>
       <p>
         Running and testing the app locally will require that you possess a phone with Expo Go installed on it and a working internet connection. To work with live refresh, run:<br>
@@ -126,7 +127,7 @@ Built with JavaScript and React Native, Crates and Craters is a single player pu
       <h2 style="display: flex; align-items: center;">
         Building APK
         <img src="assets/main_theme/options_icon.png" style="height: 1em; margin-left: 0.2em;"/>
-        <img src="assets/main_theme/hammer_icon.png" style="height: 1em;"/>
+        <img src="assets/main_theme/create.png" style="height: 1em;"/>
       </h2>
       <p>
         Make sure you are logged in to expo with <b>expo whoami</b>. If not logged in, run <b>expo login</b>.
