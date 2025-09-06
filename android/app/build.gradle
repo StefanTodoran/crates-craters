@@ -92,8 +92,8 @@ android {
         applicationId 'com.stefantodoran.cratesncraters'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 21
-        versionName "0.4.7"
+        versionCode 22
+        versionName "0.4.18"
     }
     signingConfigs {
         debug {

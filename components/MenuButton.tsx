@@ -10,6 +10,7 @@ interface Props {
   onPress?: () => void, // The function to be called on press event.
   onLongPress?: () => void, // The function to be called on long press event.
   icon?: ImageSourcePropType, // The image to be displayed in the button.
+  iconRotation?: number, // The rotation of the icon in degrees.
   disabled?: boolean, // Whether or not the button can be pressed (changes appearance).
   allowOverflow?: boolean, // Whether number of lines for the button text should cap at 1.
   theme?: Theme,
@@ -28,6 +29,7 @@ export default function MenuButton({
   onLongPress,
   label,
   icon,
+  iconRotation,
   disabled,
   allowOverflow,
   theme,
@@ -57,7 +59,7 @@ export default function MenuButton({
         backgroundColor: useTheme.MAIN_TRANSPARENT(0.3),
       }}
     >
-      {(icon) && <Image style={styles.icon} source={icon} />}
+      {(icon) && <Image style={styles.icon(iconRotation)} source={icon} />}
 
       {!!label && <Text
         numberOfLines={allowOverflow ? undefined : 1}
@@ -71,7 +73,7 @@ export default function MenuButton({
   );
 }
 
-const styles = StyleSheet.create({
+const styles = StyleSheet.create<any>({
   body: {
     borderWidth: 1,
     borderRadius: normalize(10),
@@ -91,8 +93,9 @@ const styles = StyleSheet.create({
     letterSpacing: 0.25,
     fontWeight: "bold",
   },
-  icon: {
+  icon: (iconRotation: number = 0) => ({
     height: normalize(30),
     width: normalize(30),
-  }
+    transform: [{ rotate: `${iconRotation}deg` }],
+  }),
 });

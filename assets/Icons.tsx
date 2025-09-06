@@ -1,6 +1,6 @@
 import { StyleSheet } from "react-native";
 import Svg, { Circle, Defs, G, LinearGradient, Mask, Path, Stop } from "react-native-svg";
-import { Direction, FlatTile, TileType } from "../util/types";
+import { FlatTile, TileType } from "../util/types";
 
 interface Props {
   bgColor?: string,
@@ -33,10 +33,12 @@ export function TileIcon({ bgColor, tileSize, tileData }: Props) {
       break;
 
     case TileType.ONEWAY:
-      if (tileData.orientation === Direction.UP) Icon = OneWayUpIcon;
-      if (tileData.orientation === Direction.RIGHT) Icon = OneWayRightIcon;
-      if (tileData.orientation === Direction.DOWN) Icon = OneWayDownIcon;
-      if (tileData.orientation === Direction.LEFT) Icon = OneWayLeftIcon;
+      Icon = OneWayUpIcon;
+      // TODO: FIX ME!
+      // if (tileData.orientation === Direction.UP) Icon = OneWayUpIcon;
+      // if (tileData.orientation === Direction.RIGHT) Icon = OneWayRightIcon;
+      // if (tileData.orientation === Direction.DOWN) Icon = OneWayDownIcon;
+      // if (tileData.orientation === Direction.LEFT) Icon = OneWayLeftIcon;
       break;
 
     case TileType.BOMB:

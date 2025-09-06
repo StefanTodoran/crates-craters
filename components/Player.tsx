@@ -108,10 +108,10 @@ function getAdjacentTile(game: Game, offset: Offset, tileSize: number, tileStyle
 
   const tile = game.board.getTile(yPos, xPos, true);
   if ([TileType.CRATE, TileType.METAL_CRATE, TileType.ICE_BLOCK].includes(tile.id) && isValidMove) {
-    return <Image style={tileStyle} source={getIconSrc(tile)} />;
+    return <Image style={tileStyle} source={getIconSrc(tile)!.icon} />;
   }
   if (tile.id === TileType.BOMB && isValidMove) {
-    return <BombBoardTile tile={tile} icon={getIconSrc(tile)} tileSize={tileSize} />;
+    return <BombBoardTile tile={tile} icon={getIconSrc(tile)!.icon} tileSize={tileSize} />;
   }
 
   return <View style={tileStyle} />;

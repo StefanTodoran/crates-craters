@@ -52,7 +52,7 @@ export default function GameBoard({
 
     // Regular tiles are sized like wall tiles but are Image elements. All
     // tiles have png sources so the checkered background colors can show through.
-    const icon = getIconSrc(tile);
+    const iconSrc = getIconSrc(tile);
     const bgColor = oddTile ? colors.BLUE_THEME.MAIN_TRANSPARENT(0.03) : colors.BLUE_THEME.MAIN_TRANSPARENT(0.14);
 
     // Render an empty tile if we are directly adjacent to the player's position. Board will be a LayeredBoard since this won't be used for EditLevel.
@@ -60,9 +60,12 @@ export default function GameBoard({
       return <View key={j} style={styles.tile(bgColor, tileSize)} />;
     }
 
+    // This should never happen, because it would only occur if tile.id is TileType.EMPTY which is handled above.
+    if (!iconSrc) throw new Error("Invalid tile! Tile: " + tile);
+
     const tileGraphic = useSvg ?
       <TileIcon key={j} bgColor={bgColor} tileSize={tileSize} tileData={tile} /> :
-      <Image key={j} style={styles.tile(bgColor, tileSize)} source={icon} />;
+      <Image key={j} style={styles.tile(bgColor, tileSize, iconSrc.rotation)} source={iconSrc.icon} />;
 
     if (tile.id === TileType.BOMB) {
       const contents = <>
@@ -152,10 +155,11 @@ const styles = StyleSheet.create<any>({
     borderStyle: "solid",
     // borderWidth: 5,
   }),
-  tile: (bgColor: string, size: number) => ({
+  tile: (bgColor: string, size: number, rotation: number = 0) => ({
     width: size,
     height: size,
     backgroundColor: bgColor,
+    transform: [{ rotate: `${rotation}deg` }],
   }),
   entityContainer: (size: number) => ({
     position: "absolute",

@@ -1,5 +1,5 @@
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
-import { Animated, Dimensions, GestureResponderEvent, PanResponder, PanResponderGestureState, SafeAreaView, StyleSheet, Text, View } from "react-native";
+import { Animated, Dimensions, GestureResponderEvent, ImageSourcePropType, PanResponder, PanResponderGestureState, SafeAreaView, ScrollView, StyleSheet, Text, View } from "react-native";
 import BackButton from "../assets/BackButton";
 import CurrentToolIndicator from "../components/CurrentToolIndicator";
 import GameBoard from "../components/GameBoard";
@@ -12,10 +12,11 @@ import { colors, graphics } from "../Theme";
 import { calcBoardTileSize } from "../util/board";
 import { updateLevel } from "../util/loader";
 import { getSpawnPosition } from "../util/logic";
-import { metalCrateTool, spawnTool, Tool, tools, wallTool } from "../util/tools";
-import { PageView, TileType, UserLevel } from "../util/types";
+import { getOneWayTool, metalCrateTool, spawnTool, Tool, tools, wallTool } from "../util/tools";
+import { PageView, rotationToDirection, TileType, UserLevel } from "../util/types";
 
 import { useAudioPlayer } from "expo-audio";
+import FilterChip from "../components/FilterChip";
 const successSound = require("../assets/audio/push.wav");
 const errorSound = require("../assets/audio/fill.wav");
 
@@ -38,6 +39,18 @@ enum GestureMode {
   PLACE,
   ERASE,
 }
+
+enum OneWayMode {
+  ONE_DIR = "One Direction",
+  OPPOSITE_SIDES = "Opposite Sides",
+  CORNER = "Corner",
+}
+
+const oneWayModeToIcon: Record<OneWayMode, ImageSourcePropType> = {
+  [OneWayMode.ONE_DIR]: graphics.ONE_WAY_ONE_DIR,
+  [OneWayMode.OPPOSITE_SIDES]: graphics.ONE_WAY_OPPOSITE_SIDES,
+  [OneWayMode.CORNER]: graphics.ONE_WAY_CORNER,
+};
 
 interface Props {
   viewCallback: (newView: PageView, pageNum?: number) => void, // Sets the current view of the application. 
@@ -193,6 +206,9 @@ export default function EditLevel({
     theme: colors.RED_THEME,
   };
 
+  const [oneWayRotation, setOneWayRotation] = useState(0);
+  const [oneWayMode, setOneWayMode] = useState<OneWayMode>(OneWayMode.ONE_DIR);
+
   if (level === undefined) {
     return <Text style={[TextStyles.subtitle(darkMode), { color: colors.RED_THEME.MAIN_COLOR }]}>
       No level being edited
@@ -230,7 +246,7 @@ export default function EditLevel({
         <SimpleButton onPress={() => {
           saveChanges();
           viewCallback(PageView.MANAGE, 1);
-        }} text={unsavedChanges ? "Save & Exit" : "Exit"} />
+        }} text={unsavedChanges ? "Save & Exit" : "Exit"} Svg={BackButton} />
         <View style={{ width: normalize(15) }} />
         <SimpleButton onPress={toggleToolsModal} text="Change Tool" main={true} />
       </Animated.View>
@@ -243,61 +259,135 @@ export default function EditLevel({
           backgroundColor: darkMode ? "rgba(0, 0, 0, 0.85)" : "rgba(255, 255, 255, 0.85)",
         },
       ]}>
-        <View style={styles.section}>
-          {toolPairs.map((pair, index) =>
-            <View key={index} style={styles.row}>
+        <ScrollView style={styles.modalScrollView}>
+          <View style={styles.section}>
+            <Text style={TextStyles.subtitle(darkMode, colors.DIM_GRAY)}>
+              Basic Tiles
+            </Text>
+            {toolPairs.map((pair, index) =>
+              <View key={index} style={styles.row}>
+                <MenuButton
+                  label={pair.left.label}
+                  icon={pair.left.icon}
+                  onPress={() => changeTool(pair.left)}
+                  theme={pair.left.theme}
+                  fillWidth
+                />
+                <MenuButton
+                  label={pair.right.label}
+                  icon={pair.right.icon}
+                  onPress={() => changeTool(pair.right)}
+                  theme={pair.right.theme}
+                  fillWidth
+                />
+              </View>
+            )}
+            <View style={styles.row}>
               <MenuButton
-                label={pair.left.label}
-                icon={pair.left.icon}
-                onPress={() => changeTool(pair.left)}
-                theme={pair.left.theme}
-                fillWidth
-              />
-              <MenuButton
-                label={pair.right.label}
-                icon={pair.right.icon}
-                onPress={() => changeTool(pair.right)}
-                theme={pair.right.theme}
+                label={spawnTool.label}
+                icon={spawnTool.icon}
+                onPress={() => changeTool(spawnTool)}
                 fillWidth
               />
             </View>
-          )}
-          <View style={styles.row}>
-          <MenuButton
-              label={spawnTool.label}
-              icon={spawnTool.icon}
-              onPress={() => changeTool(spawnTool)}
-              fillWidth
-            />
-          </View>
-          <View style={{ height: 15 }} />
-          <View style={styles.row}>
-            <SliderBar
-              label="Fuse Timer" value={fuseTimer} units={" turns"}
-              minValue={1} maxValue={99} changeCallback={setFuseTimer}
-              theme={colors.RED_THEME}
-              showSteppers
-            />
-          </View>
-          <View style={styles.row}>
-            <MenuButton
-              label="Bomb"
-              icon={bombTool.icon}
-              onPress={() => changeTool(bombTool)}
-              theme={bombTool.theme}
-              fillWidth
-            />
-            <MenuButton
-              label={metalCrateTool.label}
-              icon={metalCrateTool.icon}
-              onPress={() => changeTool(metalCrateTool)}
-              theme={metalCrateTool.theme}
-              fillWidth
-            />
-          </View>
-        </View>
 
-        <View style={styles.section}>
+            {/* BOMB TOOL */}
+            <View style={{ height: normalize(20) }} />
+            <Text style={TextStyles.subtitle(darkMode, colors.RED_THEME.MAIN_COLOR)}>
+              Bomb Tiles
+            </Text>
+            <View style={styles.row}>
+              <SliderBar
+                label="Fuse Timer" value={fuseTimer} units={" turns"}
+                minValue={1} maxValue={99} changeCallback={setFuseTimer}
+                theme={colors.RED_THEME}
+                showSteppers
+              />
+            </View>
+            <View style={styles.row}>
+              <MenuButton
+                label="Bomb"
+                icon={bombTool.icon}
+                onPress={() => changeTool(bombTool)}
+                theme={bombTool.theme}
+                fillWidth
+              />
+              <MenuButton
+                label={metalCrateTool.label}
+                icon={metalCrateTool.icon}
+                onPress={() => changeTool(metalCrateTool)}
+                theme={metalCrateTool.theme}
+                fillWidth
+              />
+            </View>
+
+            {/* ONE WAY TOOL */}
+            <View style={{ height: normalize(20) }} />
+            <Text style={TextStyles.subtitle(darkMode, colors.BLUE_THEME.MAIN_COLOR)}>
+              One Way Tiles
+            </Text>
+            <View style={styles.row}>
+              <SliderBar
+                label="Rotation" value={oneWayRotation} units={" deg"} stepSize={90}
+                minValue={0} maxValue={oneWayMode === OneWayMode.OPPOSITE_SIDES ? 90 : 270} changeCallback={setOneWayRotation}
+                theme={colors.BLUE_THEME}
+                showSteppers
+              />
+            </View>
+            <View style={{ height: normalize(10) }} />
+            <View style={styles.row}>
+              <FilterChip
+                text={"One Direction"}
+                active={oneWayMode === OneWayMode.ONE_DIR}
+                onPress={() => setOneWayMode(OneWayMode.ONE_DIR)}
+                theme={colors.BLUE_THEME}
+              />
+              <FilterChip
+                text={"Opposite Sides"}
+                active={oneWayMode === OneWayMode.OPPOSITE_SIDES}
+                onPress={() => {
+                  setOneWayMode(OneWayMode.OPPOSITE_SIDES);
+                  setOneWayRotation(Math.min(oneWayRotation, 90));
+                }}
+                theme={colors.BLUE_THEME}
+              />
+              <FilterChip
+                text={"Corner"}
+                active={oneWayMode === OneWayMode.CORNER}
+                onPress={() => setOneWayMode(OneWayMode.CORNER)}
+                theme={colors.BLUE_THEME}
+              />
+            </View>
+            <View style={styles.row}>
+              <MenuButton
+                label="One Way"
+                icon={oneWayModeToIcon[oneWayMode]}
+                iconRotation={oneWayRotation}
+                onPress={() => {
+                  let blocked = [];
+                  switch (oneWayMode) {
+                    case OneWayMode.ONE_DIR:
+                      blocked = [rotationToDirection(oneWayRotation)];
+                      break;
+                    case OneWayMode.OPPOSITE_SIDES:
+                      blocked = [rotationToDirection(oneWayRotation), rotationToDirection(oneWayRotation + 180)];
+                      break;
+                    case OneWayMode.CORNER:
+                      blocked = [rotationToDirection(oneWayRotation), rotationToDirection(oneWayRotation - 90)];
+                      break;
+                  }
+
+                  const oneWayTool = getOneWayTool(blocked);
+                  changeTool(oneWayTool);
+                }}
+                theme={colors.BLUE_THEME}
+                fillWidth
+              />
+            </View>
+          </View>
+        </ScrollView>
+
+        <View style={[styles.section, styles.bottomSection]}>
           <View style={styles.row}>
             <SimpleButton
               onPress={discardChanges}
@@ -368,8 +458,12 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     width: "100%",
-    marginTop: normalize(6),
     marginBottom: normalize(18),
+  },
+  bottomSection: {
+    borderTopWidth: 1,
+    borderTopColor: colors.DIM_GRAY_TRANSPARENT(0.25),
+    paddingTop: normalize(16),
   },
   row: {
     flexDirection: "row",
@@ -389,10 +483,14 @@ const styles = StyleSheet.create({
   },
   modal: {
     ...StyleSheet.absoluteFillObject,
-    paddingTop: normalize(36),
+    paddingTop: normalize(12),
     paddingBottom: normalize(24),
     alignItems: "center",
     justifyContent: "space-between",
+    height: "100%",
+    width: "100%",
+  },
+  modalScrollView: {
     height: "100%",
     width: "100%",
   },

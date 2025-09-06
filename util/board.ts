@@ -227,22 +227,45 @@ export function calcBoardTileSize(boardWidth: number, boardHeight: number, windo
 
 // This can't just be a dictionary since `graphics` may change.
 export function getIconSrc(tile: FlatTile) {
-  if (tile.id === TileType.DOOR) return graphics.DOOR;
-  if (tile.id === TileType.KEY) return graphics.KEY;
-  if (tile.id === TileType.CRATE) return graphics.CRATE;
-  if (tile.id === TileType.CRATER) return graphics.CRATER;
-  if (tile.id === TileType.COIN) return graphics.COIN;
-  if (tile.id === TileType.SPAWN) return graphics.PLAYER; // Exists for level creation only.
-  if (tile.id === TileType.FLAG) return graphics.FLAG;
-  if (tile.id === TileType.BOMB) return graphics.BOMB;
-  if (tile.id === TileType.EXPLOSION) return graphics.EXPLOSION;
-  if (tile.id === TileType.LITTLE_EXPLOSION) return graphics.LITTLE_EXPLOSION;
-  if (tile.id === TileType.METAL_CRATE) return graphics.METAL_CRATE;
-  if (tile.id === TileType.ICE_BLOCK) return graphics.ICE_BLOCK;
+  if (tile.id === TileType.DOOR) return { icon: graphics.DOOR, rotation: 0 };
+  if (tile.id === TileType.KEY) return { icon: graphics.KEY, rotation: 0 };
+  if (tile.id === TileType.CRATE) return { icon: graphics.CRATE, rotation: 0 };
+  if (tile.id === TileType.CRATER) return { icon: graphics.CRATER, rotation: 0 };
+  if (tile.id === TileType.COIN) return { icon: graphics.COIN, rotation: 0 };
+  if (tile.id === TileType.SPAWN) return { icon: graphics.PLAYER, rotation: 0 }; // Exists for level creation only.
+  if (tile.id === TileType.FLAG) return { icon: graphics.FLAG, rotation: 0 };
+  if (tile.id === TileType.BOMB) return { icon: graphics.BOMB, rotation: 0 };
+  if (tile.id === TileType.EXPLOSION) return { icon: graphics.EXPLOSION, rotation: 0 };
+  if (tile.id === TileType.LITTLE_EXPLOSION) return { icon: graphics.LITTLE_EXPLOSION, rotation: 0 };
+  if (tile.id === TileType.METAL_CRATE) return { icon: graphics.METAL_CRATE, rotation: 0 };
+  if (tile.id === TileType.ICE_BLOCK) return { icon: graphics.ICE_BLOCK, rotation: 0 };
 
   const oneway = (tile as OneWayTile);
-  if (tile.id === TileType.ONEWAY && oneway.orientation === Direction.UP) return graphics.ONE_WAY_UP;
-  if (tile.id === TileType.ONEWAY && oneway.orientation === Direction.RIGHT) return graphics.ONE_WAY_RIGHT;
-  if (tile.id === TileType.ONEWAY && oneway.orientation === Direction.DOWN) return graphics.ONE_WAY_DOWN;
-  if (tile.id === TileType.ONEWAY && oneway.orientation === Direction.LEFT) return graphics.ONE_WAY_LEFT;
+  if (tile.id === TileType.ONEWAY) return _getOnewaySrc(oneway);
+
+  return undefined;
+}
+
+function _getOnewaySrc(tile: OneWayTile) {
+  if (tile.blocked.length === 1) return { icon: graphics.ONE_WAY_ONE_DIR, rotation: _directionToRotation(tile.blocked[0]) };
+
+  else if (tile.blocked.length === 2 && tile.blocked.includes(Direction.LEFT) && tile.blocked.includes(Direction.RIGHT)) return { icon: graphics.ONE_WAY_OPPOSITE_SIDES, rotation: 0 };
+  else if (tile.blocked.length === 2 && tile.blocked.includes(Direction.UP) && tile.blocked.includes(Direction.DOWN)) return { icon: graphics.ONE_WAY_OPPOSITE_SIDES, rotation: 90 };
+
+  else if (tile.blocked.length === 2 && tile.blocked.includes(Direction.DOWN) && tile.blocked.includes(Direction.LEFT)) return { icon: graphics.ONE_WAY_CORNER, rotation: 0 };
+  else if (tile.blocked.length === 2 && tile.blocked.includes(Direction.UP) && tile.blocked.includes(Direction.LEFT)) return { icon: graphics.ONE_WAY_CORNER, rotation: 90 };
+  else if (tile.blocked.length === 2 && tile.blocked.includes(Direction.UP) && tile.blocked.includes(Direction.RIGHT)) return { icon: graphics.ONE_WAY_CORNER, rotation: 180 };
+  else if (tile.blocked.length === 2 && tile.blocked.includes(Direction.DOWN) && tile.blocked.includes(Direction.RIGHT)) return { icon: graphics.ONE_WAY_CORNER, rotation: 270 };
+
+  else {
+    console.error("Invalid one way tile! Blocked: " + tile.blocked.join(", "));
+    return undefined;
+  }
+}
+
+function _directionToRotation(direction: Direction) {
+  if (direction === Direction.LEFT) return 0;
+  else if (direction === Direction.UP) return 90;
+  else if (direction === Direction.RIGHT) return 180;
+  else return 270;
 }

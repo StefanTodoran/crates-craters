@@ -42,6 +42,24 @@ export enum Direction {
   LEFT,
 }
 
+export function rotationToDirection(rotation: number): Direction {
+  const maximum = 360;
+  rotation = ((rotation % maximum) + maximum) % maximum;
+  
+  switch (rotation) {
+    case 0:
+      return Direction.LEFT;
+    case 90:
+      return Direction.UP;
+    case 180:
+      return Direction.RIGHT;
+    case 270:
+      return Direction.DOWN;
+    default:
+      throw new Error(`Invalid rotation: ${rotation}`);
+  }
+}
+
 export interface EmptyTile {
   id: TileType.EMPTY,
 }
@@ -56,7 +74,7 @@ export interface WallTile {
 
 export interface OneWayTile {
   id: TileType.ONEWAY,
-  orientation: Direction,
+  blocked: Direction[],
 }
 
 export interface BombTile {

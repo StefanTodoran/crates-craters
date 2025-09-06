@@ -14,7 +14,7 @@ export enum metadataKeys {
   coinBalance = "coinBalance",
   userCredentials = "userCredentials",
   userData = "userData",
-  
+
   // These reference the UUIDs of publicly shared user created levels.
   likedLevels = "likedLevels",
   attemptedLevels = "attemptedLevels",
@@ -104,7 +104,7 @@ export function getStoredLevels() {
       // @ts-expect-error The next two lines turn level.board from an object to a class instance.
       const board = new FlatBoard(level.board.board);
       level.board = board;
-      
+
       levels.push(level);
     } else {
       // TODO: If the level is malformed, then the key needs to be deleted.
@@ -128,7 +128,7 @@ export function createLevel(level: UserLevel) {
   const customLevelKeys = getData(metadataKeys.customLevelKeys) || [];
   customLevelKeys.push(level.uuid);
   setData(metadataKeys.customLevelKeys, customLevelKeys);
-  
+
   // TODO: All state storage sync functions could maybe be replaced with
   // a number of event listeners on MMKV.
   doStateStorageSync(level.uuid);
@@ -201,7 +201,7 @@ export function markLevelCompleted(uuid: string, moveHistory: Direction[]) {
   const prevBest = level.bestSolution ? level.bestSolution.length : Infinity;
   if (moveHistory.length < prevBest) level.bestSolution = moveHistory.join("");
   level.completed = true;
-  
+
   setData(uuid, level);
   doStateStorageSync(uuid);
 
@@ -246,7 +246,7 @@ export function parseCompressedBoardData(raw: string): FlatBoard {
         // be refactored.
 
         if (tile.id === TileType.ONEWAY) {
-          (tile as OneWayTile).orientation = tileData[1];
+          (tile as OneWayTile).blocked = tileData.slice(1);
         }
         if (tile.id === TileType.BOMB) {
           (tile as BombTile).fuse = tileData[1];
@@ -284,8 +284,14 @@ export function compressBoardData(board: FlatBoard): string {
         // TODO: These seem to always be in the right order, but need to
         // make sure that this is a guarantee and not environment dependent.
 
-        // @ts-expect-error
-        encoding += tile[key].toString() + split.tile;
+        // @ts-expect-error This is a valid key.
+        const value = tile[key];
+
+        let serializedValue = value.toString();
+        if (value.constructor === Array) {
+          serializedValue = value.join(".");
+        }
+        encoding += serializedValue + split.tile;
       });
       encoding = encoding.slice(0, -1);
 

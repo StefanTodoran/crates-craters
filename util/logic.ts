@@ -70,10 +70,10 @@ export function canWalkTile(yPos: number, xPos: number, game: Game, extra?: Tile
 }
 
 export function canEnterOneWay(direction: Direction, tile: OneWayTile) {
-  if (direction === Direction.UP && tile.orientation === Direction.DOWN) return false;
-  if (direction === Direction.DOWN && tile.orientation === Direction.UP) return false;
-  if (direction === Direction.LEFT && tile.orientation === Direction.RIGHT) return false;
-  if (direction === Direction.RIGHT && tile.orientation === Direction.LEFT) return false;
+  if (direction === Direction.UP && tile.blocked.includes(Direction.DOWN)) return false;
+  if (direction === Direction.DOWN && tile.blocked.includes(Direction.UP)) return false;
+  if (direction === Direction.LEFT && tile.blocked.includes(Direction.RIGHT)) return false;
+  if (direction === Direction.RIGHT && tile.blocked.includes(Direction.LEFT)) return false;
 
   return true;
 }
@@ -405,10 +405,10 @@ export function isValidMove(game: Game, offset: Offset) {
   if (tile.id === TileType.FLAG && game.coins !== game.maxCoins) return false;
 
   if (background.id === TileType.ONEWAY) {
-    if (background.orientation === Direction.LEFT && xPos > game.player.x) return false;
-    if (background.orientation === Direction.RIGHT && xPos < game.player.x) return false;
-    if (background.orientation === Direction.UP && yPos > game.player.y) return false;
-    if (background.orientation === Direction.DOWN && yPos < game.player.y) return false;
+    if (background.blocked.includes(Direction.LEFT) && xPos > game.player.x) return false;
+    if (background.blocked.includes(Direction.RIGHT) && xPos < game.player.x) return false;
+    if (background.blocked.includes(Direction.UP) && yPos > game.player.y) return false;
+    if (background.blocked.includes(Direction.DOWN) && yPos < game.player.y) return false;
   }
 
   if ([...pushableTiles, TileType.ICE_BLOCK].includes(tile.id)) {

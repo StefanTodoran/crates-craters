@@ -108,7 +108,7 @@ const styles = StyleSheet.create<any>({
   },
   label: (anim: Animated.Value) => ({
     position: "absolute",
-    top: "60%",
+    top: "50%",
     left: 0,
     marginLeft: normalize(6),
     fontFamily: "Montserrat-Regular",

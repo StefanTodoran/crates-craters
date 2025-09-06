@@ -7,10 +7,6 @@ const mainGraphics = {
   COIN: require("./assets/main_theme/coin.png"),
   FLAG: require("./assets/main_theme/flag.png"),
   BOMB: require("./assets/main_theme/bomb.png"),
-  ONE_WAY_LEFT: require("./assets/main_theme/one_way_left.png"),
-  ONE_WAY_RIGHT: require("./assets/main_theme/one_way_right.png"),
-  ONE_WAY_UP: require("./assets/main_theme/one_way_up.png"),
-  ONE_WAY_DOWN: require("./assets/main_theme/one_way_down.png"),
   ONE_WAY_ONE_DIR: require("./assets/main_theme/one_way_one_dir.png"),
   ONE_WAY_CORNER: require("./assets/main_theme/one_way_corner.png"),
   ONE_WAY_OPPOSITE_SIDES: require("./assets/main_theme/one_way_opposite_sides.png"),
@@ -21,6 +17,7 @@ const mainGraphics = {
   PLAYER_OUTLINED_DARK: require("./assets/main_theme/player_outlined_dark.png"),
   METAL_CRATE: require("./assets/main_theme/metal_crate.png"),
   ICE_BLOCK: require("./assets/main_theme/ice_block.png"),
+  FILTER: require("./assets/main_theme/filter.png"),
 
   THEME_ICON: require("./assets/main_theme/theme_icon.png"),
   NIGHT_MODE_ICON: require("./assets/main_theme/night_icon.png"),

@@ -12,7 +12,7 @@ import TextStyles, { normalize } from "../TextStyles";
 import { colors, graphics } from "../Theme";
 import { calcBoardTileSize } from "../util/board";
 import { likeUserLevel, markUserLevelCompleted, postSolutionData } from "../util/database";
-import { getData, markLevelCompleted, metadataKeys } from "../util/loader";
+import { compressBoardData, getData, markLevelCompleted, metadataKeys } from "../util/loader";
 import { Game, SoundEvent, canMoveTo, doGameMove, initializeGameObj } from "../util/logic";
 // import { aStarSearch, basicHeuristic, compoundHeuristic } from "../util/search";
 import Toast from "react-native-toast-message";
@@ -123,6 +123,7 @@ export default function PlayLevel({
 
   const [canLikeLevel, setCanLikeLevel] = useState(false);
   useEffect(() => {
+    console.log("level", compressBoardData(level.board));
     if (!level.hasOwnProperty("shared") || !userCredential) return;
 
     const likedLevels = getData(metadataKeys.likedLevels) || [];
@@ -446,7 +447,7 @@ export default function PlayLevel({
           />
           <MenuButton
             label="Undo Move"
-            icon={graphics.ONE_WAY_LEFT}
+            icon={graphics.ONE_WAY_ONE_DIR}
             theme={colors.BLUE_THEME}
             onPress={undoMove}
             disabled={history.length === 0}

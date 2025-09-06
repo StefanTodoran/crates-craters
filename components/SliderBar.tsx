@@ -17,6 +17,7 @@ interface Props {
   minValue: number,
   maxValue: number,
   changeCallback: (newValue: number) => void,
+  stepSize?: number,
   showSteppers?: boolean,
   theme?: Theme,
 }
@@ -29,6 +30,7 @@ interface Props {
  * @param {number} minValue
  * @param {number} maxValue
  * @param {Function} changeCallback The callback to use when the value inside is changed.
+ * @param {number} stepSize The increment to snap values to. Defaults to 1.
  * @param {boolean} showSteppers
  */
 export default function SliderBar({
@@ -37,6 +39,7 @@ export default function SliderBar({
   value,
   minValue, maxValue,
   changeCallback,
+  stepSize = 1,
   showSteppers,
   theme,
 }: Props) {
@@ -58,10 +61,12 @@ export default function SliderBar({
     calcValueFromGesture.current = (gestureState: PanResponderGestureState) => {
       const fractionalPos = (gestureState.moveX - leftGutterWidth) / barWidth;
       const newValue = fractionalPos * (maxValue - minValue) + minValue;
-      const boundedNewValue = Math.max(minValue, Math.min(maxValue, Math.round(newValue)));
+      const effectiveStep = stepSize > 0 ? stepSize : 1;
+      const snappedValue = Math.round((newValue - minValue) / effectiveStep) * effectiveStep + minValue;
+      const boundedNewValue = Math.max(minValue, Math.min(maxValue, snappedValue));
       return boundedNewValue;
     };
-  }, [value, minValue, maxValue]);
+  }, [value, minValue, maxValue, stepSize]);
 
   function onGestureMove(_evt: GestureResponderEvent, gestureState: PanResponderGestureState) {
     const newValue = calcValueFromGesture.current(gestureState);
@@ -103,8 +108,8 @@ export default function SliderBar({
         </View>
 
         {showSteppers && <>
-          <StepperArrow color={mainColor!} onPress={() => changeCallback(Math.max(value - 1, minValue))} flipped />
-          <StepperArrow color={mainColor!} onPress={() => changeCallback(Math.min(value + 1, maxValue))} />
+          <StepperArrow color={mainColor!} onPress={() => changeCallback(Math.max(value - stepSize, minValue))} flipped />
+          <StepperArrow color={mainColor!} onPress={() => changeCallback(Math.min(value + stepSize, maxValue))} />
         </>}
       </View>
     </View>

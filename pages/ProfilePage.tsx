@@ -1,9 +1,9 @@
 import { UserCredential, sendEmailVerification, signOut } from "firebase/auth";
 import { useContext } from "react";
-import { Linking, StyleSheet, View } from "react-native";
+import { Dimensions, Linking, StyleSheet, View } from "react-native";
 import Toast from "react-native-toast-message";
 import InputCard from "../components/InputCard";
-import MenuButton from "../components/MenuButton";
+import SimpleButton from "../components/SimpleButton";
 import SubpageContainer from "../components/SubpageContainer";
 import GlobalContext from "../GlobalContext";
 import { normalize } from "../TextStyles";
@@ -11,6 +11,8 @@ import { colors, graphics } from "../Theme";
 import { auth } from "../util/firebase";
 import { metadataKeys, setData } from "../util/loader";
 import LoginPage from "./LoginPage";
+
+const win = Dimensions.get("window");
 
 interface Props {
     attemptSignIn: () => Promise<void>,
@@ -68,7 +70,7 @@ export default function ProfilePage({ attemptSignIn, setUserCredential }: Props)
             />
 
             <View style={styles.buttonsRow}>
-                <MenuButton onPress={() => {
+                <SimpleButton onPress={() => {
                     const user = userCredential.user;
                     sendEmailVerification(user)
                         .then(() => {
@@ -86,15 +88,21 @@ export default function ProfilePage({ attemptSignIn, setUserCredential }: Props)
                             });
                         });
                 }}
-                    label="Resend Verification"
+                    text="Resend Verification"
                     icon={graphics.MAIL_ICON}
                     theme={colors.YELLOW_THEME}
                     disabled={userCredential.user.emailVerified}
+                    fillWidth
+                    extraMargin={[6, 5]}
+                    square
                 />
-                <MenuButton onPress={() => Linking.openURL("mailto:info@todoran.dev?subject=Crates%20%26%20Craters")}
-                    label="Contact Support"
+                <SimpleButton onPress={() => Linking.openURL("mailto:info@todoran.dev?subject=Crates%20%26%20Craters")}
+                    text="Contact Support"
                     icon={graphics.GET_SUPPORT_ICON}
                     theme={colors.YELLOW_THEME}
+                    fillWidth
+                    extraMargin={[6, 5]}
+                    square
                 />
             </View>
 
@@ -104,10 +112,11 @@ export default function ProfilePage({ attemptSignIn, setUserCredential }: Props)
 
 const styles = StyleSheet.create({
     buttonsRow: {
-        // alignItems: "center",
+        marginTop: normalize(5),
+        flexDirection: "row",
         justifyContent: "center",
-        // width: "100%",
-        paddingHorizontal: "20%",
+        width: win.width * 0.45,
+        marginHorizontal: win.width * 0.225,
     },
     hintRow: {
         flexDirection: "row",

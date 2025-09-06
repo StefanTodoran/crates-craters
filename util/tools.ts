@@ -29,6 +29,15 @@ export const spawnTool: Tool = {
     tile: { id: TileType.SPAWN },
 };
 
+export function getOneWayTool(directions: Direction[]): Tool {
+    return {
+        label: "One Way",
+        icon: graphics.ONE_WAY_ONE_DIR,
+        tile: { id: TileType.ONEWAY, blocked: directions },
+        theme: colors.BLUE_THEME,
+    };
+}
+
 export const tools: Tool[] = [
     {
         label: "Door",
@@ -53,30 +62,6 @@ export const tools: Tool[] = [
         icon: graphics.COIN,
         tile: { id: TileType.COIN },
         theme: colors.YELLOW_THEME,
-    },
-    {
-        label: "Left",
-        icon: graphics.ONE_WAY_LEFT,
-        tile: { id: TileType.ONEWAY, orientation: Direction.LEFT },
-        theme: colors.BLUE_THEME,
-    },
-    {
-        label: "Right",
-        icon: graphics.ONE_WAY_RIGHT,
-        tile: { id: TileType.ONEWAY, orientation: Direction.RIGHT },
-        theme: colors.BLUE_THEME,
-    },
-    {
-        label: "Up",
-        icon: graphics.ONE_WAY_UP,
-        tile: { id: TileType.ONEWAY, orientation: Direction.UP },
-        theme: colors.BLUE_THEME,
-    },
-    {
-        label: "Down",
-        icon: graphics.ONE_WAY_DOWN,
-        tile: { id: TileType.ONEWAY, orientation: Direction.DOWN },
-        theme: colors.BLUE_THEME,
     },
     wallTool,
     {
