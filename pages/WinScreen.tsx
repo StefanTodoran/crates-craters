@@ -1,26 +1,18 @@
-import { Audio } from "expo-av";
 import { useContext, useEffect, useRef } from "react";
 import { Animated, Image, StyleSheet } from "react-native";
 import GlobalContext from "../GlobalContext";
 import { sizeFromWidthPercent } from "../TextStyles";
 import { graphics } from "../Theme";
 
+import { useAudioPlayer } from "expo-audio";
+const victorySound = require("../assets/audio/victory.wav");
+
 export default function WinScreen() {
   const { darkMode, playAudio } = useContext(GlobalContext);
 
+  const victorySoundPlayer = useAudioPlayer(victorySound);
   useEffect(() => {
-    let sound: Audio.Sound;
-    async function playSound() {
-      sound = (await Audio.Sound.createAsync(require('../assets/audio/victory.wav'))).sound;
-      await sound.playAsync();
-    }
-
-    // A useEffect hook must return a function, not a promise.
-    if (playAudio) playSound();
-
-    return function unmountCleanUp() {
-      if (sound) sound.unloadAsync();
-    }
+    if (playAudio) victorySoundPlayer.play();
   }, []);
 
   // Controls the modal fade in.

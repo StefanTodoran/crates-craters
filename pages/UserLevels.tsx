@@ -111,7 +111,7 @@ export default function UserLevels({
     const likedLevels = getData(metadataKeys.likedLevels) || [];
     const attemptedLevels = getData(metadataKeys.attemptedLevels) || [];
     const completedLevels = getData(metadataKeys.completedLevels) || [];
-    const scrollRef = useRef<any>();
+    const scrollRef = useRef<FlatList<Filter>>(null);
 
     const [filters, setFilters] = useState(new Set<Filter>());
     const toggleFilter = (filter: Filter) => {
@@ -129,7 +129,7 @@ export default function UserLevels({
     };
 
     useEffect(() => {
-        scrollRef.current.scrollToOffset({ offset: 0, animated: false });
+        scrollRef.current?.scrollToOffset({ offset: 0, animated: false });
     }, [filters]);
 
     const [lengthFilterEnabled, setLengthFilterEnabled] = useState(false);

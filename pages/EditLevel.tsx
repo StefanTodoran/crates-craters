@@ -1,5 +1,3 @@
-import { Audio } from "expo-av";
-import { Sound } from "expo-av/build/Audio";
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { Animated, Dimensions, GestureResponderEvent, PanResponder, PanResponderGestureState, SafeAreaView, StyleSheet, Text, View } from "react-native";
 import BackButton from "../assets/BackButton";
@@ -16,6 +14,10 @@ import { updateLevel } from "../util/loader";
 import { getSpawnPosition } from "../util/logic";
 import { metalCrateTool, spawnTool, Tool, tools, wallTool } from "../util/tools";
 import { PageView, TileType, UserLevel } from "../util/types";
+
+import { useAudioPlayer } from "expo-audio";
+const successSound = require("../assets/audio/push.wav");
+const errorSound = require("../assets/audio/fill.wav");
 
 const win = Dimensions.get("window");
 
@@ -52,32 +54,8 @@ export default function EditLevel({
 }: Props) {
   const { darkMode, playAudio } = useContext(GlobalContext);
 
-  // ===================
-  // SOUND RELATED SETUP
-  // ===================
-  const [successSound, setSuccessSound] = useState<Sound>();
-  const [errorSound, setErrorSound] = useState<Sound>();
-
-  async function playSuccessSound() {
-    const { sound } = await Audio.Sound.createAsync(require("../assets/audio/push.wav"));
-    setSuccessSound(sound);
-    await sound.playAsync();
-  }
-  async function playErrorSound() {
-    const { sound } = await Audio.Sound.createAsync(require("../assets/audio/fill.wav"));
-    setErrorSound(sound);
-    await sound.playAsync();
-  }
-
-  useEffect(() => {
-    return successSound ? () => { successSound.unloadAsync(); } : undefined;
-  }, [successSound]);
-  useEffect(() => {
-    return errorSound ? () => { errorSound.unloadAsync(); } : undefined;
-  }, [errorSound]);
-  // ===============
-  // END SOUND SETUP
-  // ===============
+  const successSoundPlayer = useAudioPlayer(successSound);
+  const errorSoundPlayer = useAudioPlayer(errorSound);
 
   const [currentTool, selectTool] = useState<Tool>(wallTool);
   const [toolsModalOpen, setToolsModalState] = useState(false);
@@ -119,8 +97,8 @@ export default function EditLevel({
     setUnsavedChanges(false);
   }, []);
 
-  const gestureStartMode = useRef<GestureMode>();
-  const gestureStartTile = useRef<TileType>();
+  const gestureStartMode = useRef<GestureMode>(undefined);
+  const gestureStartTile = useRef<TileType>(undefined);
 
   const tileSize = calcBoardTileSize(level.board.width, level.board.height, win);
   const changeTile = useRef<(_y: number, _x: number) => void>(() => undefined);
@@ -143,7 +121,7 @@ export default function EditLevel({
 
       if (tileType === TileType.EMPTY && gestureStartMode.current !== GestureMode.ERASE) {
         newBoard.setTile(y, x, currentTool.tile);
-        if (playAudio) playSuccessSound();
+        if (playAudio) successSoundPlayer.play();
         gestureStartMode.current = GestureMode.PLACE;
 
       } else if (
@@ -152,7 +130,7 @@ export default function EditLevel({
       ) {
         // Never allow deletion of spawn tile, only replacement to somewhere else.
         if (tileType !== TileType.SPAWN) newBoard.setTile(y, x, { id: 0 });
-        if (tileType !== TileType.EMPTY && playAudio) playErrorSound();
+        if (tileType !== TileType.EMPTY && playAudio) errorSoundPlayer.play();
         gestureStartMode.current = GestureMode.ERASE;
         gestureStartTile.current = tileType;
       }

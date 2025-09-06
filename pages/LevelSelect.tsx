@@ -85,7 +85,7 @@ export default function LevelSelect({
     return lastBeaten;
   }, [levels]);
 
-  const scrollRef = useRef<any>();
+  const scrollRef = useRef<FlatList<Level>>(null);
   let scrollIndex = levels.findIndex(level => level.uuid === scrollTo);
   if (scrollIndex === -1) scrollIndex = lastBeatenLevel;  // If a level is not currently in progress/resumable, scroll to the last beaten level.
   scrollIndex = Math.max(0, scrollIndex);
@@ -96,7 +96,7 @@ export default function LevelSelect({
 
   useEffect(() => {
     if (levels.length === 0) return;
-    if (scrollTo === "last") scrollRef.current.scrollToIndex({ index: displayLevels.length - 1, animated: true });
+    if (scrollTo === "last") scrollRef.current?.scrollToIndex({ index: displayLevels.length - 1, animated: true });
   }, [scrollTo, loadedLevels]);
 
   const doRefresh = useCallback(() => {
@@ -225,7 +225,7 @@ export default function LevelSelect({
             { length: elementHeight, offset: elementHeight * index, index }
           )}
           onLayout={() => {
-            if (scrollIndex) scrollRef.current.scrollToIndex({ index: scrollIndex, animated: false });
+            if (scrollIndex) scrollRef.current?.scrollToIndex({ index: scrollIndex, animated: false });
           }}
           removeClippedSubviews
         />

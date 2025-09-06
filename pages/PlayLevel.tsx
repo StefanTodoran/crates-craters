@@ -1,5 +1,3 @@
-import { Audio } from "expo-av";
-import { Sound } from "expo-av/build/Audio";
 import { useContext, useEffect, useMemo, useRef, useState } from "react";
 import { Animated, Dimensions, GestureResponderEvent, PanResponder, PanResponderGestureState, SafeAreaView, StyleSheet, Text, View } from "react-native";
 import BackButton from "../assets/BackButton";
@@ -21,6 +19,14 @@ import Toast from "react-native-toast-message";
 import TutorialHint from "../components/TutorialHint";
 import { Direction, Level, OfficialLevel, PageView, PlayMode, SharedLevel } from "../util/types";
 import WinScreen from "./WinScreen";
+
+import { useAudioPlayer } from "expo-audio";
+const moveSound = require("../assets/audio/move.wav");
+const pushSound = require("../assets/audio/push.wav");
+const fillSound = require("../assets/audio/fill.wav");
+const coinSound = require("../assets/audio/coin.wav");
+const doorSound = require("../assets/audio/door.wav");
+const explosionSound = require("../assets/audio/explosion.wav");
 
 const win = Dimensions.get("window");
 
@@ -73,86 +79,34 @@ export default function PlayLevel({
     gameHistoryCallback([...history, game]);
   }
 
-  // Set up for sounds, most of this is just copied from the very
-  // limited expo-av documentation so don't mess with it.
-  const [moveSound, setMoveSound] = useState<Sound>();
-  const [pushSound, setPushSound] = useState<Sound>();
-  const [fillSound, setFillSound] = useState<Sound>();
-  const [coinSound, setCoinSound] = useState<Sound>();
-  const [doorSound, setDoorSound] = useState<Sound>();
-  const [boomSound, setBoomSound] = useState<Sound>();
-
-  async function playMoveSound() {
-    const { sound } = await Audio.Sound.createAsync(require("../assets/audio/move.wav"));
-    setMoveSound(sound);
-    await sound.playAsync();
-  }
-  async function playPushSound() {
-    const { sound } = await Audio.Sound.createAsync(require("../assets/audio/push.wav"));
-    setPushSound(sound);
-    await sound.playAsync();
-  }
-  async function playFillSound() {
-    const { sound } = await Audio.Sound.createAsync(require("../assets/audio/fill.wav"));
-    setFillSound(sound);
-    await sound.playAsync();
-  }
-  async function playCoinSound() {
-    const { sound } = await Audio.Sound.createAsync(require("../assets/audio/coin.wav"));
-    setCoinSound(sound);
-    await sound.playAsync();
-  }
-  async function playDoorSound() {
-    const { sound } = await Audio.Sound.createAsync(require("../assets/audio/door.wav"));
-    setDoorSound(sound);
-    await sound.playAsync();
-  }
-  async function playExplosionSound() {
-    const { sound } = await Audio.Sound.createAsync(require("../assets/audio/explosion.wav"));
-    setBoomSound(sound);
-    await sound.playAsync();
-  }
-
-  useEffect(() => {
-    return moveSound ? () => { moveSound.unloadAsync(); } : undefined;
-  }, [moveSound]);
-  useEffect(() => {
-    return pushSound ? () => { pushSound.unloadAsync(); } : undefined;
-  }, [pushSound]);
-  useEffect(() => {
-    return fillSound ? () => { fillSound.unloadAsync(); } : undefined;
-  }, [fillSound]);
-  useEffect(() => {
-    return coinSound ? () => { coinSound.unloadAsync(); } : undefined;
-  }, [coinSound]);
-  useEffect(() => {
-    return doorSound ? () => { doorSound.unloadAsync(); } : undefined;
-  }, [doorSound]);
-  useEffect(() => {
-    return boomSound ? () => { boomSound.unloadAsync(); } : undefined;
-  }, [boomSound]);
+  const moveSoundPlayer = useAudioPlayer(moveSound);
+  const pushSoundPlayer = useAudioPlayer(pushSound);
+  const fillSoundPlayer = useAudioPlayer(fillSound);
+  const coinSoundPlayer = useAudioPlayer(coinSound);
+  const doorSoundPlayer = useAudioPlayer(doorSound);
+  const explosionSoundPlayer = useAudioPlayer(explosionSound);
 
   function playSoundEffect(soundEffect: SoundEvent | undefined) {
     if (!playAudio) return;
 
     switch (soundEffect) {
       case SoundEvent.EXPLOSION:
-        playExplosionSound();
+        explosionSoundPlayer.play();
         break;
       case SoundEvent.PUSH:
-        playPushSound();
+        pushSoundPlayer.play();
         break;
       case SoundEvent.FILL:
-        playFillSound();
+        fillSoundPlayer.play();
         break;
       case SoundEvent.DOOR:
-        playDoorSound();
+        doorSoundPlayer.play();
         break;
       case SoundEvent.COLLECT:
-        playCoinSound();
+        coinSoundPlayer.play();
         break;
       case SoundEvent.MOVE:
-        playMoveSound();
+        moveSoundPlayer.play();
         break;
     }
   }
@@ -188,7 +142,7 @@ export default function PlayLevel({
   // the previous tap time so we can determine if the two taps happened fast enough, and
   // we keep track of position show it is only a double tap if its the same square twice.
   const prevTouchTime = useRef(Date.now());
-  const prevTouchPos = useRef<Position>();
+  const prevTouchPos = useRef<Position>(undefined);
   const [touchPos, setTouchPos] = useState({ y: -1, x: -1 });
   const pressAnim = useRef(new Animated.Value(0)).current;
 
