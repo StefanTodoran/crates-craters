@@ -4,7 +4,7 @@ import { normalize } from "../TextStyles";
 import ResponsivePressable from "./ResponsivePressable";
 
 interface Props {
-  icon: ImageSourcePropType, // The image to be displayed in the button.
+  icon?: ImageSourcePropType, // The image to be displayed in the button.
   color: string,
   label?: string, // The text to be displayed in the button.
   onPress?: () => void, // The function to be called on press event.

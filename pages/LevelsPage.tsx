@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { ImageURISource } from "react-native";
 import OfficialIcon from "../assets/main_theme/official.png";
 import SharedIcon from "../assets/main_theme/shared.png";
 import { IndicatorIcon } from "../components/LevelCard";
@@ -69,12 +70,12 @@ export default function LevelsPage({
             {
                 label: "Official",
                 color: purpleTheme.MAIN_COLOR,
-                icon: OfficialIcon,
+                icon: OfficialIcon as ImageURISource,
             },
             {
                 label: "Shared",
                 color: purpleTheme.MAIN_COLOR,
-                icon: SharedIcon,
+                icon: SharedIcon as ImageURISource,
             },
         ];
     }, []);

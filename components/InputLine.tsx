@@ -81,7 +81,6 @@ export default function InputLine({
           value={value}
           selectionColor={colors.DIM_GRAY}
           cursorColor={colors.DIM_GRAY}
-          maxLength={24}
           allowFontScaling={false}
           editable={!disabled && !!onChange}
           secureTextEntry={isSensitive}
@@ -111,6 +110,7 @@ const styles = StyleSheet.create<any>({
     position: "absolute",
     top: "60%",
     left: 0,
+    marginLeft: normalize(6),
     fontFamily: "Montserrat-Regular",
     fontWeight: "normal",
     color: anim.interpolate({
@@ -120,7 +120,7 @@ const styles = StyleSheet.create<any>({
     transform: [{
       translateY: anim.interpolate({
         inputRange: [0, 1],
-        outputRange: [0, -7],
+        outputRange: [0, -12],
       }),
     }],
     fontSize: anim.interpolate({

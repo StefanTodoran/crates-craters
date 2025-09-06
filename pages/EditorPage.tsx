@@ -1,8 +1,10 @@
-import { useMemo } from "react";
+import { useContext, useMemo } from "react";
+import { ImageURISource } from "react-native";
 import CreateIcon from "../assets/main_theme/create.png";
 import EditorIcon from "../assets/main_theme/editor.png";
 import { IndicatorIcon } from "../components/LevelCard";
 import Subpages from "../components/Subpages";
+import GlobalContext from "../GlobalContext";
 import { colors, graphics } from "../Theme";
 import { doPageChange } from "../util/events";
 import { Level, PageView, UserLevel } from "../util/types";
@@ -11,7 +13,7 @@ import LevelSelect from "./LevelSelect";
 import ManageLevel from "./ManageLevel";
 
 interface Props {
-  viewCallback: (newView: PageView) => void,
+  viewCallback: (newView: PageView, pageNum?: number) => void,
   playLevelCallback: (uuid: string) => void,
   startEditingCallback: (uuid: string) => void,
   createNewLevelCallback: (newLevel: UserLevel) => void,
@@ -31,7 +33,19 @@ export default function EditorPage({
   elementHeight,
   storeElementHeightCallback,
 }: Props) {
+  const { userCredential } = useContext(GlobalContext);
   const existingLevelNames = levels.map(level => level.name.toLowerCase());
+
+  const regularEmptyListProps = {
+    textLines: ["No custom levels created yet."],
+  };
+
+  const notSignedInEmtpyListProps = {
+    textLines: ["No custom levels created yet.", "Log in or sign up to get started!"],
+    onPress: () => viewCallback(PageView.STORE),
+    buttonLabel: "Goto Accounts",
+    buttonIcon: graphics.SHARE_ICON_RED,
+  };
 
   const pageComponents = [
     <LevelSelect
@@ -51,12 +65,10 @@ export default function EditorPage({
       elementHeight={elementHeight}
       indicatorIcon={IndicatorIcon.SHARED}
       storeElementHeightCallback={storeElementHeightCallback}
-      headerComponent={<CreateLevel createLevelCallback={createNewLevelCallback} existingLevelNames={existingLevelNames}/>}
+      headerComponent={!!userCredential ? <CreateLevel createLevelCallback={createNewLevelCallback} existingLevelNames={existingLevelNames}/> : undefined}
       emptyListProps={{
-        textLines: ["No custom levels created yet!"],
-        // onPress: () => doPageChange(2),
-        // buttonLabel: "Create New Level",
-        // buttonIcon: graphics.METAL_CRATE,
+        ...regularEmptyListProps,
+        ...(!userCredential ? notSignedInEmtpyListProps : {}),
       }}
       theme={colors.RED_THEME}
     />,
@@ -75,12 +87,12 @@ export default function EditorPage({
       {
         label: "Levels",
         color: colors.RED_THEME.MAIN_COLOR,
-        icon: CreateIcon,
+        icon: CreateIcon as ImageURISource,
       },
       {
         label: "Manage",
         color: colors.RED_THEME.MAIN_COLOR,
-        icon: EditorIcon,
+        icon: EditorIcon as ImageURISource,
       },
     ];
   }, []);

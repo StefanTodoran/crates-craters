@@ -8,7 +8,7 @@ import IconButton from "./IconButton";
 interface SubpageTab {
   label: string,
   color: string,
-  icon: ImageURISource,
+  icon?: ImageURISource,
 }
 
 interface Props {

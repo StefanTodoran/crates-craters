@@ -24,9 +24,11 @@ export default function EmptyList({
 
   return (
     <View style={styles.container}>
-      <Text style={TextStyles.paragraph(darkMode)}>
-        {textLines.join("\n\n")}
-      </Text>
+      {textLines.map((line, index) => (
+        <Text key={index} style={[TextStyles.paragraph(darkMode), { textAlign: "center" }]}>
+          {line}
+        </Text>
+      ))}
       <View style={styles.buttonWrap}>
         {buttonLabel && <MenuButton
           onPress={onPress}

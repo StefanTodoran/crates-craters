@@ -20,7 +20,7 @@ import TutorialHint from "../components/TutorialHint";
 import { Direction, Level, OfficialLevel, PageView, PlayMode, SharedLevel } from "../util/types";
 import WinScreen from "./WinScreen";
 
-import { useAudioPlayer } from "expo-audio";
+import { AudioPlayer, useAudioPlayer } from "expo-audio";
 const moveSound = require("../assets/audio/move.wav");
 const pushSound = require("../assets/audio/push.wav");
 const fillSound = require("../assets/audio/fill.wav");
@@ -86,27 +86,32 @@ export default function PlayLevel({
   const doorSoundPlayer = useAudioPlayer(doorSound);
   const explosionSoundPlayer = useAudioPlayer(explosionSound);
 
+  const playSound = (soundPlayer: AudioPlayer) => {
+    soundPlayer.seekTo(0);
+    soundPlayer.play();
+  }
+
   function playSoundEffect(soundEffect: SoundEvent | undefined) {
     if (!playAudio) return;
 
     switch (soundEffect) {
       case SoundEvent.EXPLOSION:
-        explosionSoundPlayer.play();
+        playSound(explosionSoundPlayer);
         break;
       case SoundEvent.PUSH:
-        pushSoundPlayer.play();
+        playSound(pushSoundPlayer);
         break;
       case SoundEvent.FILL:
-        fillSoundPlayer.play();
+        playSound(fillSoundPlayer);
         break;
       case SoundEvent.DOOR:
-        doorSoundPlayer.play();
+        playSound(doorSoundPlayer);
         break;
       case SoundEvent.COLLECT:
-        coinSoundPlayer.play();
+        playSound(coinSoundPlayer);
         break;
       case SoundEvent.MOVE:
-        moveSoundPlayer.play();
+        playSound(moveSoundPlayer);
         break;
     }
   }
@@ -470,7 +475,7 @@ export default function PlayLevel({
           <SimpleButton onPress={modeToBackPage[mode]} Svg={BackButton} square extraMargin={[7.5, 0]} />
 
           {Object.hasOwn(level, "introduces") && !game.won &&
-            <SimpleButton onPress={() => setShowTutorial(true)} icon={graphics.LIGHTBULB_ICON} square main extraMargin={[7.5, 0]} />}
+            <SimpleButton onPress={() => setShowTutorial(true)} icon={graphics.LIGHTBULB_ICON} text="Help" square main extraMargin={[7.5, 0]} />}
 
           {!game.won && <SimpleButton onPress={toggleModal} icon={graphics.MENU_ICON} text="Menu" main extraMargin={[7.5, 0]} />}
           {game.won && postWinActionBtn}

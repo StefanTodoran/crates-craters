@@ -140,6 +140,9 @@ const styles = StyleSheet.create<any>({
       {
         rotate: `${(unsignedMax(touchX, tileSize) / tileSize) * MAX_PLAYER_ROTATION_DEG}deg`,
       },
+      {
+        scale: (touchX === 0 && touchY === 0) ? 0.975 : 1.05,
+      },
     ],
   }),
   adjacentTileContainer: (xPos: number, yPos: number, tileSize: number, touchMove: number, isHorizontal: boolean, clampPositive: boolean) => ({

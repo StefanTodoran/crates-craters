@@ -55,7 +55,15 @@ export default function EditLevel({
   const { darkMode, playAudio } = useContext(GlobalContext);
 
   const successSoundPlayer = useAudioPlayer(successSound);
+  const playSuccessSound = () => {
+    successSoundPlayer.seekTo(0);
+    successSoundPlayer.play();
+  }
   const errorSoundPlayer = useAudioPlayer(errorSound);
+  const playErrorSound = () => {
+    errorSoundPlayer.seekTo(0);
+    errorSoundPlayer.play();
+  }
 
   const [currentTool, selectTool] = useState<Tool>(wallTool);
   const [toolsModalOpen, setToolsModalState] = useState(false);
@@ -121,7 +129,7 @@ export default function EditLevel({
 
       if (tileType === TileType.EMPTY && gestureStartMode.current !== GestureMode.ERASE) {
         newBoard.setTile(y, x, currentTool.tile);
-        if (playAudio) successSoundPlayer.play();
+        if (playAudio) playSuccessSound();
         gestureStartMode.current = GestureMode.PLACE;
 
       } else if (
@@ -130,7 +138,7 @@ export default function EditLevel({
       ) {
         // Never allow deletion of spawn tile, only replacement to somewhere else.
         if (tileType !== TileType.SPAWN) newBoard.setTile(y, x, { id: 0 });
-        if (tileType !== TileType.EMPTY && playAudio) errorSoundPlayer.play();
+        if (tileType !== TileType.EMPTY && playAudio) playErrorSound();
         gestureStartMode.current = GestureMode.ERASE;
         gestureStartTile.current = tileType;
       }

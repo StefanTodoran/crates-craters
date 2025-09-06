@@ -60,6 +60,7 @@ export function getLocalUserData() {
       // TODO: Maybe add "expo-device" package to get device info.
     }
     setData(metadataKeys.userData, newUserData);
+    return newUserData;
   }
 
   return userData;

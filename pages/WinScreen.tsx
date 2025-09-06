@@ -12,7 +12,9 @@ export default function WinScreen() {
 
   const victorySoundPlayer = useAudioPlayer(victorySound);
   useEffect(() => {
-    if (playAudio) victorySoundPlayer.play();
+    if (!playAudio) return;
+    victorySoundPlayer.seekTo(0);
+    victorySoundPlayer.play();
   }, []);
 
   // Controls the modal fade in.
