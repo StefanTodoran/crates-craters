@@ -32,7 +32,7 @@ export default function ProfilePage({ attemptSignIn, setUserCredential }: Props)
                 title={"Profile"}
                 hints={[
                     `UID: ${userCredential?.user.uid}`,
-                    userCredential?.user.emailVerified ? "Email verified" : "Unverified email",
+                    userCredential?.user.emailVerified ? "Email verified" : "Email address unverified",
                 ]}
                 fields={[
                     {
@@ -88,7 +88,7 @@ export default function ProfilePage({ attemptSignIn, setUserCredential }: Props)
                             });
                         });
                 }}
-                    text="Resend Verification"
+                    text="Resend Email"
                     icon={graphics.MAIL_ICON}
                     theme={colors.YELLOW_THEME}
                     disabled={userCredential.user.emailVerified}

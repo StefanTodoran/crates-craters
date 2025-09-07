@@ -60,7 +60,7 @@ export default function EditorPage({
           doPageChange(1);
         },
       }}
-      levels={levels}
+      levels={!!userCredential ? levels : []}
       scrollTo={editorLevel?.uuid}
       elementHeight={elementHeight}
       indicatorIcon={IndicatorIcon.SHARED}

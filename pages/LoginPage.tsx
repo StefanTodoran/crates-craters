@@ -61,14 +61,14 @@ export default function LoginPage({ setUserCredential }: Props) {
                             square
                             extraMargin={[0, 8]}
                             main
-                            />
+                        />
                         <SimpleButton
                             text="Create Account"
                             onPress={() => setPageMode(PageMode.SIGNUP)}
                             theme={colors.YELLOW_THEME}
                             icon={graphics.FLAG}
-                            square
                             fillWidth
+                            square
                             extraMargin={[0, 8]}
                         />
                     </View>
@@ -77,6 +77,9 @@ export default function LoginPage({ setUserCredential }: Props) {
 
             {
                 pageMode !== PageMode.UNSET && <>
+                    <Text style={[TextStyles.subtitle(darkMode), { color: colors.YELLOW_THEME.MAIN_COLOR }]}>
+                        {pageMode === PageMode.LOGIN ? "Log In" : "Sign Up"}
+                    </Text>
                     <InputLine
                         label={"Email"}
                         value={email}
