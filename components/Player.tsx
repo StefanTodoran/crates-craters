@@ -2,16 +2,12 @@ import { useEffect, useMemo, useRef } from "react";
 import { Animated, Image, StyleProp, StyleSheet, View } from "react-native";
 import { colors, graphics } from "../Theme";
 import { getIconSrc } from "../util/board";
-import { Game, isValidMove } from "../util/logic";
-import { TileType } from "../util/types";
+import { Game, isValidMove, pushIceBlock } from "../util/logic";
+import { Offset, TileType, offsetToDirection } from "../util/types";
 import BombBoardTile from "./BombBoardTile";
 
 const MAX_PLAYER_ROTATION_DEG = 5;
-
-interface Offset {
-  dx: number,
-  dy: number,
-}
+const ICE_BLOCK_LINE_SIZE = 5;
 
 interface Props {
   game: Game,
@@ -50,10 +46,12 @@ export default function Player({
     height: tileSize,
   };
 
-  const [options, pushables] = useMemo(() => {
+  const [options, pushables, iceBlockPreviews] = useMemo(() => {
     // We only add selectors on adjacent tiles where the player could actually move.
     const newOptions: JSX.Element[] = [];
     const newPushables: JSX.Element[] = [];
+    const newIceBlockPreviews: (IceBlockPreview | null)[] = [];
+
     const offsets: Offset[] = [
       { dx: 0, dy: -1 },
       { dx: -1, dy: 0 },
@@ -73,48 +71,112 @@ export default function Player({
 
       const pushable = getAdjacentTile(game, offset, tileSize, tileStyle, shouldHighlight);
       newPushables.push(pushable);
+
+      const iceBlockPreview = getIceBlockPreview(game, offset, shouldHighlight);
+      newIceBlockPreviews.push(iceBlockPreview);
     });
 
-    return [newOptions, newPushables];
+    return [newOptions, newPushables, newIceBlockPreviews];
   }, [game, tileSize, darkMode]);
 
   return (
     <>
       {!game.won && options}
-      
-      <Animated.View style={styles.adjacentTileContainer(game.player.x, game.player.y - 1, tileSize, touch.y, false, false)}>
-        {pushables[0]}
-      </Animated.View>
-      <Animated.View style={styles.adjacentTileContainer(game.player.x - 1, game.player.y, tileSize, touch.x, true, false)}>
-        {pushables[1]}
-      </Animated.View>
-      <Animated.View style={styles.adjacentTileContainer(game.player.x + 1, game.player.y, tileSize, touch.x, true, true)}>
-        {pushables[2]}
-      </Animated.View>
-      <Animated.View style={styles.adjacentTileContainer(game.player.x, game.player.y + 1, tileSize, touch.y, false, true)}>
-        {pushables[3]}
-      </Animated.View>
 
-      <Animated.View style={styles.playerContainer(game.player.x, game.player.y, tileSize, touch.x, touch.y)}>
+      {/* Ice block slide path previews */}
+      {iceBlockPreviews[0] && <>
+        <View style={styles.iceBlockPreview(iceBlockPreviews[0].topX, iceBlockPreviews[0].topY, iceBlockPreviews[0].width, iceBlockPreviews[0].height, tileSize, -touch.y, "top", darkMode)} />
+        <View style={styles.iceBlockHead(iceBlockPreviews[0].topX, iceBlockPreviews[0].topY, tileSize, -touch.y, "top", darkMode)} />
+      </>}
+      {iceBlockPreviews[1] && <>
+        <View style={styles.iceBlockPreview(iceBlockPreviews[1].topX, iceBlockPreviews[1].topY, iceBlockPreviews[1].width, iceBlockPreviews[1].height, tileSize, -touch.x, "left", darkMode)} />
+        <View style={styles.iceBlockHead(iceBlockPreviews[1].topX, iceBlockPreviews[1].topY, tileSize, -touch.x, "left", darkMode)} />
+      </>}
+      {iceBlockPreviews[2] && <>
+        <View style={styles.iceBlockPreview(iceBlockPreviews[2].topX, iceBlockPreviews[2].topY, iceBlockPreviews[2].width, iceBlockPreviews[2].height, tileSize, touch.x, "right", darkMode)} />
+        <View style={styles.iceBlockHead(iceBlockPreviews[2].bottomX, iceBlockPreviews[2].bottomY, tileSize, touch.x, "right", darkMode)} />
+      </>}
+      {iceBlockPreviews[3] && <>
+        <View style={styles.iceBlockPreview(iceBlockPreviews[3].topX, iceBlockPreviews[3].topY, iceBlockPreviews[3].width, iceBlockPreviews[3].height, tileSize, touch.y, "bottom", darkMode)} />
+        <View style={styles.iceBlockHead(iceBlockPreviews[3].bottomX, iceBlockPreviews[3].bottomY, tileSize, touch.y, "bottom", darkMode)} />
+      </>}
+
+      {/* Pushables tiles previews */}
+      <View style={styles.adjacentTileContainer(game.player.x, game.player.y - 1, tileSize, touch.y, false, false)}>
+        {pushables[0]}
+      </View>
+      <View style={styles.adjacentTileContainer(game.player.x - 1, game.player.y, tileSize, touch.x, true, false)}>
+        {pushables[1]}
+      </View>
+      <View style={styles.adjacentTileContainer(game.player.x + 1, game.player.y, tileSize, touch.x, true, true)}>
+        {pushables[2]}
+      </View>
+      <View style={styles.adjacentTileContainer(game.player.x, game.player.y + 1, tileSize, touch.y, false, true)}>
+        {pushables[3]}
+      </View>
+
+      <View style={styles.playerContainer(game.player.x, game.player.y, tileSize, touch.x, touch.y)}>
         <Image style={tileStyle} source={playerSrc} />
-      </Animated.View>
+      </View>
     </>
   );
 }
 
 function getAdjacentTile(game: Game, offset: Offset, tileSize: number, tileStyle: StyleProp<any>, isValidMove: boolean) {
+  if (!isValidMove) {
+    return <View style={tileStyle} />;
+  }
+
   const xPos = game.player.x + offset.dx;
   const yPos = game.player.y + offset.dy;
-
   const tile = game.board.getTile(yPos, xPos, true);
-  if ([TileType.CRATE, TileType.METAL_CRATE, TileType.ICE_BLOCK].includes(tile.id) && isValidMove) {
+
+  if ([TileType.CRATE, TileType.METAL_CRATE, TileType.ICE_BLOCK].includes(tile.id)) {
     return <Image style={tileStyle} source={getIconSrc(tile)!.icon} />;
   }
-  if (tile.id === TileType.BOMB && isValidMove) {
+  if (tile.id === TileType.BOMB) {
     return <BombBoardTile tile={tile} icon={getIconSrc(tile)!.icon} tileSize={tileSize} />;
   }
 
   return <View style={tileStyle} />;
+}
+
+interface IceBlockPreview {
+  topX: number;
+  topY: number;
+  bottomX: number;
+  bottomY: number;
+  height: number;
+  width: number;
+}
+
+function getIceBlockPreview(game: Game, offset: Offset, isValidMove: boolean): IceBlockPreview | null {
+  if (!isValidMove) return null;
+
+  const xPos = game.player.x + offset.dx;
+  const yPos = game.player.y + offset.dy;
+  const tile = game.board.getTile(yPos, xPos, true);
+
+  if (tile.id === TileType.ICE_BLOCK) {
+    const endPosition = pushIceBlock(game.board, game.player, offsetToDirection(offset));
+    const xTiles = Math.abs(endPosition.x - xPos);
+    const yTiles = Math.abs(endPosition.y - yPos);
+    if (xTiles <= 1 && yTiles <= 1) {
+      // We don't need a preview if the block won't slide.
+      return null;
+    }
+
+    return {
+      topX: Math.min(xPos, endPosition.x),
+      topY: Math.min(yPos, endPosition.y),
+      bottomX: Math.max(xPos, endPosition.x),
+      bottomY: Math.max(yPos, endPosition.y),
+      height: yTiles,
+      width: xTiles,
+    };
+  }
+
+  return null;
 }
 
 function unsignedMax(num: number, max: number) {
@@ -140,9 +202,6 @@ const styles = StyleSheet.create<any>({
       {
         rotate: `${(unsignedMax(touchX, tileSize) / tileSize) * MAX_PLAYER_ROTATION_DEG}deg`,
       },
-      {
-        scale: (touchX === 0 && touchY === 0) ? 0.975 : 1.05,
-      },
     ],
   }),
   adjacentTileContainer: (xPos: number, yPos: number, tileSize: number, touchMove: number, isHorizontal: boolean, clampPositive: boolean) => ({
@@ -152,12 +211,12 @@ const styles = StyleSheet.create<any>({
     transform: [
       isHorizontal ? {
         translateX: clampPositive ?
-          Math.max(0, Math.abs(touchMove) > tileSize ? Math.sign(touchMove) * tileSize : touchMove) :
-          Math.min(0, Math.abs(touchMove) > tileSize ? Math.sign(touchMove) * tileSize : touchMove),
+          Math.max(0, unsignedMax(touchMove, tileSize)) :
+          Math.min(0, unsignedMax(touchMove, tileSize)),
       } : {
         translateY: clampPositive ?
-          Math.max(0, Math.abs(touchMove) > tileSize ? Math.sign(touchMove) * tileSize : touchMove) :
-          Math.min(0, Math.abs(touchMove) > tileSize ? Math.sign(touchMove) * tileSize : touchMove),
+          Math.max(0, unsignedMax(touchMove, tileSize)) :
+          Math.min(0, unsignedMax(touchMove, tileSize)),
       },
     ],
   }),
@@ -186,4 +245,80 @@ const styles = StyleSheet.create<any>({
       },
     ],
   }),
+  iceBlockPreview: (
+    xPos: number, yPos: number,
+    width: number, height: number,
+    tileSize: number,
+    touchMove: number,
+    side: "top" | "left" | "right" | "bottom",
+    darkMode: boolean,
+  ) => {
+    let topPos = (yPos * tileSize) + (tileSize / 2);
+    let leftPos = (xPos * tileSize) + (tileSize / 2);
+
+    let lineWidth = Math.max(ICE_BLOCK_LINE_SIZE, width * tileSize);
+    let lineHeight = Math.max(ICE_BLOCK_LINE_SIZE, height * tileSize);
+
+    if (side === "top") {
+      // Adjust for line size
+      leftPos -= ICE_BLOCK_LINE_SIZE / 2;
+
+      // Adjust for head size
+      topPos += tileSize / 4;
+      lineHeight -= tileSize / 4;
+
+      // Adjust for touchMove
+      lineHeight -= unsignedMax(touchMove, tileSize);
+    } else if (side === "left") {
+      topPos -= ICE_BLOCK_LINE_SIZE / 2;
+      leftPos += tileSize / 4;
+      lineWidth -= tileSize / 4;
+      lineWidth -= unsignedMax(touchMove, tileSize);
+    } else if (side === "bottom") {
+      leftPos -= ICE_BLOCK_LINE_SIZE / 2;
+      lineHeight -= tileSize / 4;
+      // Adjust for touchMove
+      topPos += unsignedMax(touchMove, tileSize);
+      lineHeight -= unsignedMax(touchMove, tileSize);
+    } else if (side === "right") {
+      lineWidth -= tileSize / 4;
+      topPos -= ICE_BLOCK_LINE_SIZE / 2;
+      // Adjust for touchMove
+      leftPos += unsignedMax(touchMove, tileSize);
+      lineWidth -= unsignedMax(touchMove, tileSize);
+    }
+
+    return {
+      position: "absolute",
+      top: topPos,
+      left: leftPos,
+      backgroundColor: (darkMode) ? colors.OFF_WHITE : colors.BLUE_THEME.DARK_COLOR,
+      opacity: Math.max(0, unsignedMax(touchMove, tileSize)) / tileSize,
+      width: lineWidth,
+      height: lineHeight,
+    };
+  },
+  iceBlockHead: (
+    xPos: number, yPos: number,
+    tileSize: number,
+    touchMove: number,
+    side: "top" | "left" | "right" | "bottom",
+    darkMode: boolean,
+  ) => {
+    const color = (darkMode) ? colors.OFF_WHITE : colors.BLUE_THEME.DARK_COLOR;
+    return {
+      position: "absolute",
+      left: (xPos * tileSize) + (tileSize / 4),
+      top: (yPos * tileSize) + (tileSize / 4),
+      width: 0,
+      height: 0,
+      borderWidth: tileSize / 4,
+      borderStyle: "solid",
+      borderTopColor: side === "bottom" ? color : "transparent",
+      borderLeftColor: side === "right" ? color : "transparent",
+      borderRightColor: side === "left" ? color : "transparent",
+      borderBottomColor: side === "top" ? color : "transparent",
+      opacity: Math.max(0, unsignedMax(touchMove, tileSize)) / tileSize,
+    };
+  },
 });

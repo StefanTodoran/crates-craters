@@ -1,5 +1,6 @@
 import SubpageContainer from "../components/SubpageContainer";
-import TutorialHint, { Tutorial } from "../components/TutorialHint";
+import TutorialHint from "../components/TutorialHint";
+import { Tutorial } from "../util/types";
 
 export default function HowToPlay() {
   const tutorialVals: Tutorial[] = Object.values(Tutorial).filter(t => !isNaN(Number(t))) as Tutorial[];

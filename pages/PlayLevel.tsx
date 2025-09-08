@@ -12,7 +12,7 @@ import TextStyles, { normalize } from "../TextStyles";
 import { colors, graphics } from "../Theme";
 import { calcBoardTileSize } from "../util/board";
 import { likeUserLevel, markUserLevelCompleted, postSolutionData } from "../util/database";
-import { compressBoardData, getData, markLevelCompleted, metadataKeys } from "../util/loader";
+import { getData, markLevelCompleted, metadataKeys } from "../util/loader";
 import { Game, SoundEvent, canMoveTo, doGameMove, initializeGameObj } from "../util/logic";
 // import { aStarSearch, basicHeuristic, compoundHeuristic } from "../util/search";
 import Toast from "react-native-toast-message";
@@ -87,8 +87,8 @@ export default function PlayLevel({
   const explosionSoundPlayer = useAudioPlayer(explosionSound);
 
   const playSound = (soundPlayer: AudioPlayer) => {
-    soundPlayer.seekTo(0);
     soundPlayer.play();
+    soundPlayer.seekTo(0);
   }
 
   function playSoundEffect(soundEffect: SoundEvent | undefined) {
@@ -123,7 +123,6 @@ export default function PlayLevel({
 
   const [canLikeLevel, setCanLikeLevel] = useState(false);
   useEffect(() => {
-    console.log("level", compressBoardData(level.board));
     if (!level.hasOwnProperty("shared") || !userCredential) return;
 
     const likedLevels = getData(metadataKeys.likedLevels) || [];
@@ -152,6 +151,9 @@ export default function PlayLevel({
   const [touchPos, setTouchPos] = useState({ y: -1, x: -1 });
   const pressAnim = useRef(new Animated.Value(0)).current;
 
+  const [pathFollowed, setPathFollowed] = useState<Position[]>([]);
+  const pathAnim = useRef(new Animated.Value(0)).current;
+
   const handleGesture = useRef((_gesture: Gesture) => { });
   useEffect(() => {
     handleGesture.current = (gesture: Gesture) => {
@@ -179,6 +181,7 @@ export default function PlayLevel({
   const onGestureStart = useRef((_evt: GestureResponderEvent, _gestureState: PanResponderGestureState) => { });
   useEffect(() => {
     onGestureStart.current = (_evt: GestureResponderEvent, gestureState: PanResponderGestureState) => {
+
       setTouchMove({ y: 0, x: 0 });
 
       const pressX = pressToIndex(gestureState.x0, tileSize, -boardPosition.current.x);
@@ -188,7 +191,9 @@ export default function PlayLevel({
         Date.now() - prevTouchTime.current < doubleTapDelay &&
         prevTouchPos.current &&
         prevTouchPos.current.x === pressX &&
-        prevTouchPos.current.y === pressY
+        prevTouchPos.current.y === pressY &&
+        // If we are currently jumping to a position, wait until that is complete before allowing another.
+        pathFollowed.length === 0
       ) {
         setTouchPos({ x: pressX, y: pressY });
         prevTouchPos.current = undefined;
@@ -200,13 +205,31 @@ export default function PlayLevel({
         }).start(() => {
           const path = canMoveTo(game, pressX, pressY);
           if (path) {
+            const visitedSquares = [];
             let current = game;
+
             for (let i = 0; i < path.length; i++) {
               [current] = doGameMove(current, path[i]);
+              visitedSquares.push(current.player);
             }
 
-            updateGameState(current);
-            playSoundEffect(current.soundEvent);
+            const pathAnimDuration = 200 + (visitedSquares.length * 25);
+            setPathFollowed(visitedSquares);
+            Animated.timing(pathAnim, {
+              toValue: 1,
+              duration: pathAnimDuration,
+              useNativeDriver: true,
+            }).start(() => {
+              Animated.timing(pathAnim, {
+                toValue: 0,
+                duration: 200,
+                useNativeDriver: true,
+              }).start(() => {
+                setPathFollowed([]);
+                updateGameState(current);
+                playSoundEffect(current.soundEvent);
+              });
+            });
           }
 
           Animated.timing(pressAnim, {
@@ -324,11 +347,9 @@ export default function PlayLevel({
     }
   }
 
-  const [showTutorial, setShowTutorial] = useState(Object.hasOwn(level, "introduces"));
-  const goNextLevel = () => {
-    setShowTutorial(Object.hasOwn(level, "introduces"));
-    nextLevelCallback(level.uuid);
-  };
+  const introducesMechanics = Object.hasOwn(level, "introduces");
+  const [showTutorial, setShowTutorial] = useState(introducesMechanics); // TODO: State value won't update when level changes.
+  const goNextLevel = () => nextLevelCallback(level.uuid);
 
   const toEditor = () => viewCallback(PageView.EDITOR);
   const toLevelSelect = () => viewCallback(PageView.LEVELS);
@@ -421,6 +442,15 @@ export default function PlayLevel({
             <GameBoard board={game.board} overrideTileSize={tileSize} playerPosition={game.player}>
               <Player game={game} touch={touchMove} darkMode={darkMode} tileSize={tileSize} />
 
+              {pathFollowed.map((square, index) => (
+                <Animated.View key={index} style={[
+                  staticStyles.pathSquare,
+                  dynamicStyles.pathSquare(square.x, square.y, tileSize, pathAnim, darkMode, index / pathFollowed.length),
+                ]}>
+                  <Text style={dynamicStyles.pathSquareText(darkMode)}>{index + 1}</Text>
+                </Animated.View>
+              ))}
+
               {touchPos && <Animated.View style={[
                 staticStyles.indicator,
                 dynamicStyles.indicator(touchPos.x, touchPos.y, tileSize, pressAnim, darkMode),
@@ -475,7 +505,7 @@ export default function PlayLevel({
         <Animated.View style={dynamicStyles.buttonsRow(anim)}>
           <SimpleButton onPress={modeToBackPage[mode]} Svg={BackButton} square extraMargin={[7.5, 0]} />
 
-          {Object.hasOwn(level, "introduces") && !game.won &&
+          {introducesMechanics && !game.won &&
             <SimpleButton onPress={() => setShowTutorial(true)} icon={graphics.LIGHTBULB_ICON} text="Help" square main extraMargin={[7.5, 0]} />}
 
           {!game.won && <SimpleButton onPress={toggleModal} icon={graphics.MENU_ICON} text="Menu" main extraMargin={[7.5, 0]} />}
@@ -483,7 +513,7 @@ export default function PlayLevel({
         </Animated.View>
 
       </SafeAreaView>
-      {showTutorial && <TutorialHint introduces={(level as OfficialLevel).introduces!} hideTutorial={() => setShowTutorial(false)} />}
+      {introducesMechanics && showTutorial && <TutorialHint introduces={(level as OfficialLevel).introduces!} hideTutorial={() => setShowTutorial(false)} />}
     </>
   );
 }
@@ -531,6 +561,29 @@ const dynamicStyles = StyleSheet.create<any>({
       }),
     }],
   }),
+  pathSquare: (xPos: number, yPos: number, size: number, anim: Animated.Value, darkMode: boolean, progress: number) => ({
+    left: xPos * size,
+    top: yPos * size,
+    width: size,
+    height: size,
+    backgroundColor: (darkMode) ? colors.OFF_WHITE_TRANSPARENT(0.2) : colors.NEAR_BLACK_TRANSPARENT(0.1),
+    opacity: anim.interpolate({
+      inputRange: [0, progress * 0.9, 1],
+      outputRange: [0, 0, 1],
+    }),
+    transform: [{
+      scale: anim.interpolate({
+        inputRange: [0, 1],
+        outputRange: [0.5 - 0.25 * (1 - progress), 0.75 - 0.25 * (1 - progress)],
+      }),
+    }],
+  }),
+  pathSquareText: (darkMode: boolean) => ({
+    color: (darkMode) ? colors.OFF_WHITE_TRANSPARENT(0.9) : colors.NEAR_BLACK_TRANSPARENT(0.4),
+    fontFamily: "Montserrat-Medium",
+    fontWeight: "bold",
+    fontSize: normalize(24),
+  }),
 });
 
 const staticStyles = StyleSheet.create({
@@ -560,5 +613,11 @@ const staticStyles = StyleSheet.create({
     borderStyle: "solid",
     borderWidth: 1,
     borderRadius: 2,
+  },
+  pathSquare: {
+    position: "absolute",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
   },
 });

@@ -2,11 +2,10 @@ import { DocumentData, DocumentReference, Query, QuerySnapshot, Timestamp, Where
 import { doStateStorageSync } from "./events";
 import { db } from "./firebase";
 import { compressBoardData, getData, getLocalUserData, getStoredLevelCount, metadataKeys, multiStoreLevels, parseCompressedBoardData, setData } from "./loader";
-import { Direction, OfficialLevel, SharedLevel, UserLevel } from "./types";
+import { Direction, OfficialLevel, SharedLevel, Tutorial, UserLevel } from "./types";
 
 import { UserCredential } from "firebase/auth";
 import { setLogLevel } from "firebase/firestore";
-import { Tutorial } from "../components/TutorialHint";
 setLogLevel("debug");
 
 // ======================== \\

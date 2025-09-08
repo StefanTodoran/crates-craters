@@ -1,7 +1,7 @@
 import { emptyTile, FlatBoard, LayeredBoard, unsqueezeBoard } from "./board";
 import Queue from "./Queue";
 import { PositionSet } from "./Set";
-import { Direction, explodableTiles, fillCapableTiles, Level, OneWayTile, pushableTiles, SimpleTile, TileType } from "./types";
+import { Direction, directionToOffset, explodableTiles, fillCapableTiles, Level, Offset, OneWayTile, pushableTiles, SimpleTile, TileType } from "./types";
 
 export enum SoundEvent {
   MOVE,
@@ -194,18 +194,7 @@ export function doGameMove(game: Game, move: Direction): [Game, boolean] {
   const next = cloneGameObj(game); // The next game object following this game move.
   const moveTo = { y: game.player.y, x: game.player.x }; // Where the player is attempting to move.
   const oneFurther = { y: game.player.y, x: game.player.x }; // One tile further that that in the same direction.
-
-  let dx = 0;
-  let dy = 0;
-  if (move === Direction.UP) {
-    dy = -1;
-  } else if (move === Direction.DOWN) {
-    dy = 1;
-  } else if (move === Direction.LEFT) {
-    dx = -1;
-  } else if (move === Direction.RIGHT) {
-    dx = 1;
-  }
+  const { dx, dy } = directionToOffset(move);
 
   moveTo.x += dx;
   moveTo.y += dy;
@@ -296,7 +285,7 @@ export function doGameMove(game: Game, move: Direction): [Game, boolean] {
           next.soundEvent = SoundEvent.FILL;
           break;
         }
-        
+
         if (
           (currLayer.foreground.id !== TileType.EMPTY) || // Stop if we hit a solid tile.
           (currLayer.background.id === TileType.ONEWAY && !canEnterOneWay(move, currLayer.background)) || // Stop if we hit a one way tile from wrong direction.
@@ -306,7 +295,7 @@ export function doGameMove(game: Game, move: Direction): [Game, boolean] {
           next.soundEvent = SoundEvent.PUSH; // TODO: Add ice block sliding sound.
           break;
         }
-        
+
         // Move to next position
         prevX = currX;
         prevY = currY;
@@ -387,11 +376,6 @@ export function initializeGameObj(level: Level): Game {
   };
 }
 
-interface Offset {
-  dx: number,
-  dy: number,
-}
-
 export function isValidMove(game: Game, offset: Offset) {
   const xPos = game.player.x + offset.dx;
   const yPos = game.player.y + offset.dy;
@@ -412,7 +396,7 @@ export function isValidMove(game: Game, offset: Offset) {
   }
 
   if ([...pushableTiles, TileType.ICE_BLOCK].includes(tile.id)) {
-    return isPushable(game.board, {x: xPos, y: yPos}, offset);
+    return isPushable(game.board, { x: xPos, y: yPos }, offset);
   }
 
   return true;
@@ -454,4 +438,41 @@ export function isPushable(board: LayeredBoard, position: Position, offset: Offs
   }
 
   return false;
+}
+
+export function pushIceBlock(board: LayeredBoard, playerPosition: Position, move: Direction): Position {
+  const dimensions = [board.height, board.width];
+  const { dx, dy } = directionToOffset(move);
+
+  // Start from the tile the ice block would first be pushed to.
+  let currX = playerPosition.x + 2*dx;
+  let currY = playerPosition.y + 2*dy;
+  let prevX = currX;
+  let prevY = currY;
+
+  // Keep sliding until we hit something.
+  while (currX >= -1 && currX < dimensions[1] + 1 && currY >= -1 && currY < dimensions[0] + 1) {
+    const currLayer = board.getLayer(currY, currX, true);
+
+    // We hit a crater, return the crater position since we will fill it.
+    if (currLayer.foreground.id === TileType.CRATER) {
+      return { x: currX, y: currY };
+    }
+
+    if (
+      (currLayer.foreground.id !== TileType.EMPTY) || // Stop if we hit a solid tile.
+      (currLayer.background.id === TileType.ONEWAY && !canEnterOneWay(move, currLayer.background)) || // Stop if we hit a one way tile from wrong direction.
+      ([TileType.OUTSIDE, TileType.WALL].includes(currLayer.background.id)) // Stop if we hit a wall or the edge of the board.
+    ) {
+      return { x: prevX, y: prevY };
+    }
+
+    // Move to next position
+    prevX = currX;
+    prevY = currY;
+    currX += dx;
+    currY += dy;
+  }
+
+  throw new Error("Assert never: ice block push loop exited without returning a position.");
 }

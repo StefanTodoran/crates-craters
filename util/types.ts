@@ -1,5 +1,4 @@
 import { UserCredential } from "firebase/auth";
-import { Tutorial } from "../components/TutorialHint";
 import { FlatBoard } from "./board";
 
 export interface UserData extends UserCredential {
@@ -42,10 +41,15 @@ export enum Direction {
   LEFT,
 }
 
+export interface Offset {
+  dx: number,
+  dy: number,
+}
+
 export function rotationToDirection(rotation: number): Direction {
   const maximum = 360;
   rotation = ((rotation % maximum) + maximum) % maximum;
-  
+
   switch (rotation) {
     case 0:
       return Direction.LEFT;
@@ -58,6 +62,29 @@ export function rotationToDirection(rotation: number): Direction {
     default:
       throw new Error(`Invalid rotation: ${rotation}`);
   }
+}
+
+export function directionToOffset(direction: Direction): Offset {
+  let dx = 0;
+  let dy = 0;
+  if (direction === Direction.UP) {
+    dy = -1;
+  } else if (direction === Direction.DOWN) {
+    dy = 1;
+  } else if (direction === Direction.LEFT) {
+    dx = -1;
+  } else if (direction === Direction.RIGHT) {
+    dx = 1;
+  }
+  return { dx, dy };
+}
+
+export function offsetToDirection(offset: Offset): Direction {
+  if (offset.dy === -1) return Direction.UP;
+  if (offset.dy === 1) return Direction.DOWN;
+  if (offset.dx === -1) return Direction.LEFT;
+  if (offset.dx === 1) return Direction.RIGHT;
+  throw new Error(`Invalid offset: ${offset}`);
 }
 
 export interface EmptyTile {
@@ -110,6 +137,19 @@ interface LevelBase {
   official: boolean,
   completed: boolean,
   bestSolution?: string, // If completed, the shortest solution found by the user.
+}
+
+export enum Tutorial {
+  MOVEMENT = 0,
+  OBJECTIVE = 1,
+  CRATES_CRATERS = 2,
+  ONEWAY_TILES = 3,
+  // FILTERS = 4,
+  DOORS_KEYS = 5,
+  BOMBS = 6,
+  METAL_CRATES = 7,
+  ICE_BLOCKS = 8,
+  MISC = 9,
 }
 
 export interface OfficialLevel extends LevelBase {
@@ -209,13 +249,13 @@ export function isLevelWellFormed(target: any, check: LevelObjectType = LevelObj
       incorrectKeys.push(key);
       continue;
     }
-    
+
     if (type === "array") {
       if (!Array.isArray(target[key])) incorrectKeys.push(key);
     }
     else if (typeof target[key] !== type) incorrectKeys.push(key);
   }
-  
+
   for (const [key, type] of Object.entries(props.optional)) {
     if (!(key in target)) continue;
 

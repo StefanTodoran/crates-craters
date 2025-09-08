@@ -4,20 +4,8 @@ import BackButton from "../assets/BackButton";
 import GlobalContext from "../GlobalContext";
 import TextStyles, { normalize } from "../TextStyles";
 import { colors, graphics, Theme } from "../Theme";
+import { Tutorial } from "../util/types";
 import SimpleButton from "./SimpleButton";
-
-export enum Tutorial {
-  MOVEMENT = 0,
-  OBJECTIVE = 1,
-  CRATES_CRATERS = 2,
-  ONEWAY_TILES = 3,
-  // FILTERS = 4,
-  DOORS_KEYS = 5,
-  BOMBS = 6,
-  METAL_CRATES = 7,
-  ICE_BLOCKS = 8,
-  MISC = 9,
-}
 
 interface TutorialContentPage {
   title: string,
