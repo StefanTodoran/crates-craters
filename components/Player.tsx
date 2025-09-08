@@ -84,22 +84,10 @@ export default function Player({
       {!game.won && options}
 
       {/* Ice block slide path previews */}
-      {iceBlockPreviews[0] && <>
-        <View style={styles.iceBlockPreview(iceBlockPreviews[0].topX, iceBlockPreviews[0].topY, iceBlockPreviews[0].width, iceBlockPreviews[0].height, tileSize, -touch.y, "top", darkMode)} />
-        <View style={styles.iceBlockHead(iceBlockPreviews[0].topX, iceBlockPreviews[0].topY, tileSize, -touch.y, "top", darkMode)} />
-      </>}
-      {iceBlockPreviews[1] && <>
-        <View style={styles.iceBlockPreview(iceBlockPreviews[1].topX, iceBlockPreviews[1].topY, iceBlockPreviews[1].width, iceBlockPreviews[1].height, tileSize, -touch.x, "left", darkMode)} />
-        <View style={styles.iceBlockHead(iceBlockPreviews[1].topX, iceBlockPreviews[1].topY, tileSize, -touch.x, "left", darkMode)} />
-      </>}
-      {iceBlockPreviews[2] && <>
-        <View style={styles.iceBlockPreview(iceBlockPreviews[2].topX, iceBlockPreviews[2].topY, iceBlockPreviews[2].width, iceBlockPreviews[2].height, tileSize, touch.x, "right", darkMode)} />
-        <View style={styles.iceBlockHead(iceBlockPreviews[2].bottomX, iceBlockPreviews[2].bottomY, tileSize, touch.x, "right", darkMode)} />
-      </>}
-      {iceBlockPreviews[3] && <>
-        <View style={styles.iceBlockPreview(iceBlockPreviews[3].topX, iceBlockPreviews[3].topY, iceBlockPreviews[3].width, iceBlockPreviews[3].height, tileSize, touch.y, "bottom", darkMode)} />
-        <View style={styles.iceBlockHead(iceBlockPreviews[3].bottomX, iceBlockPreviews[3].bottomY, tileSize, touch.y, "bottom", darkMode)} />
-      </>}
+      {renderIceBlockPreview(iceBlockPreviews[0], tileSize, darkMode, -touch.y, "top")}
+      {renderIceBlockPreview(iceBlockPreviews[1], tileSize, darkMode, -touch.x, "left")}
+      {renderIceBlockPreview(iceBlockPreviews[2], tileSize, darkMode, touch.x, "right")}
+      {renderIceBlockPreview(iceBlockPreviews[3], tileSize, darkMode, touch.y, "bottom")}
 
       {/* Pushables tiles previews */}
       <View style={styles.adjacentTileContainer(game.player.x, game.player.y - 1, tileSize, touch.y, false, false)}>
@@ -179,6 +167,21 @@ function getIceBlockPreview(game: Game, offset: Offset, isValidMove: boolean): I
   return null;
 }
 
+function renderIceBlockPreview(iceBlockPreview: IceBlockPreview | null, tileSize: number, darkMode: boolean, touchMove: number, side: "top" | "left" | "right" | "bottom") {
+  if (!iceBlockPreview) return <></>;
+
+  const headX = ["top", "left"].includes(side) ? iceBlockPreview.topX : iceBlockPreview.bottomX;
+  const headY = ["top", "left"].includes(side) ? iceBlockPreview.topY : iceBlockPreview.bottomY;
+
+  return (
+    <>
+      <View style={styles.iceBlockPreview(iceBlockPreview.topX, iceBlockPreview.topY, iceBlockPreview.width, iceBlockPreview.height, tileSize, touchMove, side, darkMode)} />
+      <View style={styles.iceBlockGhost(headX, headY, tileSize, touchMove, darkMode)} />
+      <View style={styles.iceBlockHead(headX, headY, tileSize, touchMove, side, darkMode)} />
+    </>
+  );
+}
+
 function unsignedMax(num: number, max: number) {
   return Math.abs(num) > max ? Math.sign(num) * max : num;
 }
@@ -199,8 +202,12 @@ const styles = StyleSheet.create<any>({
       {
         translateX: unsignedMax(touchX, tileSize),
       },
+      // {
+      //   rotate: `${(unsignedMax(touchX, tileSize) / tileSize) * MAX_PLAYER_ROTATION_DEG}deg`,
+      // },
       {
-        rotate: `${(unsignedMax(touchX, tileSize) / tileSize) * MAX_PLAYER_ROTATION_DEG}deg`,
+        scale: 0.975 + (Math.min(tileSize, Math.max(Math.abs(touchX), Math.abs(touchY))) / tileSize * 0.075),
+        // scale: (touchX === 0 && touchY === 0) ? 0.975 : 1.05,
       },
     ],
   }),
@@ -256,12 +263,13 @@ const styles = StyleSheet.create<any>({
     let topPos = (yPos * tileSize) + (tileSize / 2);
     let leftPos = (xPos * tileSize) + (tileSize / 2);
 
-    let lineWidth = Math.max(ICE_BLOCK_LINE_SIZE, width * tileSize);
-    let lineHeight = Math.max(ICE_BLOCK_LINE_SIZE, height * tileSize);
+    const line_size = ICE_BLOCK_LINE_SIZE;
+    let lineWidth = Math.max(line_size, width * tileSize);
+    let lineHeight = Math.max(line_size, height * tileSize);
 
     if (side === "top") {
       // Adjust for line size
-      leftPos -= ICE_BLOCK_LINE_SIZE / 2;
+      leftPos -= line_size / 2;
 
       // Adjust for head size
       topPos += tileSize / 4;
@@ -270,19 +278,19 @@ const styles = StyleSheet.create<any>({
       // Adjust for touchMove
       lineHeight -= unsignedMax(touchMove, tileSize);
     } else if (side === "left") {
-      topPos -= ICE_BLOCK_LINE_SIZE / 2;
+      topPos -= line_size / 2;
       leftPos += tileSize / 4;
       lineWidth -= tileSize / 4;
       lineWidth -= unsignedMax(touchMove, tileSize);
     } else if (side === "bottom") {
-      leftPos -= ICE_BLOCK_LINE_SIZE / 2;
+      leftPos -= line_size / 2;
       lineHeight -= tileSize / 4;
       // Adjust for touchMove
       topPos += unsignedMax(touchMove, tileSize);
       lineHeight -= unsignedMax(touchMove, tileSize);
     } else if (side === "right") {
       lineWidth -= tileSize / 4;
-      topPos -= ICE_BLOCK_LINE_SIZE / 2;
+      topPos -= line_size / 2;
       // Adjust for touchMove
       leftPos += unsignedMax(touchMove, tileSize);
       lineWidth -= unsignedMax(touchMove, tileSize);
@@ -292,10 +300,31 @@ const styles = StyleSheet.create<any>({
       position: "absolute",
       top: topPos,
       left: leftPos,
-      backgroundColor: (darkMode) ? colors.OFF_WHITE : colors.BLUE_THEME.DARK_COLOR,
-      opacity: Math.max(0, unsignedMax(touchMove, tileSize)) / tileSize,
+      backgroundColor: darkMode ? colors.OFF_WHITE : colors.BLUE_THEME.DARK_COLOR,
       width: lineWidth,
       height: lineHeight,
+      opacity: Math.max(0, unsignedMax(touchMove, tileSize)) / tileSize,
+    };
+  },
+  iceBlockGhost: (
+    xPos: number, yPos: number,
+    tileSize: number,
+    touchMove: number,
+    darkMode: boolean,
+  ) => {
+    const size = tileSize * 0.8; // Block size for pushables
+
+    let topPos = (yPos * tileSize) + (tileSize * 0.1); // Adjust for size
+    let leftPos = (xPos * tileSize) + (tileSize * 0.1); // Adjust for size
+
+    return {
+      position: "absolute",
+      left: leftPos,
+      top: topPos,
+      width: size,
+      height: size,
+      backgroundColor: darkMode ? colors.OFF_WHITE : colors.BLUE_THEME.DARK_COLOR,
+      opacity: Math.max(0, unsignedMax(touchMove, tileSize)) / tileSize * 0.5,
     };
   },
   iceBlockHead: (
@@ -305,14 +334,18 @@ const styles = StyleSheet.create<any>({
     side: "top" | "left" | "right" | "bottom",
     darkMode: boolean,
   ) => {
-    const color = (darkMode) ? colors.OFF_WHITE : colors.BLUE_THEME.DARK_COLOR;
+    const size = tileSize / 4;
+    const topPos = (yPos * tileSize) + (tileSize / 2) - size;
+    const leftPos = (xPos * tileSize) + (tileSize / 2) - size;
+    const color = darkMode ? colors.OFF_WHITE : colors.BLUE_THEME.DARK_COLOR;
+
     return {
       position: "absolute",
-      left: (xPos * tileSize) + (tileSize / 4),
-      top: (yPos * tileSize) + (tileSize / 4),
+      left: leftPos,
+      top: topPos,
       width: 0,
       height: 0,
-      borderWidth: tileSize / 4,
+      borderWidth: size,
       borderStyle: "solid",
       borderTopColor: side === "bottom" ? color : "transparent",
       borderLeftColor: side === "right" ? color : "transparent",

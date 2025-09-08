@@ -270,39 +270,19 @@ export function doGameMove(game: Game, move: Direction): [Game, boolean] {
     // Pushing an ice block into an empty tile (slides until it hits a non-empty tile).
     if (moveToLayer.foreground.id === TileType.ICE_BLOCK && oneFurtherLayer.foreground.id === TileType.EMPTY) {
       // Start from one tile further in the direction of movement.
-      let currX = oneFurther.x;
-      let currY = oneFurther.y;
-      let prevX = currX;
-      let prevY = currY;
+      const endPos = pushIceBlock(next.board, game.player, move);
+      const endLayer = next.board.getLayer(endPos.y, endPos.x, true);
 
-      // Keep sliding until we hit something.
-      while (currX >= -1 && currX < dimensions[1] + 1 && currY >= -1 && currY < dimensions[0] + 1) {
-        const currLayer = next.board.getLayer(currY, currX, true);
-
-        // If we hit a crater, fill it
-        if (currLayer.foreground.id === TileType.CRATER) {
-          next.board.setTile(currY, currX, emptyTile);
-          next.soundEvent = SoundEvent.FILL;
-          break;
-        }
-
-        if (
-          (currLayer.foreground.id !== TileType.EMPTY) || // Stop if we hit a solid tile.
-          (currLayer.background.id === TileType.ONEWAY && !canEnterOneWay(move, currLayer.background)) || // Stop if we hit a one way tile from wrong direction.
-          ([TileType.OUTSIDE, TileType.WALL].includes(currLayer.background.id)) // Stop if we hit a wall or the edge of the board.
-        ) {
-          next.board.setTile(prevY, prevX, moveToLayer.foreground);
-          next.soundEvent = SoundEvent.PUSH; // TODO: Add ice block sliding sound.
-          break;
-        }
-
-        // Move to next position
-        prevX = currX;
-        prevY = currY;
-        currX += dx;
-        currY += dy;
+      // If we hit a crater, fill it
+      if (endLayer.foreground.id === TileType.CRATER) {
+        next.board.setTile(endPos.y, endPos.x, emptyTile);
+        next.soundEvent = SoundEvent.FILL;
+      } else {
+        next.board.setTile(endPos.y, endPos.x, moveToLayer.foreground);
+        next.soundEvent = SoundEvent.PUSH; // TODO: Add ice block sliding sound.
       }
-      next.board.setTile(moveTo.y, moveTo.x, emptyTile);
+
+      next.board.setTile(moveTo.y, moveTo.x, emptyTile); // Clear original ice block tile.
     }
   }
 
@@ -445,8 +425,8 @@ export function pushIceBlock(board: LayeredBoard, playerPosition: Position, move
   const { dx, dy } = directionToOffset(move);
 
   // Start from the tile the ice block would first be pushed to.
-  let currX = playerPosition.x + 2*dx;
-  let currY = playerPosition.y + 2*dy;
+  let currX = playerPosition.x + 2 * dx;
+  let currY = playerPosition.y + 2 * dy;
   let prevX = currX;
   let prevY = currY;
 
