@@ -118,6 +118,7 @@ const fillSound = require("../assets/audio/fill.wav");
 const coinSound = require("../assets/audio/coin.wav");
 const doorSound = require("../assets/audio/door.wav");
 const explosionSound = require("../assets/audio/explosion.wav");
+const iceSound = require("../assets/audio/ice.wav");
 
 export function useSoundEventPlayers() {
   const { playAudio } = useContext(GlobalContext);
@@ -128,6 +129,7 @@ export function useSoundEventPlayers() {
   const coinSoundPlayer = useAudioPlayer(coinSound);
   const doorSoundPlayer = useAudioPlayer(doorSound);
   const explosionSoundPlayer = useAudioPlayer(explosionSound);
+  const iceSoundPlayer = useAudioPlayer(iceSound);
 
   function playSound(soundPlayer: AudioPlayer) {
     soundPlayer.play();
@@ -154,6 +156,9 @@ export function useSoundEventPlayers() {
         break;
       case SoundEvent.MOVE:
         playSound(moveSoundPlayer);
+        break;
+      case SoundEvent.ICE:
+        playSound(iceSoundPlayer);
         break;
     }
   }

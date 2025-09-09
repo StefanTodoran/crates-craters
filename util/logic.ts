@@ -10,6 +10,7 @@ export enum SoundEvent {
   FILL,
   DOOR,
   COLLECT,
+  ICE,
 }
 
 export interface Position {
@@ -279,7 +280,7 @@ export function doGameMove(game: Game, move: Direction): [Game, boolean] {
         next.soundEvent = SoundEvent.FILL;
       } else {
         next.board.setTile(endPos.y, endPos.x, moveToLayer.foreground);
-        next.soundEvent = SoundEvent.PUSH; // TODO: Add ice block sliding sound.
+        next.soundEvent = SoundEvent.ICE;
       }
 
       next.board.setTile(moveTo.y, moveTo.x, emptyTile); // Clear original ice block tile.
