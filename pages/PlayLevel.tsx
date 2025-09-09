@@ -13,21 +13,14 @@ import { colors, graphics } from "../Theme";
 import { calcBoardTileSize } from "../util/board";
 import { likeUserLevel, markUserLevelCompleted, postSolutionData } from "../util/database";
 import { getData, markLevelCompleted, metadataKeys } from "../util/loader";
-import { Game, SoundEvent, canMoveTo, doGameMove, initializeGameObj } from "../util/logic";
+import { Game, canMoveTo, doGameMove, initializeGameObj } from "../util/logic";
 // import { aStarSearch, basicHeuristic, compoundHeuristic } from "../util/search";
 import Toast from "react-native-toast-message";
 import TutorialHint from "../components/TutorialHint";
 import { Direction, Level, OfficialLevel, PageView, PlayMode, SharedLevel } from "../util/types";
+
+import { useSoundEventPlayers } from "../util/hooks";
 import WinScreen from "./WinScreen";
-
-import { AudioPlayer, useAudioPlayer } from "expo-audio";
-const moveSound = require("../assets/audio/move.wav");
-const pushSound = require("../assets/audio/push.wav");
-const fillSound = require("../assets/audio/fill.wav");
-const coinSound = require("../assets/audio/coin.wav");
-const doorSound = require("../assets/audio/door.wav");
-const explosionSound = require("../assets/audio/explosion.wav");
-
 const win = Dimensions.get("window");
 
 interface Props {
@@ -72,49 +65,14 @@ export default function PlayLevel({
   history,
   mode,
 }: Props) {
-  const { darkMode, dragSensitivity, doubleTapDelay, playAudio, userCredential } = useContext(GlobalContext);
+  const { darkMode, dragSensitivity, doubleTapDelay, userCredential } = useContext(GlobalContext);
 
   function updateGameState(newState: Game) {
     gameStateCallback(newState);
     gameHistoryCallback([...history, game]);
   }
 
-  const moveSoundPlayer = useAudioPlayer(moveSound);
-  const pushSoundPlayer = useAudioPlayer(pushSound);
-  const fillSoundPlayer = useAudioPlayer(fillSound);
-  const coinSoundPlayer = useAudioPlayer(coinSound);
-  const doorSoundPlayer = useAudioPlayer(doorSound);
-  const explosionSoundPlayer = useAudioPlayer(explosionSound);
-
-  const playSound = (soundPlayer: AudioPlayer) => {
-    soundPlayer.play();
-    soundPlayer.seekTo(0);
-  }
-
-  function playSoundEffect(soundEffect: SoundEvent | undefined) {
-    if (!playAudio) return;
-
-    switch (soundEffect) {
-      case SoundEvent.EXPLOSION:
-        playSound(explosionSoundPlayer);
-        break;
-      case SoundEvent.PUSH:
-        playSound(pushSoundPlayer);
-        break;
-      case SoundEvent.FILL:
-        playSound(fillSoundPlayer);
-        break;
-      case SoundEvent.DOOR:
-        playSound(doorSoundPlayer);
-        break;
-      case SoundEvent.COLLECT:
-        playSound(coinSoundPlayer);
-        break;
-      case SoundEvent.MOVE:
-        playSound(moveSoundPlayer);
-        break;
-    }
-  }
+  const playSoundEvent = useSoundEventPlayers();
 
   // Player input related state. The touchMove state is used for the <Player/> component 
   // preview of moves, gesture is used for actually completing those moves on release.
@@ -169,7 +127,7 @@ export default function PlayLevel({
       const [newState, stateChanged] = doGameMove(game, move);
 
       if (stateChanged) {
-        playSoundEffect(newState.soundEvent);
+        playSoundEvent(newState.soundEvent);
         updateGameState(newState);
       }
     }
@@ -227,7 +185,7 @@ export default function PlayLevel({
               }).start(() => {
                 setPathFollowed([]);
                 updateGameState(current);
-                playSoundEffect(current.soundEvent);
+                playSoundEvent(current.soundEvent);
               });
             });
           }
@@ -335,7 +293,7 @@ export default function PlayLevel({
 
     gameStateCallback(prevState);
     gameHistoryCallback(newHistory);
-    playSoundEffect(prevState.soundEvent);
+    playSoundEvent(prevState.soundEvent);
   }
 
   function toggleModal() {
@@ -386,6 +344,7 @@ export default function PlayLevel({
       postWinActionBtn = <SimpleButton
         onPress={toEditor}
         text="Keep Editing"
+        icon={graphics.HAMMER_ICON_WHITE}
         main
         extraMargin={[7.5, 0]}
       />;
@@ -411,6 +370,7 @@ export default function PlayLevel({
           }
         }}
         text={"Like Level"}
+        icon={graphics.LIKE_ICON_WHITE}
         disabled={!canLikeLevel}
         extraMargin={[7.5, 0]}
         main
@@ -503,7 +463,7 @@ export default function PlayLevel({
         </Animated.View>}
 
         <Animated.View style={dynamicStyles.buttonsRow(anim)}>
-          <SimpleButton onPress={modeToBackPage[mode]} Svg={BackButton} square extraMargin={[7.5, 0]} />
+          <SimpleButton text={mode === PlayMode.PLAYTEST ? "Exit" : "Back"} onPress={modeToBackPage[mode]} Svg={BackButton} square extraMargin={[7.5, 0]} />
 
           {introducesMechanics && !game.won &&
             <SimpleButton onPress={() => setShowTutorial(true)} icon={graphics.LIGHTBULB_ICON} text="Help" square main extraMargin={[7.5, 0]} />}

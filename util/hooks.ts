@@ -1,6 +1,8 @@
-import { useEffect, useRef, useState } from "react";
+import { AudioPlayer, useAudioPlayer } from "expo-audio";
+import { useContext, useEffect, useRef, useState } from "react";
 import { useMMKVBoolean, useMMKVNumber } from "react-native-mmkv";
-import { defaultSettings } from "../GlobalContext";
+import GlobalContext, { defaultSettings } from "../GlobalContext";
+import { SoundEvent } from "./logic";
 
 export function useOnUnmount(callback: () => void, dependencies: React.DependencyList) {
   const unmounting = useRef(false);
@@ -109,3 +111,52 @@ export function useDebounce<Func extends AnyFunc>(
 
   return debouncedFunction;
 }
+
+const moveSound = require("../assets/audio/move.wav");
+const pushSound = require("../assets/audio/push.wav");
+const fillSound = require("../assets/audio/fill.wav");
+const coinSound = require("../assets/audio/coin.wav");
+const doorSound = require("../assets/audio/door.wav");
+const explosionSound = require("../assets/audio/explosion.wav");
+
+export function useSoundEventPlayers() {
+  const { playAudio } = useContext(GlobalContext);
+
+  const moveSoundPlayer = useAudioPlayer(moveSound);
+  const pushSoundPlayer = useAudioPlayer(pushSound);
+  const fillSoundPlayer = useAudioPlayer(fillSound);
+  const coinSoundPlayer = useAudioPlayer(coinSound);
+  const doorSoundPlayer = useAudioPlayer(doorSound);
+  const explosionSoundPlayer = useAudioPlayer(explosionSound);
+
+  function playSound(soundPlayer: AudioPlayer) {
+    soundPlayer.play();
+    soundPlayer.seekTo(0);
+  }
+
+  function playSoundEvent(soundEffect: SoundEvent | undefined) {
+    if (!playAudio) return;
+    switch (soundEffect) {
+      case SoundEvent.EXPLOSION:
+        playSound(explosionSoundPlayer);
+        break;
+      case SoundEvent.PUSH:
+        playSound(pushSoundPlayer);
+        break;
+      case SoundEvent.FILL:
+        playSound(fillSoundPlayer);
+        break;
+      case SoundEvent.DOOR:
+        playSound(doorSoundPlayer);
+        break;
+      case SoundEvent.COLLECT:
+        playSound(coinSoundPlayer);
+        break;
+      case SoundEvent.MOVE:
+        playSound(moveSoundPlayer);
+        break;
+    }
+  }
+
+  return playSoundEvent;
+} 

@@ -14,6 +14,7 @@ import SettingsPage from "./pages/HelpSettings";
 import LevelsPage from "./pages/LevelsPage";
 import PlayLevel from "./pages/PlayLevel";
 import StorePage from "./pages/StorePage";
+import ViewSolution from "./pages/ViewSolution";
 import { colors } from "./Theme";
 import { UserAccountDocument, checkForOfficialLevelUpdates, getUserData } from "./util/database";
 import { doPageChange, eventEmitter } from "./util/events";
@@ -258,7 +259,7 @@ export default function App() {
           style={styles.modal(pageAnim, darkMode)}
           pointerEvents={view === PageView.MENU ? "none" : "auto"}
         >
-          {![PageView.PLAY, PageView.EDITOR].includes(view) && <Animated.View style={styles.header(pageAnim)}>
+          {![PageView.PLAY, PageView.EDITOR, PageView.SOLUTION].includes(view) && <Animated.View style={styles.header(pageAnim)}>
             <Header
               pageView={view}
               returnHome={() => switchView(PageView.MENU)}
@@ -316,6 +317,13 @@ export default function App() {
                 level={editorLevel!}
                 levelCallback={setEditorLevel}
                 playtestLevel={beginPlaytesting}
+              />
+            }
+
+            {view === PageView.SOLUTION &&
+              <ViewSolution
+                viewCallback={switchView}
+                level={editorLevel!} // We can only navigate to this page from the manage page, so editorLevel is guaranteed to be defined.
               />
             }
 

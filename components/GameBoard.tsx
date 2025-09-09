@@ -52,7 +52,7 @@ export default function GameBoard({
 
     // Regular tiles are sized like wall tiles but are Image elements. All
     // tiles have png sources so the checkered background colors can show through.
-    const iconSrc = getIconSrc(tile);
+    const iconSrc = getIconSrc(tile, darkMode);
     const bgColor = oddTile ? colors.BLUE_THEME.MAIN_TRANSPARENT(0.03) : colors.BLUE_THEME.MAIN_TRANSPARENT(0.14);
 
     // Render an empty tile if we are directly adjacent to the player's position. Board will be a LayeredBoard since this won't be used for EditLevel.

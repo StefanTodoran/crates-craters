@@ -108,7 +108,7 @@ export default function EditLevel({
   const [unmodifiedLevel, setUnmodifiedLevel] = useState<UserLevel>(level);
 
   const saveChanges = useCallback(() => {
-    updateLevel(level); // Stores changes to MMKV
+    updateLevel(level, unsavedChanges); // Stores changes to MMKV
     setUnmodifiedLevel(level);
     setUnsavedChanges(false);
   }, [level]);
@@ -211,7 +211,7 @@ export default function EditLevel({
 
   if (level === undefined) {
     return <Text style={[TextStyles.subtitle(darkMode), { color: colors.RED_THEME.MAIN_COLOR }]}>
-      No level being edited
+      No level being edited!
     </Text>;
   }
 
@@ -248,7 +248,7 @@ export default function EditLevel({
           viewCallback(PageView.MANAGE, 1);
         }} text={unsavedChanges ? "Save & Exit" : "Exit"} Svg={BackButton} />
         <View style={{ width: normalize(15) }} />
-        <SimpleButton onPress={toggleToolsModal} text="Change Tool" main={true} />
+        <SimpleButton onPress={toggleToolsModal} text="Change Tool" main={true} icon={graphics.MENU_ICON} />
       </Animated.View>
 
       {/* START MODAL */}
@@ -259,7 +259,7 @@ export default function EditLevel({
           backgroundColor: darkMode ? "rgba(0, 0, 0, 0.85)" : "rgba(255, 255, 255, 0.85)",
         },
       ]}>
-        <ScrollView style={styles.modalScrollView}>
+        <ScrollView style={styles.modalScrollView} contentContainerStyle={{ paddingTop: normalize(18), paddingBottom: normalize(24) }}>
           <View style={styles.section}>
             <Text style={TextStyles.subtitle(darkMode, colors.DIM_GRAY)}>
               Basic Tiles
@@ -332,6 +332,7 @@ export default function EditLevel({
                 minValue={0} maxValue={oneWayMode === OneWayMode.OPPOSITE_SIDES ? 90 : 270} changeCallback={setOneWayRotation}
                 theme={colors.BLUE_THEME}
                 showSteppers
+                stepperWrapAround
               />
             </View>
             <View style={{ height: normalize(10) }} />
@@ -483,7 +484,6 @@ const styles = StyleSheet.create({
   },
   modal: {
     ...StyleSheet.absoluteFillObject,
-    paddingTop: normalize(12),
     paddingBottom: normalize(24),
     alignItems: "center",
     justifyContent: "space-between",

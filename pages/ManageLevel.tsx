@@ -21,7 +21,7 @@ const win = Dimensions.get("window");
 
 interface Props {
   level: UserLevel,
-  viewCallback: (newView: PageView) => void, // Sets the current view of the application.
+  viewCallback: (newView: PageView, pageNum?: number) => void,
   playLevelCallback: (uuid: string) => void,
 }
 
@@ -154,13 +154,11 @@ export default function ManageLevel({
           main
         />
         <SimpleButton
-          onPress={() => { }}
+          onPress={() => viewCallback(PageView.SOLUTION)}
           text="View Solution"
           icon={graphics.KEY}
           theme={colors.GREEN_THEME}
-          // TODO: Implement a solution viewer.
-          // disabled={!level.bestSolution}
-          disabled
+          disabled={!level.bestSolution}
           fillWidth
           extraMargin={[6, 5]}
           square

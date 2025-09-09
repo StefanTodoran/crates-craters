@@ -284,6 +284,7 @@ export enum PageView {
   MENU,
   PLAY,
   EDITOR,
+  SOLUTION,
 }
 
 export enum PlayMode {

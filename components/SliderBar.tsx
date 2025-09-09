@@ -19,6 +19,7 @@ interface Props {
   changeCallback: (newValue: number) => void,
   stepSize?: number,
   showSteppers?: boolean,
+  stepperWrapAround?: boolean,
   theme?: Theme,
 }
 
@@ -32,6 +33,7 @@ interface Props {
  * @param {Function} changeCallback The callback to use when the value inside is changed.
  * @param {number} stepSize The increment to snap values to. Defaults to 1.
  * @param {boolean} showSteppers
+ * @param {boolean} stepperWrapAround Whether to wrap around the min and max values when the steppers are pressed.
  */
 export default function SliderBar({
   label,
@@ -41,6 +43,7 @@ export default function SliderBar({
   changeCallback,
   stepSize = 1,
   showSteppers,
+  stepperWrapAround,
   theme,
 }: Props) {
   const { darkMode } = useContext(GlobalContext);
@@ -90,6 +93,24 @@ export default function SliderBar({
     }),
   ).current;
 
+  function stepperDecrement() {
+    if (stepperWrapAround) {
+      const newValue = value - stepSize;
+      changeCallback(newValue >= minValue ? newValue : maxValue);
+    } else {
+      changeCallback(Math.max(value - stepSize, minValue));
+    }
+  }
+
+  function stepperIncrement() {
+    if (stepperWrapAround) {
+      const newValue = value + stepSize;
+      changeCallback(newValue <= maxValue ? newValue : minValue);
+    } else {
+      changeCallback(Math.min(value + stepSize, maxValue));
+    }
+  }
+
   return (
     <View style={styles.container}>
       <View style={styles.row}>
@@ -108,8 +129,8 @@ export default function SliderBar({
         </View>
 
         {showSteppers && <>
-          <StepperArrow color={mainColor!} onPress={() => changeCallback(Math.max(value - stepSize, minValue))} flipped />
-          <StepperArrow color={mainColor!} onPress={() => changeCallback(Math.min(value + stepSize, maxValue))} />
+          <StepperArrow color={mainColor!} onPress={stepperDecrement} flipped />
+          <StepperArrow color={mainColor!} onPress={stepperIncrement} />
         </>}
       </View>
     </View>

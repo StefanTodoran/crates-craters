@@ -65,7 +65,7 @@ export default function EditorPage({
       elementHeight={elementHeight}
       indicatorIcon={IndicatorIcon.SHARED}
       storeElementHeightCallback={storeElementHeightCallback}
-      headerComponent={!!userCredential ? <CreateLevel createLevelCallback={createNewLevelCallback} existingLevelNames={existingLevelNames}/> : undefined}
+      headerComponent={!!userCredential ? <CreateLevel createLevelCallback={createNewLevelCallback} existingLevelNames={existingLevelNames} /> : undefined}
       emptyListProps={{
         ...regularEmptyListProps,
         ...(!userCredential ? notSignedInEmtpyListProps : {}),
@@ -73,13 +73,12 @@ export default function EditorPage({
       theme={colors.RED_THEME}
     />,
 
-    <ManageLevel 
+    <ManageLevel
       key={1}
       level={editorLevel!} // The button to switch to this subpage is disabled if editorLevel is undefined.
-      viewCallback={viewCallback} 
-      playLevelCallback={playLevelCallback} 
-    />, 
-    <CreateLevel key={2} createLevelCallback={createNewLevelCallback} existingLevelNames={existingLevelNames}/>,
+      viewCallback={viewCallback}
+      playLevelCallback={playLevelCallback}
+    />,
   ];
 
   const pageTabs = useMemo(() => {
@@ -101,7 +100,7 @@ export default function EditorPage({
     <Subpages
       pageComponents={pageComponents}
       pageTabs={pageTabs}
-      disabledPages={[false, !editorLevel, false]}
+      disabledPages={[false, !editorLevel]}
     />
   );
 }

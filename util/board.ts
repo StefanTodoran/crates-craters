@@ -226,19 +226,23 @@ export function calcBoardTileSize(boardWidth: number, boardHeight: number, windo
 }
 
 // This can't just be a dictionary since `graphics` may change.
-export function getIconSrc(tile: FlatTile) {
+export function getIconSrc(tile: FlatTile, darkMode?: boolean | undefined) {
   if (tile.id === TileType.DOOR) return { icon: graphics.DOOR, rotation: 0 };
   if (tile.id === TileType.KEY) return { icon: graphics.KEY, rotation: 0 };
   if (tile.id === TileType.CRATE) return { icon: graphics.CRATE, rotation: 0 };
   if (tile.id === TileType.CRATER) return { icon: graphics.CRATER, rotation: 0 };
   if (tile.id === TileType.COIN) return { icon: graphics.COIN, rotation: 0 };
-  if (tile.id === TileType.SPAWN) return { icon: graphics.PLAYER, rotation: 0 }; // Exists for level creation only.
   if (tile.id === TileType.FLAG) return { icon: graphics.FLAG, rotation: 0 };
   if (tile.id === TileType.BOMB) return { icon: graphics.BOMB, rotation: 0 };
   if (tile.id === TileType.EXPLOSION) return { icon: graphics.EXPLOSION, rotation: 0 };
   if (tile.id === TileType.LITTLE_EXPLOSION) return { icon: graphics.LITTLE_EXPLOSION, rotation: 0 };
   if (tile.id === TileType.METAL_CRATE) return { icon: graphics.METAL_CRATE, rotation: 0 };
   if (tile.id === TileType.ICE_BLOCK) return { icon: graphics.ICE_BLOCK, rotation: 0 };
+  
+  if (tile.id === TileType.SPAWN) {
+    if (darkMode === undefined) return { icon: graphics.PLAYER, rotation: 0 };
+    else return { icon: darkMode ? graphics.PLAYER_OUTLINED_DARK : graphics.PLAYER_OUTLINED, rotation: 0 };
+  }
 
   const oneway = (tile as OneWayTile);
   if (tile.id === TileType.ONEWAY) return _getOnewaySrc(oneway);

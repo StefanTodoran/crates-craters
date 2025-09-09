@@ -397,6 +397,10 @@ export function isPushable(board: LayeredBoard, position: Position, offset: Offs
     move = Direction.RIGHT;
   }
 
+  if (moveToLayer.background.id === TileType.ONEWAY && !canEnterOneWay(move, moveToLayer.background)) {
+    return false;
+  }
+
   if (
     oneFurtherLayer.background.id === TileType.EMPTY ||
     (oneFurtherLayer.background.id === TileType.ONEWAY && canEnterOneWay(move, oneFurtherLayer.background))
