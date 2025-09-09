@@ -10,7 +10,7 @@ interface Props {
 
 export default function StepperArrow({ color, onPress, flipped }: Props) {
     const size = normalize(20);
-    const offset = -(size + normalize(10));
+    const offset = -(size + normalize(12));
 
     return (
         <ResponsivePressable

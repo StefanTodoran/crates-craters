@@ -168,7 +168,7 @@ const styles = StyleSheet.create<any>({
   slider: (xPos: number, pressed: boolean, color: string, fillColor: string) => ({
     position: "absolute",
     top: (pressed) ? -9 : -6,
-    left: xPos - ((pressed) ? 9 : 6),
+    left: xPos - 1 - ((pressed) ? 9 : 6),
     height: (pressed) ? 21 : 15,
     width: (pressed) ? 21 : 15,
     borderRadius: (pressed) ? 11 : 7,

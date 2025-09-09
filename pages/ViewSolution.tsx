@@ -2,6 +2,7 @@ import { useContext, useEffect, useMemo, useState } from "react";
 import { SafeAreaView, StyleSheet, Text, View } from "react-native";
 import BackButton from "../assets/BackButton";
 import GameBoard from "../components/GameBoard";
+import Inventory from "../components/Inventory";
 import MoveCounter from "../components/MoveCounter";
 import SimpleButton from "../components/SimpleButton";
 import SliderBar from "../components/SliderBar";
@@ -67,6 +68,7 @@ export default function ViewSolution({
       <View>
         <MoveCounter moveCount={currentGameState.moveHistory.length} />
         <GameBoard board={currentGameState.board} />
+        <Inventory coins={currentGameState.coins} maxCoins={currentGameState.maxCoins} keys={currentGameState.keys} />
       </View>
 
       <View style={{ height: normalize(15) }} />
