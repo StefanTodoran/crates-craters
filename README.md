@@ -164,6 +164,7 @@ Higher priority:
 
 * Improve VirtualizedList performance especially as content length increases
 * Improve firestore security rules, rely less on frontend logic
+* Add option to redownload shared levels which are no longer on device
 
 Lower priority:
 

@@ -220,7 +220,7 @@ function modifyCoinBalance(change: number) {
 
 export function useCoinBalance() {
   const balance = getData(metadataKeys.coinBalance) || 0;
-  return [balance, modifyCoinBalance];
+  return {balance, modifyCoinBalance};
 }
 
 const split = {

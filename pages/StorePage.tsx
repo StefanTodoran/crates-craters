@@ -1,13 +1,14 @@
 import { UserCredential } from "firebase/auth";
 import { useContext, useMemo } from "react";
-import { Image, StyleSheet, Text, View } from "react-native";
+import { Text } from "react-native";
 import CartIcon from "../assets/main_theme/cart.png";
 import ProfileIcon from "../assets/main_theme/profile.png";
+import CoinsBalance from "../components/CoinsBalance";
 import SubpageContainer from "../components/SubpageContainer";
 import Subpages from "../components/Subpages";
 import GlobalContext from "../GlobalContext";
-import TextStyles, { normalize } from "../TextStyles";
-import { colors, graphics } from "../Theme";
+import TextStyles from "../TextStyles";
+import { colors } from "../Theme";
 import { useCoinBalance } from "../util/loader";
 import ProfilePage from "./ProfilePage";
 
@@ -18,7 +19,7 @@ interface Props {
 
 export default function StorePage({ attemptSignIn, setUserCredential }: Props) {
   const { darkMode } = useContext(GlobalContext);
-  const [balance, _modifyBalance] = useCoinBalance();
+  const { balance } = useCoinBalance();
 
   const pageComponents = useMemo(() => {
     return [
@@ -32,10 +33,7 @@ export default function StorePage({ attemptSignIn, setUserCredential }: Props) {
           A way to spend your accumulated coins is in the works and coming soon!
         </Text>
 
-        <View style={styles.row}>
-          <Text allowFontScaling={false} style={[TextStyles.paragraph(darkMode), styles.coinsText]}>{balance}</Text>
-          <Image style={styles.icon} source={graphics.COIN} />
-        </View>
+        <CoinsBalance currentBalance={balance} />
       </SubpageContainer>,
     ];
   }, []);
@@ -59,20 +57,3 @@ export default function StorePage({ attemptSignIn, setUserCredential }: Props) {
     <Subpages pageComponents={pageComponents} pageTabs={pageTabs} />
   );
 }
-
-const styles = StyleSheet.create({
-  row: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  icon: {
-    height: normalize(40),
-    width: normalize(40),
-  },
-  coinsText: {
-    marginBottom: 0,
-    fontSize: normalize(25),
-    fontFamily: "Montserrat-Regular",
-    fontWeight: "normal",
-  },
-});

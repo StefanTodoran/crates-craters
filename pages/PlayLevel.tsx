@@ -383,7 +383,7 @@ export default function PlayLevel({
       <SafeAreaView style={staticStyles.container}>
         {/* GAMEPLAY COMPONENTS */}
         <View {...panResponder.panHandlers}>
-          <MoveCounter moveCount={game.moveHistory.length} />
+          <MoveCounter moveCount={game.moveHistory.length} bestMoves={level.bestSolution?.length} />
 
           <View style={staticStyles.centerContents} onLayout={(event) => {
             event.persist();
@@ -419,7 +419,7 @@ export default function PlayLevel({
           </View>
 
           <Inventory coins={game.coins} maxCoins={game.maxCoins} keys={game.keys} />
-          {game.won && <WinScreen />}
+          {game.won && <WinScreen coins={game.coins} moves={game.moveHistory.length} bestMoves={level.bestSolution?.length} />}
         </View>
 
         {/* PAUSE MENU COMPONENTS */}

@@ -1,13 +1,20 @@
 import { useContext, useEffect, useRef } from "react";
-import { Animated, Image, StyleSheet } from "react-native";
+import { Animated, Image, StyleSheet, Text } from "react-native";
 import GlobalContext from "../GlobalContext";
-import { sizeFromWidthPercent } from "../TextStyles";
-import { graphics } from "../Theme";
+import { normalize, sizeFromWidthPercent } from "../TextStyles";
+import { colors, graphics } from "../Theme";
 
 import { useAudioPlayer } from "expo-audio";
+import CoinsBalance from "../components/CoinsBalance";
 const victorySound = require("../assets/audio/victory.wav");
 
-export default function WinScreen() {
+interface Props {
+  coins: number;
+  moves: number;
+  bestMoves: number | undefined;
+}
+
+export default function WinScreen({ coins, moves, bestMoves }: Props) {
   const { darkMode, playAudio } = useContext(GlobalContext);
 
   const victorySoundPlayer = useAudioPlayer(victorySound);
@@ -95,6 +102,20 @@ export default function WinScreen() {
     }}>
       <Image style={styles.banner} source={graphics.WIN_BANNER} />
       {confetti}
+
+      <Text>
+        <Text style={styles.moveCount}>{moves}</Text>
+        <Text style={styles.moveCountLabel}> moves</Text>
+      </Text>
+
+      <Text style={styles.bestMovesContainer}>
+        {(bestMoves !== undefined && bestMoves < moves) ? <>
+          <Text style={styles.moveCount}>{bestMoves}</Text>
+          <Text style={styles.moveCountLabel}> best</Text>
+        </> : <Text style={styles.moveCount}>NEW BEST!</Text>}
+      </Text>
+
+      <CoinsBalance currentBalance={coins} startingBalance={0} />
     </Animated.View>
   );
 }
@@ -108,11 +129,28 @@ const styles = StyleSheet.create({
   banner: {
     width: sizeFromWidthPercent(80, 600, 145).width,
     height: sizeFromWidthPercent(80, 600, 145).height,
+    marginBottom: sizeFromWidthPercent(80, 600, 145).height * -0.1,
   },
   confetti: {
     position: "absolute",
     height: 28,
     width: 28,
     opacity: 0.25,
+  },
+  moveCount: {
+    color: colors.DIM_GRAY,
+    fontSize: normalize(24),
+    fontFamily: "Montserrat-Medium",
+    fontWeight: "bold",
+  },
+  moveCountLabel: {
+    color: colors.DIM_GRAY,
+    fontSize: normalize(24),
+    fontFamily: "Montserrat-Regular",
+    fontWeight: "normal",
+  },
+  bestMovesContainer: {
+    transform: [{ scale: 0.75 }],
+    marginTop: -normalize(8),
   },
 });
