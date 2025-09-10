@@ -238,6 +238,7 @@ export function getIconSrc(tile: FlatTile, darkMode?: boolean | undefined) {
   if (tile.id === TileType.LITTLE_EXPLOSION) return { icon: graphics.LITTLE_EXPLOSION, rotation: 0 };
   if (tile.id === TileType.METAL_CRATE) return { icon: graphics.METAL_CRATE, rotation: 0 };
   if (tile.id === TileType.ICE_BLOCK) return { icon: graphics.ICE_BLOCK, rotation: 0 };
+  if (tile.id === TileType.DIAMOND) return { icon: graphics.DIAMOND, rotation: 0 };
   
   if (tile.id === TileType.SPAWN) {
     if (darkMode === undefined) return { icon: graphics.PLAYER, rotation: 0 };

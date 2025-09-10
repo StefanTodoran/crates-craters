@@ -31,6 +31,7 @@ export enum TileType {
   ONEWAY,
   METAL_CRATE,
   ICE_BLOCK,
+  DIAMOND,
   OUTSIDE, // Used for out of bounds board queries. Other enum values shouldn't be reordered but this one can be.
 }
 

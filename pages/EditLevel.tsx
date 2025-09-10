@@ -12,7 +12,7 @@ import { colors, graphics } from "../Theme";
 import { calcBoardTileSize } from "../util/board";
 import { updateLevel } from "../util/loader";
 import { getSpawnPosition } from "../util/logic";
-import { getOneWayTool, metalCrateTool, spawnTool, Tool, tools, wallTool } from "../util/tools";
+import { diamondTool, getOneWayTool, metalCrateTool, spawnTool, Tool, tools, wallTool } from "../util/tools";
 import { PageView, rotationToDirection, TileType, UserLevel } from "../util/types";
 
 import { useAudioPlayer } from "expo-audio";
@@ -312,11 +312,20 @@ export default function EditLevel({
                 theme={bombTool.theme}
                 fillWidth
               />
+            </View>
+            <View style={styles.row}>
               <MenuButton
                 label={metalCrateTool.label}
                 icon={metalCrateTool.icon}
                 onPress={() => changeTool(metalCrateTool)}
                 theme={metalCrateTool.theme}
+                fillWidth
+              />
+              <MenuButton
+                label={diamondTool.label}
+                icon={diamondTool.icon}
+                onPress={() => changeTool(diamondTool)}
+                theme={diamondTool.theme}
                 fillWidth
               />
             </View>

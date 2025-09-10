@@ -17,6 +17,8 @@ const mainGraphics = {
   PLAYER_OUTLINED_DARK: require("./assets/main_theme/player_outlined_dark.png"),
   METAL_CRATE: require("./assets/main_theme/metal_crate.png"),
   ICE_BLOCK: require("./assets/main_theme/ice_block.png"),
+  DIAMOND: require("./assets/main_theme/diamond.png"),
+  DIAMOND_GLINT: require("./assets/main_theme/diamond_glint.png"),
   FILTER_PUSHABLE: require("./assets/main_theme/filter_pushable.png"),
   FILTER_PLAYER: require("./assets/main_theme/filter_player.png"),
 

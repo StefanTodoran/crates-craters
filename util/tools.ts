@@ -23,6 +23,13 @@ export const metalCrateTool: Tool = {
     theme: colors.RED_THEME,
 };
 
+export const diamondTool: Tool = {
+    label: "Diamond",
+    icon: graphics.DIAMOND,
+    tile: { id: TileType.DIAMOND },
+    theme: colors.RED_THEME,
+};
+
 export const spawnTool: Tool = {
     label: "Spawn",
     icon: graphics.PLAYER,

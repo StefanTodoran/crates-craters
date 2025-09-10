@@ -6,6 +6,7 @@ import { TileIcon } from "../assets/Icons";
 import { calcBoardTileSize, FlatBoard, getIconSrc, LayeredBoard } from "../util/board";
 import { isPushable, Position } from "../util/logic";
 import { BombTile, FlatTile, LayeredTile, TileType } from "../util/types";
+import DiamondGlint from "./DiamondGlint";
 
 const win = Dimensions.get("window");
 
@@ -70,10 +71,19 @@ export default function GameBoard({
     if (tile.id === TileType.BOMB) {
       const contents = <>
         {tileGraphic}
-        <View style={styles.entityContainer(tileSize)}>
-          <Text style={[styles.entity, { fontSize: tileSize * 0.3 }]} allowFontScaling={false}>
+        <View style={[styles.entityContainer(tileSize), styles.bombContainer]}>
+          <Text style={[styles.bombText(tileSize)]} allowFontScaling={false}>
             {(tile as BombTile).fuse}
           </Text>
+        </View>
+      </>;
+
+      return <View key={j} style={styles.relative}>{contents}</View>;
+    } else if (tile.id === TileType.DIAMOND) {
+      const contents = <>
+        {tileGraphic}
+        <View style={styles.entityContainer(tileSize)}>
+          <DiamondGlint tileSize={tileSize} />
         </View>
       </>;
 
@@ -170,9 +180,14 @@ const styles = StyleSheet.create<any>({
     justifyContent: "center",
     alignItems: "center",
   }),
-  entity: {
+  bombContainer: {
+    paddingTop: "17.5%",
+    paddingRight: "5%",
+  },
+  bombText: (size: number) => ({
+    fontSize: size * 0.3,
     fontFamily: "Montserrat-Regular",
     fontWeight: "normal",
     color: "white",
-  },
+  }),
 });
