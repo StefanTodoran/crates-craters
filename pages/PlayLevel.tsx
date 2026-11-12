@@ -111,6 +111,10 @@ export default function PlayLevel({
 
   const [pathFollowed, setPathFollowed] = useState<Position[]>([]);
   const pathAnim = useRef(new Animated.Value(0)).current;
+  // A ref (not pathFollowed state) so gesture handlers, which are only rebuilt when
+  // `game` changes, always see the current value. Input is ignored while jumping,
+  // since the jump's final state is computed from the game as it was when it started.
+  const isJumping = useRef(false);
 
   const handleGesture = useRef((_gesture: Gesture) => { });
   useEffect(() => {
@@ -118,6 +122,7 @@ export default function PlayLevel({
       const [up, down, left, right] = gesture;
       // Exactly one of up, down, left, right must be true!
       if (bti(up) + bti(down) + bti(left) + bti(right) !== 1) return;
+      if (isJumping.current) return;
 
       let move;
       if (up) move = Direction.UP;
@@ -151,8 +156,9 @@ export default function PlayLevel({
         prevTouchPos.current.x === pressX &&
         prevTouchPos.current.y === pressY &&
         // If we are currently jumping to a position, wait until that is complete before allowing another.
-        pathFollowed.length === 0
+        !isJumping.current
       ) {
+        isJumping.current = true;
         setTouchPos({ x: pressX, y: pressY });
         prevTouchPos.current = undefined;
 
@@ -186,8 +192,11 @@ export default function PlayLevel({
                 setPathFollowed([]);
                 updateGameState(current);
                 playSoundEvent(current.soundEvent);
+                isJumping.current = false;
               });
             });
+          } else {
+            isJumping.current = false;
           }
 
           Animated.timing(pressAnim, {
