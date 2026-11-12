@@ -30,7 +30,7 @@ export function useBooleanSetting(settingName: string): BooleanSetting {
   // @ts-expect-error We will assume that the settingName key is correct.
   const defaultValue = defaultSettings[settingName];
 
-  const [stateValue, setState] = useState<boolean>(storedValue || defaultValue);
+  const [stateValue, setState] = useState<boolean>(storedValue ?? defaultValue);
   useEffect(() => setStored(stateValue), [stateValue]);
 
   return [stateValue, setState];
@@ -42,7 +42,7 @@ export function useNumberSetting(settingName: string): NumberSetting {
   const [storedValue, setValue] = useMMKVNumber(settingName);
   // @ts-expect-error We will assume that the settingName key is correct.
   const defaultValue = defaultSettings[settingName];
-  return [storedValue || defaultValue, setValue];
+  return [storedValue ?? defaultValue, setValue];
 }
 
 /**
