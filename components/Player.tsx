@@ -66,8 +66,15 @@ export default function Player({
       // However this results in the animation breaking sometimes, even if we add dummy Animated.View
       // with the same id. Oddly the dummy Animated.View with same id prevents some situations
       // which break the Animated.loop, but not all.
-      const optionStyle = styles.optionTile(game.player.x + offset.dx, game.player.y + offset.dy, tileSize, optionsAnim, shouldHighlight, darkMode);
-      newOptions.push(<Animated.View key={index} style={optionStyle}></Animated.View>);
+      // Visibility lives on a static wrapper so the native-driven opacity below is never
+      // swapped out for a plain number. Swapping it left stale indicators visible (e.g.
+      // after a double-tap jump), since detaching a native-driven node doesn't reliably
+      // write the static value back to the view.
+      newOptions.push(
+        <View key={index} style={styles.optionTile(game.player.x + offset.dx, game.player.y + offset.dy, tileSize, shouldHighlight)}>
+          <Animated.View style={styles.optionTileInner(optionsAnim, darkMode)} />
+        </View>
+      );
 
       const pushable = getAdjacentTile(game, offset, tileSize, tileStyle, shouldHighlight);
       newPushables.push(pushable);
@@ -227,17 +234,21 @@ const styles = StyleSheet.create<any>({
       },
     ],
   }),
-  optionTile: (xPos: number, yPos: number, size: number, anim: Animated.Value, valid: boolean, darkMode: boolean) => ({
+  optionTile: (xPos: number, yPos: number, size: number, valid: boolean) => ({
     position: "absolute",
     left: xPos * size,
     top: yPos * size,
     width: size,
     height: size,
-    opacity: valid ? anim.interpolate({ // was originally static 0.4
+    opacity: valid ? 1 : 0,
+  }),
+  optionTileInner: (anim: Animated.Value, darkMode: boolean) => ({
+    width: "100%",
+    height: "100%",
+    opacity: anim.interpolate({ // was originally static 0.4
       inputRange: [0, 1],
       outputRange: [0.75, 0.3],
-      // outputRange: [0.5, 0.2],
-    }) : 0,
+    }),
 
     borderColor: (darkMode) ? colors.OFF_WHITE : colors.DIM_GRAY,
     borderStyle: "solid",
