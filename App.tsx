@@ -180,6 +180,7 @@ export default function App() {
       } // else if uuid is defined:
 
       const updatedLevel = getLevelData(uuid);
+      if (!updatedLevel) return;
       setLevels(prev => prev.map(level => level.uuid === updatedLevel.uuid ? updatedLevel : level));
 
       // Refresh this additional state variable if necessary.
@@ -220,7 +221,7 @@ export default function App() {
 
   const changePlayLevel = useCallback((uuid: string) => {
     const levelObject = getLevelData(uuid);
-    playLevelFromObj(levelObject);
+    if (levelObject) playLevelFromObj(levelObject);
   }, []);
 
   const playLevelFromObj = useCallback((level: Level) => {

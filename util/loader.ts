@@ -44,8 +44,12 @@ export function getData(key: string) {
   return rawValue ? JSON.parse(rawValue) : undefined;
 }
 
-export function getLevelData(key: string) {
+export function getLevelData(key: string): Level | undefined {
   const level = getData(key);
+  if (!level?.board) {
+    console.warn("No stored level for key:", key);
+    return undefined;
+  }
   const board = new FlatBoard(level.board.board);
   level.board = board;
   return level as Level;
@@ -196,6 +200,7 @@ export function multiStoreLevels(levels: Level[]) {
 
 export function markLevelCompleted(uuid: string, moveHistory: Direction[]) {
   const level = getLevelData(uuid);
+  if (!level) return;
   const wasCompleted = level.completed;
 
   const prevBest = level.bestSolution ? level.bestSolution.length : Infinity;

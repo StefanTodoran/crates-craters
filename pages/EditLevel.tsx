@@ -112,17 +112,20 @@ export default function EditLevel({
     updateLevel(level, unsavedChanges); // Stores changes to MMKV
     setUnmodifiedLevel(level);
     setUnsavedChanges(false);
-  }, [level]);
+  }, [level, unsavedChanges]);
 
+  // Restores the last saved version (not the one from when the editor opened, which
+  // would pair an old board with the newer save's completed/bestSolution).
   const discardChanges = useCallback(() => {
     levelCallback(unmodifiedLevel);
     setUnsavedChanges(false);
-  }, []);
+  }, [unmodifiedLevel, levelCallback]);
 
   const gestureStartMode = useRef<GestureMode>(undefined);
   const gestureStartTile = useRef<TileType>(undefined);
 
-  const tileSize = calcBoardTileSize(level.board.width, level.board.height, win);
+  // level can be undefined (handled by the early return below), so don't dereference it yet.
+  const tileSize = level ? calcBoardTileSize(level.board.width, level.board.height, win) : 0;
   const changeTile = useRef<(_y: number, _x: number) => void>(() => undefined);
   const { boardRef, boardPosition, remeasure } = useBoardPosition();
 
