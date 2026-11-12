@@ -2,6 +2,7 @@ import { memo, useEffect, useRef } from "react";
 import { Animated, Dimensions, Image, StyleSheet, Text, View } from "react-native";
 import TextStyles, { normalize } from "../TextStyles";
 import { Theme, colors, graphics } from "../Theme";
+import { isPageAnimating } from "../util/events";
 import { Level, SharedLevel } from "../util/types";
 import BoardPreview from "./BoardPreview";
 import SimpleButton from "./SimpleButton";
@@ -41,7 +42,10 @@ const LevelCard = memo(function ({
   isLocked,
   children,
 }: LevelCardProps) {
-  const anim = useRef(new Animated.Value(0)).current;
+  // Cards mounted while the page panel slides in skip their entrance animation,
+  // otherwise they fade/scale separately from the panel.
+  const skipEntrance = useRef(isPageAnimating()).current;
+  const anim = useRef(new Animated.Value(skipEntrance ? 1 : 0)).current;
   const setAnimTo = (animState: number, callback?: () => void) => {
     Animated.timing(anim, {
       toValue: animState,
@@ -49,7 +53,7 @@ const LevelCard = memo(function ({
       useNativeDriver: true
     }).start(callback);
   }
-  useEffect(() => setAnimTo(1), []);
+  useEffect(() => { if (!skipEntrance) setAnimTo(1); }, []);
 
   let attributionText;
   if (level.official && level.bestSolution) attributionText = `Best: ${level.bestSolution.length} moves`;

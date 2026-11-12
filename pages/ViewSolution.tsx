@@ -1,5 +1,5 @@
 import { useContext, useEffect, useMemo, useState } from "react";
-import { SafeAreaView, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 import BackButton from "../assets/BackButton";
 import GameBoard from "../components/GameBoard";
 import Inventory from "../components/Inventory";
@@ -64,7 +64,7 @@ export default function ViewSolution({
   const currentGameState = allGameStates[currentMove];
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <View>
         <MoveCounter moveCount={currentGameState.moveHistory.length} />
         <GameBoard board={currentGameState.board} />
@@ -83,7 +83,7 @@ export default function ViewSolution({
           viewCallback(PageView.MANAGE, 1);
         }} text="Back" Svg={BackButton} />
       </View>
-    </SafeAreaView>
+    </View>
   );
 }
 

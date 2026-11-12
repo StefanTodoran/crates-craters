@@ -1,5 +1,6 @@
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
-import { Animated, Dimensions, GestureResponderEvent, ImageSourcePropType, PanResponder, PanResponderGestureState, SafeAreaView, ScrollView, StyleSheet, Text, View } from "react-native";
+import { useBoardPosition } from "../util/hooks";
+import { Animated, Dimensions, GestureResponderEvent, ImageSourcePropType, PanResponder, PanResponderGestureState, ScrollView, StyleSheet, Text, View } from "react-native";
 import BackButton from "../assets/BackButton";
 import CurrentToolIndicator from "../components/CurrentToolIndicator";
 import GameBoard from "../components/GameBoard";
@@ -123,7 +124,7 @@ export default function EditLevel({
 
   const tileSize = calcBoardTileSize(level.board.width, level.board.height, win);
   const changeTile = useRef<(_y: number, _x: number) => void>(() => undefined);
-  const boardPosition = useRef({ x: 0, y: 0 });
+  const { boardRef, boardPosition, remeasure } = useBoardPosition();
 
   useEffect(() => { // TODO: This useEffect may be unnecessary. Evaluate if it is needed, potentially remove.
     changeTile.current = (y: number, x: number) => {
@@ -216,20 +217,9 @@ export default function EditLevel({
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View {...panResponder.panHandlers} onLayout={(event) => {
-        event.persist();
-        setTimeout(() => {
-          // For some reason right after the layout event is fired, the measure
-          // function doesn't return the correct values. So we need to wait a bit
-          // before calling it.
-          event.target.measure(
-            (_x, _y, _width, _height, pageX, pageY) => {
-              boardPosition.current = { x: pageX, y: pageY };
-            },
-          );
-        }, 1000);
-      }}>
+    // The page panel already insets for the safe area.
+    <View style={styles.container}>
+      <View ref={boardRef} {...panResponder.panHandlers} onLayout={remeasure}>
         <GameBoard board={level.board} overrideTileSize={tileSize} />
       </View>
       <CurrentToolIndicator tool={currentTool} />
@@ -448,7 +438,7 @@ export default function EditLevel({
         </View>
       </Animated.View>}
       {/* END MODAL */}
-    </SafeAreaView>
+    </View>
   );
 }
 

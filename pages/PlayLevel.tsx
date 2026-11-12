@@ -1,5 +1,5 @@
 import { useContext, useEffect, useMemo, useRef, useState } from "react";
-import { Animated, Dimensions, GestureResponderEvent, PanResponder, PanResponderGestureState, SafeAreaView, StyleSheet, Text, View } from "react-native";
+import { Animated, Dimensions, GestureResponderEvent, PanResponder, PanResponderGestureState, StyleSheet, Text, View } from "react-native";
 import BackButton from "../assets/BackButton";
 import GameBoard from "../components/GameBoard";
 import Inventory from "../components/Inventory";
@@ -19,7 +19,7 @@ import Toast from "react-native-toast-message";
 import TutorialHint from "../components/TutorialHint";
 import { Direction, Level, OfficialLevel, PageView, PlayMode, SharedLevel } from "../util/types";
 
-import { useSoundEventPlayers } from "../util/hooks";
+import { useBoardPosition, useSoundEventPlayers } from "../util/hooks";
 import WinScreen from "./WinScreen";
 const win = Dimensions.get("window");
 
@@ -139,7 +139,7 @@ export default function PlayLevel({
   }, [game]);
 
   const tileSize = calcBoardTileSize(game.board.width, game.board.height, win);
-  const boardPosition = useRef({ x: 0, y: 0 });
+  const { boardRef, boardPosition, remeasure } = useBoardPosition();
 
   const onGestureStart = useRef((_evt: GestureResponderEvent, _gestureState: PanResponderGestureState) => { });
   useEffect(() => {
@@ -391,25 +391,13 @@ export default function PlayLevel({
 
   return (
     <>
-      <SafeAreaView style={staticStyles.container}>
+      {/* The page panel already insets for the safe area. */}
+      <View style={staticStyles.container}>
         {/* GAMEPLAY COMPONENTS */}
         <View {...panResponder.panHandlers}>
           <MoveCounter moveCount={game.moveHistory.length} bestMoves={level.bestSolution?.length} />
 
-          <View style={staticStyles.centerContents} onLayout={(event) => {
-            event.persist();
-            setTimeout(() => {
-              // For some reason right after the layout event is fired, the measure
-              // function doesn't return the correct values. So we need to wait a bit
-              // before calling it. Since this is only used for double tap detection,
-              // it's not a big deal if we need to wait a second.
-              event.target.measure(
-                (_x, _y, _width, _height, pageX, pageY) => {
-                  boardPosition.current = { x: pageX, y: pageY };
-                },
-              );
-            }, 1000);
-          }}>
+          <View ref={boardRef} style={staticStyles.centerContents} onLayout={remeasure}>
             <GameBoard board={game.board} overrideTileSize={tileSize} playerPosition={game.player}>
               <Player game={game} touch={touchMove} darkMode={darkMode} tileSize={tileSize} />
 
@@ -483,7 +471,7 @@ export default function PlayLevel({
           {game.won && postWinActionBtn}
         </Animated.View>
 
-      </SafeAreaView>
+      </View>
       {introducesMechanics && showTutorial && <TutorialHint introduces={(level as OfficialLevel).introduces!} hideTutorial={() => setShowTutorial(false)} />}
     </>
   );

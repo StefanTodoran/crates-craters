@@ -1,8 +1,34 @@
 import { AudioPlayer, useAudioPlayer } from "expo-audio";
-import { useContext, useEffect, useRef, useState } from "react";
+import { useCallback, useContext, useEffect, useRef, useState } from "react";
+import { View } from "react-native";
 import { useMMKVBoolean, useMMKVNumber } from "react-native-mmkv";
 import GlobalContext, { defaultSettings } from "../GlobalContext";
+import { eventEmitter } from "./events";
 import { SoundEvent } from "./logic";
+
+/**
+ * Tracks a board view's position on screen, for mapping touches to tiles.
+ * Measures on layout, again once the page panel finishes its open animation (a
+ * measurement taken mid-slide is offset), and whenever remeasure() is called.
+ */
+export function useBoardPosition() {
+  const boardRef = useRef<View>(null);
+  const boardPosition = useRef({ x: 0, y: 0 });
+
+  const remeasure = useCallback(() => {
+    boardRef.current?.measure((_x, _y, _width, _height, pageX, pageY) => {
+      if (pageX === undefined || pageY === undefined) return;
+      boardPosition.current = { x: pageX, y: pageY };
+    });
+  }, []);
+
+  useEffect(() => {
+    const listener = eventEmitter.addListener("pageOpened", remeasure);
+    return () => listener.remove();
+  }, [remeasure]);
+
+  return { boardRef, boardPosition, remeasure };
+}
 
 export function useOnUnmount(callback: () => void, dependencies: React.DependencyList) {
   const unmounting = useRef(false);

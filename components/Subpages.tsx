@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Animated, ImageURISource, StyleSheet, View, Platform } from "react-native";
 import { normalize } from "../TextStyles";
 import { colors } from "../Theme";
-import { eventEmitter } from "../util/events";
+import { eventEmitter, takeInitialSubpage } from "../util/events";
 import IconButton from "./IconButton";
 
 interface SubpageTab {
@@ -27,7 +27,10 @@ export default function Subpages({ pageTabs, pageComponents, disabledPages }: Pr
     }).start(callback);
   }
 
-  const [currentPage, setPage] = useState(0);
+  const [currentPage, setPage] = useState(() => {
+    const initial = takeInitialSubpage() ?? 0;
+    return initial < pageComponents.length ? initial : 0;
+  });
   const updatePageState = (newPageState: number) => {
     if (newPageState === currentPage) return;
     setAnimTo(0, () => {

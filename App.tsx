@@ -4,7 +4,7 @@ import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import { UserCredential, signInWithEmailAndPassword } from "firebase/auth";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Animated, BackHandler, Dimensions, Platform, StatusBar as RNStatusBar, SafeAreaView, StyleSheet, View } from "react-native";
+import { Animated, BackHandler, Dimensions, Platform, StatusBar as RNStatusBar, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Toast from "react-native-toast-message";
 import Header from "./components/Header";
@@ -19,7 +19,7 @@ import StorePage from "./pages/StorePage";
 import ViewSolution from "./pages/ViewSolution";
 import { colors } from "./Theme";
 import { UserAccountDocument, checkForOfficialLevelUpdates, getUserData } from "./util/database";
-import { doPageChange, eventEmitter } from "./util/events";
+import { doPageChange, doPageOpened, eventEmitter, setInitialSubpage, setPageAnimating } from "./util/events";
 import { auth } from "./util/firebase";
 import { useBooleanSetting, useNumberSetting } from "./util/hooks";
 import { createLevel, getData, getLevelData, getStoredLevels, metadataKeys, setData } from "./util/loader";
@@ -67,10 +67,17 @@ export default function App() {
     return () => listener.remove();
   }, []);
 
-  const openPageView = useCallback((newView: PageView, pageNum?: number) => {
+  const openPageView = useCallback((newView: PageView, pageNum?: number, sameView?: boolean) => {
+    if (pageNum !== undefined && !sameView) {
+      // The page mounts fresh, so its Subpages can start on the right tab instead of
+      // sliding in tab 0 and cross-fading after the open animation.
+      setInitialSubpage(pageNum);
+    }
+    setPageAnimating();
     setView(newView);
     setAnimTo(1, () => {
-      if (pageNum !== undefined) doPageChange(pageNum);
+      if (pageNum !== undefined && sameView) doPageChange(pageNum);
+      doPageOpened();
     });
 
     // Non-standard play modes are set when calling App.tsx to 
@@ -99,7 +106,7 @@ export default function App() {
     } else if (view === PageView.MENU) { // MENU -> PAGE
       openPageView(newView, pageNum);
     } else { // PAGE -> PAGE
-      setAnimTo(0, () => openPageView(newView, pageNum));
+      setAnimTo(0, () => openPageView(newView, pageNum, newView === view));
     }
   }, [view]);
 
@@ -279,7 +286,10 @@ export default function App() {
           style={styles.modal(pageAnim, darkMode)}
           pointerEvents={view === PageView.MENU ? "none" : "auto"}
         >
-          <SafeAreaView style={styles.safeArea}>
+          {/* Static insets instead of a SafeAreaView: this panel is translated while it
+              animates, and a SafeAreaView would re-measure mid-slide and jump. iOS only,
+              like the SafeAreaView it replaces (Android pads via StatusBar.currentHeight). */}
+          <View style={[styles.safeArea, Platform.OS === "ios" && { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
           {![PageView.PLAY, PageView.EDITOR, PageView.SOLUTION].includes(view) && <View style={styles.header}>
             <Header
               pageView={view}
@@ -364,7 +374,7 @@ export default function App() {
               />
             }
           </View>
-          </SafeAreaView>
+          </View>
         </Animated.View>
 
         {/* Toast is absolutely positioned, so a SafeAreaView parent has no effect;
@@ -409,6 +419,7 @@ const styles = StyleSheet.create<any>({
   },
   modal: (animState: Animated.Value, darkMode: boolean) => ({
     ...StyleSheet.absoluteFillObject,
+    overflow: "hidden", // Clip children to the animated rounded corners.
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: darkMode ? "black" : "white",
