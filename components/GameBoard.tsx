@@ -1,10 +1,11 @@
-import { useContext } from "react";
+import { useContext, useMemo } from "react";
 import { Dimensions, Image, Platform, StyleSheet, Text, View } from "react-native";
 import GlobalContext from "../GlobalContext";
 import { colors } from "../Theme";
 import { TileIcon } from "../assets/Icons";
+import { PositionSet } from "../util/Set";
 import { calcBoardTileSize, FlatBoard, getIconSrc, LayeredBoard } from "../util/board";
-import { isPushable, Position } from "../util/logic";
+import { findConnectedMetalComponent, isPushable, Position } from "../util/logic";
 import { BombTile, FlatTile, LayeredTile, TileType } from "../util/types";
 import DiamondGlint from "./DiamondGlint";
 
@@ -28,6 +29,39 @@ export default function GameBoard({
   const tileSize = overrideTileSize ? overrideTileSize : calcBoardTileSize(board.width, board.height, win);
   const useSvg = Platform.OS === "ios";
   const isFlatBoard = board instanceof FlatBoard;
+
+  // Precompute which tiles will be rendered by the Player component (avoid BFS per tile render)
+  const handledByPlayer = useMemo(() => {
+    const handled = new PositionSet(board.width);
+    if (!playerPosition || !(board instanceof LayeredBoard)) return handled;
+
+    const offsets = [
+      { dx: 0, dy: -1 },
+      { dx: -1, dy: 0 },
+      { dx: 1, dy: 0 },
+      { dx: 0, dy: 1 },
+    ];
+
+    offsets.forEach(offset => {
+      const x = playerPosition.x + offset.dx;
+      const y = playerPosition.y + offset.dy;
+      const tile = board.getTile(y, x, true);
+
+      const pushable = [TileType.CRATE, TileType.METAL_CRATE, TileType.BOMB, TileType.ICE_BLOCK].includes(tile.id);
+      if (!pushable) return;
+
+      if (!isPushable(board, { x, y }, offset)) return;
+
+      if (tile.id === TileType.METAL_CRATE) {
+        const component = findConnectedMetalComponent(board, { x, y });
+        component.forEach(p => handled.add(p));
+      } else {
+        handled.add({ x, y });
+      }
+    });
+
+    return handled;
+  }, [board, playerPosition]);
 
   function getTile(tile: FlatTile, i: number, j: number) {
     // We need to know oddTile (board is checkered color-wise) and the tile type
@@ -57,7 +91,7 @@ export default function GameBoard({
     const bgColor = oddTile ? colors.BLUE_THEME.MAIN_TRANSPARENT(0.03) : colors.BLUE_THEME.MAIN_TRANSPARENT(0.14);
 
     // Render an empty tile if we are directly adjacent to the player's position. Board will be a LayeredBoard since this won't be used for EditLevel.
-    if (tile.id === TileType.EMPTY || willPlayerComponentHandleRender(board as LayeredBoard, j, i, playerPosition, tile.id)) {
+    if (tile.id === TileType.EMPTY || willPlayerComponentHandleRender(board as LayeredBoard, j, i, playerPosition, tile.id, handledByPlayer)) {
       return <View key={j} style={styles.tile(bgColor, tileSize)} />;
     }
 
@@ -125,20 +159,18 @@ export default function GameBoard({
 
 function isEven(num: number) { return num % 2 === 0; }
 
-function willPlayerComponentHandleRender(board: LayeredBoard, x: number, y: number, playerPosition: Position | undefined, tile_id: TileType) {
+function willPlayerComponentHandleRender(_board: LayeredBoard, x: number, y: number, playerPosition: Position | undefined, _tile_id: TileType, handled: PositionSet) {
   return (
     !!playerPosition &&
-    isAdjacent(x, y, playerPosition.x, playerPosition.y) &&
-    [TileType.CRATE, TileType.METAL_CRATE, TileType.BOMB, TileType.ICE_BLOCK].includes(tile_id) &&
-    isPushable(board, { x, y }, { dx: x - playerPosition.x, dy: y - playerPosition.y })
+    handled.has({ x, y })
   );
 }
 
-function isAdjacent(x1: number, y1: number, x2: number, y2: number) {
-  const dx = Math.abs(x1 - x2);
-  const dy = Math.abs(y1 - y2);
-  return (dx === 1 && dy === 0) || (dx === 0 && dy === 1);
-}
+// function isAdjacent(x1: number, y1: number, x2: number, y2: number) {
+//   const dx = Math.abs(x1 - x2);
+//   const dy = Math.abs(y1 - y2);
+//   return (dx === 1 && dy === 0) || (dx === 0 && dy === 1);
+// }
 
 const styles = StyleSheet.create<any>({
   board: {

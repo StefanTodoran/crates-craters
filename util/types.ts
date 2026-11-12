@@ -151,6 +151,7 @@ export enum Tutorial {
   METAL_CRATES = 7,
   ICE_BLOCKS = 8,
   MISC = 9,
+  // METAL_CRATES_2 = 10,
 }
 
 export interface OfficialLevel extends LevelBase {

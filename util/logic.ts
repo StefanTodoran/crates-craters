@@ -80,6 +80,72 @@ export function canEnterOneWay(direction: Direction, tile: OneWayTile) {
 }
 
 /**
+ * Returns all positions of orthogonally connected metal crates that include the start position.
+ */
+export function findConnectedMetalComponent(board: LayeredBoard, start: Position): Position[] {
+  const component: Position[] = [];
+  const visited = new PositionSet(board.width);
+  const bfsQueue = new Queue<Position>();
+  bfsQueue.enqueue(start);
+
+  while (!bfsQueue.isEmpty) {
+    const curr = bfsQueue.dequeue();
+    if (visited.has(curr)) continue;
+    visited.add(curr);
+    if (board.getTile(curr.y, curr.x, true).id !== TileType.METAL_CRATE) continue;
+    component.push(curr);
+    bfsQueue.enqueue({ x: curr.x + 1, y: curr.y });
+    bfsQueue.enqueue({ x: curr.x - 1, y: curr.y });
+    bfsQueue.enqueue({ x: curr.x, y: curr.y + 1 });
+    bfsQueue.enqueue({ x: curr.x, y: curr.y - 1 });
+  }
+
+  return component;
+}
+
+function sortPositionsFrontToBack(positions: Position[], move: Direction) {
+  positions.sort((a, b) => {
+    if (move === Direction.RIGHT) return b.x - a.x;
+    if (move === Direction.LEFT) return a.x - b.x;
+    if (move === Direction.DOWN) return b.y - a.y;
+    return a.y - b.y; // Direction.UP
+  });
+}
+
+function computeMovableMetals(board: LayeredBoard, metalPositions: Position[], move: Direction): PositionSet {
+  const { dx, dy } = directionToOffset(move);
+  const willMove = new PositionSet(board.width);
+
+  // Build membership set for quick checks
+  const metalSet = new PositionSet(board.width);
+  for (const p of metalPositions) metalSet.add(p);
+
+  // Ensure ordering so dependencies are resolved
+  sortPositionsFrontToBack(metalPositions, move);
+
+  for (const p of metalPositions) {
+    const target = { x: p.x + dx, y: p.y + dy };
+    const targetLayer = board.getLayer(target.y, target.x, true);
+
+    const backgroundOk =
+      targetLayer.background.id === TileType.EMPTY ||
+      (targetLayer.background.id === TileType.ONEWAY && canEnterOneWay(move, targetLayer.background));
+    if (!backgroundOk) continue;
+
+    const targetFg = targetLayer.foreground.id;
+    if (targetFg === TileType.EMPTY) {
+      willMove.add(p);
+      continue;
+    }
+    if (targetFg === TileType.METAL_CRATE && metalSet.has(target)) {
+      if (willMove.has(target)) willMove.add(p);
+    }
+  }
+
+  return willMove;
+}
+
+/**
  * Returns the player spawn position in the given level.
  * @param {LayeredBoard} board The board[][] you wish to search. 
  * @returns {Position} Returns a position of the form {y: number, x: number}
@@ -254,6 +320,26 @@ export function doGameMove(game: Game, move: Direction): [Game, boolean] {
     oneFurtherLayer.background.id === TileType.EMPTY ||
     (oneFurtherLayer.background.id === TileType.ONEWAY && canEnterOneWay(move, oneFurtherLayer.background))
   ) {
+    // Magnetic metal crates: move connected component of metal crates, with obstructed ones left behind.
+    if (moveToLayer.foreground.id === TileType.METAL_CRATE) {
+      const allMetalCrates = findConnectedMetalComponent(next.board, { x: moveTo.x, y: moveTo.y });
+      const willMove = computeMovableMetals(next.board, allMetalCrates, move);
+      const cratesToMove = allMetalCrates.filter(p => willMove.has(p));
+
+      if (willMove.size > 0) {
+        // Clear from original locations first
+        for (const p of cratesToMove) {
+          next.board.setTile(p.y, p.x, emptyTile);
+        }
+        
+        // Place at targets
+        for (const p of cratesToMove) {
+          next.board.setTile(p.y + dy, p.x + dx, { id: TileType.METAL_CRATE });
+        }
+        next.soundEvent = SoundEvent.PUSH;
+      }
+    }
+
     // Pushing a fill capable tile into a crater.
     if (fillCapableTiles.includes(moveToLayer.foreground.id) && oneFurtherLayer.foreground.id === TileType.CRATER) {
       next.board.setTile(moveTo.y, moveTo.x, emptyTile);
@@ -262,7 +348,11 @@ export function doGameMove(game: Game, move: Direction): [Game, boolean] {
     }
 
     // Pushing a pushable tile to an empty tile.
-    if (pushableTiles.includes(moveToLayer.foreground.id) && oneFurtherLayer.foreground.id === TileType.EMPTY) {
+    if (
+      pushableTiles.includes(moveToLayer.foreground.id) &&
+      moveToLayer.foreground.id !== TileType.METAL_CRATE &&
+      oneFurtherLayer.foreground.id === TileType.EMPTY
+    ) {
       next.board.setTile(oneFurther.y, oneFurther.x, moveToLayer.foreground);
       next.board.setTile(moveTo.y, moveTo.x, emptyTile);
       next.soundEvent = SoundEvent.PUSH;
@@ -406,6 +496,13 @@ export function isPushable(board: LayeredBoard, position: Position, offset: Offs
     oneFurtherLayer.background.id === TileType.EMPTY ||
     (oneFurtherLayer.background.id === TileType.ONEWAY && canEnterOneWay(move, oneFurtherLayer.background))
   ) {
+    // Magnetic metal crates: if pushing a metal crate, ensure at least the front-most can move.
+    if (moveToLayer.foreground.id === TileType.METAL_CRATE) {
+      const metalPositions = findConnectedMetalComponent(board, position);
+      const willMove = computeMovableMetals(board, metalPositions, move);
+      return willMove.size > 0;
+    }
+
     // Pushing a fill capable tile into a crater.
     if (fillCapableTiles.includes(moveToLayer.foreground.id) && oneFurtherLayer.foreground.id === TileType.CRATER) {
       return true;

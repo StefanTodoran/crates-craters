@@ -5,23 +5,6 @@ import { BackgroundTile, Direction, EmptyTile, FlatTile, ForegroundTile, Layered
 export const emptyTile: EmptyTile = { id: TileType.EMPTY };
 export const outsideTile: OutsideTile = { id: TileType.OUTSIDE };
 
-// const ForegroundTileTypes = [
-//   TileType.EMPTY,
-//   TileType.DOOR,
-//   TileType.KEY,
-//   TileType.CRATE,
-//   TileType.CRATER,
-//   TileType.COIN,
-//   TileType.SPAWN,
-//   TileType.FLAG,
-//   TileType.BOMB,
-//   TileType.EXPLOSION,
-//   TileType.LITTLE_EXPLOSION,
-//   TileType.METAL_CRATE,
-//   TileType.ICE_BLOCK,
-//   TileType.OUTSIDE,
-// ];
-
 const BackgroundTileTypes = [
   TileType.EMPTY,
   TileType.WALL,

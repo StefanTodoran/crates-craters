@@ -1,12 +1,11 @@
-import { useEffect, useMemo, useRef } from "react";
+import React, { useEffect, useMemo, useRef } from "react";
 import { Animated, Image, StyleProp, StyleSheet, View } from "react-native";
 import { colors, graphics } from "../Theme";
 import { getIconSrc } from "../util/board";
-import { Game, isValidMove, pushIceBlock } from "../util/logic";
+import { Game, findConnectedMetalComponent, isValidMove, pushIceBlock } from "../util/logic";
 import { Offset, TileType, offsetToDirection } from "../util/types";
 import BombBoardTile from "./BombBoardTile";
 
-const MAX_PLAYER_ROTATION_DEG = 5;
 const ICE_BLOCK_LINE_SIZE = 5;
 
 interface Props {
@@ -52,8 +51,8 @@ export default function Player({
 
   const [options, pushables, iceBlockPreviews] = useMemo(() => {
     // We only add selectors on adjacent tiles where the player could actually move.
-    const newOptions: JSX.Element[] = [];
-    const newPushables: JSX.Element[] = [];
+    const newOptions: React.ReactElement[] = [];
+    const newPushables: React.ReactElement[] = [];
     const newIceBlockPreviews: (IceBlockPreview | null)[] = [];
 
     const offsets: Offset[] = [
@@ -131,6 +130,19 @@ function getAdjacentTile(game: Game, offset: Offset, tileSize: number, tileStyle
   const tile = game.board.getTile(yPos, xPos, true);
 
   if ([TileType.CRATE, TileType.METAL_CRATE, TileType.ICE_BLOCK].includes(tile.id)) {
+    if (tile.id === TileType.METAL_CRATE) {
+      const component = findConnectedMetalComponent(game.board, { x: xPos, y: yPos });
+      const icon = getIconSrc({ id: TileType.METAL_CRATE })!.icon;
+      return <>
+        {component.map((p, idx) => (
+          <Image
+            key={idx}
+            style={[tileStyle, { position: "absolute", left: (p.x - xPos) * tileSize, top: (p.y - yPos) * tileSize }]}
+            source={icon}
+          />
+        ))}
+      </>;
+    }
     return <Image style={tileStyle} source={getIconSrc(tile)!.icon} />;
   }
   if (tile.id === TileType.BOMB) {
@@ -213,12 +225,8 @@ const styles = StyleSheet.create<any>({
       {
         translateX: unsignedMax(touchX, tileSize),
       },
-      // {
-      //   rotate: `${(unsignedMax(touchX, tileSize) / tileSize) * MAX_PLAYER_ROTATION_DEG}deg`,
-      // },
       {
         scale: 0.975 + (Math.min(tileSize, Math.max(Math.abs(touchX), Math.abs(touchY))) / tileSize * 0.075),
-        // scale: (touchX === 0 && touchY === 0) ? 0.975 : 1.05,
       },
     ],
   }),
