@@ -38,7 +38,8 @@ export default function LoginPage({ setUserCredential }: Props) {
     const [loading, setLoading] = useState(false);
     // Set when Google sign-in hit an existing password account for the same email:
     // after the password sign-in succeeds, Google is linked to that account.
-    const [pendingGoogle, setPendingGoogle] = useState<AuthCredential | null>(null);
+    // Only linked to an account with that same email.
+    const [pendingGoogle, setPendingGoogle] = useState<{ credential: AuthCredential, email: string } | null>(null);
 
     const continueWithGoogle = async () => {
         setLoading(true);
@@ -54,8 +55,12 @@ export default function LoginPage({ setUserCredential }: Props) {
             });
         } catch (error: any) {
             if (error.code === "auth/account-exists-with-different-credential") {
-                setPendingGoogle(GoogleAuthProvider.credentialFromError(error));
-                if (error.customData?.email) setEmail(error.customData.email);
+                const credential = GoogleAuthProvider.credentialFromError(error);
+                const googleEmail: string | undefined = error.customData?.email;
+                if (credential && googleEmail) {
+                    setPendingGoogle({ credential, email: googleEmail.toLowerCase() });
+                    setEmail(googleEmail);
+                }
                 setPageMode(PageMode.LOGIN);
                 Toast.show({
                     type: "info",
@@ -134,7 +139,11 @@ export default function LoginPage({ setUserCredential }: Props) {
                     <InputLine
                         label={"Email"}
                         value={email}
-                        onChange={setEmail}
+                        onChange={(newEmail: string) => {
+                            setEmail(newEmail);
+                            // A different email means a different account: drop the pending link.
+                            if (pendingGoogle && newEmail.toLowerCase() !== pendingGoogle.email) setPendingGoogle(null);
+                        }}
                         darkMode={darkMode}
                         doFilter={false}
                         fullBorder
@@ -168,7 +177,7 @@ export default function LoginPage({ setUserCredential }: Props) {
                     <SimpleButton
                         icon={graphics.YELLOW_BACK_ICON}
                         theme={colors.YELLOW_THEME}
-                        onPress={() => setPageMode(PageMode.UNSET)}
+                        onPress={() => { setPageMode(PageMode.UNSET); setPendingGoogle(null); }}
                         extraMargin={6}
                         square
                     />
@@ -182,16 +191,16 @@ export default function LoginPage({ setUserCredential }: Props) {
                             setLoading(true);
                             signInWithEmailAndPassword(auth, email, password)
                                 .then(async (userCredential) => {
-                                    if (pendingGoogle) {
-                                        await linkWithCredential(userCredential.user, pendingGoogle)
+                                    if (pendingGoogle && userCredential.user.email?.toLowerCase() === pendingGoogle.email) {
+                                        await linkWithCredential(userCredential.user, pendingGoogle.credential)
                                             .then(() => Toast.show({
                                                 type: "success",
                                                 text1: "Google connected!",
                                                 text2: "You can now sign in with Google too.",
                                             }))
                                             .catch(error => console.warn("Failed to link Google:", error.code));
-                                        setPendingGoogle(null);
                                     }
+                                    setPendingGoogle(null);
                                     setUserCredential(userCredential);
                                     storage.delete(metadataKeys.userCredentials); // Legacy saved password, if any.
                                     Toast.show({
