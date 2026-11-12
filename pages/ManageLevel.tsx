@@ -11,7 +11,7 @@ import GlobalContext from "../GlobalContext";
 import TextStyles, { normalize } from "../TextStyles";
 import { colors, graphics } from "../Theme";
 import { calcPreviewTileSize } from "../util/board";
-import { publishUserLevel, updateDocument } from "../util/database";
+import { postSolutionData, publishUserLevel, updateDocument } from "../util/database";
 import { doPageChange } from "../util/events";
 import { useForceRefresh } from "../util/hooks";
 import { deleteLevel, updateLevel } from "../util/loader";
@@ -53,6 +53,7 @@ export default function ManageLevel({
     publishUserLevel(level, userData!, userCredential!, shared)
       .then(docRef => {
         updateLevel({ ...level, shared: shared.toDate().toISOString(), db_id: docRef?.id }, false);
+        postSolutionData(docRef.id, level.bestSolution!, "user_level");
         Toast.show({
           type: "success",
           text1: "Congratulations!",

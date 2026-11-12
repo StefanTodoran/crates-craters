@@ -223,12 +223,18 @@ export default function UserLevels({
             if (requestId !== latestRequest.current) return true; // A newer fetch superseded this one.
 
             setMatchingCount(count);
-            setUserLevels(data.filter(doc => doc.public).map(doc => {
-                return {
-                    ...doc,
-                    board: parseCompressedBoardData(doc.board),
-                    completed: completedLevels.includes(doc.uuid),
-                };
+            setUserLevels(data.filter(doc => doc.public).flatMap(doc => {
+                try {
+                    return [{
+                        ...doc,
+                        board: parseCompressedBoardData(doc.board),
+                        completed: completedLevels.includes(doc.uuid),
+                    }];
+                } catch (error) {
+                    // Skip malformed levels instead of breaking the whole list.
+                    console.warn("Skipping malformed shared level:", doc.uuid, error);
+                    return [];
+                }
             }));
 
             setLoading(false);
@@ -331,7 +337,7 @@ export default function UserLevels({
                     const level = filteredLevels.find(level => level.uuid === uuid)!;
                     playLevelCallback(level);
                     // TODO: Add attempt tracking for official levels too.
-                    attemptUserLevel(uuid, userCredential?.user.email);
+                    attemptUserLevel(uuid, userCredential?.user.uid);
                 }}
                 secondButtonProps={{
                     text: (uuid: string) => {
@@ -345,7 +351,7 @@ export default function UserLevels({
                     },
                     icon: graphics.LIKE_ICON,
                     callback: async (uuid: string) => {
-                        const success = await likeUserLevel(uuid, userCredential!.user.email!);
+                        const success = await likeUserLevel(uuid, userCredential!.user.uid);
                         if (!success) {
                             Toast.show({
                                 type: "error",

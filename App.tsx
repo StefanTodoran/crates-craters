@@ -2,7 +2,7 @@ import { useFonts } from "expo-font";
 import * as NavigationBar from "expo-navigation-bar";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
-import { UserCredential, signInWithEmailAndPassword } from "firebase/auth";
+import { UserCredential, onAuthStateChanged, signInAnonymously, signInWithEmailAndPassword } from "firebase/auth";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Animated, BackHandler, Dimensions, Platform, StatusBar as RNStatusBar, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -22,7 +22,7 @@ import { UserAccountDocument, checkForOfficialLevelUpdates, getUserData } from "
 import { doPageChange, doPageOpened, eventEmitter, setInitialSubpage, setPageAnimating } from "./util/events";
 import { auth } from "./util/firebase";
 import { useBooleanSetting, useNumberSetting } from "./util/hooks";
-import { createLevel, getData, getLevelData, getStoredLevels, metadataKeys, setData } from "./util/loader";
+import { createLevel, getData, getLevelData, getStoredLevels, metadataKeys, storage } from "./util/loader";
 import { Game, initializeGameObj } from "./util/logic";
 import { toastConfig } from "./util/toasts";
 import { Level, PageView, PlayMode, SharedLevel, UserLevel } from "./util/types";
@@ -35,6 +35,26 @@ const win = Dimensions.get("window");
  * App handles the transition between different pages, the loading of settings from
  * storage, and the providing of these settings via a context. 
  */
+/**
+ * Versions up to 0.4.22 saved the account password in plain text to sign in on launch.
+ * Signs in with it once so the user stays logged in under the new session persistence,
+ * then deletes it. Returns whether the sign-in succeeded.
+ */
+async function migrateSavedCredentials() {
+  const saved = getData(metadataKeys.userCredentials);
+  if (!saved) return false;
+
+  try {
+    await signInWithEmailAndPassword(auth, saved.email, saved.password);
+    storage.delete(metadataKeys.userCredentials);
+    return true;
+  } catch (error: any) {
+    // Keep them for another try only if the device was offline.
+    if (error.code !== "auth/network-request-failed") storage.delete(metadataKeys.userCredentials);
+    return false;
+  }
+}
+
 export default function App() {
   const [fontsLoaded] = useFonts({
     "Montserrat-Regular": require("./assets/Montserrat-Regular.ttf"),
@@ -124,27 +144,35 @@ export default function App() {
   const [userCredential, setUserCredential] = useState<UserCredential>();
   const [userData, setUserData] = useState<UserAccountDocument>();
 
-  const attemptSignIn = useCallback(async () => {
-    // Grab the saved email and password from storage.
-    const savedCredentials = getData(metadataKeys.userCredentials);
-    if (!savedCredentials) return;
+  // Firebase Auth persists the session itself (see util/firebase.ts). Players who
+  // aren't signed in get a silent anonymous account, so their solutions can be
+  // attributed per install; the rest of the app treats anonymous users as signed out.
+  useEffect(() => {
+    return onAuthStateChanged(auth, async (user) => {
+      if (user && !user.isAnonymous) {
+        setUserCredential({ user } as UserCredential);
+        return;
+      }
 
-    signInWithEmailAndPassword(auth, savedCredentials.email, savedCredentials.password)
-      .then((userCredential) => setUserCredential(userCredential))
-      .catch((error) => {
-        console.error("Failed to sign in with saved credentials:", error.code);
-        if (error.code === "auth/invalid-credential") setData(metadataKeys.userCredentials, undefined);
-      });
-    return;
+      setUserCredential(undefined);
+      setUserData(undefined);
+      if (await migrateSavedCredentials()) return; // Sign-in fires another auth state change.
+      if (!user) signInAnonymously(auth).catch(error => console.warn("Anonymous sign-in failed:", error.code));
+    });
+  }, []);
+
+  // Re-reads the signed-in user, e.g. to pick up a newly verified email.
+  const attemptSignIn = useCallback(async () => {
+    const user = auth.currentUser;
+    if (!user || user.isAnonymous) return;
+    await user.reload().catch(error => console.warn("Failed to refresh user:", error.code));
+    setUserCredential({ user: auth.currentUser ?? user } as UserCredential);
   }, []);
 
   useEffect(() => {
-    if (!userCredential) {
-      attemptSignIn();
-      return;
-    }
+    if (!userCredential) return;
 
-    getUserData(userCredential.user.email!)
+    getUserData(userCredential.user.uid)
       .then((data) => setUserData(data))
       .catch((error) => console.error("Failed to fetch user data:", error));
     // TODO: Put a Toast message here? What to do if fail?

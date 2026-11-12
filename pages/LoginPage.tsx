@@ -1,4 +1,4 @@
-import { UserCredential, createUserWithEmailAndPassword, sendEmailVerification, signInWithEmailAndPassword } from "firebase/auth";
+import { EmailAuthProvider, UserCredential, createUserWithEmailAndPassword, deleteUser, linkWithCredential, sendEmailVerification, signInWithEmailAndPassword } from "firebase/auth";
 import { Timestamp } from "firebase/firestore";
 import { useContext, useState } from "react";
 import { Dimensions, StyleSheet, Text, View } from "react-native";
@@ -9,9 +9,9 @@ import SubpageContainer from "../components/SubpageContainer";
 import GlobalContext from "../GlobalContext";
 import TextStyles, { normalize } from "../TextStyles";
 import { colors, graphics } from "../Theme";
-import { UserAccountDocument, createDocument, doesEntryExist } from "../util/database";
+import { UserAccountDocument, createUserAccount, isUsernameTaken } from "../util/database";
 import { auth } from "../util/firebase";
-import { getData, getLocalUserData, metadataKeys, setData } from "../util/loader";
+import { getData, getLocalUserData, metadataKeys } from "../util/loader";
 
 const win = Dimensions.get("window");
 const emailRegex = /^(\S+@\S+\.\S+)?$/;
@@ -132,7 +132,6 @@ export default function LoginPage({ setUserCredential }: Props) {
                             signInWithEmailAndPassword(auth, email, password)
                                 .then((userCredential) => {
                                     setUserCredential(userCredential);
-                                    setData(metadataKeys.userCredentials, { email: email, password: password });
                                     Toast.show({
                                         type: "success",
                                         text1: "Account login succeeded!",
@@ -164,8 +163,7 @@ export default function LoginPage({ setUserCredential }: Props) {
 
                             setLoading(true);
 
-                            const usernameExists = await doesEntryExist("userAccounts", "__name__", username);
-                            if (usernameExists) {
+                            if (await isUsernameTaken(username).catch(() => false)) {
                                 Toast.show({
                                     type: "error",
                                     text1: "Username already taken.",
@@ -175,8 +173,15 @@ export default function LoginPage({ setUserCredential }: Props) {
                                 return;
                             }
 
-                            createUserWithEmailAndPassword(auth, email, password)
-                                .then((userCredential) => {
+                            // Upgrading the anonymous session keeps its uid, so solutions
+                            // posted before signing up stay attributed to this player.
+                            const current = auth.currentUser;
+                            const createAuthUser = current?.isAnonymous
+                                ? linkWithCredential(current, EmailAuthProvider.credential(email, password))
+                                : createUserWithEmailAndPassword(auth, email, password);
+
+                            createAuthUser
+                                .then(async (userCredential) => {
                                     const accountDoc: UserAccountDocument = {
                                         user_email: email,
                                         user_name: username,
@@ -188,38 +193,42 @@ export default function LoginPage({ setUserCredential }: Props) {
                                         local_uuid: userData.uuid,
                                         local_joined: Timestamp.fromDate(new Date(userData.joined)),
                                     };
-                                    createDocument("userAccounts", email, accountDoc)
+
+                                    try {
+                                        await createUserAccount(userCredential.user.uid, accountDoc);
+                                    } catch (error: any) {
+                                        // Most likely the username was claimed in the meantime. Don't
+                                        // leave an auth user behind without an account.
+                                        await deleteUser(userCredential.user).catch(() => { });
+                                        Toast.show({
+                                            type: "error",
+                                            text1: "Account creation failed.",
+                                            text2: `Error code: ${error.code}. Try a different username.`,
+                                        });
+                                        return;
+                                    }
+
+                                    setUserCredential(userCredential);
+                                    Toast.show({
+                                        type: "success",
+                                        text1: "Account creation succeeded!",
+                                        text2: `You are now logged in as ${userCredential.user.email}.`,
+                                    });
+
+                                    const user = userCredential.user;
+                                    sendEmailVerification(user)
                                         .then(() => {
-                                            setData(metadataKeys.userCredentials, { email: email, password: password });
-                                            setUserCredential(userCredential);
                                             Toast.show({
                                                 type: "success",
-                                                text1: "Account creation succeeded!",
-                                                text2: `You are now logged in as ${userCredential.user.email}.`,
+                                                text1: "Email verification sent!",
+                                                text2: `Please verify your email at ${user.email}.`,
                                             });
-
-                                            const user = userCredential.user;
-                                            sendEmailVerification(user)
-                                                .then(() => {
-                                                    Toast.show({
-                                                        type: "success",
-                                                        text1: "Email verification sent!",
-                                                        text2: `Please verify your email at ${user.email}.`,
-                                                    });
-                                                })
-                                                .catch((error) => {
-                                                    Toast.show({
-                                                        type: "error",
-                                                        text1: "Send verification failed.",
-                                                        text2: `Unable to send verification email. Error code: ${error.code}.`,
-                                                    });
-                                                });
                                         })
                                         .catch((error) => {
                                             Toast.show({
                                                 type: "error",
-                                                text1: "Account creation failed.",
-                                                text2: `Error code: ${error.code}. Please contact support.`,
+                                                text1: "Send verification failed.",
+                                                text2: `Unable to send verification email. Error code: ${error.code}.`,
                                             });
                                         });
                                 })

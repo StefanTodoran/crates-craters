@@ -234,16 +234,33 @@ const split = {
   tile: ".",
 }
 
+/**
+ * Throws on malformed data. Shared levels come from other players, so a bad board
+ * must fail here rather than crash rendering later.
+ */
 export function parseCompressedBoardData(raw: string): FlatBoard {
+  if (typeof raw !== "string") throw new Error("Board data is not a string.");
   const rawBoard = raw.split(split.row);
   const board = new FlatBoard(FlatBoard.createEmptyBoard());
+  if (rawBoard.length > board.height) throw new Error(`Board has ${rawBoard.length} rows (max ${board.height}).`);
+
+  const isInt = (value: number, min: number, max: number) => Number.isInteger(value) && value >= min && value <= max;
+  const checkTileId = (id: number) => {
+    if (!isInt(id, 0, TileType.OUTSIDE - 1)) throw new Error(`Invalid tile id "${id}".`);
+  };
 
   rawBoard.forEach((strRow, yPos) => {
     const rawRow = strRow.split(split.column);
+    if (rawRow.length > board.width) throw new Error(`Row ${yPos} has ${rawRow.length} tiles (max ${board.width}).`);
 
     rawRow.forEach((strTile, xPos) => {
       if (strTile.includes(split.tile)) {
-        const tileData = strTile.split(split.tile).map(substr => parseInt(substr));
+        const tileData = strTile.split(split.tile).map(substr => Number(substr));
+        checkTileId(tileData[0]);
+        if (tileData[0] === TileType.ONEWAY && !tileData.slice(1).every(dir => isInt(dir, Direction.UP, Direction.LEFT))) {
+          throw new Error(`Invalid one-way directions at ${yPos},${xPos}.`);
+        }
+        if (tileData[0] === TileType.BOMB && !isInt(tileData[1], 0, 999)) throw new Error(`Invalid bomb fuse at ${yPos},${xPos}.`);
         const tile = { id: tileData[0] };
 
         // TODO: As the list of tiles with data beyond id expands,
@@ -259,7 +276,9 @@ export function parseCompressedBoardData(raw: string): FlatBoard {
 
         board.setTile(yPos, xPos, tile);
       } else {
-        board.setTile(yPos, xPos, { id: parseInt(strTile) });
+        const id = Number(strTile);
+        checkTileId(id);
+        board.setTile(yPos, xPos, { id });
       }
     });
   });

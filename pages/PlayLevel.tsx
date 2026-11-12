@@ -91,12 +91,13 @@ export default function PlayLevel({
     panResponderEnabled.current = !game.won;
     if (game.won) {
       if (mode === PlayMode.SHARED) {
-        markUserLevelCompleted((level as SharedLevel), userCredential?.user.email, game.moveHistory);
+        markUserLevelCompleted((level as SharedLevel), userCredential?.user.uid, game.moveHistory);
       } else {
         markLevelCompleted(level.uuid, game.moveHistory);
 
-        // We want to collect solution data for official levels, even without a user account.
-        if (mode === PlayMode.STANDARD) postSolutionData(level.uuid, userCredential?.user.email, game.moveHistory);
+        // We want to collect solution data for official levels, even without a user account
+        // (signed-out players post under their anonymous uid).
+        if (mode === PlayMode.STANDARD) postSolutionData(level.uuid, game.moveHistory, "official_level");
       }
     }
   }, [game]);
@@ -372,7 +373,7 @@ export default function PlayLevel({
       />;
       postWinActionBtn = <SimpleButton
         onPress={async () => {
-          const success = await likeUserLevel(level.uuid, userCredential!.user.email!);
+          const success = await likeUserLevel(level.uuid, userCredential!.user.uid);
           if (!success) {
             Toast.show({
               type: "error",
