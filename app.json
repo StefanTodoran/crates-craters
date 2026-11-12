@@ -23,9 +23,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.stefantodoran.cratesncraters",
-      "runtimeVersion": {
-        "policy": "appVersion"
-      }
+      "runtimeVersion": "1.0.0"
     },
     "android": {
       "adaptiveIcon": {

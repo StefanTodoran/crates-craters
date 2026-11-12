@@ -77,22 +77,28 @@ export default function Menu({ notificationCounts, openPage }: Props) {
 
   return (
     <>
+      {/* The background lives behind the ScrollView (not inside its content) so
+          iOS bounce overscroll past the first/last page reveals the page color
+          instead of an empty white gap. */}
+      <Animated.View style={{
+        ...StyleSheet.absoluteFillObject,
+        backgroundColor: anim.interpolate({
+          inputRange: inputRange,
+          outputRange: pageColors,
+          extrapolate: "clamp",
+        }),
+      }} />
+
       <ScrollView
         horizontal
         pagingEnabled
         showsHorizontalScrollIndicator={false}
+        scrollEventThrottle={16}
         // overScrollMode="never"
         onScroll={(evt) => {
           anim.setValue(evt.nativeEvent.contentOffset.x / win.width);
         }}
       >
-        <Animated.View style={{
-          ...StyleSheet.absoluteFillObject,
-          backgroundColor: anim.interpolate({
-            inputRange: inputRange,
-            outputRange: pageColors,
-          }),
-        }} />
 
         {menuPages.map((page, idx) =>
           <Animated.View key={idx} style={{

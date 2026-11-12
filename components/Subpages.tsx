@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Animated, ImageURISource, StyleSheet, View } from "react-native";
+import { Animated, ImageURISource, StyleSheet, View, Platform } from "react-native";
 import { normalize } from "../TextStyles";
 import { colors } from "../Theme";
 import { eventEmitter } from "../util/events";
@@ -69,7 +69,8 @@ const styles = StyleSheet.create<any>({
     position: "relative",
     flexDirection: "row",
     gap: normalize(20),
-    marginBottom: normalize(30),
+    // On iOS the SafeAreaView already clears the home indicator.
+    marginBottom: Platform.OS === "ios" ? normalize(4) : normalize(30),
     width: "100%",
     justifyContent: "center",
     borderTopWidth: 1,

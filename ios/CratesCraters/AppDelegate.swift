@@ -52,6 +52,45 @@ public class AppDelegate: ExpoAppDelegate {
   }
 }
 
+// iOS 27 SDK requires the UIScene lifecycle. The window is still created in
+// AppDelegate (expo-dev-launcher expects it during didFinishLaunching); here we
+// just attach it to the scene and forward URLs to the AppDelegate handlers.
+class SceneDelegate: UIResponder, UIWindowSceneDelegate {
+  var window: UIWindow?
+
+  func scene(
+    _ scene: UIScene,
+    willConnectTo session: UISceneSession,
+    options connectionOptions: UIScene.ConnectionOptions
+  ) {
+    guard let windowScene = scene as? UIWindowScene,
+          let appDelegate = UIApplication.shared.delegate as? AppDelegate,
+          let appWindow = appDelegate.window else { return }
+
+    appWindow.windowScene = windowScene
+    appWindow.makeKeyAndVisible()
+    window = appWindow
+
+    self.scene(scene, openURLContexts: connectionOptions.urlContexts)
+    if let userActivity = connectionOptions.userActivities.first {
+      self.scene(scene, continue: userActivity)
+    }
+  }
+
+  func scene(_ scene: UIScene, openURLContexts URLContexts: Set<UIOpenURLContext>) {
+    for context in URLContexts {
+      var options: [UIApplication.OpenURLOptionsKey: Any] = [:]
+      options[.sourceApplication] = context.options.sourceApplication
+      options[.annotation] = context.options.annotation
+      _ = UIApplication.shared.delegate?.application?(UIApplication.shared, open: context.url, options: options)
+    }
+  }
+
+  func scene(_ scene: UIScene, continue userActivity: NSUserActivity) {
+    _ = UIApplication.shared.delegate?.application?(UIApplication.shared, continue: userActivity, restorationHandler: { _ in })
+  }
+}
+
 class ReactNativeDelegate: ExpoReactNativeFactoryDelegate {
   // Extension point for config-plugins
 

@@ -1,9 +1,10 @@
 import { useFonts } from "expo-font";
 import * as NavigationBar from "expo-navigation-bar";
+import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import { UserCredential, signInWithEmailAndPassword } from "firebase/auth";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Animated, BackHandler, Dimensions, StatusBar as RNStatusBar, SafeAreaView, StyleSheet, View } from "react-native";
+import { Animated, BackHandler, Dimensions, Platform, StatusBar as RNStatusBar, SafeAreaView, StyleSheet, View } from "react-native";
 import Toast from "react-native-toast-message";
 import Header from "./components/Header";
 import Menu from "./components/Menu";
@@ -38,6 +39,12 @@ export default function App() {
     "Montserrat-Regular": require("./assets/Montserrat-Regular.ttf"),
     "Montserrat-Medium": require("./assets/Montserrat-Medium.ttf"),
   });
+
+  // Hide the splash explicitly: the native auto-hide can miss its cue after a
+  // dev reload on iOS and leave the splash covering the app.
+  useEffect(() => {
+    if (fontsLoaded) SplashScreen.hideAsync().catch(() => { });
+  }, [fontsLoaded]);
 
   const pageAnim = useRef(new Animated.Value(0)).current;
   const setAnimTo = (animState: number, callback?: () => void) => {
@@ -102,6 +109,7 @@ export default function App() {
   const toggleAudioMode = () => setAudioMode(playAudio => !playAudio);
 
   useEffect(() => {
+    if (Platform.OS !== "android") return;
     NavigationBar.setPositionAsync("absolute");
     NavigationBar.setBehaviorAsync("overlay-swipe");
     NavigationBar.setBackgroundColorAsync("transparent");
@@ -251,7 +259,9 @@ export default function App() {
   if (!fontsLoaded) return <></>;
   return (
     <GlobalContext.Provider value={{ darkMode, dragSensitivity, doubleTapDelay, playAudio, userCredential, userData }}>
-      <SafeAreaView style={styles.container}>
+      {/* Menu and the page panel's background extend edge-to-edge on iOS (matching
+          Android); only the page contents and toasts are inset into the safe area. */}
+      <View style={styles.container}>
 
         <Menu notificationCounts={notificationCounts} openPage={switchView} />
 
@@ -259,6 +269,7 @@ export default function App() {
           style={styles.modal(pageAnim, darkMode)}
           pointerEvents={view === PageView.MENU ? "none" : "auto"}
         >
+          <SafeAreaView style={styles.safeArea}>
           {![PageView.PLAY, PageView.EDITOR, PageView.SOLUTION].includes(view) && <Animated.View style={styles.header(pageAnim)}>
             <Header
               pageView={view}
@@ -343,14 +354,17 @@ export default function App() {
               />
             }
           </View>
+          </SafeAreaView>
         </Animated.View>
 
+        <SafeAreaView style={StyleSheet.absoluteFill} pointerEvents="box-none">
         <Toast
           position="top"
           bottomOffset={20}
           config={toastConfig}
         />
-      </SafeAreaView>
+        </SafeAreaView>
+      </View>
 
       <StatusBar translucent={true} hidden={true} />
     </GlobalContext.Provider>
@@ -360,6 +374,11 @@ export default function App() {
 const styles = StyleSheet.create<any>({
   container: {
     flex: 1,
+  },
+  safeArea: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
   },
   page: {
     flex: 1,
