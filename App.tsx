@@ -148,7 +148,7 @@ export default function App() {
   const [userLevels, setUserLevels] = useState<SharedLevel[]>([]); // We store this here so that the fetch doesn't need to be called every time the shared levels page is mounted.
   const [notificationCounts, setNotificationCounts] = useState([0, 0, 0, 0]);
   const [userCredential, setUserCredential] = useState<UserCredential>();
-  const [userData, setUserData] = useState<UserAccountDocument>();
+  const [userData, setUserData] = useState<UserAccountDocument | null>();
 
   // Firebase Auth persists the session itself (see util/firebase.ts). Players who
   // aren't signed in get a silent anonymous account, so their solutions can be
@@ -184,7 +184,11 @@ export default function App() {
 
     getUserData(userCredential.user.uid)
       .then((data) => setUserData(data))
-      .catch((error) => console.error("Failed to fetch user data:", error));
+      .catch((error) => {
+        // First Google sign-in: the auth user exists but hasn't picked a username yet.
+        if (String(error?.message).startsWith("No document")) setUserData(null);
+        else console.error("Failed to fetch user data:", error);
+      });
     // TODO: Put a Toast message here? What to do if fail?
   }, [userCredential]);
 
@@ -486,7 +490,9 @@ const styles = StyleSheet.create<any>({
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: darkMode ? "black" : "white",
-    opacity: animState,
+    // iOS: no opacity. Any opacity on an ancestor stops the native tab bar from drawing
+    // its Liquid Glass platter (and it never recovers), so the panel slides in like a sheet.
+    opacity: Platform.OS === "ios" ? undefined : animState,
     borderRadius: animState.interpolate({
       inputRange: [0, 0.75, 1],
       outputRange: [40, 30, 0],
@@ -494,7 +500,7 @@ const styles = StyleSheet.create<any>({
     transform: [{
       translateY: animState.interpolate({
         inputRange: [0, 1],
-        outputRange: [win.height * 0.2, 0],
+        outputRange: [Platform.OS === "ios" ? win.height : win.height * 0.2, 0],
       }),
     }],
   }),

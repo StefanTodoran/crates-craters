@@ -1,7 +1,7 @@
 import { DocumentData, DocumentReference, Query, QuerySnapshot, Timestamp, WhereFilterOp, addDoc, arrayUnion, collection, doc, getCountFromServer, getDoc, getDocs, increment, limit, orderBy, query, runTransaction, setDoc, updateDoc, where, writeBatch } from "firebase/firestore";
 import { doStateStorageSync } from "./events";
 import { auth, db } from "./firebase";
-import { compressBoardData, getData, getStoredLevelCount, metadataKeys, multiStoreLevels, parseCompressedBoardData, setData } from "./loader";
+import { compressBoardData, getData, getLocalUserData, getStoredLevelCount, metadataKeys, multiStoreLevels, parseCompressedBoardData, setData } from "./loader";
 import { Direction, OfficialLevel, SharedLevel, Tutorial, UserLevel } from "./types";
 
 import { User, UserCredential, deleteUser } from "firebase/auth";
@@ -282,6 +282,22 @@ const usernameRef = (userName: string) => doc(db, "usernames", userName.toLowerC
 
 export async function isUsernameTaken(userName: string) {
   return (await getDoc(usernameRef(userName))).exists();
+}
+
+/** A new account doc, carrying over this device's local progress. */
+export function newAccountDoc(email: string, userName: string): UserAccountDocument {
+  const localUser = getLocalUserData();
+  return {
+    user_email: email,
+    user_name: userName,
+    likes: [],
+    attempted: getData(metadataKeys.attemptedLevels) || [],
+    completed: getData(metadataKeys.completedLevels) || [],
+    coins: getData(metadataKeys.coinBalance) || 0,
+    online_joined: Timestamp.now(),
+    local_uuid: localUser.uuid,
+    local_joined: Timestamp.fromDate(new Date(localUser.joined)),
+  };
 }
 
 /** Claims the username and creates the account doc in one write. */

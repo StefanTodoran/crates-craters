@@ -3,7 +3,7 @@ import { ImageURISource } from "react-native";
 import OfficialIcon from "../assets/main_theme/official.png";
 import SharedIcon from "../assets/main_theme/shared.png";
 import { IndicatorIcon } from "../components/LevelCard";
-import Subpages from "../components/Subpages";
+import Subpages, { SubpageTab } from "../components/Subpages";
 import { graphics, purpleTheme } from "../Theme";
 import { refreshLevelsFromServer } from "../util/database";
 import { Level, PageView, SharedLevel } from "../util/types";
@@ -65,17 +65,19 @@ export default function LevelsPage({
         />,
     ];
 
-    const pageTabs = useMemo(() => {
+    const pageTabs = useMemo((): SubpageTab[] => {
         return [
             {
                 label: "Official",
                 color: purpleTheme.MAIN_COLOR,
                 icon: OfficialIcon as ImageURISource,
+                sfSymbol: "flag.checkered",
             },
             {
                 label: "Shared",
                 color: purpleTheme.MAIN_COLOR,
                 icon: SharedIcon as ImageURISource,
+                sfSymbol: "person.2.fill",
             },
         ];
     }, []);

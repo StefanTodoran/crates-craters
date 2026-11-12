@@ -3,7 +3,7 @@ import { ImageURISource } from "react-native";
 import CreateIcon from "../assets/main_theme/create.png";
 import EditorIcon from "../assets/main_theme/editor.png";
 import { IndicatorIcon } from "../components/LevelCard";
-import Subpages from "../components/Subpages";
+import Subpages, { SubpageTab } from "../components/Subpages";
 import GlobalContext from "../GlobalContext";
 import { colors, graphics } from "../Theme";
 import { doPageChange } from "../util/events";
@@ -81,17 +81,19 @@ export default function EditorPage({
     />,
   ];
 
-  const pageTabs = useMemo(() => {
+  const pageTabs = useMemo((): SubpageTab[] => {
     return [
       {
         label: "Levels",
         color: colors.RED_THEME.MAIN_COLOR,
         icon: CreateIcon as ImageURISource,
+        sfSymbol: "plus.square.fill",
       },
       {
         label: "Manage",
         color: colors.RED_THEME.MAIN_COLOR,
         icon: EditorIcon as ImageURISource,
+        sfSymbol: "hammer.fill",
       },
     ];
   }, []);

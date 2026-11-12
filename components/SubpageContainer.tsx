@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Dimensions, RefreshControl, ScrollView, StyleSheet } from "react-native";
+import { TAB_BAR_CLEARANCE } from "./Subpages";
 
 const win = Dimensions.get("window");
 
@@ -26,7 +27,7 @@ export default function SubpageContainer({ center, noWidthPad, onRefresh, lessTo
       contentContainerStyle={[
         {
           paddingTop: lessTopPad ? win.height * 0.025 : win.height * 0.05,
-          paddingBottom: win.height * 0.05,
+          paddingBottom: win.height * 0.05 + TAB_BAR_CLEARANCE,
         },
         !noWidthPad && {
           paddingHorizontal: win.width * 0.05,

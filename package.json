@@ -13,7 +13,9 @@
     "prune-exports": "ts-prune"
   },
   "dependencies": {
+    "@react-native-google-signin/google-signin": "^17.0.0",
     "expo": "^53.0.22",
+    "expo-audio": "~0.4.9",
     "expo-font": "~13.3.2",
     "expo-navigation-bar": "~4.2.8",
     "expo-splash-screen": "~0.30.10",
@@ -22,11 +24,11 @@
     "heapify": "github:StefanTodoran/javascript-minqueue#release",
     "react": "19.0.0",
     "react-native": "0.79.6",
+    "react-native-bottom-tabs": "^1.5.0",
     "react-native-mmkv": "^3.3.1",
+    "react-native-safe-area-context": "5.4.0",
     "react-native-svg": "15.11.2",
-    "react-native-toast-message": "^2.2.0",
-    "expo-audio": "~0.4.9",
-    "react-native-safe-area-context": "5.4.0"
+    "react-native-toast-message": "^2.2.0"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",

@@ -1,4 +1,4 @@
-import { EmailAuthProvider, UserCredential, reauthenticateWithCredential, sendEmailVerification, signOut } from "firebase/auth";
+import { AuthCredential, EmailAuthProvider, UserCredential, reauthenticateWithCredential, sendEmailVerification, signOut } from "firebase/auth";
 import { useContext, useState } from "react";
 import { Dimensions, Linking, StyleSheet, View } from "react-native";
 import Toast from "react-native-toast-message";
@@ -9,7 +9,8 @@ import GlobalContext from "../GlobalContext";
 import { normalize } from "../TextStyles";
 import { colors, graphics } from "../Theme";
 import { auth } from "../util/firebase";
-import { DELETED_USER_NAME, deleteUserAccount } from "../util/database";
+import { DELETED_USER_NAME, createUserAccount, deleteUserAccount, isUsernameTaken, newAccountDoc } from "../util/database";
+import { getGoogleCredential, signOutOfGoogle, usesPassword } from "../util/googleAuth";
 import { metadataKeys, storage } from "../util/loader";
 import LoginPage from "./LoginPage";
 
@@ -29,17 +30,80 @@ export default function ProfilePage({ attemptSignIn, setUserCredential }: Props)
     const [deleting, setDeleting] = useState(false);
     const [password, setPassword] = useState("");
     const [busy, setBusy] = useState(false);
+    const [newUsername, setNewUsername] = useState("");
 
     if (!userCredential) return <LoginPage setUserCredential={setUserCredential} />;
+
+    const signOutEverywhere = () => {
+        storage.delete(metadataKeys.userCredentials); // Legacy saved password, if any.
+        signOutOfGoogle();
+        return signOut(auth);
+    };
+
+    // First Google sign-in: there's no account doc until a username is picked.
+    if (userData === null) {
+        const finishSignUp = async () => {
+            setBusy(true);
+            try {
+                if (await isUsernameTaken(newUsername)) {
+                    Toast.show({ type: "error", text1: "Username already taken.", text2: "Please choose a different username." });
+                    return;
+                }
+                await createUserAccount(userCredential.user.uid, newAccountDoc(userCredential.user.email!, newUsername));
+                await attemptSignIn(); // Re-fetches the new account doc.
+                Toast.show({ type: "success", text1: "Account created!", text2: `Welcome, ${newUsername}!` });
+            } catch (error: any) {
+                Toast.show({ type: "error", text1: "Account creation failed.", text2: `Error code: ${error.code}. Please try again.` });
+            } finally {
+                setBusy(false);
+            }
+        };
+
+        return (
+            <SubpageContainer center>
+                <InputCard
+                    title={"Choose a Username"}
+                    hints={[`Signed in as ${userCredential.user.email}.`, "Your username is shown on levels you share."]}
+                    fields={[{
+                        label: "Username",
+                        value: newUsername,
+                        onChange: setNewUsername,
+                        filterPattern: /[^a-z0-9_$!]/gi,
+                    }]}
+                    buttonText="Cancel"
+                    buttonCallback={() => { signOutEverywhere().then(() => setUserCredential(undefined)); }}
+                />
+                <View style={styles.buttonsRow}>
+                    <SimpleButton onPress={finishSignUp}
+                        text="Finish"
+                        icon={graphics.SIGNUP_ICON}
+                        theme={colors.YELLOW_THEME}
+                        disabled={!newUsername || newUsername.length > 32 || busy}
+                        fillWidth
+                        extraMargin={[6, 5]}
+                        square
+                        main
+                    />
+                </View>
+            </SubpageContainer>
+        );
+    }
+
+    const hasPassword = usesPassword(userCredential.user);
 
     const deleteAccount = async () => {
         const user = userCredential.user;
         setBusy(true);
         try {
-            // Firebase only deletes users who signed in recently, so confirm the password first.
-            await reauthenticateWithCredential(user, EmailAuthProvider.credential(user.email!, password));
+            // Firebase only deletes users who signed in recently, so confirm who this is first.
+            let credential: AuthCredential | null = hasPassword
+                ? EmailAuthProvider.credential(user.email!, password)
+                : await getGoogleCredential();
+            if (!credential) return; // Google picker cancelled.
+            await reauthenticateWithCredential(user, credential);
             await deleteUserAccount(user, userData?.user_name);
             storage.delete(metadataKeys.userCredentials);
+            signOutOfGoogle();
             setDeleting(false);
             setUserCredential(undefined);
             Toast.show({
@@ -67,21 +131,21 @@ export default function ProfilePage({ attemptSignIn, setUserCredential }: Props)
                     "This permanently deletes your account and frees your username.",
                     `Levels you published stay playable, credited to "${DELETED_USER_NAME}".`,
                 ]}
-                fields={[{
+                fields={hasPassword ? [{
                     label: "Confirm Password",
                     value: password,
                     onChange: setPassword,
                     isSensitive: true,
-                }]}
+                }] : []}
                 buttonText="Cancel"
                 buttonCallback={() => { setDeleting(false); setPassword(""); }}
             />
             <View style={styles.buttonsRow}>
                 <SimpleButton onPress={deleteAccount}
-                    text="Delete Forever"
+                    text={hasPassword ? "Delete Forever" : "Confirm with Google"}
                     icon={graphics.DELETE_ICON}
                     theme={colors.RED_THEME}
-                    disabled={password.length < 6 || busy}
+                    disabled={(hasPassword && password.length < 6) || busy}
                     fillWidth
                     extraMargin={[6, 5]}
                     square
@@ -112,10 +176,9 @@ export default function ProfilePage({ attemptSignIn, setUserCredential }: Props)
                 ]}
                 buttonText="Sign Out"
                 buttonCallback={() => {
-                    signOut(auth)
+                    signOutEverywhere()
                         .then(() => {
                             setUserCredential(undefined);
-                            storage.delete(metadataKeys.userCredentials); // Legacy saved password, if any.
 
                             Toast.show({
                                 type: "success",

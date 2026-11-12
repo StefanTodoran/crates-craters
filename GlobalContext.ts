@@ -23,7 +23,7 @@ interface GlobalContext {
   doubleTapDelay: number,
   playAudio: boolean,
   userCredential?: UserCredential,
-  userData?: UserAccountDocument,
+  userData?: UserAccountDocument | null, // null: signed in, but no account doc yet (new Google user).
 }
 
 export const defaultSettings = {

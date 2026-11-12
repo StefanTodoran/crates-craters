@@ -46,6 +46,12 @@
     "plugins": [
       "expo-font",
       [
+        "@react-native-google-signin/google-signin",
+        {
+          "iosUrlScheme": "com.googleusercontent.apps.967442204309-in2io4t6746h4ai3idl2qssh4oeej59b"
+        }
+      ],
+      [
         "expo-audio",
         {
           "microphonePermission": false

@@ -36,6 +36,12 @@
 				<string>exp+crates-n-craters</string>
 			</array>
 		</dict>
+		<dict>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.967442204309-in2io4t6746h4ai3idl2qssh4oeej59b</string>
+			</array>
+		</dict>
 	</array>
 	<key>CFBundleVersion</key>
 	<string>1</string>

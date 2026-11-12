@@ -1,4 +1,6 @@
-import { EmailAuthProvider, UserCredential, createUserWithEmailAndPassword, deleteUser, linkWithCredential, sendEmailVerification, signInWithEmailAndPassword } from "firebase/auth";
+import { AuthCredential, EmailAuthProvider, GoogleAuthProvider, UserCredential, createUserWithEmailAndPassword, deleteUser, linkWithCredential, sendEmailVerification, signInWithEmailAndPassword } from "firebase/auth";
+import GoogleLogo from "../assets/GoogleLogo";
+import { signInWithGoogle } from "../util/googleAuth";
 import { Timestamp } from "firebase/firestore";
 import { useContext, useState } from "react";
 import { Dimensions, StyleSheet, Text, View } from "react-native";
@@ -34,6 +36,43 @@ export default function LoginPage({ setUserCredential }: Props) {
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
     const [loading, setLoading] = useState(false);
+    // Set when Google sign-in hit an existing password account for the same email:
+    // after the password sign-in succeeds, Google is linked to that account.
+    const [pendingGoogle, setPendingGoogle] = useState<AuthCredential | null>(null);
+
+    const continueWithGoogle = async () => {
+        setLoading(true);
+        try {
+            const userCredential = await signInWithGoogle();
+            if (!userCredential) return; // Cancelled.
+            setUserCredential(userCredential);
+            storage.delete(metadataKeys.userCredentials); // Legacy saved password, if any.
+            Toast.show({
+                type: "success",
+                text1: "Signed in with Google!",
+                text2: `You are now logged in as ${userCredential.user.email}.`,
+            });
+        } catch (error: any) {
+            if (error.code === "auth/account-exists-with-different-credential") {
+                setPendingGoogle(GoogleAuthProvider.credentialFromError(error));
+                if (error.customData?.email) setEmail(error.customData.email);
+                setPageMode(PageMode.LOGIN);
+                Toast.show({
+                    type: "info",
+                    text1: "You already have an account.",
+                    text2: "Sign in with your password once to connect Google.",
+                });
+            } else if (error.code !== "SIGN_IN_CANCELLED" && error.code !== "-5") {
+                Toast.show({
+                    type: "error",
+                    text1: "Google sign-in failed.",
+                    text2: `Error code: ${error.code ?? error.message}. Please try again.`,
+                });
+            }
+        } finally {
+            setLoading(false);
+        }
+    };
 
     let hint;
     if (!password) hint = "Please input a password.";
@@ -67,6 +106,18 @@ export default function LoginPage({ setUserCredential }: Props) {
                             onPress={() => setPageMode(PageMode.SIGNUP)}
                             theme={colors.YELLOW_THEME}
                             icon={graphics.FLAG}
+                            fillWidth
+                            square
+                            extraMargin={[0, 8]}
+                        />
+                    </View>
+                    <View style={styles.pageModeRow}>
+                        <SimpleButton
+                            text="Continue with Google"
+                            Svg={GoogleLogo}
+                            theme={colors.YELLOW_THEME}
+                            onPress={continueWithGoogle}
+                            disabled={loading}
                             fillWidth
                             square
                             extraMargin={[0, 8]}
@@ -130,7 +181,17 @@ export default function LoginPage({ setUserCredential }: Props) {
                         onPress={() => {
                             setLoading(true);
                             signInWithEmailAndPassword(auth, email, password)
-                                .then((userCredential) => {
+                                .then(async (userCredential) => {
+                                    if (pendingGoogle) {
+                                        await linkWithCredential(userCredential.user, pendingGoogle)
+                                            .then(() => Toast.show({
+                                                type: "success",
+                                                text1: "Google connected!",
+                                                text2: "You can now sign in with Google too.",
+                                            }))
+                                            .catch(error => console.warn("Failed to link Google:", error.code));
+                                        setPendingGoogle(null);
+                                    }
                                     setUserCredential(userCredential);
                                     storage.delete(metadataKeys.userCredentials); // Legacy saved password, if any.
                                     Toast.show({
@@ -237,7 +298,9 @@ export default function LoginPage({ setUserCredential }: Props) {
                                     Toast.show({
                                         type: "error",
                                         text1: "Account creation failed.",
-                                        text2: `Error code: ${error.code}. Please try again.`,
+                                        text2: error.code === "auth/email-already-in-use"
+                                            ? "That email already has an account. Sign in, or use Continue with Google."
+                                            : `Error code: ${error.code}. Please try again.`,
                                     });
                                 })
                                 .finally(() => setLoading(false));

@@ -5,7 +5,7 @@ import CartIcon from "../assets/main_theme/cart.png";
 import ProfileIcon from "../assets/main_theme/profile.png";
 import CoinsBalance from "../components/CoinsBalance";
 import SubpageContainer from "../components/SubpageContainer";
-import Subpages from "../components/Subpages";
+import Subpages, { SubpageTab } from "../components/Subpages";
 import GlobalContext from "../GlobalContext";
 import TextStyles from "../TextStyles";
 import { colors } from "../Theme";
@@ -38,17 +38,19 @@ export default function StorePage({ attemptSignIn, setUserCredential }: Props) {
     ];
   }, []);
 
-  const pageTabs = useMemo(() => {
+  const pageTabs = useMemo((): SubpageTab[] => {
     return [
       {
         label: "Profile",
         color: colors.YELLOW_THEME.MAIN_COLOR,
         icon: ProfileIcon,
+        sfSymbol: "person.crop.circle.fill",
       },
       {
         label: "Store",
         color: colors.YELLOW_THEME.MAIN_COLOR,
         icon: CartIcon,
+        sfSymbol: "cart.fill",
       },
     ];
   }, []);
