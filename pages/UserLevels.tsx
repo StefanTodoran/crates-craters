@@ -352,11 +352,11 @@ export default function UserLevels({
                                 text1: "Couldn't like level.",
                                 text2: "Please check your connection and try again.",
                             });
+                            return;
                         }
-                        const newUserLevels = [...userLevels];
-                        const index = newUserLevels.findIndex(lvl => lvl.uuid === uuid);
-                        newUserLevels[index].likes += 1;
-                        setUserLevels(newUserLevels);
+                        setUserLevels(userLevels.map(lvl =>
+                            lvl.uuid === uuid ? { ...lvl, likes: lvl.likes + 1 } : lvl
+                        ));
                     },
                 }
                 }
