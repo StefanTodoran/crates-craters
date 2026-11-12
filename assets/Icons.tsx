@@ -1,5 +1,6 @@
-import { StyleSheet } from "react-native";
+import { Image, StyleSheet } from "react-native";
 import Svg, { Circle, Defs, G, LinearGradient, Mask, Path, Stop } from "react-native-svg";
+import { getIconSrc } from "../util/board";
 import { FlatTile, TileType } from "../util/types";
 
 interface Props {
@@ -32,14 +33,8 @@ export function TileIcon({ bgColor, tileSize, tileData }: Props) {
       Icon = DoorIcon;
       break;
 
-    case TileType.ONEWAY:
-      Icon = OneWayUpIcon;
-      // TODO: FIX ME!
-      // if (tileData.orientation === Direction.UP) Icon = OneWayUpIcon;
-      // if (tileData.orientation === Direction.RIGHT) Icon = OneWayRightIcon;
-      // if (tileData.orientation === Direction.DOWN) Icon = OneWayDownIcon;
-      // if (tileData.orientation === Direction.LEFT) Icon = OneWayLeftIcon;
-      break;
+    // ONEWAY has no SVG per orientation (only "up"), so it uses the PNG path below,
+    // which handles every blocked-side combination and rotation.
 
     case TileType.BOMB:
       Icon = BombIcon;
@@ -56,7 +51,18 @@ export function TileIcon({ bgColor, tileSize, tileData }: Props) {
       break;
   }
 
-  if (!Icon) return <></>;
+  if (!Icon) {
+    // No SVG for this tile (e.g. one-way, metal crate, ice block, diamond): fall back
+    // to the same PNG the Android renderer uses, instead of rendering nothing.
+    const iconSrc = getIconSrc(tileData);
+    if (!iconSrc) return <></>;
+    return (
+      <Image
+        source={iconSrc.icon}
+        style={[styles.tile(_bgColor, tileSize), { transform: [{ rotate: `${iconSrc.rotation}deg` }] }]}
+      />
+    );
+  }
   return <Icon tileSize={tileSize} styleProp={styles.tile(_bgColor, tileSize)}/>;
 }
 
