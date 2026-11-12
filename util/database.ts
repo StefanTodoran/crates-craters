@@ -6,7 +6,7 @@ import { Direction, OfficialLevel, SharedLevel, Tutorial, UserLevel } from "./ty
 
 import { UserCredential } from "firebase/auth";
 import { setLogLevel } from "firebase/firestore";
-setLogLevel("debug");
+if (__DEV__) setLogLevel("debug");
 
 // ======================== \\
 // DOCUMENT TYPE INTERFACES \\
