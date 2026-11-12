@@ -315,9 +315,11 @@ export default function PlayLevel({
   }
 
   const introducesMechanics = Object.hasOwn(level, "introduces");
-  const [showTutorial, setShowTutorial] = useState(introducesMechanics);
+  // Auto-show the tutorial only until the level has been beaten; Help still opens it.
+  const autoShowTutorial = introducesMechanics && !level.completed;
+  const [showTutorial, setShowTutorial] = useState(autoShowTutorial);
   // PlayLevel stays mounted on "Next Level", so reset the tutorial for the new level.
-  useEffect(() => setShowTutorial(introducesMechanics), [level.uuid]);
+  useEffect(() => setShowTutorial(autoShowTutorial), [level.uuid]);
   const goNextLevel = () => nextLevelCallback(level.uuid);
 
   const toEditor = () => viewCallback(PageView.EDITOR);
