@@ -128,15 +128,21 @@ export default function ManageLevel({
         pressedSize={0.99}
       >
         <BoardPreview level={level} previewSize={3} previewWidth={previewWidth} />
-        <Text style={[
+        {/* A View does the centering: textAlignVertical is Android-only, so a
+            full-size Text would render its label at the top on iOS. */}
+        <View style={[
           styles.previewOverlay,
           {
             // @ts-expect-error No, it is not possibly undefined.
             borderRadius: tileSize / 5, // Same value as GameBoard borderRadius.
             backgroundColor: darkMode ? colors.OFF_WHITE_TRANSPARENT(0.45) : colors.NEAR_BLACK_TRANSPARENT(0.45),
-            color: darkMode ? colors.NEAR_BLACK : colors.OFF_WHITE,
           }
-        ]}>Edit Board</Text>
+        ]}>
+          <Text style={[
+            styles.previewOverlayText,
+            { color: darkMode ? colors.NEAR_BLACK : colors.OFF_WHITE },
+          ]}>Edit Board</Text>
+        </View>
       </ResponsivePressable>
 
       <View style={{ marginTop: normalize(10) }} />
@@ -213,8 +219,12 @@ export default function ManageLevel({
 const styles = StyleSheet.create({
   previewOverlay: {
     ...StyleSheet.absoluteFillObject,
+    justifyContent: "center",
+    alignItems: "center",
+    overflow: "hidden",
+  },
+  previewOverlayText: {
     textAlign: "center",
-    textAlignVertical: "center",
     fontFamily: "Montserrat-Medium",
     fontWeight: "bold",
     textTransform: "uppercase",
