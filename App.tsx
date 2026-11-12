@@ -67,6 +67,15 @@ export default function App() {
     return () => listener.remove();
   }, []);
 
+  const pendingOpen = useRef<(() => void) | undefined>(undefined);
+  useEffect(() => {
+    const start = pendingOpen.current;
+    if (!start) return;
+    pendingOpen.current = undefined;
+    // Wait one frame after the commit so the page is actually on screen.
+    requestAnimationFrame(start);
+  }, [view]);
+
   const openPageView = useCallback((newView: PageView, pageNum?: number, sameView?: boolean) => {
     if (pageNum !== undefined && !sameView) {
       // The page mounts fresh, so its Subpages can start on the right tab instead of
@@ -74,11 +83,19 @@ export default function App() {
       setInitialSubpage(pageNum);
     }
     setPageAnimating();
-    setView(newView);
-    setAnimTo(1, () => {
+    const startOpen = () => setAnimTo(1, () => {
       if (pageNum !== undefined && sameView) doPageChange(pageNum);
       doPageOpened();
     });
+    if (sameView) {
+      startOpen(); // Already mounted, nothing to wait for.
+    } else {
+      // Start the slide only once the new page has rendered. The slide runs on the
+      // native driver, so starting it immediately let it finish while JS was still
+      // mounting the page, leaving an empty panel that filled in at the end.
+      pendingOpen.current = startOpen;
+      setView(newView);
+    }
 
     // Non-standard play modes are set when calling App.tsx to 
     // begin play, and therefore should be cleared when play is left.
