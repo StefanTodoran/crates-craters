@@ -273,7 +273,7 @@ export default function App() {
           pointerEvents={view === PageView.MENU ? "none" : "auto"}
         >
           <SafeAreaView style={styles.safeArea}>
-          {![PageView.PLAY, PageView.EDITOR, PageView.SOLUTION].includes(view) && <Animated.View style={styles.header(pageAnim)}>
+          {![PageView.PLAY, PageView.EDITOR, PageView.SOLUTION].includes(view) && <View style={styles.header}>
             <Header
               pageView={view}
               returnHome={() => switchView(PageView.MENU)}
@@ -282,7 +282,7 @@ export default function App() {
                 setTimeout(() => setScrollToBottom(true), 100);
               }}
             />
-          </Animated.View>}
+          </View>}
 
           <View style={styles.page}>
             {view === PageView.LEVELS &&
@@ -389,7 +389,9 @@ const styles = StyleSheet.create<any>({
     justifyContent: "center",
     width: win.width,
   },
-  header: (animState: Animated.Value) => ({
+  // No opacity here: the header already fades with its parent modal, and a second
+  // opacity on the same value made it lag the panel (effective opacity anim²).
+  header: {
     paddingTop: RNStatusBar.currentHeight,
     flexDirection: "row",
     justifyContent: "center",
@@ -397,8 +399,7 @@ const styles = StyleSheet.create<any>({
     width: win.width,
     borderBottomWidth: 1,
     borderColor: colors.DIM_GRAY_TRANSPARENT(0.2),
-    opacity: animState,
-  }),
+  },
   modal: (animState: Animated.Value, darkMode: boolean) => ({
     ...StyleSheet.absoluteFillObject,
     alignItems: "center",
