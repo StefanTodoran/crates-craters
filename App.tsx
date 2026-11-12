@@ -162,16 +162,18 @@ export default function App() {
   useEffect(() => {
     syncLevelStateWithStorage.current = (uuid?: string) => {
       if (!uuid) {
-        setLevels(getStoredLevels());
+        const storedLevels = getStoredLevels();
+        setLevels(storedLevels);
 
-        const editorLevelIndex = levels.findIndex(level => level.uuid === editorLevel?.uuid);
-        if (editorLevelIndex !== -1) setEditorLevel(undefined);
+        // Clear the editor level only if it no longer exists (e.g. it was deleted).
+        if (editorLevel && !storedLevels.some(level => level.uuid === editorLevel.uuid)) {
+          setEditorLevel(undefined);
+        }
         return;
       } // else if uuid is defined:
 
       const updatedLevel = getLevelData(uuid);
-      const levelIndex = levels.findIndex(level => level.uuid === updatedLevel.uuid);
-      levels[levelIndex] = updatedLevel;
+      setLevels(prev => prev.map(level => level.uuid === updatedLevel.uuid ? updatedLevel : level));
 
       // Refresh this additional state variable if necessary.
       if (uuid === editorLevel?.uuid) setEditorLevel(updatedLevel as UserLevel);
