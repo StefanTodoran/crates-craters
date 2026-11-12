@@ -37,6 +37,8 @@ const mainGraphics = {
   AUDIO_ON_ICON: require("./assets/main_theme/audio_on_icon.png"),
   AUDIO_OFF_ICON: require("./assets/main_theme/audio_off_icon.png"),
   PLAY_ICON: require("./assets/main_theme/play_icon.png"),
+  LOCK_ICON: require("./assets/main_theme/lock_icon.png"),
+  LOCK_ICON_WHITE: require("./assets/main_theme/lock_icon_white.png"),
   MENU_ICON: require("./assets/main_theme/menu_icon.png"),
   BACK_ICON: require("./assets/main_theme/back_icon.png"),
   YELLOW_BACK_ICON: require("./assets/main_theme/yellow_back_icon.png"),

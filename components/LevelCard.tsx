@@ -120,6 +120,12 @@ const LevelCard = memo(function ({
           previewSize={2}
           previewWidth={0.5}
         >
+          {isLocked && <View style={[
+            styles.lockOverlay,
+            { backgroundColor: darkMode ? colors.NEAR_BLACK_TRANSPARENT(0.45) : colors.OFF_WHITE_TRANSPARENT(0.55) },
+          ]}>
+            <Image style={styles.lockIcon} source={graphics.LOCK_ICON} />
+          </View>}
           {stats && <Text style={[
             styles.boardOverlay,
             {
@@ -132,7 +138,7 @@ const LevelCard = memo(function ({
         <View style={styles.buttonsContainer}>
           {playCallback && <SimpleButton
             text={isLocked ? "Locked" : "Play"}
-            icon={graphics.PLAY_ICON}
+            icon={isLocked ? graphics.LOCK_ICON_WHITE : graphics.PLAY_ICON}
             main={true}
             theme={useTheme}
             onPress={playCallback}
@@ -216,6 +222,15 @@ const styles = StyleSheet.create({
   buttonsContainer: {
     flexDirection: "column",
     flex: 0.9
+  },
+  lockOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  lockIcon: {
+    width: normalize(50),
+    height: normalize(50),
   },
   boardOverlay: {
     ...StyleSheet.absoluteFillObject,
