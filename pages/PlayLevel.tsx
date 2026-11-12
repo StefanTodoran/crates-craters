@@ -147,6 +147,7 @@ export default function PlayLevel({
 
       setTouchMove({ y: 0, x: 0 });
 
+      remeasure(); // Async: keeps the position fresh for subsequent taps.
       const pressX = pressToIndex(gestureState.x0, tileSize, -boardPosition.current.x);
       const pressY = pressToIndex(gestureState.y0, tileSize, -boardPosition.current.y);
 

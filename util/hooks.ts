@@ -8,8 +8,9 @@ import { SoundEvent } from "./logic";
 
 /**
  * Tracks a board view's position on screen, for mapping touches to tiles.
- * Measures on layout, again once the page panel finishes its open animation (a
- * measurement taken mid-slide is offset), and whenever remeasure() is called.
+ * Measures on layout, again shortly after the page panel finishes its open animation
+ * (a measurement taken mid-slide is offset by the panel's translation), and whenever
+ * remeasure() is called.
  */
 export function useBoardPosition() {
   const boardRef = useRef<View>(null);
@@ -23,8 +24,16 @@ export function useBoardPosition() {
   }, []);
 
   useEffect(() => {
-    const listener = eventEmitter.addListener("pageOpened", remeasure);
-    return () => listener.remove();
+    // measure() doesn't see native-driven transforms until their final value is synced
+    // back after the animation ends, so wait briefly before re-measuring.
+    const timers: ReturnType<typeof setTimeout>[] = [];
+    const listener = eventEmitter.addListener("pageOpened", () => {
+      timers.push(setTimeout(remeasure, 100), setTimeout(remeasure, 500));
+    });
+    return () => {
+      listener.remove();
+      timers.forEach(clearTimeout);
+    };
   }, [remeasure]);
 
   return { boardRef, boardPosition, remeasure };
