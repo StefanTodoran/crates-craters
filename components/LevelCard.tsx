@@ -124,7 +124,7 @@ const LevelCard = memo(function ({
             styles.lockOverlay,
             { backgroundColor: darkMode ? colors.NEAR_BLACK_TRANSPARENT(0.45) : colors.OFF_WHITE_TRANSPARENT(0.55) },
           ]}>
-            <Image style={styles.lockIcon} source={graphics.LOCK_ICON} />
+            <Image style={styles.lockIcon} source={graphics.LOCK_ICON_GLOW} />
           </View>}
           {stats && <Text style={[
             styles.boardOverlay,

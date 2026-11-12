@@ -39,6 +39,7 @@ const mainGraphics = {
   PLAY_ICON: require("./assets/main_theme/play_icon.png"),
   LOCK_ICON: require("./assets/main_theme/lock_icon.png"),
   LOCK_ICON_WHITE: require("./assets/main_theme/lock_icon_white.png"),
+  LOCK_ICON_GLOW: require("./assets/main_theme/lock_icon_glow.png"),
   MENU_ICON: require("./assets/main_theme/menu_icon.png"),
   BACK_ICON: require("./assets/main_theme/back_icon.png"),
   YELLOW_BACK_ICON: require("./assets/main_theme/yellow_back_icon.png"),
