@@ -199,7 +199,9 @@ export async function markUserLevelCompleted(
         completedLevels.push(level.uuid);
         const updateData: Partial<UserLevelDocument> = {
           wins: userLevelData.wins + 1,
-          winrate: (userLevelData.wins + 1) / userLevelData.attempts,
+          // Attempts can lag behind wins (e.g. attempts made while signed out are only
+          // recorded locally), so clamp to keep the winrate a valid fraction.
+          winrate: Math.min(1, (userLevelData.wins + 1) / Math.max(1, userLevelData.attempts)),
         };
         if (moveHistory.length < level.best) {
           updateData.best = moveHistory.length;

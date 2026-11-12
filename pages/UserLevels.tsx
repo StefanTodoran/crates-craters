@@ -51,7 +51,9 @@ function getRange(value: number, ranges: Record<Filter, [number, number]>): stri
     for (const [rank, range] of Object.entries(ranges)) {
         if (value > range[0] && value <= range[1]) return rank;
     }
-    throw new Error(`Invalid value ${value} for ranges ${ranges}`);
+    // Called during render, so never throw: bad server data shouldn't crash the list.
+    console.warn(`Value ${value} is outside of ranges`, ranges);
+    return "Unknown";
 }
 
 interface SearchParams {
@@ -362,7 +364,7 @@ export default function UserLevels({
                 getStats={(targetLevel: SharedLevel) => {
                     const stats = [];
 
-                    let winrate = Math.round(100 * targetLevel.wins / targetLevel.attempts);
+                    let winrate = Math.min(100, Math.round(100 * targetLevel.wins / targetLevel.attempts));
                     if (isNaN(winrate)) stats.push("No attempts yet!");
                     else if (targetLevel.wins === 0) stats.push("Never beaten!");
                     else stats.push(`${winrate}% solve rate (${getRange(winrate / 100, difficultyRanges)})`);
