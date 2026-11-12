@@ -130,13 +130,16 @@ const LevelCard = memo(function ({
           ]}>
             <Image style={styles.lockIcon} source={graphics.LOCK_ICON_GLOW} />
           </View>}
-          {stats && <Text style={[
+          {/* A View does the centering: textAlignVertical is Android-only. */}
+          {stats && <View style={[
             styles.boardOverlay,
-            {
-              backgroundColor: darkMode ? colors.OFF_WHITE_TRANSPARENT(0.65) : colors.NEAR_BLACK_TRANSPARENT(0.65),
-              color: darkMode ? colors.NEAR_BLACK : colors.OFF_WHITE,
-            },
-          ]}>{stats.join("\n")}</Text>}
+            { backgroundColor: darkMode ? colors.OFF_WHITE_TRANSPARENT(0.65) : colors.NEAR_BLACK_TRANSPARENT(0.65) },
+          ]}>
+            <Text style={[
+              styles.boardOverlayText,
+              { color: darkMode ? colors.NEAR_BLACK : colors.OFF_WHITE },
+            ]}>{stats.join("\n")}</Text>
+          </View>}
         </BoardPreview>
 
         <View style={styles.buttonsContainer}>
@@ -238,8 +241,11 @@ const styles = StyleSheet.create({
   },
   boardOverlay: {
     ...StyleSheet.absoluteFillObject,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  boardOverlayText: {
     textAlign: "center",
-    textAlignVertical: "center",
     fontFamily: "Montserrat-Medium",
     fontWeight: "normal",
     fontSize: normalize(16),
