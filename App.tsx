@@ -144,7 +144,9 @@ export default function App() {
       return;
     }
 
-    getUserData(userCredential.user.email!).then((data) => setUserData(data));
+    getUserData(userCredential.user.email!)
+      .then((data) => setUserData(data))
+      .catch((error) => console.error("Failed to fetch user data:", error));
     // TODO: Put a Toast message here? What to do if fail?
   }, [userCredential]);
 
@@ -187,10 +189,13 @@ export default function App() {
 
   useEffect(() => {
     syncLevelStateWithStorage.current();
-    checkForOfficialLevelUpdates().then((numUpdated) => {
-      updateNotificationCounts.current(0, numUpdated);
-      syncLevelStateWithStorage.current();
-    });
+    checkForOfficialLevelUpdates()
+      .then((numUpdated) => {
+        updateNotificationCounts.current(0, numUpdated);
+        syncLevelStateWithStorage.current();
+      })
+      // Expected when offline: keep using the locally stored levels.
+      .catch((error) => console.warn("Failed to check for official level updates:", error));
 
     const handleSyncRequest = (uuid?: string) => syncLevelStateWithStorage.current(uuid);
     const syncListener = eventEmitter.addListener("doStateStorageSync", handleSyncRequest);
