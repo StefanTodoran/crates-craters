@@ -85,30 +85,6 @@ export default function App() {
     if (newView !== PageView.PLAY) setPlayMode(PlayMode.STANDARD);
   }, []);
 
-  const switchView = useCallback((newView: PageView, pageNum?: number) => {
-    setScrollToBottom(false);
-    if (view === PageView.PLAY && newView === PageView.EDITOR) {
-      // If we are coming from PageView.PLAY, playLevel must not be undefined.
-      startEditingLevel(playLevel!.uuid);
-    }
-
-    if (view === PageView.PLAY && newView === PageView.LEVELS && playMode === PlayMode.SHARED) {
-      // If we were playing a shared level and are now returning to the search page, we need to clear the userLevels state to trigger a refresh on mount..
-      setUserLevels([]);
-    }
-
-    if (newView < notificationCounts.length) {
-      updateNotificationCounts.current(newView, 0);
-    }
-
-    if (newView === PageView.MENU) { // PAGE -> MENU
-      setAnimTo(0, () => setView(newView));
-    } else if (view === PageView.MENU) { // MENU -> PAGE
-      openPageView(newView, pageNum);
-    } else { // PAGE -> PAGE
-      setAnimTo(0, () => openPageView(newView, pageNum, newView === view));
-    }
-  }, [view]);
 
   const [darkMode, setDarkMode] = useBooleanSetting("darkMode");
   const [dragSensitivity, setSensitivity] = useNumberSetting("dragSensitivity");
@@ -232,8 +208,12 @@ export default function App() {
   }, []);
 
   const getNextLevel = useCallback(() => {
-    const nextIndex = levels.findIndex(level => level.uuid === playLevel!.uuid) + 1;
-    const nextLevel = levels[nextIndex];
+    // Only walk official levels (in the order the Levels page shows them): the full
+    // list also holds custom levels, which "Next Level" would otherwise load in
+    // STANDARD mode and then post official solution data for.
+    const officialLevels = levels.filter(level => level.official);
+    const nextIndex = officialLevels.findIndex(level => level.uuid === playLevel!.uuid) + 1;
+    const nextLevel = nextIndex > 0 ? officialLevels[nextIndex] : undefined;
     if (nextLevel) playLevelFromObj(nextLevel);
   }, [levels, playLevel]);
 
@@ -241,6 +221,33 @@ export default function App() {
     const levelObject = getLevelData(uuid);
     setEditorLevel(levelObject as UserLevel);
   }, []);
+
+  // Declared after the state and callbacks it reads, so they can be listed as
+  // dependencies (previously only [view], which left playLevel/playMode stale).
+  const switchView = useCallback((newView: PageView, pageNum?: number) => {
+    setScrollToBottom(false);
+    if (view === PageView.PLAY && newView === PageView.EDITOR) {
+      // If we are coming from PageView.PLAY, playLevel must not be undefined.
+      startEditingLevel(playLevel!.uuid);
+    }
+
+    if (view === PageView.PLAY && newView === PageView.LEVELS && playMode === PlayMode.SHARED) {
+      // If we were playing a shared level and are now returning to the search page, we need to clear the userLevels state to trigger a refresh on mount..
+      setUserLevels([]);
+    }
+
+    if (newView < notificationCounts.length) {
+      updateNotificationCounts.current(newView, 0);
+    }
+
+    if (newView === PageView.MENU) { // PAGE -> MENU
+      setAnimTo(0, () => setView(newView));
+    } else if (view === PageView.MENU) { // MENU -> PAGE
+      openPageView(newView, pageNum);
+    } else { // PAGE -> PAGE
+      setAnimTo(0, () => openPageView(newView, pageNum, newView === view));
+    }
+  }, [view, playLevel, playMode, notificationCounts, startEditingLevel, openPageView]);
 
   const createNewLevel = useCallback((level: UserLevel) => {
     setEditorLevel(level);
