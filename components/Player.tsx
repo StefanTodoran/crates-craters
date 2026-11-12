@@ -24,7 +24,7 @@ export default function Player({
 }: Props) {
   const optionsAnim = useRef(new Animated.Value(0)).current;
   useEffect(() => {
-    Animated.loop(
+    const loop = Animated.loop(
       Animated.sequence([
         Animated.timing(optionsAnim, {
           toValue: 1,
@@ -37,7 +37,11 @@ export default function Player({
           useNativeDriver: true,
         })
       ])
-    ).start();
+    );
+    loop.start();
+    // Without this, each game.won change stacked another loop on the same value,
+    // and loops kept running natively after unmount.
+    return () => loop.stop();
   }, [game.won]);
 
   const playerSrc = (darkMode) ? graphics.PLAYER_OUTLINED_DARK : graphics.PLAYER_OUTLINED;
