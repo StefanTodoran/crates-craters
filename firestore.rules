@@ -1,0 +1,79 @@
+rules_version = "2";
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /officialLevels/{document} {
+      allow read: if true;
+      allow write: if false;
+      // allow write: if isUserAuthenticated() && isEmailVerified() && isUserAdmin();
+    }
+
+    match /metadata/{document} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    match /userPrivileges/{document} {
+      allow read: if false;
+      allow write: if false;
+    }
+
+    // Solutions are analytics only. They carry the solver's email, and the app never
+    // reads them, so clients can't read them either (admin SDK only).
+    match /levelSolutions/{document} {
+      allow read: if false;
+      allow create: if true;
+    }
+
+    match /userAccounts/{document} {
+      allow read: if isUserAuthenticated() && request.auth.token.email == document;
+      allow write: if isUserAuthenticated() && request.auth.token.email == document;
+    }
+
+    // Level docs are world-readable, so they identify the creator by uid and must
+    // never contain an email address.
+    match /userLevels/{document} {
+      allow read: if true;
+      allow create: if isUserAuthenticated() && isEmailVerified() && ownsNewData();
+      allow update: if isUserAuthenticated() &&
+        ((ownsExistingData() && ownsNewData()) || isValidNonOwnerUpdate());
+    }
+
+    function isUserAuthenticated() {
+      return request.auth != null &&
+        request.auth.token != null &&
+        request.auth.token.email != null &&
+        request.auth.token.email != "";
+    }
+
+    function isEmailVerified() {
+      return request.auth.token.email_verified == true;
+    }
+
+    // The written data names the caller as owner and doesn't (re)introduce an email.
+    function ownsNewData() {
+      return request.resource.data.user_uid == request.auth.uid &&
+        !("user_email" in request.resource.data);
+    }
+
+    function ownsExistingData() {
+      return resource.data.user_uid == request.auth.uid;
+    }
+
+    function isValidNonOwnerUpdate() {
+      let diff = request.resource.data.diff(resource.data);
+      let keys = diff.affectedKeys();
+
+      return keys.hasOnly(["likes", "attempts", "wins", "winrate"]) &&
+          (!keys.hasAny(["likes"]) || request.resource.data.likes == resource.data.likes + 1) &&
+          (!keys.hasAny(["attempts"]) || request.resource.data.attempts == resource.data.attempts + 1) &&
+          (!keys.hasAny(["wins"]) || request.resource.data.wins == resource.data.wins + 1) &&
+          (!keys.hasAny(["winrate"]) || (request.resource.data.winrate >= 0 && request.resource.data.winrate <= 1));
+    }
+
+    function isUserAdmin() {
+      let userDoc = get(/databases/$(database)/documents/userPrivileges/$(request.auth.token.email));
+      return userDoc != null && userDoc.data != null && userDoc.data.admin == true;
+    }
+  }
+}

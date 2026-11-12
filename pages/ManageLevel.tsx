@@ -71,7 +71,6 @@ export default function ManageLevel({
   function unshareLevel() {
     updateDocument("userLevels", level.db_id!, {
       public: false,
-      user_email: userCredential!.user.email!,
     })
       .then(() => {
         updateLevel({ ...level, shared: undefined }, false);

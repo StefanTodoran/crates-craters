@@ -169,7 +169,7 @@ export interface UserLevel extends LevelBase {
 }
 
 export interface SharedLevel extends Exclude<UserLevel, "created"> {
-  user_email: string,
+  user_uid: string, // Firebase Auth uid of the creator. Emails are never stored on public level docs.
   shared: DateString,
   downloads: number,
   attempts: number,
@@ -226,7 +226,7 @@ const levelObjectProps: { [key in LevelObjectType]: levelObjectPropSet } = {
   },
   [LevelObjectType.SHARED]: {
     required: {
-      "user_email": "string",
+      "user_uid": "string",
       "user_name": "string",
       "shared": "string",
       "downloads": "number",

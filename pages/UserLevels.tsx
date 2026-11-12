@@ -341,7 +341,7 @@ export default function UserLevels({
                     disabled: (uuid: string) => {
                         return !userCredential ||
                             likedLevels.includes(uuid) ||
-                            filteredLevels.find(lvl => lvl.uuid === uuid)!.user_email === userCredential.user.email
+                            filteredLevels.find(lvl => lvl.uuid === uuid)!.user_uid === userCredential.user.uid
                     },
                     icon: graphics.LIKE_ICON,
                     callback: async (uuid: string) => {
@@ -373,7 +373,7 @@ export default function UserLevels({
                     stats.push(`${getRange(solnLen, lengthRanges)} solution`);
                     stats.push(`(Best: ${solnLen} moves)`);
 
-                    if (userCredential && targetLevel.user_email === userCredential.user.email) {
+                    if (userCredential && targetLevel.user_uid === userCredential.user.uid) {
                         stats.push("Made by you!");
                     }
 
