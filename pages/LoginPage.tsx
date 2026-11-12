@@ -11,7 +11,7 @@ import TextStyles, { normalize } from "../TextStyles";
 import { colors, graphics } from "../Theme";
 import { UserAccountDocument, createUserAccount, isUsernameTaken } from "../util/database";
 import { auth } from "../util/firebase";
-import { getData, getLocalUserData, metadataKeys } from "../util/loader";
+import { getData, getLocalUserData, metadataKeys, storage } from "../util/loader";
 
 const win = Dimensions.get("window");
 const emailRegex = /^(\S+@\S+\.\S+)?$/;
@@ -132,6 +132,7 @@ export default function LoginPage({ setUserCredential }: Props) {
                             signInWithEmailAndPassword(auth, email, password)
                                 .then((userCredential) => {
                                     setUserCredential(userCredential);
+                                    storage.delete(metadataKeys.userCredentials); // Legacy saved password, if any.
                                     Toast.show({
                                         type: "success",
                                         text1: "Account login succeeded!",

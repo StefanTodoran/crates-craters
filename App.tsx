@@ -40,7 +40,13 @@ const win = Dimensions.get("window");
  * Signs in with it once so the user stays logged in under the new session persistence,
  * then deletes it. Returns whether the sign-in succeeded.
  */
+let credentialMigrationAttempted = false;
 async function migrateSavedCredentials() {
+  // Only on the first auth state of a launch, so an explicit sign-out can never
+  // be undone by a leftover saved password.
+  if (credentialMigrationAttempted) return false;
+  credentialMigrationAttempted = true;
+
   const saved = getData(metadataKeys.userCredentials);
   if (!saved) return false;
 

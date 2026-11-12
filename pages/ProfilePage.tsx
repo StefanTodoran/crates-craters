@@ -10,6 +10,7 @@ import { normalize } from "../TextStyles";
 import { colors, graphics } from "../Theme";
 import { auth } from "../util/firebase";
 import { DELETED_USER_NAME, deleteUserAccount } from "../util/database";
+import { metadataKeys, storage } from "../util/loader";
 import LoginPage from "./LoginPage";
 
 const win = Dimensions.get("window");
@@ -38,6 +39,7 @@ export default function ProfilePage({ attemptSignIn, setUserCredential }: Props)
             // Firebase only deletes users who signed in recently, so confirm the password first.
             await reauthenticateWithCredential(user, EmailAuthProvider.credential(user.email!, password));
             await deleteUserAccount(user, userData?.user_name);
+            storage.delete(metadataKeys.userCredentials);
             setDeleting(false);
             setUserCredential(undefined);
             Toast.show({
@@ -113,6 +115,7 @@ export default function ProfilePage({ attemptSignIn, setUserCredential }: Props)
                     signOut(auth)
                         .then(() => {
                             setUserCredential(undefined);
+                            storage.delete(metadataKeys.userCredentials); // Legacy saved password, if any.
 
                             Toast.show({
                                 type: "success",
