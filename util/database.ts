@@ -1,4 +1,4 @@
-import { DocumentData, DocumentReference, Query, QuerySnapshot, Timestamp, WhereFilterOp, addDoc, collection, doc, getCountFromServer, getDocs, limit, orderBy, query, runTransaction, setDoc, updateDoc, where } from "firebase/firestore";
+import { DocumentData, DocumentReference, Query, QuerySnapshot, Timestamp, WhereFilterOp, addDoc, arrayUnion, collection, doc, getCountFromServer, getDocs, increment, limit, orderBy, query, runTransaction, setDoc, updateDoc, where, writeBatch } from "firebase/firestore";
 import { doStateStorageSync } from "./events";
 import { db } from "./firebase";
 import { compressBoardData, getData, getLocalUserData, getStoredLevelCount, metadataKeys, multiStoreLevels, parseCompressedBoardData, setData } from "./loader";
@@ -110,21 +110,16 @@ export async function likeUserLevel(level_id: string, user_email: string) {
   if (likedLevels.includes(level_id)) return false;
 
   try {
-    const success = await runTransaction(db, async (transaction) => {
-      const userLevelRef = doc(db, "userLevels", level_id);
-      const userLevelDoc = await transaction.get(userLevelRef);
-      const userLevelData = userLevelDoc.data() as UserLevelDocument;
+    // Server-side increment/arrayUnion: no read needed, nothing to retry, and other
+    // devices' entries in the account's list are preserved.
+    const batch = writeBatch(db);
+    batch.update(doc(db, "userLevels", level_id), { likes: increment(1) });
+    batch.update(doc(db, "userAccounts", user_email), { likes: arrayUnion(level_id) });
+    await batch.commit();
 
-      const userAccountRef = doc(db, "userAccounts", user_email);
-      likedLevels.push(level_id);
-
-      transaction.update(userLevelRef, { likes: userLevelData.likes + 1 });
-      transaction.update(userAccountRef, { likes: likedLevels });
-      setData(metadataKeys.likedLevels, likedLevels);
-      return true;
-    });
-
-    return success;
+    // Only record locally once the server write has succeeded.
+    setData(metadataKeys.likedLevels, [...likedLevels, level_id]);
+    return true;
   } catch (error) {
     console.error("Error liking level:", level_id, error);
     return false;
@@ -143,21 +138,13 @@ export async function attemptUserLevel(level_id: string, user_email?: string | n
   }
 
   try {
-    const success = await runTransaction(db, async (transaction) => {
-      const userLevelRef = doc(db, "userLevels", level_id);
-      const userLevelDoc = await transaction.get(userLevelRef);
-      const userLevelData = userLevelDoc.data() as UserLevelDocument;
+    const batch = writeBatch(db);
+    batch.update(doc(db, "userLevels", level_id), { attempts: increment(1) });
+    batch.update(doc(db, "userAccounts", user_email), { attempted: arrayUnion(level_id) });
+    await batch.commit();
 
-      const userAccountRef = doc(db, "userAccounts", user_email);
-      attemptedLevels.push(level_id);
-
-      transaction.update(userLevelRef, { attempts: userLevelData.attempts + 1 });
-      transaction.update(userAccountRef, { attempted: attemptedLevels });
-      setData(metadataKeys.attemptedLevels, attemptedLevels);
-      return true;
-    });
-
-    return success;
+    setData(metadataKeys.attemptedLevels, [...attemptedLevels, level_id]);
+    return true;
   } catch (error) {
     console.error("Error marking level attempted:", level_id, error);
     return false;
@@ -196,7 +183,6 @@ export async function markUserLevelCompleted(
       });
 
       if (firstCompletion) {
-        completedLevels.push(level.uuid);
         const updateData: Partial<UserLevelDocument> = {
           wins: userLevelData.wins + 1,
           // Attempts can lag behind wins (e.g. attempts made while signed out are only
@@ -210,11 +196,13 @@ export async function markUserLevelCompleted(
         transaction.update(userLevelRef, updateData);
       }
 
-      transaction.update(userAccountRef, { completed: completedLevels });
-      setData(metadataKeys.completedLevels, completedLevels);
+      // arrayUnion keeps entries added from other devices. Local storage is only
+      // written after the commit below, since this callback can be retried.
+      transaction.update(userAccountRef, { completed: arrayUnion(level.uuid) });
       return true;
     });
 
+    if (success && firstCompletion) setData(metadataKeys.completedLevels, [...completedLevels, level.uuid]);
     return success;
   } catch (error) {
     console.error("Error marking level completed:", level.uuid, error);
@@ -300,6 +288,71 @@ export interface QueryFilter {
   field: string,
   operator: WhereFilterOp,
   value: any,
+}
+
+/** Firestore allows at most 30 values in an "in" filter. */
+const IN_FILTER_LIMIT = 30;
+
+function chunk<T>(list: T[], size: number) {
+  const chunks: T[][] = [];
+  for (let i = 0; i < list.length; i += size) chunks.push(list.slice(i, i + size));
+  return chunks;
+}
+
+function compareByOrder(a: any, b: any, orderFields: ExplicitOrder[]) {
+  for (const { field, order } of orderFields) {
+    const av = a[field] instanceof Timestamp ? a[field].toMillis() : a[field];
+    const bv = b[field] instanceof Timestamp ? b[field].toMillis() : b[field];
+    if (av === bv) continue;
+    const result = av < bv ? -1 : 1;
+    return order === "asc" ? result : -result;
+  }
+  return 0;
+}
+
+/**
+ * Queries shared levels, optionally restricted to (includeIds) or excluding
+ * (excludeIds) specific level ids. Firestore caps "in" at 30 values and can't combine
+ * "not-in" with "!=", so includes are chunked and merged, and excludes are applied
+ * client-side with exact counts from chunked count queries.
+ */
+export async function queryUserLevels(
+  orderFields: ExplicitOrder[],
+  filters: QueryFilter[],
+  pageSize: number,
+  includeIds?: string[],
+  excludeIds: string[] = [],
+) {
+  if (includeIds !== undefined) {
+    if (includeIds.length === 0) return { data: [], count: 0 };
+    const chunks = chunk(includeIds, IN_FILTER_LIMIT);
+    const results = await Promise.all(chunks.map(ids => {
+      const chunkFilters: QueryFilter[] = [...filters, { field: "__name__", operator: "in", value: ids }];
+      return Promise.all([
+        getEntriesFromQuery(createFirebaseQuery("userLevels", pageSize, orderFields, chunkFilters)),
+        // Count without the page limit, so "Showing X of Y" reports the real total.
+        getEntryCountFromQuery(createFirebaseQuery("userLevels", -1, [], chunkFilters)),
+      ]);
+    }));
+    const merged = results.flatMap(([data]) => data).sort((a, b) => compareByOrder(a, b, orderFields));
+    const data = merged.filter(doc => !excludeIds.includes(doc.uuid)).slice(0, pageSize);
+    const count = results.reduce((sum, [, n]) => sum + n, 0);
+    return { data, count };
+  }
+
+  // Over-fetch so that, after dropping excluded levels, a full page remains.
+  const q = createFirebaseQuery("userLevels", pageSize === -1 ? -1 : pageSize + excludeIds.length, orderFields, filters);
+  const excludedCountQueries = chunk(excludeIds, IN_FILTER_LIMIT).map(ids =>
+    getEntryCountFromQuery(createFirebaseQuery("userLevels", -1, [], [...filters, { field: "__name__", operator: "in", value: ids }]))
+  );
+  const [docs, total, ...excludedCounts] = await Promise.all([
+    getEntriesFromQuery(q),
+    getEntryCountFromQuery(createFirebaseQuery("userLevels", -1, [], filters)),
+    ...excludedCountQueries,
+  ]);
+  const data = docs.filter(doc => !excludeIds.includes(doc.uuid)).slice(0, pageSize === -1 ? undefined : pageSize);
+  const count = total - excludedCounts.reduce((sum, n) => sum + n, 0);
+  return { data, count };
 }
 
 export function createFirebaseQuery(

@@ -9,7 +9,7 @@ import SliderBar from "../components/SliderBar";
 import GlobalContext from "../GlobalContext";
 import TextStyles, { normalize } from "../TextStyles";
 import { graphics, purpleTheme } from "../Theme";
-import { ExplicitOrder, QueryFilter, attemptUserLevel, createFirebaseQuery, getEntriesFromQuery, getEntryCountFromQuery, likeUserLevel } from "../util/database";
+import { ExplicitOrder, QueryFilter, attemptUserLevel, likeUserLevel, queryUserLevels } from "../util/database";
 import { useDebounce } from "../util/hooks";
 import { getData, metadataKeys, parseCompressedBoardData } from "../util/loader";
 import { areSetsEqual } from "../util/Set";
@@ -170,6 +170,8 @@ export default function UserLevels({
         minWinrate: 25,
         maxWinrate: 95,
     });
+    // Incremented per fetch, so a slow older response can't overwrite a newer one.
+    const latestRequest = useRef(0);
     const fetchLevels = async (
         filters: Set<Filter>,
         numLoaded: number,
@@ -177,6 +179,7 @@ export default function UserLevels({
         attemptedLevels: string[],
         completedLevels: string[],
     ) => {
+        const requestId = ++latestRequest.current;
         setLoading(true);
         try {
             const orderFields: ExplicitOrder[] = [];
@@ -193,16 +196,14 @@ export default function UserLevels({
                 filterFields.push({ field: "attempts", operator: "!=", value: 0 });
             }
 
-            const filterInList = (operator: "in" | "not-in" | "array-contains-any", list: string[], field: string = "uuid") => {
-                if (list.length === 0) return;
-                // TODO: The following needs chunking, since we can have at most 30 disjunctions.
-                filterFields.push({ field: field, operator: operator, value: list });
-            };
-
-            if (filters.has(Filter.LIKED)) filterInList("in", likedLevels);
-            if (filters.has(Filter.PLAYED)) filterInList("in", attemptedLevels);
-            if (filters.has(Filter.UNPLAYED)) filterInList("not-in", attemptedLevels);
-            if (filters.has(Filter.COMPLETED)) filterInList("in", completedLevels);
+            // Liked/Played/Completed restrict results to a known list of level ids, and
+            // Unplayed excludes one. Ids are document names (documents have no "uuid"
+            // field; parseQuerySnapshot adds it client-side), so match on "__name__".
+            let includeIds: string[] | undefined;
+            if (filters.has(Filter.LIKED)) includeIds = likedLevels;
+            if (filters.has(Filter.PLAYED)) includeIds = attemptedLevels;
+            if (filters.has(Filter.COMPLETED)) includeIds = completedLevels;
+            const excludeIds = filters.has(Filter.UNPLAYED) ? attemptedLevels : [];
 
             // if (searchQuery) {
             //     const keywords = [...searchQuery.toLowerCase().split(/\s+/)];
@@ -218,10 +219,8 @@ export default function UserLevels({
                 filterFields.push({ field: "winrate", operator: "<=", value: maxWinrate / 100 });
             }
 
-            // console.log(filterFields);
-            const query = createFirebaseQuery("userLevels", numLoaded, orderFields, filterFields);
-            const data = await getEntriesFromQuery(query);
-            const count = await getEntryCountFromQuery(query);
+            const { data, count } = await queryUserLevels(orderFields, filterFields, numLoaded, includeIds, excludeIds);
+            if (requestId !== latestRequest.current) return true; // A newer fetch superseded this one.
 
             setMatchingCount(count);
             setUserLevels(data.filter(doc => doc.public).map(doc => {
@@ -234,8 +233,9 @@ export default function UserLevels({
 
             setLoading(false);
             return true;
-        } catch {
-            setLoading(false);
+        } catch (error) {
+            console.warn("Failed to fetch shared levels:", error);
+            if (requestId === latestRequest.current) setLoading(false);
             return false;
         }
     };
