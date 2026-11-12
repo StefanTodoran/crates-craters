@@ -156,6 +156,10 @@ export default function App() {
   useEffect(() => {
     return onAuthStateChanged(auth, async (user) => {
       if (user && !user.isAnonymous) {
+        // A persisted session makes any legacy saved password redundant, so drop it
+        // before a later sign-out could ever fall back to it.
+        credentialMigrationAttempted = true;
+        storage.delete(metadataKeys.userCredentials);
         setUserCredential({ user } as UserCredential);
         return;
       }
