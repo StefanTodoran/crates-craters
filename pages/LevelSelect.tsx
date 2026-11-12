@@ -118,7 +118,7 @@ export default function LevelSelect({
         });
       }
     });
-  }, []);
+  }, [onRefresh]); // onRefresh closes over the caller's current filters, so it must stay fresh.
 
   const openLevel = useCallback((levelIndex: number) => {
     playLevelCallback(levels[levelIndex].uuid, levelIndex);
