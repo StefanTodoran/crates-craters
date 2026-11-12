@@ -269,7 +269,7 @@ export async function postSolutionData(
 ) {
   const userData = getLocalUserData();
   try {
-    createDocument("levelSolutions", undefined, {
+    await createDocument("levelSolutions", undefined, {
       level_id: level_id,
       user_email: user_email ?? "undefined",
       local_uuid: userData.uuid,
