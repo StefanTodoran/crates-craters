@@ -25,7 +25,8 @@
     "react-native-mmkv": "^3.3.1",
     "react-native-svg": "15.11.2",
     "react-native-toast-message": "^2.2.0",
-    "expo-audio": "~0.4.9"
+    "expo-audio": "~0.4.9",
+    "react-native-safe-area-context": "5.4.0"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",

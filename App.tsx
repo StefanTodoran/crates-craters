@@ -5,6 +5,7 @@ import { StatusBar } from "expo-status-bar";
 import { UserCredential, signInWithEmailAndPassword } from "firebase/auth";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Animated, BackHandler, Dimensions, Platform, StatusBar as RNStatusBar, SafeAreaView, StyleSheet, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Toast from "react-native-toast-message";
 import Header from "./components/Header";
 import Menu from "./components/Menu";
@@ -45,6 +46,8 @@ export default function App() {
   useEffect(() => {
     if (fontsLoaded) SplashScreen.hideAsync().catch(() => { });
   }, [fontsLoaded]);
+
+  const insets = useSafeAreaInsets();
 
   const pageAnim = useRef(new Animated.Value(0)).current;
   const setAnimTo = (animState: number, callback?: () => void) => {
@@ -357,13 +360,13 @@ export default function App() {
           </SafeAreaView>
         </Animated.View>
 
-        <SafeAreaView style={StyleSheet.absoluteFill} pointerEvents="box-none">
+        {/* Toast is absolutely positioned, so a SafeAreaView parent has no effect;
+            offset it below the status bar / Dynamic Island explicitly. */}
         <Toast
           position="top"
-          bottomOffset={20}
+          topOffset={insets.top + 8}
           config={toastConfig}
         />
-        </SafeAreaView>
       </View>
 
       <StatusBar translucent={true} hidden={true} />
