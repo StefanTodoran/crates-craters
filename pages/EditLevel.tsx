@@ -19,6 +19,8 @@ import { PageView, TileType, UserLevel } from "../util/types";
 const successSound = require("../assets/audio/push.wav");
 const errorSound = require("../assets/audio/fill.wav");
 
+const MAX_UNDO = 200;
+
 enum GestureMode {
   PLACE,
   ERASE,
@@ -57,6 +59,18 @@ export default function EditLevel({
   const [unsavedChanges, setUnsavedChanges] = useState(false);
   const [unmodifiedLevel, setUnmodifiedLevel] = useState<UserLevel>(level);
 
+  // Undo history: the board before each edit gesture, so a whole drag stroke undoes at once.
+  const history = useRef<UserLevel["board"][]>([]);
+  const [canUndo, setCanUndo] = useState(false);
+
+  const undo = useCallback(() => {
+    const board = history.current.pop();
+    if (!board) return;
+    setCanUndo(history.current.length > 0);
+    setUnsavedChanges(true);
+    levelCallback({ ...latest.current.level, board });
+  }, [levelCallback]);
+
   const saveChanges = useCallback(() => {
     updateLevel(level, unsavedChanges); // Stores changes to MMKV
     setUnmodifiedLevel(level);
@@ -68,6 +82,8 @@ export default function EditLevel({
   const discardChanges = useCallback(() => {
     levelCallback(unmodifiedLevel);
     setUnsavedChanges(false);
+    history.current = [];
+    setCanUndo(false);
   }, [unmodifiedLevel, levelCallback]);
 
   // level can be undefined (handled by the early return below), so don't dereference it yet.
@@ -84,6 +100,7 @@ export default function EditLevel({
     let gestureMode: GestureMode | undefined;
     let gestureStartTile: TileType | undefined;
     let lastTile: Position | undefined;
+    let gestureRecorded = false; // Whether this gesture's starting board is in the history.
 
     function changeTile(y: number, x: number) {
       const { level, currentTool, levelCallback, playSound, successSoundPlayer, errorSoundPlayer } = latest.current;
@@ -115,6 +132,13 @@ export default function EditLevel({
         return; // Nothing to change.
       }
 
+      if (!gestureRecorded) {
+        gestureRecorded = true;
+        history.current.push(level.board);
+        if (history.current.length > MAX_UNDO) history.current.shift();
+        setCanUndo(true);
+      }
+
       const newLevel = { ...level, board: newBoard };
       // Move events can arrive faster than re-renders, so build the next change on this one.
       latest.current.level = newLevel;
@@ -133,6 +157,7 @@ export default function EditLevel({
     function onGestureStart(_evt: GestureResponderEvent, gestureState: PanResponderGestureState) {
       gestureMode = undefined;
       gestureStartTile = undefined;
+      gestureRecorded = false;
       lastTile = touchedTile(gestureState.x0, gestureState.y0);
       changeTile(lastTile.y, lastTile.x);
     }
@@ -140,9 +165,21 @@ export default function EditLevel({
     function onGestureMove(_evt: GestureResponderEvent, gestureState: PanResponderGestureState) {
       // Move events fire many times per tile; only act when the finger reaches a new one.
       const tile = touchedTile(gestureState.moveX, gestureState.moveY);
-      if (lastTile && tile.x === lastTile.x && tile.y === lastTile.y) return;
+      if (!lastTile) {
+        lastTile = tile;
+        changeTile(tile.y, tile.x);
+        return;
+      }
+      // A fast drag can jump several tiles between move events, so fill in the tiles
+      // along the way (one axis step at a time, so diagonals don't skip corners).
+      let { x, y } = lastTile;
+      while (x !== tile.x || y !== tile.y) {
+        const remainingX = tile.x - x, remainingY = tile.y - y;
+        if (Math.abs(remainingX) >= Math.abs(remainingY)) x += Math.sign(remainingX);
+        else y += Math.sign(remainingY);
+        changeTile(y, x);
+      }
       lastTile = tile;
-      changeTile(tile.y, tile.x);
     }
 
     return PanResponder.create({
@@ -189,7 +226,9 @@ export default function EditLevel({
           saveChanges();
           viewCallback(PageView.MANAGE, 1);
         }} text={unsavedChanges ? "Save & Exit" : "Exit"} Svg={BackButton} />
-        <View style={{ width: normalize(15) }} />
+        <View style={{ width: normalize(10) }} />
+        <SimpleButton onPress={undo} text="Undo" disabled={!canUndo} />
+        <View style={{ width: normalize(10) }} />
         <SimpleButton onPress={toggleToolsModal} text="Change Tool" main={true} icon={graphics.MENU_ICON} />
       </Animated.View>
 

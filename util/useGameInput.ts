@@ -1,4 +1,4 @@
-import { useContext, useMemo, useRef, useState } from "react";
+import { useContext, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Animated, GestureResponderEvent, PanResponder, PanResponderGestureState, useWindowDimensions } from "react-native";
 import GlobalContext from "../GlobalContext";
 import { useBoardPosition } from "./hooks";
@@ -55,6 +55,11 @@ export function useGameInput({ game, tileSize, onMove, onJump }: Options) {
   // Input is ignored while jumping, since the jump is computed from the game as it
   // was when it started.
   const isJumping = useRef(false);
+
+  const resetTouch = useRef(() => {});
+  // Runs after the new game is committed, in the same frame, so the player and pushed
+  // tiles land on their new tiles as the drag offset clears.
+  useLayoutEffect(() => resetTouch.current(), [game]);
 
   const panResponder = useMemo(() => {
     const enabled = () => !latest.current.game.won;
@@ -139,23 +144,32 @@ export function useGameInput({ game, tileSize, onMove, onJump }: Options) {
     }
 
     function onGestureEnd(_evt: GestureResponderEvent, gestureState: PanResponderGestureState) {
-      setTouch(0, 0);
-
       const distance = latest.current.swipeDistance;
       const { dx, dy } = gestureState;
       const vertical = Math.abs(dy) > Math.abs(dx);
       const along = vertical ? dy : dx;
-      if (Math.abs(along) <= distance) return; // Not a swipe.
+      if (Math.abs(along) <= distance || isJumping.current) { // Not a swipe.
+        setTouch(0, 0);
+        return;
+      }
 
       // Fast successive swipes shouldn't count as a double tap.
       prevTouchPos.current = undefined;
-      if (isJumping.current) return;
 
       const direction = vertical ?
         (along < 0 ? Direction.UP : Direction.DOWN) :
         (along < 0 ? Direction.LEFT : Direction.RIGHT);
+      // Keep the drag offset until the moved game has rendered (see the layout effect
+      // below). Resetting it here snapped the preview back to the old tile for a frame
+      // before React drew the player on the new one.
+      const before = latest.current.game;
       latest.current.onMove(direction);
+      requestAnimationFrame(() => {
+        if (latest.current.game === before) setTouch(0, 0); // Invalid move, nothing rendered.
+      });
     }
+
+    resetTouch.current = () => setTouch(0, 0);
 
     return PanResponder.create({
       onStartShouldSetPanResponder: enabled,
