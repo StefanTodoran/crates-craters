@@ -4,7 +4,7 @@ import { signInWithGoogle } from "../util/googleAuth";
 import { Timestamp } from "firebase/firestore";
 import { useContext, useState } from "react";
 import { StyleSheet, Text, View, useWindowDimensions } from "react-native";
-import Toast from "react-native-toast-message";
+import Toast from "../util/toast";
 import InputLine from "../components/InputLine";
 import SimpleButton from "../components/SimpleButton";
 import SubpageContainer from "../components/SubpageContainer";

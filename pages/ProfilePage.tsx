@@ -1,7 +1,7 @@
 import { AuthCredential, EmailAuthProvider, UserCredential, reauthenticateWithCredential, sendEmailVerification, signOut } from "firebase/auth";
 import { useContext, useState } from "react";
 import { Linking, StyleSheet, View, useWindowDimensions } from "react-native";
-import Toast from "react-native-toast-message";
+import Toast from "../util/toast";
 import InputCard from "../components/InputCard";
 import SimpleButton from "../components/SimpleButton";
 import SubpageContainer from "../components/SubpageContainer";

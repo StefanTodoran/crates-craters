@@ -1,7 +1,7 @@
 import { Timestamp } from "firebase/firestore";
 import { useContext, useEffect, useState } from "react";
 import { StyleSheet, Text, View, useWindowDimensions } from "react-native";
-import Toast from "react-native-toast-message";
+import Toast from "../util/toast";
 import BoardPreview from "../components/BoardPreview";
 import InputCard from "../components/InputCard";
 import ResponsivePressable from "../components/ResponsivePressable";

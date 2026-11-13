@@ -6,7 +6,6 @@ import { UserCredential, onAuthStateChanged, signInAnonymously, signInWithEmailA
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Animated, Appearance, BackHandler, Platform, StatusBar as RNStatusBar, StyleSheet, View, useWindowDimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import Toast from "react-native-toast-message";
 import Header from "./components/Header";
 import Menu from "./components/Menu";
 import GlobalContext from "./GlobalContext";
@@ -22,9 +21,9 @@ import { UserAccountDocument, checkForOfficialLevelUpdates, getUserData } from "
 import { auth } from "./util/firebase";
 import { useBooleanSetting, useNumberSetting } from "./util/hooks";
 import { createLevel, getData, getLevelData, metadataKeys, storage, syncLevelsWithStorage } from "./util/loader";
+import { setHapticsEnabled } from "./util/haptics";
 import { usePlaySession } from "./util/playSession";
 import { setAppState, setEditorLevel, updateNotificationCount, useAppStore } from "./util/store";
-import { toastConfig } from "./util/toasts";
 import { usePageNavigation } from "./util/usePageNavigation";
 import { Level, PageView, PlayMode, SharedLevel, UserLevel } from "./util/types";
 
@@ -85,6 +84,9 @@ export default function App() {
 
   const toggleDarkMode = useCallback(() => setDarkMode(darkMode => !darkMode), []);
   const toggleAudioMode = useCallback(() => setAudioMode(playAudio => !playAudio), []);
+  const [haptics, setHaptics] = useBooleanSetting("haptics");
+  useEffect(() => setHapticsEnabled(haptics), [haptics]);
+  const toggleHaptics = useCallback(() => setHaptics(haptics => !haptics), []);
 
   useEffect(() => {
     if (Platform.OS !== "android") return;
@@ -244,8 +246,8 @@ export default function App() {
   // Memoized so context consumers (every board tile, button, etc.) don't re-render
   // whenever App does, e.g. on every game move.
   const globalContext = useMemo(
-    () => ({ darkMode, dragSensitivity, doubleTapDelay, playAudio, userCredential, userData }),
-    [darkMode, dragSensitivity, doubleTapDelay, playAudio, userCredential, userData],
+    () => ({ darkMode, dragSensitivity, doubleTapDelay, playAudio, haptics, userCredential, userData }),
+    [darkMode, dragSensitivity, doubleTapDelay, playAudio, haptics, userCredential, userData],
   );
 
   const panel = useMemo(() => panelStyle(pageAnim, darkMode, win.height), [darkMode, win.height]);
@@ -342,6 +344,7 @@ export default function App() {
               <SettingsPage
                 darkModeCallback={toggleDarkMode}
                 audioModeCallback={toggleAudioMode}
+                hapticsCallback={toggleHaptics}
                 setSensitivityCallback={setSensitivity}
                 setTapDelayCallback={setTapDelay}
               />
@@ -350,13 +353,6 @@ export default function App() {
           </View>
         </Animated.View>
 
-        {/* Toast is absolutely positioned, so a SafeAreaView parent has no effect;
-            offset it below the status bar / Dynamic Island explicitly. */}
-        <Toast
-          position="top"
-          topOffset={insets.top + 8}
-          config={toastConfig}
-        />
       </View>
 
       <StatusBar translucent={true} hidden={true} />

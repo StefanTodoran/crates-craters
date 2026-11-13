@@ -11,6 +11,7 @@ import Settings from "./Settings";
 interface Props {
   darkModeCallback: () => void,
   audioModeCallback: () => void,
+  hapticsCallback: () => void,
   setSensitivityCallback: (sensitivity: number) => void,
   setTapDelayCallback: (delay: number) => void,
 }
@@ -18,6 +19,7 @@ interface Props {
 export default function AccountSettings({
   darkModeCallback,
   audioModeCallback,
+  hapticsCallback,
   setSensitivityCallback,
   setTapDelayCallback,
 }: Props) {
@@ -27,6 +29,7 @@ export default function AccountSettings({
       <Settings
         darkModeCallback={darkModeCallback}
         audioModeCallback={audioModeCallback}
+        hapticsCallback={hapticsCallback}
         setSensitivityCallback={setSensitivityCallback}
         setTapDelayCallback={setTapDelayCallback}
       />,

@@ -1,17 +1,17 @@
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
-import { Animated, FlatList, StyleSheet, Text, View, useWindowDimensions } from "react-native";
-import Toast from "react-native-toast-message";
+import { Modal, ScrollView, StyleSheet, Switch, Text, View, useWindowDimensions } from "react-native";
+import Toast from "../util/toast";
 import FilterChip from "../components/FilterChip";
-import InputLine from "../components/InputLine";
+import NativeMenu, { NativeMenuItem } from "../components/NativeMenu";
+import SearchField from "../components/SearchField";
 import { IndicatorIcon } from "../components/LevelCard";
 import SimpleButton from "../components/SimpleButton";
 import SliderBar from "../components/SliderBar";
-import { TAB_BAR_CLEARANCE } from "../components/Subpages";
 import GlobalContext from "../GlobalContext";
 import TextStyles, { normalize } from "../TextStyles";
-import { graphics, purpleTheme } from "../Theme";
+import { colors, graphics, purpleTheme } from "../Theme";
 import { ExplicitOrder, QueryFilter, attemptUserLevel, likeUserLevel, queryUserLevels } from "../util/database";
-import { useDebounce, useFadeModal } from "../util/hooks";
+import { useDebounce } from "../util/hooks";
 import { getData, metadataKeys, parseCompressedBoardData } from "../util/loader";
 import { areSetsEqual } from "../util/Set";
 import { Level, PageView, SharedLevel } from "../util/types";
@@ -140,7 +140,9 @@ export default function UserLevels({
     const { darkMode, userCredential } = useContext(GlobalContext);
 
     const win = useWindowDimensions();
-    const { modalOpen, anim: fadeModalAnim, toggleModal } = useFadeModal(200);
+    // The full filters panel is a native sheet (swipe down to dismiss on iOS).
+    const [modalOpen, setModalOpen] = useState(false);
+    const toggleModal = () => setModalOpen(open => !open);
 
     // Read from storage only when the shown levels change (e.g. after a like), not on
     // every render: these parse JSON, and renders happen on each search keystroke.
@@ -150,7 +152,6 @@ export default function UserLevels({
         completedLevels: getData(metadataKeys.completedLevels) || [],
     }), [userLevels]);
     const { likedLevels } = localLists;
-    const scrollRef = useRef<FlatList<Filter>>(null);
 
     const [filters, setFilters] = useState(new Set<Filter>());
     const toggleFilter = (filter: Filter) => {
@@ -166,10 +167,6 @@ export default function UserLevels({
         alreadyEnabled ? newFilters.delete(filter) : newFilters.add(filter);
         setFilters(newFilters);
     };
-
-    useEffect(() => {
-        scrollRef.current?.scrollToOffset({ offset: 0, animated: false });
-    }, [filters]);
 
     const [lengthFilterEnabled, setLengthFilterEnabled] = useState(false);
     const [minSolutionLength, setMinSolutionLength] = useState(50);
@@ -197,6 +194,15 @@ export default function UserLevels({
         });
     });
     const validFilters = [...filters, ...inactiveFilters];
+
+    // The quick filters as a system dropdown (checkmarks on the active ones).
+    const filterMenuItems: NativeMenuItem[] = Object.values(Filter).map(filter => ({
+        id: filter,
+        title: filter,
+        checked: filters.has(filter),
+        disabled: loading || !validFilters.includes(filter),
+        onPress: () => toggleFilter(filter),
+    }));
 
     const params: SearchParams = {
         filters,
@@ -296,14 +302,7 @@ export default function UserLevels({
             <LevelSelect
                 headerComponent={<View style={{ width: win.width }}>
                     <View style={{ marginHorizontal: "5%", flexDirection: "row", alignItems: "center", marginBottom: normalize(10) }}>
-                        <InputLine
-                            label={"Search"}
-                            value={searchQuery}
-                            onChange={setSearchQuery}
-                            darkMode={darkMode}
-                            fullBorder
-                            doFlex
-                        />
+                        <SearchField value={searchQuery} onChange={setSearchQuery} placeholder="Search levels" />
                         <SimpleButton
                             icon={graphics.FILTER_ICON}
                             onPress={toggleModal}
@@ -312,22 +311,15 @@ export default function UserLevels({
                             main
                         />
                     </View>
-                    <FlatList
-                        horizontal
-                        ref={scrollRef}
-                        // overScrollMode="never"
-                        showsHorizontalScrollIndicator={false}
-                        style={{ flexGrow: 0 }}
-                        contentContainerStyle={styles.filterChipsRow}
-                        data={validFilters}
-                        renderItem={({ item, index }) => <FilterChip
-                            key={index}
-                            text={item}
-                            active={filters.has(item)}
-                            onPress={() => toggleFilter(item)}
-                            disabled={loading}
-                        />}
-                    />
+                    <View style={styles.filterMenuRow}>
+                        <NativeMenu items={filterMenuItems} title="Quick Filters">
+                            <SimpleButton
+                                text={filters.size ? [...filters].join(", ") : "All Levels"}
+                                icon={graphics.FILTER_ICON}
+                                disabled={loading}
+                            />
+                        </NativeMenu>
+                    </View>
                 </View>}
                 footerText={`Showing ${filteredLevels.length} of ${Math.max(matchingCount, filteredLevels.length)} levels`}
 
@@ -387,13 +379,16 @@ export default function UserLevels({
                 noNumber
             />
 
-            {modalOpen && <Animated.View style={[
-                styles.modal,
-                {
-                    opacity: fadeModalAnim,
-                    backgroundColor: darkMode ? "rgba(0, 0, 0, 0.95)" : "rgba(255, 255, 255, 0.95)", // More opaque than the shared backdrop: the list behind is busy.
-                },
-            ]}>
+            <Modal
+                visible={modalOpen}
+                presentationStyle="pageSheet"
+                animationType="slide"
+                onRequestClose={() => setModalOpen(false)} // Swipe down (iOS) or back button (Android).
+            >
+            <ScrollView
+                style={{ backgroundColor: darkMode ? colors.NEAR_BLACK : colors.OFF_WHITE }}
+                contentContainerStyle={styles.modal}
+            >
                 <View style={styles.section}>
                     <Text style={TextStyles.subtitle(darkMode)}>
                         All Filters
@@ -411,10 +406,7 @@ export default function UserLevels({
                     </View>
 
                     <Text style={[TextStyles.paragraph(darkMode), { marginBottom: 0 }]}>Desired Solution Length</Text>
-                    <SimpleButton
-                        text={lengthFilterEnabled ? "Disable Length Filter" : "Enable Length Filter"}
-                        onPress={() => setLengthFilterEnabled(!lengthFilterEnabled)}
-                    />
+                    <Switch value={lengthFilterEnabled} onValueChange={setLengthFilterEnabled} accessibilityLabel="Length filter" style={styles.filterSwitch} trackColor={{ true: purpleTheme.MAIN_COLOR }} />
                     {lengthFilterEnabled && <>
                         <SliderBar
                             label="Minimum" value={minSolutionLength} units={" moves"}
@@ -430,10 +422,7 @@ export default function UserLevels({
 
                     <View style={{ marginTop: normalize(25) }} />
                     <Text style={[TextStyles.paragraph(darkMode), { marginBottom: 0 }]}>Desired Winrate</Text>
-                    <SimpleButton
-                        text={winrateFilterEnabled ? "Disable Winrate Filter" : "Enable Winrate Filter"}
-                        onPress={() => setWinrateFilterEnabled(!winrateFilterEnabled)}
-                    />
+                    <Switch value={winrateFilterEnabled} onValueChange={setWinrateFilterEnabled} accessibilityLabel="Winrate filter" style={styles.filterSwitch} trackColor={{ true: purpleTheme.MAIN_COLOR }} />
                     {winrateFilterEnabled && <>
                         <SliderBar
                             label="Minimum" value={minWinrate} units={"%"}
@@ -458,16 +447,20 @@ export default function UserLevels({
                         main
                     />
                 </View>
-            </Animated.View>}
+            </ScrollView>
+            </Modal>
         </>
     );
 }
 
 const styles = StyleSheet.create({
-    filterChipsRow: {
+    filterMenuRow: {
+        flexDirection: "row",
         paddingHorizontal: "5%",
-        marginTop: "1%",
         marginBottom: "1%",
+    },
+    filterSwitch: {
+        marginVertical: normalize(8),
     },
     section: {
         flexDirection: "column",
@@ -478,13 +471,11 @@ const styles = StyleSheet.create({
         marginBottom: normalize(18),
     },
     modal: {
-        ...StyleSheet.absoluteFillObject,
-        paddingTop: normalize(12),
-        paddingBottom: normalize(12) + TAB_BAR_CLEARANCE, // Keep Apply Filters above the floating iOS tab bar.
+        flexGrow: 1,
+        paddingTop: normalize(24),
+        paddingBottom: normalize(24),
         alignItems: "center",
         justifyContent: "space-between",
-        height: "100%",
-        width: "100%",
     },
     wrappedList: {
         flexDirection: "row",

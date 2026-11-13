@@ -1,7 +1,7 @@
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { FlatList, ImageSourcePropType, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { TAB_BAR_CLEARANCE } from "../components/Subpages";
-import Toast from "react-native-toast-message";
+import Toast from "../util/toast";
 import EmptyList, { EmptyListProps } from "../components/EmptyList";
 import LevelCard, { IndicatorIcon } from "../components/LevelCard";
 import GlobalContext from "../GlobalContext";

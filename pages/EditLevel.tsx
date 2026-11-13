@@ -11,6 +11,7 @@ import TextStyles, { normalize } from "../TextStyles";
 import { colors, graphics, modalBackground } from "../Theme";
 import { calcBoardTileSize } from "../util/board";
 import { useBoardPosition, useFadeModal } from "../util/hooks";
+import { hapticErase, hapticSelection } from "../util/haptics";
 import { updateLevel } from "../util/loader";
 import { getSpawnPosition, Position } from "../util/logic";
 import { Tool, wallTool } from "../util/tools";
@@ -121,11 +122,15 @@ export default function EditLevel({
       if (tileType === TileType.EMPTY && gestureMode !== GestureMode.ERASE) {
         newBoard.setTile(y, x, currentTool.tile);
         playSound(successSoundPlayer);
+        hapticSelection();
         gestureMode = GestureMode.PLACE;
       } else if ((gestureStartTile === undefined || gestureStartTile === tileType) && gestureMode !== GestureMode.PLACE) {
         // Never allow deletion of spawn tile, only replacement to somewhere else.
         if (tileType !== TileType.SPAWN) newBoard.setTile(y, x, { id: 0 });
-        if (tileType !== TileType.EMPTY) playSound(errorSoundPlayer);
+        if (tileType !== TileType.EMPTY) {
+          playSound(errorSoundPlayer);
+          hapticErase();
+        }
         gestureMode = GestureMode.ERASE;
         gestureStartTile = tileType;
       } else {
