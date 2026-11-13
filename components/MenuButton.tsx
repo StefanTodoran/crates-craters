@@ -15,7 +15,6 @@ interface Props {
   allowOverflow?: boolean, // Whether number of lines for the button text should cap at 1.
   theme?: Theme,
   fillWidth?: boolean,
-  selected?: boolean, // Highlighted, e.g. the editor's current tool.
 }
 
 /**
@@ -35,7 +34,6 @@ export default function MenuButton({
   allowOverflow,
   theme,
   fillWidth,
-  selected,
 }: Props) {
   const { darkMode } = useContext(GlobalContext);
   const useTheme = theme || purpleTheme;
@@ -54,8 +52,7 @@ export default function MenuButton({
           marginHorizontal: normalize(7.5),
           paddingRight: label ? normalize(17.5) : normalize(15),
           borderColor: useTheme.MAIN_COLOR,
-          backgroundColor: selected ? useTheme.MAIN_TRANSPARENT(darkMode ? 0.35 : 0.3) : backgroundColor,
-          borderWidth: selected ? 2 : 1,
+          backgroundColor: backgroundColor,
         }
       ]}
       pressedStyle={{

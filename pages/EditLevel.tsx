@@ -1,31 +1,35 @@
 import { useAudioPlayer } from "expo-audio";
 import { useCallback, useContext, useMemo, useRef, useState } from "react";
-import { Animated, GestureResponderEvent, PanResponder, PanResponderGestureState, StyleSheet, Text, View, useWindowDimensions } from "react-native";
+import { Alert, Image, ImageSourcePropType, LayoutChangeEvent, PanResponder, PanResponderGestureState, StyleSheet, Text, View } from "react-native";
 import BackButton from "../assets/BackButton";
-import CurrentToolIndicator from "../components/CurrentToolIndicator";
 import GameBoard from "../components/GameBoard";
+import ResponsivePressable from "../components/ResponsivePressable";
 import SimpleButton from "../components/SimpleButton";
-import ToolPicker, { defaultToolOptions, ToolOptions } from "../components/ToolPicker";
+import { defaultToolOptions, OPTIONS_HEIGHT, PlacedBombRow, resolveTool, STRIP_HEIGHT, ToolOptions, ToolOptionsRow, ToolStrip } from "../components/ToolStrip";
 import GlobalContext from "../GlobalContext";
 import TextStyles, { normalize } from "../TextStyles";
-import { colors, graphics, modalBackground } from "../Theme";
-import { calcBoardTileSize } from "../util/board";
-import { useBoardPosition, useFadeModal } from "../util/hooks";
+import { colors, graphics, purpleTheme } from "../Theme";
+import { useBoardPosition } from "../util/hooks";
 import { hapticErase, hapticSelection } from "../util/haptics";
 import { updateLevel } from "../util/loader";
 import { getSpawnPosition, Position } from "../util/logic";
-import { Tool, wallTool } from "../util/tools";
-import { PageView, TileType, UserLevel } from "../util/types";
+import { wallTool } from "../util/tools";
+import { BombTile, Direction, OneWayTile, PageView, TileType, UserLevel } from "../util/types";
 
 const successSound = require("../assets/audio/push.wav");
 const errorSound = require("../assets/audio/fill.wav");
 
 const MAX_UNDO = 200;
+const LONG_PRESS_MS = 400;
 
 enum GestureMode {
   PLACE,
   ERASE,
+  DONE, // The gesture already did its one thing (rotated a tile, opened a bomb's fuse).
 }
+
+const TOOLBAR_HEIGHT = normalize(40);
+const GAP = normalize(10);
 
 interface Props {
   viewCallback: (newView: PageView, pageNum?: number) => void, // Sets the current view of the application.
@@ -34,6 +38,8 @@ interface Props {
   playtestLevel: (uuid: string) => void,
 }
 
+type Board = UserLevel["board"];
+
 export default function EditLevel({
   viewCallback,
   level,
@@ -41,7 +47,6 @@ export default function EditLevel({
   playtestLevel,
 }: Props) {
   const { darkMode, playAudio } = useContext(GlobalContext);
-  const win = useWindowDimensions();
 
   const successSoundPlayer = useAudioPlayer(successSound);
   const errorSoundPlayer = useAudioPlayer(errorSound);
@@ -51,26 +56,56 @@ export default function EditLevel({
     player.play();
   };
 
-  const [currentTool, selectTool] = useState<Tool>(wallTool);
+  const [toolLabel, setToolLabel] = useState(wallTool.label);
   const [toolOptions, setToolOptions] = useState<ToolOptions>(defaultToolOptions);
   const updateToolOptions = useCallback((update: Partial<ToolOptions>) => setToolOptions(options => ({ ...options, ...update })), []);
-  const { modalOpen: toolsModalOpen, anim: fadeToolsAnim, toggleModal: toggleToolsModal } = useFadeModal(200);
+  const currentTool = useMemo(() => resolveTool(toolLabel, toolOptions), [toolLabel, toolOptions]);
 
-  // TODO: Actually compare board state to unmodified level.
+  // A placed bomb whose fuse is being edited (after a long press on it).
+  const [editingBomb, setEditingBomb] = useState<Position>();
+
   const [unsavedChanges, setUnsavedChanges] = useState(false);
   const [unmodifiedLevel, setUnmodifiedLevel] = useState<UserLevel>(level);
 
-  // Undo history: the board before each edit gesture, so a whole drag stroke undoes at once.
-  const history = useRef<UserLevel["board"][]>([]);
-  const [canUndo, setCanUndo] = useState(false);
+  // Undo and redo history: whole boards, one per edit gesture, so a drag stroke undoes at once.
+  const history = useRef<Board[]>([]);
+  const future = useRef<Board[]>([]);
+  const [historySizes, setHistorySizes] = useState({ undo: 0, redo: 0 });
+  const syncHistorySizes = () => setHistorySizes({ undo: history.current.length, redo: future.current.length });
 
-  const undo = useCallback(() => {
+  /** Call before an edit changes the board: makes it undoable and clears redo. */
+  const recordEdit = (board: Board) => {
+    history.current.push(board);
+    if (history.current.length > MAX_UNDO) history.current.shift();
+    future.current = [];
+    syncHistorySizes();
+  };
+
+  const applyBoard = (board: Board) => {
+    const newLevel = { ...latest.current.level, board };
+    // Move events can arrive faster than re-renders, so build the next change on this one.
+    latest.current.level = newLevel;
+    setUnsavedChanges(true);
+    levelCallback(newLevel);
+  };
+
+  const undo = () => {
     const board = history.current.pop();
     if (!board) return;
-    setCanUndo(history.current.length > 0);
-    setUnsavedChanges(true);
-    levelCallback({ ...latest.current.level, board });
-  }, [levelCallback]);
+    future.current.push(latest.current.level.board);
+    syncHistorySizes();
+    setEditingBomb(undefined);
+    applyBoard(board);
+  };
+
+  const redo = () => {
+    const board = future.current.pop();
+    if (!board) return;
+    history.current.push(latest.current.level.board);
+    syncHistorySizes();
+    setEditingBomb(undefined);
+    applyBoard(board);
+  };
 
   const saveChanges = useCallback(() => {
     updateLevel(level, unsavedChanges); // Stores changes to MMKV
@@ -78,37 +113,90 @@ export default function EditLevel({
     setUnsavedChanges(false);
   }, [level, unsavedChanges]);
 
-  // Restores the last saved version (not the one from when the editor opened, which
-  // would pair an old board with the newer save's completed/bestSolution).
-  const discardChanges = useCallback(() => {
-    levelCallback(unmodifiedLevel);
-    setUnsavedChanges(false);
-    history.current = [];
-    setCanUndo(false);
-  }, [unmodifiedLevel, levelCallback]);
+  const exit = () => {
+    const leave = () => viewCallback(PageView.MANAGE, 1);
+    if (!unsavedChanges) return leave();
+    Alert.alert("Unsaved changes", "Save your changes before leaving?", [
+      // Restores the last saved version (not the one from when the editor opened, which
+      // would pair an old board with the newer save's completed/bestSolution).
+      { text: "Discard", style: "destructive", onPress: () => { levelCallback(unmodifiedLevel); leave(); } },
+      { text: "Cancel", style: "cancel" },
+      { text: "Save", onPress: () => { saveChanges(); leave(); } },
+    ]);
+  };
 
-  // level can be undefined (handled by the early return below), so don't dereference it yet.
-  const tileSize = level ? calcBoardTileSize(level.board.width, level.board.height, win) : 0;
+  const playtest = () => {
+    saveChanges();
+    playtestLevel(level.uuid);
+    viewCallback(PageView.PLAY);
+  };
+
+  // The board gets whatever height the toolbar, tool strip and options leave free.
+  const [area, setArea] = useState<{ width: number, height: number }>();
+  const onAreaLayout = (event: LayoutChangeEvent) => {
+    const { width, height } = event.nativeEvent.layout;
+    if (width !== area?.width || height !== area?.height) setArea({ width, height });
+  };
+  const contentWidth = area ? area.width * 0.9 : 0;
+  const boardSpace = area ? area.height - TOOLBAR_HEIGHT - STRIP_HEIGHT - OPTIONS_HEIGHT - 5 * GAP : 0; // 3 gaps, plus padding.
+  const tileSize = level && area ?
+    Math.floor(Math.min(contentWidth / level.board.width, boardSpace / level.board.height)) : 0;
   const { boardRef, boardPosition, remeasure } = useBoardPosition();
 
   // The responder is created once, so it reads the current values through this.
-  const latest = useRef({ level, tileSize, currentTool, levelCallback, playSound, successSoundPlayer, errorSoundPlayer });
-  latest.current = { level, tileSize, currentTool, levelCallback, playSound, successSoundPlayer, errorSoundPlayer };
+  const latest = useRef({ level, tileSize, currentTool, playSound, successSoundPlayer, errorSoundPlayer, recordEdit, applyBoard, setEditingBomb, setToolLabel, updateToolOptions });
+  latest.current = { level, tileSize, currentTool, playSound, successSoundPlayer, errorSoundPlayer, recordEdit, applyBoard, setEditingBomb, setToolLabel, updateToolOptions };
 
   const panResponder = useMemo(() => {
     // Per gesture: whether it is placing or erasing, which tile type it started on (an
-    // erase only removes that type), and the last tile it touched.
+    // erase only removes that type, except with the eraser), and the last tile it touched.
     let gestureMode: GestureMode | undefined;
     let gestureStartTile: TileType | undefined;
     let lastTile: Position | undefined;
     let gestureRecorded = false; // Whether this gesture's starting board is in the history.
+    // A touch that starts on a bomb waits: a long press edits its fuse, anything else
+    // (a tap, or dragging away) acts on it as usual.
+    let pendingBomb: Position | undefined;
+    let longPressTimer: ReturnType<typeof setTimeout> | undefined;
+
+    function commit(newBoard: Board) {
+      const { level, recordEdit, applyBoard } = latest.current;
+      if (!gestureRecorded) {
+        gestureRecorded = true;
+        recordEdit(level.board);
+      }
+      applyBoard(newBoard);
+    }
 
     function changeTile(y: number, x: number) {
-      const { level, currentTool, levelCallback, playSound, successSoundPlayer, errorSoundPlayer } = latest.current;
+      const { level, currentTool, playSound, successSoundPlayer, errorSoundPlayer } = latest.current;
+      if (gestureMode === GestureMode.DONE) return;
       const tileType = level.board.getTile(y, x, true).id;
       if (tileType === TileType.OUTSIDE) return;
 
       const newBoard = level.board.clone();
+      const erase = () => {
+        newBoard.setTile(y, x, { id: TileType.EMPTY });
+        playSound(errorSoundPlayer);
+        hapticErase();
+      };
+
+      if (currentTool.tile.id === TileType.EMPTY) { // Eraser: removes anything but the spawn.
+        if (tileType === TileType.EMPTY || tileType === TileType.SPAWN) return;
+        erase();
+        gestureMode = GestureMode.ERASE;
+        return commit(newBoard);
+      }
+
+      // Tapping a placed one-way tile with the one-way tool turns it clockwise.
+      if (currentTool.tile.id === TileType.ONEWAY && tileType === TileType.ONEWAY && gestureMode === undefined) {
+        const tile = level.board.getTile(y, x) as OneWayTile;
+        newBoard.setTile(y, x, { id: TileType.ONEWAY, blocked: tile.blocked.map(dir => ((dir + 1) % 4) as Direction) });
+        playSound(successSoundPlayer);
+        hapticSelection();
+        gestureMode = GestureMode.DONE;
+        return commit(newBoard);
+      }
 
       // Clear current spawn position, as we cannot allow multiple spawn locations!
       if (currentTool.tile.id === TileType.SPAWN) {
@@ -126,29 +214,14 @@ export default function EditLevel({
         gestureMode = GestureMode.PLACE;
       } else if ((gestureStartTile === undefined || gestureStartTile === tileType) && gestureMode !== GestureMode.PLACE) {
         // Never allow deletion of spawn tile, only replacement to somewhere else.
-        if (tileType !== TileType.SPAWN) newBoard.setTile(y, x, { id: 0 });
-        if (tileType !== TileType.EMPTY) {
-          playSound(errorSoundPlayer);
-          hapticErase();
-        }
+        if (tileType === TileType.SPAWN) return;
+        if (tileType !== TileType.EMPTY) erase();
         gestureMode = GestureMode.ERASE;
         gestureStartTile = tileType;
       } else {
         return; // Nothing to change.
       }
-
-      if (!gestureRecorded) {
-        gestureRecorded = true;
-        history.current.push(level.board);
-        if (history.current.length > MAX_UNDO) history.current.shift();
-        setCanUndo(true);
-      }
-
-      const newLevel = { ...level, board: newBoard };
-      // Move events can arrive faster than re-renders, so build the next change on this one.
-      latest.current.level = newLevel;
-      setUnsavedChanges(true);
-      levelCallback(newLevel);
+      commit(newBoard);
     }
 
     function touchedTile(pageX: number, pageY: number): Position {
@@ -159,15 +232,44 @@ export default function EditLevel({
       };
     }
 
-    function onGestureStart(_evt: GestureResponderEvent, gestureState: PanResponderGestureState) {
+    /** Acts on the bomb the gesture started on, as an ordinary touch. */
+    function releasePendingBomb() {
+      clearTimeout(longPressTimer);
+      if (!pendingBomb) return;
+      const { y, x } = pendingBomb;
+      pendingBomb = undefined;
+      changeTile(y, x);
+    }
+
+    function onGestureStart(_evt: unknown, gestureState: PanResponderGestureState) {
       gestureMode = undefined;
       gestureStartTile = undefined;
       gestureRecorded = false;
+      latest.current.setEditingBomb(undefined);
       lastTile = touchedTile(gestureState.x0, gestureState.y0);
+
+      const { level, currentTool } = latest.current;
+      const startsOnBomb = level.board.getTile(lastTile.y, lastTile.x, true).id === TileType.BOMB;
+      if (startsOnBomb && currentTool.tile.id !== TileType.EMPTY) {
+        const bomb = lastTile;
+        pendingBomb = bomb;
+        longPressTimer = setTimeout(() => {
+          pendingBomb = undefined;
+          gestureMode = GestureMode.DONE;
+          const { level, setEditingBomb, setToolLabel, updateToolOptions } = latest.current;
+          const fuse = (level.board.getTile(bomb.y, bomb.x) as BombTile).fuse;
+          hapticSelection();
+          setEditingBomb(bomb);
+          // New bombs get the same fuse, which is usually what you want next.
+          setToolLabel("Bomb");
+          updateToolOptions({ fuseTimer: fuse });
+        }, LONG_PRESS_MS);
+        return;
+      }
       changeTile(lastTile.y, lastTile.x);
     }
 
-    function onGestureMove(_evt: GestureResponderEvent, gestureState: PanResponderGestureState) {
+    function onGestureMove(_evt: unknown, gestureState: PanResponderGestureState) {
       // Move events fire many times per tile; only act when the finger reaches a new one.
       const tile = touchedTile(gestureState.moveX, gestureState.moveY);
       if (!lastTile) {
@@ -175,6 +277,8 @@ export default function EditLevel({
         changeTile(tile.y, tile.x);
         return;
       }
+      if (tile.x === lastTile.x && tile.y === lastTile.y) return;
+      releasePendingBomb(); // Dragged off the bomb before the long press: act on it first.
       // A fast drag can jump several tiles between move events, so fill in the tiles
       // along the way (one axis step at a time, so diagonals don't skip corners).
       let { x, y } = lastTile;
@@ -196,13 +300,33 @@ export default function EditLevel({
       onShouldBlockNativeResponder: () => true,
       onPanResponderGrant: onGestureStart,
       onPanResponderMove: onGestureMove,
+      onPanResponderRelease: releasePendingBomb, // A tap on a bomb.
+      onPanResponderTerminate: () => { clearTimeout(longPressTimer); pendingBomb = undefined; },
     });
   }, []);
 
-  function changeTool(tool: Tool) {
-    selectTool(tool);
-    toggleToolsModal();
-  }
+  // Fuse edits on a placed bomb: one undo step per editing session.
+  const bombEditRecorded = useRef(false);
+  const editedBombFuse = editingBomb && level?.board.getTile(editingBomb.y, editingBomb.x, true).id === TileType.BOMB ?
+    (level.board.getTile(editingBomb.y, editingBomb.x) as BombTile).fuse : undefined;
+  if (!editingBomb) bombEditRecorded.current = false;
+
+  const setPlacedFuse = (fuse: number) => {
+    if (!editingBomb || fuse === editedBombFuse) return;
+    if (!bombEditRecorded.current) {
+      bombEditRecorded.current = true;
+      recordEdit(latest.current.level.board);
+    }
+    const newBoard = latest.current.level.board.clone();
+    newBoard.setTile(editingBomb.y, editingBomb.x, { id: TileType.BOMB, fuse });
+    applyBoard(newBoard);
+    updateToolOptions({ fuseTimer: fuse });
+  };
+
+  const selectTool = (label: string) => {
+    setEditingBomb(undefined);
+    setToolLabel(label);
+  };
 
   if (level === undefined) {
     return <Text style={[TextStyles.subtitle(darkMode), { color: colors.RED_THEME.MAIN_COLOR }]}>
@@ -210,103 +334,73 @@ export default function EditLevel({
     </Text>;
   }
 
+  const editingFuse = editingBomb && editedBombFuse !== undefined;
+
   return (
     // The page panel already insets for the safe area.
-    <View style={styles.container}>
-      <View ref={boardRef} {...panResponder.panHandlers} onLayout={remeasure}>
-        <GameBoard board={level.board} overrideTileSize={tileSize} />
-      </View>
-      <CurrentToolIndicator tool={currentTool} />
-
-      {/* Undo and Change Tool side by side, Save & Exit spanning both below. */}
-      <Animated.View style={[
-        styles.controls,
-        {
-          width: Math.min(tileSize * level.board.width, win.width * 0.85),
-          opacity: fadeToolsAnim.interpolate({
-            inputRange: [0, 1],
-            outputRange: [1, 0],
-          }),
-        },
-      ]}>
-        <View style={styles.controlsRow}>
-          <View style={styles.controlCell}>
-            <SimpleButton onPress={undo} text="Undo" icon={graphics.UNDO_ICON} disabled={!canUndo} fillWidth centered />
-          </View>
-          <View style={styles.controlCell}>
-            <SimpleButton onPress={toggleToolsModal} text="Change Tool" main={true} icon={graphics.MENU_ICON} fillWidth centered />
+    <View style={styles.container} onLayout={onAreaLayout}>
+      {!!area && <>
+        <View style={[styles.toolbar, { width: contentWidth }]}>
+          <SimpleButton onPress={exit} text="Exit" Svg={BackButton} height={TOOLBAR_HEIGHT} />
+          <View style={styles.toolbarGroup}>
+            <ToolbarButton icon={graphics.UNDO_ICON} label="Undo" onPress={undo} disabled={historySizes.undo === 0} />
+            <ToolbarButton icon={graphics.REDO_ICON} label="Redo" onPress={redo} disabled={historySizes.redo === 0} />
+            <ToolbarButton icon={graphics.SAVE_ICON_PURPLE} label="Save" onPress={saveChanges} disabled={!unsavedChanges} badge={unsavedChanges} />
+            <ToolbarButton icon={graphics.PLAY_ICON} label="Playtest" onPress={playtest} main />
           </View>
         </View>
-        <SimpleButton onPress={() => {
-          saveChanges();
-          viewCallback(PageView.MANAGE, 1);
-        }} text={unsavedChanges ? "Save & Exit" : "Exit"}
-          {...(unsavedChanges ? { icon: graphics.SAVE_ICON_PURPLE } : { Svg: BackButton })}
-          fillWidth centered />
-      </Animated.View>
 
-      {/* START MODAL */}
-      {toolsModalOpen && <Animated.View style={[
-        styles.modal,
-        {
-          opacity: fadeToolsAnim,
-          backgroundColor: modalBackground(darkMode),
-        },
-      ]}>
-        <ToolPicker options={toolOptions} setOptions={updateToolOptions} onSelect={changeTool} currentTool={currentTool} />
-
-        <View style={[styles.section, styles.bottomSection]}>
-          <View style={[styles.row, { width: win.width * 0.45 }]}>
-            <SimpleButton
-              onPress={discardChanges}
-              doConfirmation="Are you sure you want to discard your unsaved changes?"
-              text="Discard Changes"
-              icon={graphics.EXPLOSION}
-              theme={colors.RED_THEME}
-              disabled={!unsavedChanges}
-              fillWidth
-              square
-              extraMargin={6}
-            />
-            <SimpleButton
-              onPress={saveChanges}
-              text="Save Changes"
-              icon={graphics.SAVE_ICON}
-              theme={colors.GREEN_THEME}
-              disabled={!unsavedChanges}
-              fillWidth
-              extraMargin={6}
-              main
-            />
-          </View>
-
-          <View style={[styles.row, { width: win.width * 0.45 }]}>
-            <SimpleButton
-              onPress={toggleToolsModal}
-              Svg={BackButton}
-              text="Close Menu"
-              fillWidth
-              extraMargin={6}
-            />
-            <SimpleButton
-              onPress={() => {
-                saveChanges();
-                playtestLevel(level.uuid);
-                viewCallback(PageView.PLAY);
-              }}
-              text="Playtest"
-              icon={graphics.PLAY_ICON}
-              square
-              fillWidth
-              disabled={unsavedChanges}
-              extraMargin={6}
-              main
-            />
+        <View style={[styles.boardArea, { height: boardSpace }]}>
+          <View ref={boardRef} {...panResponder.panHandlers} onLayout={remeasure}>
+            <GameBoard board={level.board} overrideTileSize={tileSize}>
+              {editingFuse && <View pointerEvents="none" style={[styles.tileHighlight, {
+                left: editingBomb.x * tileSize,
+                top: editingBomb.y * tileSize,
+                width: tileSize,
+                height: tileSize,
+              }]} />}
+            </GameBoard>
           </View>
         </View>
-      </Animated.View>}
-      {/* END MODAL */}
+
+        <ToolStrip selected={toolLabel} options={toolOptions} onSelect={selectTool} width={contentWidth} />
+        <View style={styles.optionsArea}>
+          {editingFuse ?
+            <PlacedBombRow fuse={editedBombFuse} setFuse={setPlacedFuse} onDone={() => setEditingBomb(undefined)} width={contentWidth} /> :
+            <ToolOptionsRow selected={toolLabel} options={toolOptions} setOptions={updateToolOptions} width={contentWidth} />}
+        </View>
+      </>}
     </View>
+  );
+}
+
+interface ToolbarButtonProps {
+  icon: ImageSourcePropType,
+  label: string,
+  onPress: () => void,
+  disabled?: boolean,
+  main?: boolean,
+  badge?: boolean, // A dot in the corner, e.g. unsaved changes.
+}
+
+function ToolbarButton({ icon, label, onPress, disabled, main, badge }: ToolbarButtonProps) {
+  const { darkMode } = useContext(GlobalContext);
+  return (
+    <ResponsivePressable
+      onPress={onPress}
+      disabled={disabled}
+      pressedSize={0.92}
+      customStyle={[styles.toolbarButton, {
+        borderColor: purpleTheme.MAIN_COLOR,
+        backgroundColor: main ? purpleTheme.MAIN_COLOR : (darkMode ? purpleTheme.NEAR_BLACK : purpleTheme.OFF_WHITE),
+      }]}
+      pressedStyle={{ backgroundColor: purpleTheme.MAIN_TRANSPARENT(main ? 0.8 : 0.3) }}
+    >
+      <View accessible accessibilityRole="button" accessibilityLabel={label} accessibilityState={{ disabled }}>
+        <Image source={icon} style={styles.toolbarIcon} />
+      </View>
+      {badge && <View style={[styles.badge, { borderColor: darkMode ? purpleTheme.NEAR_BLACK : purpleTheme.OFF_WHITE }]} />}
+    </ResponsivePressable>
   );
 }
 
@@ -316,40 +410,51 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     width: "100%",
     height: "100%",
+    paddingVertical: GAP, // Android has no inset above the toolbar.
   },
-  section: {
-    flexDirection: "column",
-    justifyContent: "center",
-    alignItems: "center",
-    width: "100%",
-    marginBottom: normalize(18),
-  },
-  bottomSection: {
-    borderTopWidth: 1,
-    borderTopColor: colors.DIM_GRAY_TRANSPARENT(0.25),
-    paddingTop: normalize(16),
-  },
-  row: {
+  toolbar: {
+    height: TOOLBAR_HEIGHT,
     flexDirection: "row",
-    justifyContent: "center",
-  },
-  controls: {
-    // The tool indicator above already has a bottom margin.
-    marginTop: -normalize(5),
-  },
-  controlsRow: {
-    flexDirection: "row",
-    gap: normalize(10),
-  },
-  controlCell: {
-    flex: 1,
-  },
-  modal: {
-    ...StyleSheet.absoluteFillObject,
-    paddingBottom: normalize(24),
-    alignItems: "center",
     justifyContent: "space-between",
-    height: "100%",
-    width: "100%",
+    alignItems: "center",
+  },
+  toolbarGroup: {
+    flexDirection: "row",
+    gap: normalize(8),
+  },
+  toolbarButton: {
+    width: TOOLBAR_HEIGHT,
+    height: TOOLBAR_HEIGHT,
+    borderRadius: normalize(10),
+    borderWidth: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  toolbarIcon: {
+    width: normalize(24),
+    height: normalize(24),
+  },
+  badge: {
+    position: "absolute",
+    top: -normalize(4),
+    right: -normalize(4),
+    width: normalize(12),
+    height: normalize(12),
+    borderRadius: normalize(6),
+    borderWidth: 2,
+    backgroundColor: colors.RED_THEME.MAIN_COLOR,
+  },
+  boardArea: {
+    justifyContent: "center",
+    marginVertical: GAP,
+  },
+  optionsArea: {
+    marginTop: GAP,
+  },
+  tileHighlight: {
+    position: "absolute",
+    borderWidth: 3,
+    borderRadius: 4,
+    borderColor: colors.RED_THEME.MAIN_COLOR,
   },
 });

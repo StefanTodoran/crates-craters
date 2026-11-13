@@ -36,6 +36,21 @@ export const spawnTool: Tool = {
     tile: { id: TileType.SPAWN },
 };
 
+export const eraserTool: Tool = {
+    label: "Eraser",
+    icon: graphics.ERASER_ICON,
+    tile: { id: TileType.EMPTY },
+};
+
+export function getBombTool(fuse: number): Tool {
+    return {
+        label: "Bomb",
+        icon: graphics.BOMB,
+        tile: { id: TileType.BOMB, fuse },
+        theme: colors.RED_THEME,
+    };
+}
+
 export function getOneWayTool(directions: Direction[]): Tool {
     return {
         label: "One Way",

@@ -396,13 +396,13 @@ export default function App() {
 }
 
 /**
- * Development only: a local stand-in for a signed-in account on the iOS simulator, so
+ * Development only: a local stand-in for a signed-in account on the simulator or emulator, so
  * signed-in screens (editor, profile) can be used without real credentials. Enabled by
  * EXPO_PUBLIC_DEV_STANDIN_ACCOUNT=1 in a git-ignored .env.local; never in release builds,
  * where __DEV__ is false. A real sign-in takes precedence. The uid isn't a real Firebase
  * user, so server writes (sharing, likes) are rejected by the security rules.
  */
-const devStandIn = __DEV__ && Platform.OS === "ios" && process.env.EXPO_PUBLIC_DEV_STANDIN_ACCOUNT === "1" ? {
+const devStandIn = __DEV__ && process.env.EXPO_PUBLIC_DEV_STANDIN_ACCOUNT === "1" ? {
   credential: { user: { uid: "dev-standin", email: "standin@example.com", emailVerified: true, providerData: [] } } as unknown as UserCredential,
   data: { user_name: "CrateMaster", user_email: "standin@example.com", likes: [], attempted: [], completed: [], coins: 0 } as unknown as UserAccountDocument,
 } : undefined;
