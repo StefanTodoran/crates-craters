@@ -1,0 +1,14 @@
+<svg width="100" height="100" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<path d="M72.5 80H27.5C23.3579 80 20 76.6423 20 72.5V27.5C20 23.3579 23.3579 20 27.5 20H58.1435C60.1325 20 62.0401 20.7902 63.4468 22.1967L77.8032 36.5533C79.2099 37.9598 80 39.8675 80 41.8566V72.5C80 76.6423 76.6423 80 72.5 80Z" fill="#FAFFFA"/>
+<use xlink:href="#stroke0_969_171" fill="#FAFFFA"/>
+<use xlink:href="#stroke0_969_171" fill="black" fill-opacity="0.1"/>
+<use xlink:href="#stroke1_969_171" fill="#FAFFFA"/>
+<use xlink:href="#stroke1_969_171" fill="black" fill-opacity="0.1"/>
+<use xlink:href="#stroke2_969_171" fill="#FAFFFA"/>
+<use xlink:href="#stroke2_969_171" fill="black" fill-opacity="0.1"/>
+<defs>
+<path id="stroke0_969_171" d="M65 80V64.25C65 62.5931 63.6569 61.25 62 61.25H38C36.3431 61.25 35 62.5931 35 64.25V80"/>
+<path id="stroke1_969_171" d="M62.125 57.0298C63.7128 57.0298 65 55.7426 65 54.1548C65 52.5669 63.7128 51.2798 62.125 51.2798H37.875C36.2872 51.2798 35 52.5669 35 54.1548C35 55.7426 36.2872 57.0298 37.875 57.0298H62.125Z"/>
+<path id="stroke2_969_171" d="M53 20V27C53 28.6569 51.6569 30 50 30H38C36.3431 30 35 28.6569 35 27V20"/>
+</defs>
+</svg>

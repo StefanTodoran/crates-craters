@@ -1,0 +1,24 @@
+<svg width="100" height="100" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect x="20" y="20" width="60" height="60" fill="#B19CD8"/>
+<rect opacity="0.05" x="20" y="20" width="60" height="60" fill="#15101A"/>
+<mask id="stroke0_544_2391" fill="white">
+<path d="M20 15H80V30H20V15Z"/>
+</mask>
+<path opacity="0.4" d="M80 30V25H20V30V35H80V30Z" fill="#BEA9DF" mask="url(#stroke0_544_2391)"/>
+<mask id="stroke1_544_2391" fill="white">
+<path d="M20 30H80V45H20V30Z"/>
+</mask>
+<path opacity="0.4" d="M80 45V40H20V45V50H80V45Z" fill="#BEA9DF" mask="url(#stroke1_544_2391)"/>
+<mask id="stroke2_544_2391" fill="white">
+<path d="M20 45H80V60H20V45Z"/>
+</mask>
+<path opacity="0.4" d="M80 60V55H20V60V65H80V60Z" fill="#BEA9DF" mask="url(#stroke2_544_2391)"/>
+<mask id="stroke3_544_2391" fill="white">
+<path d="M20 60H80V75H20V60Z"/>
+</mask>
+<path opacity="0.4" d="M80 75V70H20V75V80H80V75Z" fill="#BEA9DF" mask="url(#stroke3_544_2391)"/>
+<rect x="12.929" y="80.1751" width="95" height="10" transform="rotate(-45 12.929 80.1751)" fill="#BEA9DF"/>
+<rect x="20" y="13" width="95" height="10" transform="rotate(45 20 13)" fill="#BEA9DF"/>
+<path d="M90 90V10H20H10V90H90ZM80 80H20V20H80V80Z" fill-rule="evenodd" clip-rule="evenodd" fill="#CCB7E5"/>
+<path opacity="0.1" d="M10 71L90 43.5V90H10V71Z" fill="#15101A"/>
+</svg>

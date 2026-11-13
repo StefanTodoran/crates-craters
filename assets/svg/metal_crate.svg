@@ -1,0 +1,8 @@
+<svg width="100" height="100" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect x="20" y="20" width="60" height="60" fill="#F98585"/>
+<rect opacity="0.15" x="20" y="20" width="60" height="60" fill="#2A0E0E"/>
+<path d="M73 73V27H32.75H27V73H73ZM67.25 67.25H32.75V32.75H67.25V67.25Z" fill-rule="evenodd" clip-rule="evenodd" fill="#F98585"/>
+<path d="M62 62V38H38V62H62ZM56.2308 56.2308H43.7692V43.7692H56.2308V56.2308Z" fill-rule="evenodd" clip-rule="evenodd" fill="#F98585"/>
+<path d="M90 90V10H20H10V90H90ZM80 80H20V20H80V80Z" fill-rule="evenodd" clip-rule="evenodd" fill="#F98585"/>
+<path opacity="0.1" d="M10 71L90 43.5V90H10V71Z" fill="#2A0E0E"/>
+</svg>

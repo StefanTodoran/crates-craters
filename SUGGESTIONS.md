@@ -24,38 +24,21 @@ Open items from `APP_REVIEW.md`, plus a few found since. Finished items are remo
 
 ## UI
 
-7. Tutorial hint card: its buttons don't line up with the faded Back/Help/Menu bar underneath, and the movement diagram's bottom arrow sticks out past the card.
-
 8. Hide the coin counter on levels with no coins (it shows "0/0").
-
-9. The win screen has no Menu button, only Back and Next Level.
+Approved
 
 10. The in-game menu has no backdrop, and tapping outside it doesn't close it.
-
-11. Home menu:
-    - The page dots are tiny and white.
-    - About 40% of the screen is empty.
-    - Nothing hints that you can swipe.
-    - There's no progress or coin balance.
-
-12. Header logo: low-contrast text over busy art, and it uses about 120pt on every page. The top-left icon on Levels is unclear.
-
-13. Menu and tool-picker buttons have the icon on the left and the text pushed far right. `SimpleButton` now has a `centered` option (used on Manage and the editor); `MenuButton` and the tool picker still need the same.
+Ignore lack of backdrop, tapping outside should close. It could even be a native modal like the all filters screen
 
 14. Game screen:
-    - The move count and best are tiny grey corner text.
-    - The `/5` coin counter is a faint subscript.
-    - There's dead space above the board.
-
-15. Editor walls render as isolated squares instead of joined walls as in play.
+    - The move count and best are tiny grey corner text. (ignore)
+    - The `/5` coin counter is a faint subscript. (ignore)
+    - There's dead space above the board. (could put level title here? make it small)
 
 16. Tool picker:
-    - Metal Crate and Diamond are filed under "Bomb Tiles".
-    - The current tool isn't highlighted.
-    - Save, Discard and Playtest are buried in the menu.
-
-17. Android sub-page tab bars: only the active tab is labelled, and some icons are ambiguous. Label every tab or none. (iOS uses the system tab bar, which labels every tab.)
-
+    - Metal Crate and Diamond are filed under "Bomb Tiles". (ignore)
+    - The current tool isn't highlighted. (do this)
+    - Save, Discard and Playtest are buried in the menu. (ignore)
 
 ## Features
 
