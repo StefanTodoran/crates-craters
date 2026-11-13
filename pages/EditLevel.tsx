@@ -253,7 +253,7 @@ export default function EditLevel({
           backgroundColor: modalBackground(darkMode),
         },
       ]}>
-        <ToolPicker options={toolOptions} setOptions={updateToolOptions} onSelect={changeTool} />
+        <ToolPicker options={toolOptions} setOptions={updateToolOptions} onSelect={changeTool} currentTool={currentTool} />
 
         <View style={[styles.section, styles.bottomSection]}>
           <View style={[styles.row, { width: win.width * 0.45 }]}>

@@ -7,6 +7,7 @@ import Subpages, { SubpageTab } from "../components/Subpages";
 import { graphics, purpleTheme } from "../Theme";
 import { refreshLevelsFromServer } from "../util/database";
 import { Level, PageView, SharedLevel } from "../util/types";
+import { showSolution } from "../util/store";
 import LevelSelect from "./LevelSelect";
 import UserLevels from "./UserLevels";
 
@@ -52,6 +53,17 @@ export default function LevelsPage({
             indicatorIcon={IndicatorIcon.COMPLETION}
             isOfficial
             allowResume
+            // Solved levels can replay the player's best solution.
+            secondButtonProps={{
+                text: (uuid) => levels.find(level => level.uuid === uuid)?.bestSolution ? "Solution" : undefined,
+                icon: graphics.KEY,
+                callback: (uuid) => {
+                    const level = levels.find(level => level.uuid === uuid);
+                    if (!level?.bestSolution) return;
+                    showSolution(level, PageView.LEVELS, 0);
+                    viewCallback(PageView.SOLUTION);
+                },
+            }}
         />,
         <UserLevels
             key={1}

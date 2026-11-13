@@ -80,3 +80,6 @@ dist/
 serviceAccountKey.json
 # Local scratch output (screenshots for Figma, etc.)
 tmp/
+
+# Local env overrides (e.g. the simulator stand-in account)
+.env*.local

@@ -32,7 +32,6 @@ const mainGraphics = {
   SAVE_ICON: require("./assets/main_theme/save_icon.png"),
   SAVE_ICON_PURPLE: require("./assets/main_theme/save_icon_purple.png"),
   UNDO_ICON: require("./assets/main_theme/undo_icon.png"),
-  RESET_ICON: require("./assets/main_theme/reset_icon.png"),
   DELETE_ICON: require("./assets/main_theme/delete_icon.png"),
   DELETE_ICON_WHITE: require("./assets/main_theme/delete_icon_white.png"),
   OPTIONS_ICON: require("./assets/main_theme/options_icon.png"),

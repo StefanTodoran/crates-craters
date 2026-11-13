@@ -7,20 +7,21 @@ import MoveCounter from "../components/MoveCounter";
 import SimpleButton from "../components/SimpleButton";
 import SliderBar from "../components/SliderBar";
 import GlobalContext from "../GlobalContext";
-import TextStyles, { normalize } from "../TextStyles";
+import TextStyles from "../TextStyles";
 import { colors } from "../Theme";
 import { useSoundEventPlayers } from "../util/hooks";
 import { doGameMove, Game, initializeGameObj, Position, SoundEvent } from "../util/logic";
-import { PageView, TileType, UserLevel } from "../util/types";
+import { Level, PageView, TileType } from "../util/types";
 
 interface Props {
-  viewCallback: (newView: PageView, pageNum?: number) => void, // Sets the current view of the application. 
-  level: UserLevel, // The level currently being edited. The uuid must not change.
+  viewCallback: (newView: PageView, pageNum?: number) => void, // Sets the current view of the application.
+  level: Level, // The level whose best solution is shown.
+  onBack: () => void,
 }
 
 export default function ViewSolution({
-  viewCallback,
   level,
+  onBack,
 }: Props) {
   const { darkMode } = useContext(GlobalContext);
   const [currentMove, setCurrentMove] = useState(0);
@@ -71,7 +72,6 @@ export default function ViewSolution({
         <Inventory coins={currentGameState.coins} maxCoins={currentGameState.maxCoins} keys={currentGameState.keys} />
       </View>
 
-      <View style={{ height: normalize(15) }} />
       <SliderBar
         label="Move" value={currentMove} units={""}
         minValue={0} maxValue={level.bestSolution.length} changeCallback={setCurrentMove}
@@ -79,9 +79,7 @@ export default function ViewSolution({
       />
 
       <View style={styles.buttonsRow}>
-        <SimpleButton onPress={() => {
-          viewCallback(PageView.MANAGE, 1);
-        }} text="Back" Svg={BackButton} />
+        <SimpleButton onPress={onBack} text="Back" Svg={BackButton} />
       </View>
     </View>
   );
@@ -105,7 +103,5 @@ const styles = StyleSheet.create({
   },
   buttonsRow: {
     flexDirection: "row",
-    height: normalize(50),
-    marginTop: normalize(15),
   },
 });

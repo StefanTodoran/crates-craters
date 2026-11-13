@@ -102,7 +102,9 @@ export default function EditorPage({
     <Subpages
       pageComponents={pageComponents}
       pageTabs={pageTabs}
-      disabledPages={[false, !editorLevel]}
+      // Manage needs a level to manage, and an account: signed out, the level list is
+      // empty, but the last edited level would otherwise still be reachable here.
+      disabledPages={[false, !editorLevel || !userCredential]}
     />
   );
 }

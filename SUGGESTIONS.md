@@ -20,25 +20,21 @@ Open items from `APP_REVIEW.md`, plus a few found since. Finished items are remo
 
 ## Assets
 
-6. Icons are exported at 1× (100×100 px) but shown at up to ~3× density, so they're slightly soft on iPhones. Now that the SVG sources are in `assets/svg`, the `@2x`/`@3x` PNGs can be rendered from them by a script. The exported SVGs aren't committed yet.
+6. Icons are exported at 1× (100×100 px) but shown at up to ~3× density, so they're slightly soft on iPhones. Now that the SVG sources are in `assets/svg`, the `@2x`/`@3x` PNGs can be rendered from them by a script.
 
-## UI
+## Editor
 
-8. Hide the coin counter on levels with no coins (it shows "0/0").
-Approved
+Ideas for an editor revamp, most impactful first. 1 and 2 together are the real revamp; the rest stand alone.
 
-10. The in-game menu has no backdrop, and tapping outside it doesn't close it.
-Ignore lack of backdrop, tapping outside should close. It could even be a native modal like the all filters screen
+7. Replace the Change Tool screen with a tool strip: a scrollable row of tool icons under the board, with the current tool highlighted, so switching is one tap. Bomb fuse and one-way rotation appear inline only when those tools are picked.
 
-14. Game screen:
-    - The move count and best are tiny grey corner text. (ignore)
-    - The `/5` coin counter is a faint subscript. (ignore)
-    - There's dead space above the board. (could put level title here? make it small)
+8. Add a compact top toolbar: small icon buttons above the board for Undo, Redo, Playtest and Save, with a dot on Save when there are unsaved changes. This frees the bottom for the tool strip and adds redo.
 
-16. Tool picker:
-    - Metal Crate and Diamond are filed under "Bomb Tiles". (ignore)
-    - The current tool isn't highlighted. (do this)
-    - Save, Discard and Playtest are buried in the menu. (ignore)
+9. Check the level before Playtest or Share: small warnings for no spawn, no flag, coins the player can't reach, or keys without doors.
+
+10. Long-press a placed tile to edit it, such as a bomb's fuse or a one-way tile's direction, instead of setting these before placing.
+
+11. Later: rectangle fill, clear board and mirror mode.
 
 ## Features
 

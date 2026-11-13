@@ -25,10 +25,12 @@ function NativeSliderBar({
   showSteppers,
   stepperWrapAround,
   theme,
+  width,
+  labelColor,
 }: SliderBarProps) {
   const { darkMode } = useContext(GlobalContext);
   const win = useWindowDimensions();
-  const barWidth = win.width / 2;
+  const barWidth = width ?? win.width / 2;
   const useTheme = theme || purpleTheme;
   const mainColor = useTheme.MAIN_COLOR;
 
@@ -53,8 +55,8 @@ function NativeSliderBar({
   return (
     <View style={[styles.container, { width: barWidth }]}>
       <View style={styles.row}>
-        <Text allowFontScaling={false} style={[styles.text, { color: mainColor }]}>{label}</Text>
-        <Text allowFontScaling={false} style={[styles.text, { color: mainColor }]}>{value}{units}</Text>
+        <Text allowFontScaling={false} style={[styles.text, { color: labelColor ?? mainColor }]}>{label}</Text>
+        <Text allowFontScaling={false} style={[styles.text, { color: labelColor ?? mainColor }]}>{value}{units}</Text>
       </View>
 
       <View style={styles.barContainer}>

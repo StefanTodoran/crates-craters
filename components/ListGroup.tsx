@@ -1,5 +1,5 @@
 import { ReactNode, useContext } from "react";
-import { Image, ImageSourcePropType, Pressable, StyleSheet, Switch, Text, View } from "react-native";
+import { Image, ImageSourcePropType, Platform, Pressable, StyleSheet, Switch, Text, View } from "react-native";
 import GlobalContext from "../GlobalContext";
 import { normalize } from "../TextStyles";
 import { colors } from "../Theme";
@@ -62,7 +62,14 @@ export function SwitchRow({ title, value, onToggle, color, last, icon }: { title
       title={title}
       icon={icon}
       last={last}
-      accessory={<Switch value={value} onValueChange={onToggle} trackColor={{ true: color }} accessibilityLabel={title} />}
+      accessory={<Switch
+        value={value}
+        onValueChange={onToggle}
+        trackColor={{ true: color }}
+        // Android tints the thumb with the system accent (teal) by default; white matches iOS.
+        thumbColor={Platform.OS === "android" ? "#fff" : undefined}
+        accessibilityLabel={title}
+      />}
     />
   );
 }

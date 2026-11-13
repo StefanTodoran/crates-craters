@@ -1,5 +1,5 @@
 import { Dispatch, useContext, useEffect, useMemo, useRef, useState } from "react";
-import { Animated, StyleSheet, Text, TextStyle, View, useWindowDimensions } from "react-native";
+import { Animated, Pressable, StyleSheet, Text, TextStyle, View, useWindowDimensions } from "react-native";
 import Toast from "react-native-toast-message";
 import BackButton from "../assets/BackButton";
 import GameBoard from "../components/GameBoard";
@@ -189,7 +189,7 @@ export default function PlayLevel({
       <View style={staticStyles.container}>
         {/* GAMEPLAY COMPONENTS */}
         <View {...panHandlers}>
-          <MoveCounter moveCount={game.moveHistory.length} bestMoves={level.bestSolution?.length} />
+          <MoveCounter moveCount={game.moveHistory.length} bestMoves={level.bestSolution?.length} title={level.name} />
 
           <View ref={boardRef} style={staticStyles.centerContents} onLayout={remeasure}>
             <View>
@@ -226,6 +226,8 @@ export default function PlayLevel({
           { paddingHorizontal: win.width * 0.225 },
           animatedStyles.modal,
         ]}>
+          {/* Tapping anywhere outside the buttons closes the menu. */}
+          <Pressable style={StyleSheet.absoluteFill} onPress={toggleModal} accessibilityLabel="Close menu" />
           <Text style={dynamicStyles.subtitle(darkMode)}>Menu</Text>
           <MenuButton
             label="Restart Level"

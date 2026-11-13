@@ -175,7 +175,7 @@ const LevelCard = memo(function ({
             onPress={resumeCallback}
           />}
 
-          {onSecondButton && <SimpleButton
+          {onSecondButton && !!secondButtonText && <SimpleButton
             text={secondButtonText}
             disabled={secondButtonDisabled}
             icon={secondButtonIcon}

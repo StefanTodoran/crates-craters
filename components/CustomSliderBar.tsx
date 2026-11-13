@@ -17,6 +17,8 @@ export interface SliderBarProps {
   showSteppers?: boolean,
   stepperWrapAround?: boolean,
   theme?: Theme,
+  width?: number, // Bar width; defaults to half the window. The bar must be centered on screen.
+  labelColor?: string, // Defaults to the theme's main color.
 }
 
 /** 
@@ -42,10 +44,12 @@ export default function CustomSliderBar({
   showSteppers,
   stepperWrapAround,
   theme,
+  width,
+  labelColor,
 }: SliderBarProps) {
   const { darkMode } = useContext(GlobalContext);
   const win = useWindowDimensions();
-  const barWidth = win.width / 2;
+  const barWidth = width ?? win.width / 2;
   const leftGutterWidth = (win.width - barWidth) / 2; // The bar is centered on screen.
   const [pressed, setPressed] = useState(false);
   const useTheme = theme || purpleTheme;
@@ -110,8 +114,8 @@ export default function CustomSliderBar({
   return (
     <View style={[styles.container, { width: barWidth }]}>
       <View style={styles.row}>
-        <Text allowFontScaling={false} style={[styles.text, { color: mainColor }]}>{label}</Text>
-        <Text allowFontScaling={false} style={[styles.text, { color: mainColor }]}>{value}{units}</Text>
+        <Text allowFontScaling={false} style={[styles.text, { color: labelColor ?? mainColor }]}>{label}</Text>
+        <Text allowFontScaling={false} style={[styles.text, { color: labelColor ?? mainColor }]}>{value}{units}</Text>
       </View>
 
       <View style={styles.barContainer}>

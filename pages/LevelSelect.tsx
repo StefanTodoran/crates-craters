@@ -11,7 +11,7 @@ import { Theme, purpleTheme } from "../Theme";
 import { Level, PageView } from "../util/types";
 
 interface SecondButtonProps {
-  text?: string | ((uuid: string, index: number) => string),
+  text?: string | ((uuid: string, index: number) => string | undefined), // No text hides the button.
   icon?: ImageSourcePropType,
   callback?: (uuid: string, index: number) => void, // Triggers an effect on the current level.
   disabled?: boolean | ((uuid: string, index: number) => boolean),

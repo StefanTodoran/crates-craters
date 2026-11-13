@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from "react";
-import { Level, UserLevel } from "./types";
+import { Level, PageView, UserLevel } from "./types";
 
 /**
  * App-wide state shared outside the React tree (loader.ts updates it after writing
@@ -17,6 +17,7 @@ export interface AppState {
   initialSubpage?: number, // The tab a freshly mounted Subpages should start on.
   pageAnimating: boolean, // The page panel is sliding in.
   pageOpenedCount: number, // Increments each time the page panel finishes sliding in.
+  solution?: { level: Level, backView: PageView, backPage?: number }, // What the solution viewer shows.
 }
 
 type Listener = () => void;
@@ -83,4 +84,9 @@ export function takeInitialSubpage() {
 
 export function pageOpened() {
   setAppState(({ pageOpenedCount }) => ({ pageAnimating: false, pageOpenedCount: pageOpenedCount + 1 }));
+}
+
+/** Opens the solution viewer on a level's best solution; Back returns to backView. */
+export function showSolution(level: Level, backView: PageView, backPage?: number) {
+  setAppState({ solution: { level, backView, backPage } });
 }

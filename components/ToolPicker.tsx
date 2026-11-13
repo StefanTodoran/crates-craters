@@ -38,6 +38,7 @@ interface Props {
   options: ToolOptions,
   setOptions: (update: Partial<ToolOptions>) => void,
   onSelect: (tool: Tool) => void,
+  currentTool?: Tool, // Highlighted in the list.
 }
 
 const toolPairs: [Tool, Tool][] = [];
@@ -55,14 +56,14 @@ function blockedDirections(mode: OneWayMode, rotation: number): Direction[] {
 }
 
 /** The editor's scrollable list of tools, grouped by kind, with their settings. */
-export default function ToolPicker({ options, setOptions, onSelect }: Props) {
+export default function ToolPicker({ options, setOptions, onSelect, currentTool }: Props) {
   const { darkMode } = useContext(GlobalContext);
   const win = useWindowDimensions();
   const rowStyle = [styles.row, { width: win.width * 0.45 }];
   const { fuseTimer, oneWayRotation, oneWayMode } = options;
 
   const toolButton = (tool: Tool, onPress = () => onSelect(tool)) =>
-    <MenuButton label={tool.label} icon={tool.icon} onPress={onPress} theme={tool.theme} fillWidth />;
+    <MenuButton label={tool.label} icon={tool.icon} onPress={onPress} theme={tool.theme} selected={tool.label === currentTool?.label} fillWidth />;
 
   const bombTool: Tool = {
     label: "Bomb",
@@ -143,6 +144,7 @@ export default function ToolPicker({ options, setOptions, onSelect }: Props) {
             iconRotation={oneWayRotation}
             onPress={() => onSelect(getOneWayTool(blockedDirections(oneWayMode, oneWayRotation)))}
             theme={colors.BLUE_THEME}
+            selected={currentTool?.label === "One Way"}
             fillWidth
           />
         </View>

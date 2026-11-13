@@ -109,6 +109,7 @@ export default function App() {
   const editorLevel = useAppStore(state => state.editorLevel);
   const notificationCounts = useAppStore(state => state.notificationCounts);
   const scrollToBottom = useAppStore(state => state.scrollToBottom);
+  const solution = useAppStore(state => state.solution);
 
   const [userLevels, setUserLevels] = useState<SharedLevel[]>([]); // Kept here so the shared levels fetch isn't redone every time that page mounts.
   const [userCredential, setUserCredential] = useState<UserCredential>();
@@ -181,7 +182,7 @@ export default function App() {
   // and then post official solution data for.
   const officialLevels = useMemo(() => levels.filter(level => level.official), [levels]);
   const ownLevels = useMemo(
-    () => levels.filter(level => !level.official && level.user_name === userData?.user_name),
+    () => levels.filter(level => !level.official && level.user_name === (userData ?? devStandIn?.data)?.user_name),
     [levels, userData?.user_name],
   );
 
@@ -256,7 +257,11 @@ export default function App() {
   // Memoized so context consumers (every board tile, button, etc.) don't re-render
   // whenever App does, e.g. on every game move.
   const globalContext = useMemo(
-    () => ({ darkMode, dragSensitivity, doubleTapDelay, playAudio, haptics, userCredential, userData }),
+    () => ({
+      darkMode, dragSensitivity, doubleTapDelay, playAudio, haptics,
+      userCredential: userCredential ?? devStandIn?.credential,
+      userData: userData ?? devStandIn?.data,
+    }),
     [darkMode, dragSensitivity, doubleTapDelay, playAudio, haptics, userCredential, userData],
   );
 
@@ -347,10 +352,11 @@ export default function App() {
               />
             }
 
-            {view === PageView.SOLUTION &&
+            {view === PageView.SOLUTION && solution &&
               <ViewSolution
                 viewCallback={switchView}
-                level={editorLevel!} // We can only navigate to this page from the manage page, so editorLevel is guaranteed to be defined.
+                level={solution!.level} // Set by showSolution() before navigating here.
+                onBack={() => switchView(solution!.backView, solution!.backPage)}
               />
             }
 
@@ -388,6 +394,18 @@ export default function App() {
     </GlobalContext.Provider>
   );
 }
+
+/**
+ * Development only: a local stand-in for a signed-in account on the iOS simulator, so
+ * signed-in screens (editor, profile) can be used without real credentials. Enabled by
+ * EXPO_PUBLIC_DEV_STANDIN_ACCOUNT=1 in a git-ignored .env.local; never in release builds,
+ * where __DEV__ is false. A real sign-in takes precedence. The uid isn't a real Firebase
+ * user, so server writes (sharing, likes) are rejected by the security rules.
+ */
+const devStandIn = __DEV__ && Platform.OS === "ios" && process.env.EXPO_PUBLIC_DEV_STANDIN_ACCOUNT === "1" ? {
+  credential: { user: { uid: "dev-standin", email: "standin@example.com", emailVerified: true, providerData: [] } } as unknown as UserCredential,
+  data: { user_name: "CrateMaster", user_email: "standin@example.com", likes: [], attempted: [], completed: [], coins: 0 } as unknown as UserAccountDocument,
+} : undefined;
 
 function panelStyle(animState: Animated.Value, darkMode: boolean, screenHeight: number) {
   return {

@@ -56,7 +56,8 @@ export default function Inventory({ coins, maxCoins, keys }: Props) {
       <View style={styles.row}>
         {inventory}
       </View>
-      <View style={styles.row}>
+      {/* Hidden, not removed, on levels without coins so the layout doesn't change. */}
+      <View style={[styles.row, maxCoins === 0 && { opacity: 0 }]}>
         <Animated.Text allowFontScaling={false} style={[styles.coinsText, { opacity: coinsAnim }]}>{coins}</Animated.Text>
         <Animated.Text allowFontScaling={false} style={styles.maxCoinsText}>/{maxCoins}</Animated.Text>
         <Animated.Image style={[styles.icon, { transform: [{ scale: coinsAnim }] }]} source={graphics.COIN} />

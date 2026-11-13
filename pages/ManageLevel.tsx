@@ -12,7 +12,7 @@ import GlobalContext from "../GlobalContext";
 import { normalize } from "../TextStyles";
 import { colors, graphics } from "../Theme";
 import { postSolutionData, publishUserLevel, updateDocument } from "../util/database";
-import { requestSubpage } from "../util/store";
+import { requestSubpage, showSolution } from "../util/store";
 import { useForceRefresh } from "../util/hooks";
 import { deleteLevel, updateLevel } from "../util/loader";
 import { PageView, UserLevel } from "../util/types";
@@ -179,7 +179,10 @@ export default function ManageLevel({
             title="View Solution"
             icon={graphics.KEY}
             subtitle={level.bestSolution ? undefined : "Beat the level once to record a solution."}
-            onPress={() => viewCallback(PageView.SOLUTION)}
+            onPress={() => {
+              showSolution(level, PageView.MANAGE, 1);
+              viewCallback(PageView.SOLUTION);
+            }}
             disabled={!level.bestSolution}
           />
           {level.shared ?
