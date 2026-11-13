@@ -33,7 +33,7 @@ export default function MoveCounter({ moveCount, bestMoves }: Props) {
   );
 }
 
-const styles = StyleSheet.create<any>({
+const styles = StyleSheet.create({
   row: {
     flexDirection: "row",
     alignItems: "center",

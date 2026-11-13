@@ -59,7 +59,7 @@ export default function MenuButton({
         backgroundColor: useTheme.MAIN_TRANSPARENT(0.3),
       }}
     >
-      {(icon) && <Image style={styles.icon(iconRotation)} source={icon} />}
+      {(icon) && <Image style={[styles.icon, { transform: [{ rotate: `${iconRotation ?? 0}deg` }] }]} source={icon} />}
 
       {!!label && <Text
         numberOfLines={allowOverflow ? undefined : 1}
@@ -73,7 +73,7 @@ export default function MenuButton({
   );
 }
 
-const styles = StyleSheet.create<any>({
+const styles = StyleSheet.create({
   body: {
     borderWidth: 1,
     borderRadius: normalize(10),
@@ -93,9 +93,8 @@ const styles = StyleSheet.create<any>({
     letterSpacing: 0.25,
     fontWeight: "bold",
   },
-  icon: (iconRotation: number = 0) => ({
+  icon: {
     height: normalize(30),
     width: normalize(30),
-    transform: [{ rotate: `${iconRotation}deg` }],
-  }),
+  },
 });

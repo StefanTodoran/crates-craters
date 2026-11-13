@@ -1,10 +1,10 @@
-import { Image, Platform, StyleSheet, Text, View } from "react-native";
+import { Image, ImageSourcePropType, Platform, StyleSheet, Text, View } from "react-native";
 import { TileIcon } from "../assets/Icons";
 import { BombTile, FlatTile } from "../util/types";
 
 interface Props {
   tile: FlatTile,
-  icon: any,
+  icon: ImageSourcePropType,
   tileSize: number,
   bgColor?: string,
 }
@@ -16,11 +16,11 @@ export default function BombBoardTile({
 
   const tileGraphic = useSvg ?
     <TileIcon bgColor={bgColor} tileSize={tileSize} tileData={tile} /> :
-    <Image style={styles.tile(bgColor, tileSize)} source={icon} />;
+    <Image style={{ width: tileSize, height: tileSize, backgroundColor: bgColor }} source={icon} />;
 
   return <>
     {tileGraphic}
-    <View style={styles.entityContainer(tileSize)}>
+    <View style={[styles.entityContainer, { width: tileSize, height: tileSize }]}>
       <Text style={[styles.entity, { fontSize: tileSize * 0.3 }]} allowFontScaling={false}>
         {(tile as BombTile).fuse}
       </Text>
@@ -28,21 +28,14 @@ export default function BombBoardTile({
   </>;
 }
 
-const styles = StyleSheet.create<any>({
-  tile: (bgColor: string, size: number) => ({
-    width: size,
-    height: size,
-    backgroundColor: bgColor,
-  }),
-  entityContainer: (size: number) => ({
+const styles = StyleSheet.create({
+  entityContainer: {
     position: "absolute",
-    width: size,
-    height: size,
     paddingTop: "17.5%",
     paddingRight: "5%",
     justifyContent: "center",
     alignItems: "center",
-  }),
+  },
   entity: {
     fontFamily: "Montserrat-Regular",
     fontWeight: "normal",

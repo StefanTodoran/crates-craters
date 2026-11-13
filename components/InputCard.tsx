@@ -1,12 +1,11 @@
 import { useContext } from "react";
-import { Dimensions, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import GlobalContext from "../GlobalContext";
 import TextStyles, { normalize } from "../TextStyles";
 import { Theme, colors } from "../Theme";
 import InputLine, { InputLineProps } from "./InputLine";
 import SimpleButton from "./SimpleButton";
 
-const win = Dimensions.get("window");
 
 interface PropsBase {
   title: string,
@@ -41,9 +40,10 @@ export default function InputCard({
   buttonDisabled,
 }: Props) {
   const { darkMode } = useContext(GlobalContext);
+  const win = useWindowDimensions();
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { width: win.width * 0.9 }]}>
       <View style={styles.titleContainer}>
         <Text style={[
           TextStyles.subtitle(darkMode, "#fff"),
@@ -82,8 +82,6 @@ const styles = StyleSheet.create({
     borderRadius: normalize(10),
     overflow: "hidden",
     marginVertical: normalize(15),
-    width: win.width * 0.9,
-    // marginBottom: normalize(15),
   },
   hintsContainer: {
     marginTop: 5,

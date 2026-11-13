@@ -1,8 +1,6 @@
 import { useState } from "react";
-import { Dimensions, RefreshControl, ScrollView, StyleSheet } from "react-native";
+import { RefreshControl, ScrollView, StyleSheet, useWindowDimensions } from "react-native";
 import { TAB_BAR_CLEARANCE } from "./Subpages";
-
-const win = Dimensions.get("window");
 
 interface Props {
   center?: boolean,
@@ -13,6 +11,7 @@ interface Props {
 }
 
 export default function SubpageContainer({ center, noWidthPad, onRefresh, lessTopPad, children }: Props) {
+  const win = useWindowDimensions();
   const [refreshing, setRefreshing] = useState(false);
   const finishRefresh = () => setRefreshing(false);
 

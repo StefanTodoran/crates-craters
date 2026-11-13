@@ -79,11 +79,12 @@ export function useOnUnmount(callback: () => void, dependencies: React.Dependenc
   }, dependencies);
 }
 
+type Settings = typeof defaultSettings;
+type SettingName<T> = { [K in keyof Settings]: Settings[K] extends T ? K : never }[keyof Settings];
 type BooleanSetting = [boolean, React.Dispatch<React.SetStateAction<boolean>>]; /* [value, setter] */
 
-export function useBooleanSetting(settingName: string): BooleanSetting {
+export function useBooleanSetting(settingName: SettingName<boolean>): BooleanSetting {
   const [storedValue, setStored] = useMMKVBoolean(settingName);
-  // @ts-expect-error We will assume that the settingName key is correct.
   const defaultValue = defaultSettings[settingName];
 
   const [stateValue, setState] = useState<boolean>(storedValue ?? defaultValue);
@@ -94,9 +95,8 @@ export function useBooleanSetting(settingName: string): BooleanSetting {
 
 type NumberSetting = [number, (newValue: number) => void]; /* [value, setter] */
 
-export function useNumberSetting(settingName: string): NumberSetting {
+export function useNumberSetting(settingName: SettingName<number>): NumberSetting {
   const [storedValue, setValue] = useMMKVNumber(settingName);
-  // @ts-expect-error We will assume that the settingName key is correct.
   const defaultValue = defaultSettings[settingName];
   return [storedValue ?? defaultValue, setValue];
 }

@@ -8,25 +8,19 @@ import SliderBar from "../components/SliderBar";
 import SubpageContainer from "../components/SubpageContainer";
 import { useOnUnmount } from "../util/hooks";
 
-/**
- * @typedef {object} Props
- * @property {() => void} darkModeCallback
- * @property {() => void} audioModeCallback
- * @property {(sensitivity: number) => void} setSensitivityCallback
- * @property {(delay: number) => void} setTapDelayCallback
- */
+interface Props {
+  darkModeCallback: () => void,
+  audioModeCallback: () => void,
+  setSensitivityCallback: (sensitivity: number) => void,
+  setTapDelayCallback: (delay: number) => void,
+}
 
-/**
- * @param {Props} props
- */
 export default function Settings({
   darkModeCallback,
   audioModeCallback,
-  // setThemeCallback,
   setSensitivityCallback,
   setTapDelayCallback,
-}) {
-  const { darkMode, dragSensitivity, doubleTapDelay, playAudio } = useContext(GlobalContext);
+}: Props) {  const { darkMode, dragSensitivity, doubleTapDelay, playAudio } = useContext(GlobalContext);
 
   const [newDragSens, setNewDragSens] = useState(dragSensitivity);
   const [newTapDelay, setNewTapDelay] = useState(doubleTapDelay);
@@ -54,10 +48,7 @@ export default function Settings({
           theme={colors.GREEN_THEME}
           fillWidth
         />
-        <MenuButton onPress={() => {
-          // const newTheme = nextTheme();
-          // setThemeCallback(newTheme);
-        }}
+        <MenuButton
           label="Change App Theme"
           icon={graphics.THEME_ICON}
           disabled={true}

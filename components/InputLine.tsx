@@ -99,8 +99,7 @@ export default function InputLine({
 // Explicit geometry so iOS (whose TextInput has no default padding) and Android
 // (whose TextInput does) lay out identically, and the label can be positioned
 // from known values instead of percentages.
-// Plain points rather than normalize(): it subtracts a flat amount on iOS, which
-// collapses small values like these.
+// Plain points rather than normalize(), so the label math below stays exact.
 const INPUT_HEIGHT = 26;
 const TOP_SPACE = 16; // Room above the input for the raised label.
 const TEXT_INSET = 6;

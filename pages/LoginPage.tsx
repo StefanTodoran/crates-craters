@@ -3,7 +3,7 @@ import GoogleLogo from "../assets/GoogleLogo";
 import { signInWithGoogle } from "../util/googleAuth";
 import { Timestamp } from "firebase/firestore";
 import { useContext, useState } from "react";
-import { Dimensions, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import Toast from "react-native-toast-message";
 import InputLine from "../components/InputLine";
 import SimpleButton from "../components/SimpleButton";
@@ -15,7 +15,6 @@ import { UserAccountDocument, createUserAccount, isUsernameTaken } from "../util
 import { auth } from "../util/firebase";
 import { getData, getLocalUserData, metadataKeys, storage } from "../util/loader";
 
-const win = Dimensions.get("window");
 const emailRegex = /^(\S+@\S+\.\S+)?$/;
 
 interface Props {
@@ -30,6 +29,7 @@ enum PageMode {
 
 export default function LoginPage({ setUserCredential }: Props) {
     const { darkMode } = useContext(GlobalContext);
+    const win = useWindowDimensions();
     const [pageMode, setPageMode] = useState<PageMode>(PageMode.UNSET);
 
     const [email, setEmail] = useState("");
@@ -95,7 +95,7 @@ export default function LoginPage({ setUserCredential }: Props) {
         <SubpageContainer center>
             {
                 pageMode === PageMode.UNSET && <>
-                    <View style={styles.pageModeRow}>
+                    <View style={[styles.pageModeRow, { marginHorizontal: win.width * 0.18 }]}>
                         <SimpleButton
                             text="Sign In"
                             icon={graphics.SIGNUP_ICON}
@@ -329,7 +329,6 @@ const styles = StyleSheet.create({
     pageModeRow: {
         alignItems: "center",
         justifyContent: "center",
-        marginHorizontal: win.width * 0.18,
     },
     buttonsRow: {
         flexDirection: "row",

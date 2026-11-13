@@ -1,6 +1,6 @@
 import { AuthCredential, EmailAuthProvider, UserCredential, reauthenticateWithCredential, sendEmailVerification, signOut } from "firebase/auth";
 import { useContext, useState } from "react";
-import { Dimensions, Linking, StyleSheet, View } from "react-native";
+import { Linking, StyleSheet, View, useWindowDimensions } from "react-native";
 import Toast from "react-native-toast-message";
 import InputCard from "../components/InputCard";
 import SimpleButton from "../components/SimpleButton";
@@ -14,7 +14,6 @@ import { getGoogleCredential, signOutOfGoogle, usesPassword } from "../util/goog
 import { metadataKeys, storage } from "../util/loader";
 import LoginPage from "./LoginPage";
 
-const win = Dimensions.get("window");
 
 interface Props {
     attemptSignIn: () => Promise<void>,
@@ -23,6 +22,7 @@ interface Props {
 
 export default function ProfilePage({ attemptSignIn, setUserCredential }: Props) {
     const { userData, userCredential } = useContext(GlobalContext);
+    const win = useWindowDimensions();
     const refreshCredentials = (onFinish: () => void) => {
         attemptSignIn().then(onFinish);
     }
@@ -73,7 +73,7 @@ export default function ProfilePage({ attemptSignIn, setUserCredential }: Props)
                     buttonText="Cancel"
                     buttonCallback={() => { signOutEverywhere().then(() => setUserCredential(undefined)); }}
                 />
-                <View style={styles.buttonsRow}>
+                <View style={[styles.buttonsRow, { width: win.width * 0.45, marginHorizontal: win.width * 0.225 }]}>
                     <SimpleButton onPress={finishSignUp}
                         text="Finish"
                         icon={graphics.SIGNUP_ICON}
@@ -140,7 +140,7 @@ export default function ProfilePage({ attemptSignIn, setUserCredential }: Props)
                 buttonText="Cancel"
                 buttonCallback={() => { setDeleting(false); setPassword(""); }}
             />
-            <View style={styles.buttonsRow}>
+            <View style={[styles.buttonsRow, { width: win.width * 0.45, marginHorizontal: win.width * 0.225 }]}>
                 <SimpleButton onPress={deleteAccount}
                     text={hasPassword ? "Delete Forever" : "Confirm with Google"}
                     icon={graphics.DELETE_ICON}
@@ -196,7 +196,7 @@ export default function ProfilePage({ attemptSignIn, setUserCredential }: Props)
                 }}
             />
 
-            <View style={styles.buttonsRow}>
+            <View style={[styles.buttonsRow, { width: win.width * 0.45, marginHorizontal: win.width * 0.225 }]}>
                 <SimpleButton onPress={() => {
                     const user = userCredential.user;
                     sendEmailVerification(user)
@@ -232,7 +232,7 @@ export default function ProfilePage({ attemptSignIn, setUserCredential }: Props)
                     square
                 />
             </View>
-            <View style={styles.buttonsRow}>
+            <View style={[styles.buttonsRow, { width: win.width * 0.45, marginHorizontal: win.width * 0.225 }]}>
                 <SimpleButton onPress={() => setDeleting(true)}
                     text="Delete Account"
                     icon={graphics.DELETE_ICON}
@@ -252,8 +252,6 @@ const styles = StyleSheet.create({
         marginTop: normalize(5),
         flexDirection: "row",
         justifyContent: "center",
-        width: win.width * 0.45,
-        marginHorizontal: win.width * 0.225,
     },
     hintRow: {
         flexDirection: "row",

@@ -1,5 +1,5 @@
 import { useContext } from "react";
-import { Alert, Image, ImageSourcePropType, StyleSheet, Text } from "react-native";
+import { Alert, Image, ImageSourcePropType, StyleSheet, Text, TextStyle } from "react-native";
 import GlobalContext from "../GlobalContext";
 import TextStyles, { normalize } from "../TextStyles";
 import { Theme, purpleTheme } from "../Theme";
@@ -172,12 +172,12 @@ const staticStyles = StyleSheet.create({
   },
 });
 
-const dynamicStyles = StyleSheet.create<any>({
-  label: (hasIcon: boolean, theme: Theme, main?: boolean) => ({
+const dynamicStyles = {
+  label: (hasIcon: boolean, theme: Theme, main?: boolean): TextStyle => ({
     marginBottom: 0,
     marginHorizontal: hasIcon ? normalize(8) : 0,
     color: main ? "#fff" : theme.MAIN_COLOR,
     fontSize: normalize(15),
     textAlign: "right",
   }),
-});
+};

@@ -21,7 +21,7 @@ export default function CurrentToolIndicator({ tool }: Props) {
   );
 }
 
-const styles = StyleSheet.create<any>({
+const styles = StyleSheet.create({
   container: {
     flexDirection: "row",
     justifyContent: "center",

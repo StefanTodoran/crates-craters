@@ -3,8 +3,7 @@ import { getFirestore } from "firebase/firestore";
 // import { getAnalytics } from "firebase/analytics";
 // import { getStorage } from "firebase/storage";
 // getReactNativePersistence is only exported by the react-native build of firebase/auth,
-// which Metro resolves; the default type declarations don't include it.
-// @ts-ignore
+// which Metro resolves; tsconfig maps @firebase/auth to that build's type declarations.
 import { getReactNativePersistence, initializeAuth } from "firebase/auth";
 import { MMKV } from "react-native-mmkv";
 

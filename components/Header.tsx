@@ -84,7 +84,7 @@ export default function Header({ pageView, returnHome, scrollToBottom }: Props) 
   );
 }
 
-const styles = StyleSheet.create<any>({
+const styles = StyleSheet.create({
   leftMenuButton: {
     position: "absolute",
     top: StatusBar.currentHeight!,

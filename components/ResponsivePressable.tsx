@@ -47,11 +47,6 @@ export default function ResponsivePressable({
             onPressIn={() => setPressedState(!disabled && !!onPress)}
             onPressOut={() => setPressedState(false)}
             hitSlop={hitSlop}
-
-        // TODO: Decide if the touch sound is desired or not.
-        // // @ts-expect-error
-        // touchSoundDisabled={false}
-        // android_disableSound={false}
         >{children}</Pressable>
     );
 }

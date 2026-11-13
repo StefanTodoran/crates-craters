@@ -1,6 +1,6 @@
 import { Timestamp } from "firebase/firestore";
 import { useContext, useEffect, useState } from "react";
-import { Dimensions, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import Toast from "react-native-toast-message";
 import BoardPreview from "../components/BoardPreview";
 import InputCard from "../components/InputCard";
@@ -17,7 +17,6 @@ import { useForceRefresh } from "../util/hooks";
 import { deleteLevel, updateLevel } from "../util/loader";
 import { PageView, UserLevel } from "../util/types";
 
-const win = Dimensions.get("window");
 
 interface Props {
   level: UserLevel,
@@ -31,6 +30,7 @@ export default function ManageLevel({
   playLevelCallback,
 }: Props) {
   const { darkMode, userData, userCredential } = useContext(GlobalContext);
+  const win = useWindowDimensions();
 
   const [levelTitle, setLevelTitle] = useState<string>("");
   const [refreshed, forceRefresh] = useForceRefresh();
@@ -115,7 +115,6 @@ export default function ManageLevel({
         ]}
         buttonText="Save"
         buttonCallback={() => {
-          // @ts-expect-error We just want to update these two properties, which both exist on UserLevel.
           updateLevel({ uuid: level.uuid, name: levelTitle }, false);
           forceRefresh();
         }}
@@ -133,8 +132,7 @@ export default function ManageLevel({
         <View style={[
           styles.previewOverlay,
           {
-            // @ts-expect-error No, it is not possibly undefined.
-            borderRadius: tileSize / 5, // Same value as GameBoard borderRadius.
+            borderRadius: (tileSize ?? 0) / 5, // Same value as GameBoard borderRadius.
             backgroundColor: darkMode ? colors.OFF_WHITE_TRANSPARENT(0.45) : colors.NEAR_BLACK_TRANSPARENT(0.45),
           }
         ]}>
@@ -146,7 +144,7 @@ export default function ManageLevel({
       </ResponsivePressable>
 
       <View style={{ marginTop: normalize(10) }} />
-      <View style={styles.buttonsRow}>
+      <View style={[styles.buttonsRow, { width: win.width * 0.45, marginHorizontal: win.width * 0.225 }]}>
         <SimpleButton
           onPress={() => {
             playLevelCallback(level.uuid);
@@ -171,7 +169,7 @@ export default function ManageLevel({
         />
       </View>
 
-      <View style={styles.buttonsRow}>
+      <View style={[styles.buttonsRow, { width: win.width * 0.45, marginHorizontal: win.width * 0.225 }]}>
         {level.shared ?
           <SimpleButton
             doConfirmation="Are you sure you want to make this level private? All likes and attempts will be lost permanently."
@@ -235,8 +233,6 @@ const styles = StyleSheet.create({
     marginTop: normalize(5),
     flexDirection: "row",
     justifyContent: "center",
-    width: win.width * 0.45,
-    marginHorizontal: win.width * 0.225,
   },
   relative: {
     position: "relative",

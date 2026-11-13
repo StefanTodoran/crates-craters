@@ -21,15 +21,9 @@ interface BaseGameState {
   won: boolean,
 }
 
-const validKeys = ["board", "player", "maxCoins", "coins", "keys", "won"];
-
 function pruneGameStateObject(state: Game): BaseGameState {
-  const prunedState = { ...state };
-  Object.keys(prunedState).forEach((key) => {
-    // @ts-expect-error This is stupid, all of these keys will exist on the object.
-    if (!validKeys.includes(key)) delete prunedState[key];
-  });
-  return prunedState;
+  const { board, player, maxCoins, coins, keys, won } = state;
+  return { board, player, maxCoins, coins, keys, won };
 }
 
 function manhattanDistance(positionA: Position, positionB: Position): number {

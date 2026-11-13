@@ -2,7 +2,7 @@ import { MMKV } from "react-native-mmkv";
 import { FlatBoard } from "./board";
 import { setAppState, updateNotificationCount } from "./store";
 import { countInstancesInBoard } from "./logic";
-import { BombTile, Direction, Level, LevelObjectType, LocalUserData, OfficialLevel, OneWayTile, TileType, UserLevel, isLevelWellFormed } from "./types";
+import { BombTile, Direction, FlatTile, Level, LevelObjectType, LocalUserData, OfficialLevel, OneWayTile, TileType, UserLevel, isLevelWellFormed } from "./types";
 
 export const storage = new MMKV();
 
@@ -105,9 +105,9 @@ export function getStoredLevels() {
     const expectedType = olKeys.includes(key) ? LevelObjectType.OFFICIAL : LevelObjectType.USER;
 
     if (isLevelWellFormed(level, expectedType)) {
-      // @ts-expect-error The next two lines turn level.board from an object to a class instance.
-      const board = new FlatBoard(level.board.board);
-      level.board = board;
+      // Storage holds the board as plain data; turn it back into a class instance.
+      const stored = level.board as unknown as { board: FlatTile[][] };
+      level.board = new FlatBoard(stored.board);
 
       levels.push(level);
     } else {
@@ -118,9 +118,13 @@ export function getStoredLevels() {
     }
   });
 
+  // Official levels by their order, then custom levels in the order they were created.
+  // (Comparing only when both had an order wasn't transitive, so the result depended on
+  // the sort algorithm.)
+  const orderOf = (level: Level) => Object.hasOwn(level, "order") ? (level as OfficialLevel).order : Infinity;
   levels.sort((a, b) => {
-    if (!Object.hasOwn(a, "order") || !Object.hasOwn(b, "order")) return 0;
-    else return (a as OfficialLevel).order - (b as OfficialLevel).order;
+    const orderA = orderOf(a), orderB = orderOf(b);
+    return orderA === orderB ? 0 : orderA < orderB ? -1 : 1;
   });
 
   return levels;
@@ -138,15 +142,15 @@ export function createLevel(level: UserLevel) {
   syncLevelsWithStorage(level.uuid);
 }
 
-export function updateLevel(updatedLevel: UserLevel, boardChange: boolean = true) {
-  const existingLevel: Level = getData(updatedLevel.uuid);
+export function updateLevel(updatedLevel: Pick<UserLevel, "uuid"> & Partial<UserLevel>, boardChange: boolean = true) {
+  const existingLevel: UserLevel | undefined = getData(updatedLevel.uuid);
 
   if (!existingLevel) {
     console.error("Attempted to update non-existent level: " + updatedLevel.uuid);
     return;
   }
 
-  const level: Level = {
+  const level: UserLevel = {
     ...existingLevel,
     ...updatedLevel,
   };
@@ -301,20 +305,11 @@ export function compressBoardData(board: FlatBoard): string {
 
     for (let x = 0; x < board.width; x++) {
       const tile = board.getTile(y, x);
-      const keys = Object.keys(tile);
-
       let encoding = "";
-      keys.forEach(key => {
-        // TODO: These seem to always be in the right order, but need to
-        // make sure that this is a guarantee and not environment dependent.
-
-        // @ts-expect-error This is a valid key.
-        const value = tile[key];
-
-        let serializedValue = value.toString();
-        if (value.constructor === Array) {
-          serializedValue = value.join(".");
-        }
+      // Property order is insertion order (guaranteed for string keys since ES2015),
+      // and tiles are always built id first.
+      Object.values(tile).forEach((value: number | Direction[]) => {
+        const serializedValue = Array.isArray(value) ? value.join(".") : value.toString();
         encoding += serializedValue + split.tile;
       });
       encoding = encoding.slice(0, -1);

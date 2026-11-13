@@ -1,4 +1,4 @@
-import { DocumentData, DocumentReference, Query, QuerySnapshot, Timestamp, WhereFilterOp, addDoc, arrayUnion, collection, doc, getCountFromServer, getDoc, getDocs, increment, limit, orderBy, query, runTransaction, setDoc, updateDoc, where, writeBatch } from "firebase/firestore";
+import { DocumentData, DocumentReference, Query, QuerySnapshot, Timestamp, UpdateData, WhereFilterOp, addDoc, arrayUnion, collection, doc, getCountFromServer, getDoc, getDocs, increment, limit, orderBy, query, runTransaction, setDoc, updateDoc, where, writeBatch } from "firebase/firestore";
 import { auth, db } from "./firebase";
 import { compressBoardData, getData, getLocalUserData, getStoredLevelCount, metadataKeys, multiStoreLevels, parseCompressedBoardData, setData, syncLevelsWithStorage } from "./loader";
 import { Direction, OfficialLevel, SharedLevel, Tutorial, UserLevel } from "./types";
@@ -55,7 +55,7 @@ export interface UserAccountDocument {
 // HIGH LEVEL FUNCTIONS \\
 
 export async function checkForOfficialLevelUpdates(): Promise<number> {
-  const metadata: MetadataDocument = await getSpecificEntryByName("metadata", "metadata");
+  const metadata = await getSpecificEntryByName<MetadataDocument>("metadata", "metadata");
   const updated: Timestamp = getData(metadataKeys.lastUpdatedOfficialLevels);
   const prevCount = getStoredLevelCount();
 
@@ -82,7 +82,7 @@ export async function refreshLevelsFromServer(): Promise<boolean> {
 }
 
 async function fetchOfficialLevelsFromServer() {
-  const rawLevels: OfficialLevelDocument[] = await getAllEntries("officialLevels");
+  const rawLevels = await getAllEntries<OfficialLevelDocument>("officialLevels");
   const parsedLevels: OfficialLevel[] = [];
 
   rawLevels.forEach(rawLevel => {
@@ -266,13 +266,13 @@ export async function postSolutionData(
   } catch (error) {
     // Rejected if the server already has a solution at least this short (e.g. from before
     // this device tracked it), so remember not to retry this length.
-    if ((error as any)?.code === "permission-denied") setData(POSTED_SOLUTIONS_KEY, { ...posted, [key]: solution.length });
+    if ((error as { code?: string } | undefined)?.code === "permission-denied") setData(POSTED_SOLUTIONS_KEY, { ...posted, [key]: solution.length });
     else console.warn("Error posting solution data:", level_id, error);
   }
 }
 
 export async function getUserData(uid: string) {
-  return getSpecificEntryByName("userAccounts", uid);
+  return getSpecificEntryByName<UserAccountDocument>("userAccounts", uid);
 }
 
 // Usernames are claimed in usernames/{lowercased name} -> { uid }, which keeps them
@@ -337,7 +337,7 @@ export interface ExplicitOrder {
 export interface QueryFilter {
   field: string,
   operator: WhereFilterOp,
-  value: any,
+  value: unknown,
 }
 
 /** Firestore allows at most 30 values in an "in" filter. */
@@ -349,7 +349,7 @@ function chunk<T>(list: T[], size: number) {
   return chunks;
 }
 
-function compareByOrder(a: any, b: any, orderFields: ExplicitOrder[]) {
+function compareByOrder(a: DocumentData, b: DocumentData, orderFields: ExplicitOrder[]) {
   for (const { field, order } of orderFields) {
     const av = a[field] instanceof Timestamp ? a[field].toMillis() : a[field];
     const bv = b[field] instanceof Timestamp ? b[field].toMillis() : b[field];
@@ -379,7 +379,7 @@ export async function queryUserLevels(
     const results = await Promise.all(chunks.map(ids => {
       const chunkFilters: QueryFilter[] = [...filters, { field: "__name__", operator: "in", value: ids }];
       return Promise.all([
-        getEntriesFromQuery(createFirebaseQuery("userLevels", pageSize, orderFields, chunkFilters)),
+        getEntriesFromQuery<UserLevelDocument>(createFirebaseQuery("userLevels", pageSize, orderFields, chunkFilters)),
         // Count without the page limit, so "Showing X of Y" reports the real total.
         getEntryCountFromQuery(createFirebaseQuery("userLevels", -1, [], chunkFilters)),
       ]);
@@ -396,7 +396,7 @@ export async function queryUserLevels(
     getEntryCountFromQuery(createFirebaseQuery("userLevels", -1, [], [...filters, { field: "__name__", operator: "in", value: ids }]))
   );
   const [docs, total, ...excludedCounts] = await Promise.all([
-    getEntriesFromQuery(q),
+    getEntriesFromQuery<UserLevelDocument>(q),
     getEntryCountFromQuery(createFirebaseQuery("userLevels", -1, [], filters)),
     ...excludedCountQueries,
   ]);
@@ -433,9 +433,9 @@ export async function doesEntryExist(collectionName: string, fieldName: string, 
 //   return snap.data().count;
 // }
 
-export async function getAllEntries(collectionName: string) {
+export async function getAllEntries<T = DocumentData>(collectionName: string) {
   const querySnapshot = await getDocs(collection(db, collectionName));
-  return parseQuerySnapshot(querySnapshot);
+  return parseQuerySnapshot<T>(querySnapshot);
 }
 
 export async function getEntryCountFromQuery(q: Query) {
@@ -443,14 +443,14 @@ export async function getEntryCountFromQuery(q: Query) {
   return snap.data().count;
 }
 
-export async function getEntriesFromQuery(q: Query) {
+export async function getEntriesFromQuery<T = DocumentData>(q: Query) {
   const querySnapshot = await getDocs(q);
-  return parseQuerySnapshot(querySnapshot);
+  return parseQuerySnapshot<T>(querySnapshot);
 }
 
-export async function getSpecificEntry(q: Query) {
+export async function getSpecificEntry<T = DocumentData>(q: Query) {
   const querySnapshot = await getDocs(q);
-  const docs = parseQuerySnapshot(querySnapshot);
+  const docs = parseQuerySnapshot<T>(querySnapshot);
 
   if (docs.length === 0) {
     throw new Error(`No document matching query "${q}" found.`);
@@ -463,10 +463,10 @@ export async function getSpecificEntry(q: Query) {
   }
 }
 
-export async function getSpecificEntryByName(collectionName: string, docName: string) {
+export async function getSpecificEntryByName<T = DocumentData>(collectionName: string, docName: string) {
   const q = query(collection(db, collectionName), where("__name__", "==", docName));
   const querySnapshot = await getDocs(q);
-  const docs = parseQuerySnapshot(querySnapshot);
+  const docs = parseQuerySnapshot<T>(querySnapshot);
 
   if (docs.length === 0) {
     throw new Error(`No document "${docName}" found in collection "${collectionName}"`);
@@ -485,7 +485,7 @@ export async function getSpecificEntryByName(collectionName: string, docName: st
 export async function createDocument(
   collectionName: string,
   docName: string | undefined,
-  docContent: any,
+  docContent: DocumentData,
 ): Promise<DocumentReference> {
   let newDoc;
 
@@ -503,7 +503,7 @@ export async function createDocument(
 export async function updateDocument(
   collectionName: string,
   docName: string,
-  updateContent: any,
+  updateContent: UpdateData<DocumentData>,
 ): Promise<void> {
   const documentRef = doc(db, collectionName, docName);
   return await updateDoc(documentRef, updateContent);
@@ -512,14 +512,14 @@ export async function updateDocument(
 // ================ \\
 // HELPER FUNCTIONS \\
 
-function parseQuerySnapshot(snapshot: QuerySnapshot<DocumentData, DocumentData>) {
-  const docs: any[] = [];
+/** Document data plus its id (as both id and uuid). T is what the caller expects the collection to hold. */
+type ParsedDocument<T> = T & { id: string, uuid: string };
+
+function parseQuerySnapshot<T = DocumentData>(snapshot: QuerySnapshot<DocumentData, DocumentData>) {
+  const docs: ParsedDocument<T>[] = [];
   snapshot.forEach((doc) => {
     // doc.data() is never undefined for query doc snapshots
-    const next = doc.data();
-    next.id = doc.id;
-    next.uuid = doc.id;
-    docs.push(next);
+    docs.push({ ...doc.data() as T, id: doc.id, uuid: doc.id });
   });
 
   return docs;

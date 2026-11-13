@@ -6,6 +6,7 @@ import InputLine from "../components/InputLine";
 import { IndicatorIcon } from "../components/LevelCard";
 import SimpleButton from "../components/SimpleButton";
 import SliderBar from "../components/SliderBar";
+import { TAB_BAR_CLEARANCE } from "../components/Subpages";
 import GlobalContext from "../GlobalContext";
 import TextStyles, { normalize } from "../TextStyles";
 import { graphics, purpleTheme } from "../Theme";
@@ -221,11 +222,15 @@ export default function UserLevels({
             setMatchingCount(count);
             setUserLevels(data.filter(doc => doc.public).flatMap(doc => {
                 try {
-                    return [{
+                    // A level document is close to, but not exactly, a SharedLevel: it has
+                    // no created/downloads/official fields and `shared` is a Timestamp.
+                    // Nothing reads those on fetched levels.
+                    const level = {
                         ...doc,
                         board: parseCompressedBoardData(doc.board),
                         completed: localLists.completedLevels.includes(doc.uuid),
-                    }];
+                    } as unknown as SharedLevel;
+                    return [level];
                 } catch (error) {
                     // Skip malformed levels instead of breaking the whole list.
                     console.warn("Skipping malformed shared level:", doc.uuid, error);
@@ -475,7 +480,7 @@ const styles = StyleSheet.create({
     modal: {
         ...StyleSheet.absoluteFillObject,
         paddingTop: normalize(12),
-        paddingBottom: normalize(12),
+        paddingBottom: normalize(12) + TAB_BAR_CLEARANCE, // Keep Apply Filters above the floating iOS tab bar.
         alignItems: "center",
         justifyContent: "space-between",
         height: "100%",

@@ -1,13 +1,9 @@
-import { useContext, useEffect, useRef, useState } from "react";
-import { Animated, Dimensions, GestureResponderEvent, PanResponder, PanResponderGestureState, StyleSheet, Text, View } from "react-native";
+import { useContext, useRef, useState } from "react";
+import { GestureResponderEvent, PanResponder, PanResponderGestureState, StyleSheet, Text, View, ViewStyle, useWindowDimensions } from "react-native";
 import GlobalContext from "../GlobalContext";
 import { normalize } from "../TextStyles";
 import { purpleTheme, Theme } from "../Theme";
 import StepperArrow from "./StepperArrow";
-
-const win = Dimensions.get("window");
-const barWidth = win.width / 2;
-const leftGutterWidth = (win.width - barWidth) / 2;
 
 
 interface Props {
@@ -47,6 +43,9 @@ export default function SliderBar({
   theme,
 }: Props) {
   const { darkMode } = useContext(GlobalContext);
+  const win = useWindowDimensions();
+  const barWidth = win.width / 2;
+  const leftGutterWidth = (win.width - barWidth) / 2; // The bar is centered on screen.
   const [pressed, setPressed] = useState(false);
   const useTheme = theme || purpleTheme;
 
@@ -59,21 +58,17 @@ export default function SliderBar({
     return offset;
   }
 
-  const calcValueFromGesture = useRef((_gestureState: PanResponderGestureState) => value);
-  useEffect(() => {
-    calcValueFromGesture.current = (gestureState: PanResponderGestureState) => {
-      const fractionalPos = (gestureState.moveX - leftGutterWidth) / barWidth;
-      const newValue = fractionalPos * (maxValue - minValue) + minValue;
-      const effectiveStep = stepSize > 0 ? stepSize : 1;
-      const snappedValue = Math.round((newValue - minValue) / effectiveStep) * effectiveStep + minValue;
-      const boundedNewValue = Math.max(minValue, Math.min(maxValue, snappedValue));
-      return boundedNewValue;
-    };
-  }, [value, minValue, maxValue, stepSize]);
+  // The responder is created once, so it reads the current props through this.
+  const latest = useRef({ minValue, maxValue, stepSize, barWidth, leftGutterWidth, changeCallback });
+  latest.current = { minValue, maxValue, stepSize, barWidth, leftGutterWidth, changeCallback };
 
   function onGestureMove(_evt: GestureResponderEvent, gestureState: PanResponderGestureState) {
-    const newValue = calcValueFromGesture.current(gestureState);
-    changeCallback(newValue);
+    const { minValue, maxValue, stepSize, barWidth, leftGutterWidth, changeCallback } = latest.current;
+    const fractionalPos = (gestureState.moveX - leftGutterWidth) / barWidth;
+    const newValue = fractionalPos * (maxValue - minValue) + minValue;
+    const effectiveStep = stepSize > 0 ? stepSize : 1;
+    const snappedValue = Math.round((newValue - minValue) / effectiveStep) * effectiveStep + minValue;
+    changeCallback(Math.max(minValue, Math.min(maxValue, snappedValue)));
   }
 
   const panResponder = useRef(
@@ -112,20 +107,15 @@ export default function SliderBar({
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { width: barWidth }]}>
       <View style={styles.row}>
-        <Text allowFontScaling={false} style={styles.text(mainColor)}>{label}</Text>
-        <Text allowFontScaling={false} style={styles.text(mainColor)}>{value}{units}</Text>
+        <Text allowFontScaling={false} style={[styles.text, { color: mainColor }]}>{label}</Text>
+        <Text allowFontScaling={false} style={[styles.text, { color: mainColor }]}>{value}{units}</Text>
       </View>
 
       <View style={styles.barContainer}>
         <View style={[styles.bar, { backgroundColor: mainColor }]} {...panResponder.panHandlers}>
-          <Animated.View style={styles.slider(
-            calcOffsetFromValue(),
-            pressed,
-            mainColor,
-            knobColor,
-          )}></Animated.View>
+          <View style={sliderStyle(calcOffsetFromValue(), pressed, mainColor, knobColor)} />
         </View>
 
         {showSteppers && <>
@@ -137,10 +127,23 @@ export default function SliderBar({
   );
 }
 
-const styles = StyleSheet.create<any>({
+function sliderStyle(xPos: number, pressed: boolean, color: string, fillColor: string): ViewStyle {
+  return {
+    position: "absolute",
+    top: (pressed) ? -9 : -6,
+    left: xPos - 1 - ((pressed) ? 9 : 6),
+    height: (pressed) ? 21 : 15,
+    width: (pressed) ? 21 : 15,
+    borderRadius: (pressed) ? 11 : 7,
+    borderWidth: 1,
+    borderColor: color,
+    backgroundColor: fillColor,
+  };
+}
+
+const styles = StyleSheet.create({
   container: {
     position: "relative",
-    width: barWidth,
     paddingTop: 5,
     paddingBottom: 15,
   },
@@ -158,29 +161,10 @@ const styles = StyleSheet.create<any>({
     height: 3,
     borderRadius: 3,
   },
-  text: (color: string) => ({
+  text: {
     marginBottom: normalize(10),
-    color: color,
     fontFamily: "Montserrat-Regular",
     fontWeight: "normal",
     fontSize: normalize(15),
-  }),
-  slider: (xPos: number, pressed: boolean, color: string, fillColor: string) => ({
-    position: "absolute",
-    top: (pressed) ? -9 : -6,
-    left: xPos - 1 - ((pressed) ? 9 : 6),
-    height: (pressed) ? 21 : 15,
-    width: (pressed) ? 21 : 15,
-    borderRadius: (pressed) ? 11 : 7,
-    borderWidth: 1,
-    borderColor: color,
-    backgroundColor: fillColor,
-  }),
-
-  // transform: [{
-  //   translateY: anim.interpolate({
-  //     inputRange: [0, 1],
-  //     outputRange: [0, -7],
-  //   }),
-  // }],
+  },
 });
