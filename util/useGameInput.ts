@@ -1,4 +1,4 @@
-import { useContext, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useContext, useMemo, useRef, useState } from "react";
 import { Animated, GestureResponderEvent, PanResponder, PanResponderGestureState, useWindowDimensions } from "react-native";
 import GlobalContext from "../GlobalContext";
 import { useBoardPosition } from "./hooks";
@@ -35,11 +35,13 @@ export function useGameInput({ game, tileSize, onMove, onJump }: Options) {
   const latest = useRef({ game, tileSize, onMove, onJump, dragSensitivity, doubleTapDelay, swipeDistance: win.width / 10 });
   latest.current = { game, tileSize, onMove, onJump, dragSensitivity, doubleTapDelay, swipeDistance: win.width / 10 };
 
-  const touch = useRef<TouchAnim>({
-    x: new Animated.Value(0),
-    y: new Animated.Value(0),
-    magnitude: new Animated.Value(0),
-  }).current;
+  // The drag offset belongs to the current game: a move swaps in fresh zeroed values
+  // through state, in the same render as the moved game. Zeroing the old values with
+  // setValue instead was a separate native update that could land a frame before or
+  // after the new board, briefly drawing the player back on its old tile (or a tile
+  // past the new one).
+  const [touch, setTouchAnim] = useState(newTouchAnim);
+  const touchRef = useRef(touch);
 
   const { boardRef, boardPosition, remeasure } = useBoardPosition();
 
@@ -56,15 +58,11 @@ export function useGameInput({ game, tileSize, onMove, onJump }: Options) {
   // was when it started.
   const isJumping = useRef(false);
 
-  const resetTouch = useRef(() => {});
-  // Runs after the new game is committed, in the same frame, so the player and pushed
-  // tiles land on their new tiles as the drag offset clears.
-  useLayoutEffect(() => resetTouch.current(), [game]);
-
   const panResponder = useMemo(() => {
     const enabled = () => !latest.current.game.won;
 
     function setTouch(x: number, y: number) {
+      const touch = touchRef.current;
       touch.x.setValue(x);
       touch.y.setValue(y);
       touch.magnitude.setValue(Math.max(Math.abs(x), Math.abs(y)));
@@ -159,17 +157,16 @@ export function useGameInput({ game, tileSize, onMove, onJump }: Options) {
       const direction = vertical ?
         (along < 0 ? Direction.UP : Direction.DOWN) :
         (along < 0 ? Direction.LEFT : Direction.RIGHT);
-      // Keep the drag offset until the moved game has rendered (see the layout effect
-      // below). Resetting it here snapped the preview back to the old tile for a frame
-      // before React drew the player on the new one.
-      const before = latest.current.game;
-      latest.current.onMove(direction);
-      requestAnimationFrame(() => {
-        if (latest.current.game === before) setTouch(0, 0); // Invalid move, nothing rendered.
-      });
+      const { game, onMove } = latest.current;
+      if (!doGameMove(game, direction)[1]) { // Invalid move: nothing re-renders, so just reset.
+        setTouch(0, 0);
+        return;
+      }
+      const fresh = newTouchAnim();
+      touchRef.current = fresh;
+      setTouchAnim(fresh); // Batched with the move's state update.
+      onMove(direction);
     }
-
-    resetTouch.current = () => setTouch(0, 0);
 
     return PanResponder.create({
       onStartShouldSetPanResponder: enabled,
@@ -196,4 +193,8 @@ export function useGameInput({ game, tileSize, onMove, onJump }: Options) {
     pathFollowed,
     pathAnim,
   };
+}
+
+function newTouchAnim(): TouchAnim {
+  return { x: new Animated.Value(0), y: new Animated.Value(0), magnitude: new Animated.Value(0) };
 }
