@@ -107,7 +107,7 @@ export default function LoginPage({ setUserCredential }: Props) {
                             main
                         />
                         <SimpleButton
-                            text="Continue with Google"
+                            text="Continue w/ Google"
                             Svg={GoogleLogo}
                             theme={colors.YELLOW_THEME}
                             onPress={continueWithGoogle}

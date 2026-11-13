@@ -66,6 +66,8 @@ export interface Theme {
   MAIN_COLOR: string,
   MIDDLE_COLOR: string,
   DARK_COLOR: string,
+  /** Saturated, darker shade for small UI on light backgrounds (e.g. the iOS tab bar). */
+  TINT_COLOR: string,
   NEAR_BLACK: string,
   MAIN_TRANSPARENT: (opacity: number) => string,
   NAME: string,
@@ -77,6 +79,7 @@ export const purpleTheme: Theme = {
   MAIN_COLOR: "#CCB7E5",
   MIDDLE_COLOR: "#BEA9DF",
   DARK_COLOR: "#B19CD8",
+  TINT_COLOR: "#8F6CC4",
   NEAR_BLACK: "#15101A",
   MAIN_TRANSPARENT: (opacity: number) => `rgba(204, 183, 229, ${opacity})`,
   NAME: "PURPLE",
@@ -88,6 +91,7 @@ const blueTheme: Theme = {
   MAIN_COLOR: "#97C2FE",
   MIDDLE_COLOR: "#81B5FE",
   DARK_COLOR: "#6AA7FD",
+  TINT_COLOR: "#4A88E0",
   NEAR_BLACK: "#101219",
   MAIN_TRANSPARENT: (opacity: number) => `rgba(129, 181, 254, ${opacity})`,
   NAME: "BLUE",
@@ -99,6 +103,7 @@ const greenTheme: Theme = {
   MAIN_COLOR: "#B8E5B9",
   MIDDLE_COLOR: "#9BD99D",
   DARK_COLOR: "#8AD092",
+  TINT_COLOR: "#4E9E53",
   NEAR_BLACK: "#0E160E",
   MAIN_TRANSPARENT: (opacity: number) => `rgba(184, 229, 185, ${opacity})`,
   NAME: "GREEN",
@@ -110,6 +115,7 @@ const yellowTheme: Theme = {
   MAIN_COLOR: "#F7DC9C",
   MIDDLE_COLOR: "#F9D385",
   DARK_COLOR: "#FBC86A",
+  TINT_COLOR: "#D19A2A",
   NEAR_BLACK: "#17150D",
   MAIN_TRANSPARENT: (opacity: number) => `rgba(247, 220, 156, ${opacity})`,
   NAME: "YELLOW",
@@ -121,6 +127,7 @@ const orangeTheme: Theme = {
   MAIN_COLOR: "#F7B69B",
   MIDDLE_COLOR: "#F9A784",
   DARK_COLOR: "#FB976C",
+  TINT_COLOR: "#D9733F",
   NEAR_BLACK: "#0E0A09",
   MAIN_TRANSPARENT: (opacity: number) => `rgba(247, 182, 155, ${opacity})`,
   NAME: "ORANGE",
@@ -132,9 +139,17 @@ const redTheme: Theme = {
   MAIN_COLOR: "#F79C9C",
   MIDDLE_COLOR: "#FA8484",
   DARK_COLOR: "#FA6B6B",
+  TINT_COLOR: "#D95454",
   NEAR_BLACK: "#170D0D",
   MAIN_TRANSPARENT: (opacity: number) => `rgba(247, 156, 156, ${opacity})`,
   NAME: "RED",
+}
+
+const allThemes = [purpleTheme, blueTheme, greenTheme, yellowTheme, orangeTheme, redTheme];
+
+/** The darker tint for a theme's MAIN_COLOR, or the color itself if it isn't a theme color. */
+export function tintFor(color: string): string {
+  return allThemes.find(theme => theme.MAIN_COLOR === color)?.TINT_COLOR ?? color;
 }
 
 const mainColors = {

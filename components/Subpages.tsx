@@ -5,7 +5,7 @@ import TabView from "react-native-bottom-tabs";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { SFSymbol } from "sf-symbols-typescript";
 import { normalize } from "../TextStyles";
-import { colors } from "../Theme";
+import { colors, tintFor } from "../Theme";
 import { eventEmitter, takeInitialSubpage } from "../util/events";
 import IconButton from "./IconButton";
 
@@ -52,7 +52,7 @@ function NativeSubpages({ pageTabs, pageComponents, disabledPages }: Props) {
     key: String(tabIndex),
     title: tab.label,
     focusedIcon: tab.sfSymbol ? { sfSymbol: tab.sfSymbol } : tab.icon,
-    activeTintColor: tab.color,
+    activeTintColor: darkMode ? tab.color : tintFor(tab.color),
     preventsDefault: !!disabledPages?.[tabIndex],
   }));
 
@@ -68,7 +68,10 @@ function NativeSubpages({ pageTabs, pageComponents, disabledPages }: Props) {
         // Native tab scenes have no background of their own.
         <View style={[styles.nativePage, { backgroundColor: darkMode ? "black" : "white" }]}>{pageComponents[Number(route.key)]}</View>
       )}
-      tabBarActiveTintColor={pageTabs[index]?.color}
+      tabBarActiveTintColor={pageTabs[index] && (darkMode ? pageTabs[index].color : tintFor(pageTabs[index].color))}
+      tabBarInactiveTintColor={colors.DIM_GRAY}
+      // iOS 26 Liquid Glass ignores the inactive tint unless the colors are baked into the tab images.
+      experimental_bakedTintColors
       hapticFeedbackEnabled
     />
     </View>
