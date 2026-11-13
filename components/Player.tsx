@@ -54,6 +54,12 @@ export default memo(function Player({
   const playerSrc = (darkMode) ? graphics.PLAYER_OUTLINED_DARK : graphics.PLAYER_OUTLINED;
   const tileStyle = { width: tileSize, height: tileSize };
   const drag = useMemo(() => dragNodes(touch, tileSize), [touch, tileSize]);
+  // Dragging moves these views directly, outside React, so after a move React would
+  // render the same zero offset as last time, see no change, and leave the stale drag
+  // offset on the view (drawing the player a tile past its new position). An invisible
+  // per-move change to the transform makes React send the whole fresh transform in the
+  // same commit as the new position. (Remounting instead blanks the images for a frame.)
+  const nudge = { translateX: (touch.epoch % 2) * 0.001 };
   const optionInnerStyle = useMemo(() => optionTileInner(optionsAnim, darkMode), [darkMode]);
 
   const [options, pushables, iceBlockPreviews] = useMemo(() => {
@@ -100,30 +106,33 @@ export default memo(function Player({
     <>
       {!game.won && options}
 
-      {/* Ice block slide path previews */}
-      {renderIceBlockPreview(iceBlockPreviews[0], tileSize, darkMode, drag, "top")}
-      {renderIceBlockPreview(iceBlockPreviews[1], tileSize, darkMode, drag, "left")}
-      {renderIceBlockPreview(iceBlockPreviews[2], tileSize, darkMode, drag, "right")}
-      {renderIceBlockPreview(iceBlockPreviews[3], tileSize, darkMode, drag, "bottom")}
+      {/* The ice previews have no images, so they simply remount each move (keyed on the
+          drag epoch, see TouchAnim) and take their animated styles fresh from React. */}
+      <React.Fragment key={touch.epoch}>
+        {renderIceBlockPreview(iceBlockPreviews[0], tileSize, darkMode, drag, "top")}
+        {renderIceBlockPreview(iceBlockPreviews[1], tileSize, darkMode, drag, "left")}
+        {renderIceBlockPreview(iceBlockPreviews[2], tileSize, darkMode, drag, "right")}
+        {renderIceBlockPreview(iceBlockPreviews[3], tileSize, darkMode, drag, "bottom")}
+      </React.Fragment>
 
       {/* Pushables tiles previews: each only moves away from the player. */}
-      <Animated.View style={[styles.absolute, at(game.player.x, game.player.y - 1, tileSize), { transform: [{ translateY: drag.top.toward }] }]}>
+      <Animated.View style={[styles.absolute, at(game.player.x, game.player.y - 1, tileSize), { transform: [{ translateY: drag.top.toward }, nudge] }]}>
         {pushables[0]}
       </Animated.View>
-      <Animated.View style={[styles.absolute, at(game.player.x - 1, game.player.y, tileSize), { transform: [{ translateX: drag.left.toward }] }]}>
+      <Animated.View style={[styles.absolute, at(game.player.x - 1, game.player.y, tileSize), { transform: [{ translateX: drag.left.toward }, nudge] }]}>
         {pushables[1]}
       </Animated.View>
-      <Animated.View style={[styles.absolute, at(game.player.x + 1, game.player.y, tileSize), { transform: [{ translateX: drag.right.toward }] }]}>
+      <Animated.View style={[styles.absolute, at(game.player.x + 1, game.player.y, tileSize), { transform: [{ translateX: drag.right.toward }, nudge] }]}>
         {pushables[2]}
       </Animated.View>
-      <Animated.View style={[styles.absolute, at(game.player.x, game.player.y + 1, tileSize), { transform: [{ translateY: drag.bottom.toward }] }]}>
+      <Animated.View style={[styles.absolute, at(game.player.x, game.player.y + 1, tileSize), { transform: [{ translateY: drag.bottom.toward }, nudge] }]}>
         {pushables[3]}
       </Animated.View>
 
       <Animated.View style={[
         styles.absolute,
         at(game.player.x, game.player.y, tileSize),
-        { transform: [{ translateY: drag.y }, { translateX: drag.x }, { scale: drag.scale }] },
+        { transform: [{ translateY: drag.y }, { translateX: drag.x }, { scale: drag.scale }, nudge] },
       ]}>
         <Image style={tileStyle} source={playerSrc} />
       </Animated.View>
@@ -131,36 +140,43 @@ export default memo(function Player({
   );
 });
 
-function getAdjacentTile(game: Game, offset: Offset, tileSize: number, tileStyle: ImageStyle, isValidMove: boolean) {
-  if (!isValidMove) {
-    return <View style={tileStyle} />;
-  }
+const crateIcon = getIconSrc({ id: TileType.CRATE })!.icon;
+const iceBlockIcon = getIconSrc({ id: TileType.ICE_BLOCK })!.icon;
 
+/**
+ * The preview of a pushable tile next to the player. The board hides those tiles while
+ * the player is beside them, so the crate and ice block images stay mounted (shown by
+ * opacity) and the element structure never changes: mounting a fresh image left the
+ * tile blank for a frame after each move while it loaded.
+ */
+function getAdjacentTile(game: Game, offset: Offset, tileSize: number, tileStyle: ImageStyle, isValidMove: boolean) {
   const xPos = game.player.x + offset.dx;
   const yPos = game.player.y + offset.dy;
-  const tile = game.board.getTile(yPos, xPos, true);
+  const tile = isValidMove ? game.board.getTile(yPos, xPos, true) : undefined;
+  const id = tile?.id;
 
-  if ([TileType.CRATE, TileType.METAL_CRATE, TileType.ICE_BLOCK].includes(tile.id)) {
-    if (tile.id === TileType.METAL_CRATE) {
-      const component = findConnectedMetalComponent(game.board, { x: xPos, y: yPos });
-      const icon = getIconSrc({ id: TileType.METAL_CRATE })!.icon;
-      return <>
-        {component.map((p, idx) => (
-          <Image
-            key={idx}
-            style={[tileStyle, { position: "absolute", left: (p.x - xPos) * tileSize, top: (p.y - yPos) * tileSize }]}
-            source={icon}
-          />
-        ))}
-      </>;
-    }
-    return <Image style={tileStyle} source={getIconSrc(tile)!.icon} />;
-  }
-  if (tile.id === TileType.BOMB) {
-    return <BombBoardTile tile={tile} icon={getIconSrc(tile)!.icon} tileSize={tileSize} />;
+  let other: React.ReactElement | null = null;
+  if (tile && id === TileType.METAL_CRATE) {
+    const component = findConnectedMetalComponent(game.board, { x: xPos, y: yPos });
+    const icon = getIconSrc({ id: TileType.METAL_CRATE })!.icon;
+    other = <>
+      {component.map((p, idx) => (
+        <Image
+          key={idx}
+          style={[tileStyle, { position: "absolute", left: (p.x - xPos) * tileSize, top: (p.y - yPos) * tileSize }]}
+          source={icon}
+        />
+      ))}
+    </>;
+  } else if (tile && id === TileType.BOMB) {
+    other = <BombBoardTile tile={tile} icon={getIconSrc(tile)!.icon} tileSize={tileSize} />;
   }
 
-  return <View style={tileStyle} />;
+  return <>
+    <Image style={[tileStyle, styles.absolute, { opacity: id === TileType.CRATE ? 1 : 0 }]} source={crateIcon} />
+    <Image style={[tileStyle, styles.absolute, { opacity: id === TileType.ICE_BLOCK ? 1 : 0 }]} source={iceBlockIcon} />
+    <View style={tileStyle}>{other}</View>
+  </>;
 }
 
 interface IceBlockPreview {

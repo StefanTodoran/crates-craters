@@ -14,6 +14,7 @@ export interface TouchAnim {
   x: Animated.Value,
   y: Animated.Value,
   magnitude: Animated.Value,
+  epoch: number, // Increments with each swap, so Player can make React refresh its drag-driven views.
 }
 
 interface Options {
@@ -35,12 +36,14 @@ export function useGameInput({ game, tileSize, onMove, onJump }: Options) {
   const latest = useRef({ game, tileSize, onMove, onJump, dragSensitivity, doubleTapDelay, swipeDistance: win.width / 10 });
   latest.current = { game, tileSize, onMove, onJump, dragSensitivity, doubleTapDelay, swipeDistance: win.width / 10 };
 
-  // The drag offset belongs to the current game: a move swaps in fresh zeroed values
-  // through state, in the same render as the moved game. Zeroing the old values with
-  // setValue instead was a separate native update that could land a frame before or
-  // after the new board, briefly drawing the player back on its old tile (or a tile
-  // past the new one).
-  const [touch, setTouchAnim] = useState(newTouchAnim);
+  // The drag offset belongs to the current game. Dragging updates the views directly
+  // (outside React), so React never knows they moved: when a move rendered a zero
+  // offset, React saw no change from its last render and left the stale offset on the
+  // view, drawing the player past its new tile. Resetting with setValue instead was a
+  // separate native update that could land a frame before or after the new board.
+  // So a move swaps in fresh zeroed values (a new epoch) in the same render as the
+  // moved game, and Player uses the epoch to force React to re-send those views' styles.
+  const [touch, setTouchAnim] = useState(() => newTouchAnim(0));
   const touchRef = useRef(touch);
 
   const { boardRef, boardPosition, remeasure } = useBoardPosition();
@@ -162,7 +165,7 @@ export function useGameInput({ game, tileSize, onMove, onJump }: Options) {
         setTouch(0, 0);
         return;
       }
-      const fresh = newTouchAnim();
+      const fresh = newTouchAnim(touchRef.current.epoch + 1);
       touchRef.current = fresh;
       setTouchAnim(fresh); // Batched with the move's state update.
       onMove(direction);
@@ -195,6 +198,6 @@ export function useGameInput({ game, tileSize, onMove, onJump }: Options) {
   };
 }
 
-function newTouchAnim(): TouchAnim {
-  return { x: new Animated.Value(0), y: new Animated.Value(0), magnitude: new Animated.Value(0) };
+function newTouchAnim(epoch: number): TouchAnim {
+  return { x: new Animated.Value(0), y: new Animated.Value(0), magnitude: new Animated.Value(0), epoch };
 }
