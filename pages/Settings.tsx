@@ -49,9 +49,9 @@ export default function Settings({
         {ios ? <>
           <View style={{ height: normalize(12) }} />
           <ListGroup>
-            <SwitchRow title="Dark Mode" value={darkMode} onToggle={darkModeCallback} color={colors.GREEN_THEME.MAIN_COLOR} />
-            <SwitchRow title="Sounds" value={playAudio} onToggle={audioModeCallback} color={colors.GREEN_THEME.MAIN_COLOR} />
-            <SwitchRow title="Haptics" value={haptics} onToggle={hapticsCallback} color={colors.GREEN_THEME.MAIN_COLOR} last />
+            <SwitchRow title="Dark Mode" icon={graphics.NIGHT_MODE_ICON} value={darkMode} onToggle={darkModeCallback} color={colors.GREEN_THEME.MAIN_COLOR} />
+            <SwitchRow title="Sounds" icon={playAudio ? graphics.AUDIO_ON_ICON : graphics.AUDIO_OFF_ICON} value={playAudio} onToggle={audioModeCallback} color={colors.GREEN_THEME.MAIN_COLOR} />
+            <SwitchRow title="Haptics" icon={graphics.HAPTICS_ICON} value={haptics} onToggle={hapticsCallback} color={colors.GREEN_THEME.MAIN_COLOR} last />
           </ListGroup>
         </> : <>
           <MenuButton

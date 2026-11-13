@@ -1,4 +1,5 @@
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { useAppStore } from "../util/store";
 import { FlatList, ImageSourcePropType, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { TAB_BAR_CLEARANCE } from "../components/Subpages";
 import Toast from "react-native-toast-message";
@@ -71,6 +72,7 @@ export default function LevelSelect({
 }: Props) {
   const { darkMode } = useContext(GlobalContext);
   const win = useWindowDimensions();
+  const pageAnimating = useAppStore(state => state.pageAnimating);
   const [refreshing, setRefreshing] = useState(false);
   const useTheme = theme || purpleTheme;
 
@@ -185,6 +187,10 @@ export default function LevelSelect({
 
           data={displayLevels}
           initialNumToRender={cardsPerScreen}
+          // While the page panel slides in, render only the visible cards. FlatList
+          // otherwise mounts its next batch of off-screen cards (each board preview is
+          // many views) a few frames in, which stalls the UI thread mid-slide.
+          windowSize={pageAnimating ? 1 : undefined}
           onEndReached={() => {
             setLoadedLevels(Math.min(levels.length, loadedLevels + 10));
             onEndReached && onEndReached();

@@ -36,7 +36,7 @@ export default function About() {
         </Text>
 
         <ListGroup>
-          <ListRow title="Send Feedback" icon={graphics.MAIL_ICON} onPress={() => Linking.openURL(FEEDBACK_URL)} />
+          <ListRow title="Send Feedback" icon={graphics.MAIL_ICON_GREEN} onPress={() => Linking.openURL(FEEDBACK_URL)} />
           <ListRow title="Support C&C" icon={graphics.SUPPORT_ICON} onPress={() => Linking.openURL(DONATE_URL)} />
           <ListRow title="My Portfolio" icon={graphics.LOGO} onPress={() => Linking.openURL(PORTFOLIO_URL)} last />
         </ListGroup>

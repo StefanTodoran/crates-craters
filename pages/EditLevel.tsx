@@ -2,6 +2,7 @@ import { useAudioPlayer } from "expo-audio";
 import { useCallback, useContext, useMemo, useRef, useState } from "react";
 import { Animated, GestureResponderEvent, PanResponder, PanResponderGestureState, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import BackButton from "../assets/BackButton";
+import UndoIcon from "../assets/UndoIcon";
 import CurrentToolIndicator from "../components/CurrentToolIndicator";
 import GameBoard from "../components/GameBoard";
 import SimpleButton from "../components/SimpleButton";
@@ -218,23 +219,29 @@ export default function EditLevel({
       </View>
       <CurrentToolIndicator tool={currentTool} />
 
+      {/* Undo and Change Tool side by side, Save & Exit spanning both below. */}
       <Animated.View style={[
-        styles.buttonsRow,
+        styles.controls,
         {
+          width: Math.min(tileSize * level.board.width, win.width * 0.85),
           opacity: fadeToolsAnim.interpolate({
             inputRange: [0, 1],
             outputRange: [1, 0],
           }),
         },
       ]}>
+        <View style={styles.controlsRow}>
+          <View style={styles.controlCell}>
+            <SimpleButton onPress={undo} text="Undo" Svg={UndoIcon} disabled={!canUndo} fillWidth centered />
+          </View>
+          <View style={styles.controlCell}>
+            <SimpleButton onPress={toggleToolsModal} text="Change Tool" main={true} icon={graphics.MENU_ICON} fillWidth centered />
+          </View>
+        </View>
         <SimpleButton onPress={() => {
           saveChanges();
           viewCallback(PageView.MANAGE, 1);
-        }} text={unsavedChanges ? "Save & Exit" : "Exit"} Svg={BackButton} />
-        <View style={{ width: normalize(10) }} />
-        <SimpleButton onPress={undo} text="Undo" disabled={!canUndo} />
-        <View style={{ width: normalize(10) }} />
-        <SimpleButton onPress={toggleToolsModal} text="Change Tool" main={true} icon={graphics.MENU_ICON} />
+        }} text={unsavedChanges ? "Save & Exit" : "Exit"} Svg={BackButton} fillWidth centered />
       </Animated.View>
 
       {/* START MODAL */}
@@ -325,10 +332,15 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "center",
   },
-  buttonsRow: {
-    flexDirection: "row",
-    height: normalize(50),
+  controls: {
     marginTop: normalize(15),
+  },
+  controlsRow: {
+    flexDirection: "row",
+    gap: normalize(10),
+  },
+  controlCell: {
+    flex: 1,
   },
   modal: {
     ...StyleSheet.absoluteFillObject,

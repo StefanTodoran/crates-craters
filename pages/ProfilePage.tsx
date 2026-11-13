@@ -209,8 +209,8 @@ export default function ProfilePage({ attemptSignIn, setUserCredential }: Props)
 
                 {/* Stats */}
                 {userData && <View style={styles.stats}>
-                    <Stat darkMode={darkMode} icon={graphics.FLAG_ICON} value={userData.completed.length} label="Solved" />
-                    <Stat darkMode={darkMode} icon={graphics.LIKE_ICON} value={userData.likes.length} label="Liked" />
+                    <Stat darkMode={darkMode} icon={graphics.FLAG_ICON_YELLOW} value={userData.completed.length} label="Solved" />
+                    <Stat darkMode={darkMode} icon={graphics.LIKE_ICON_YELLOW} value={userData.likes.length} label="Liked" />
                     <Stat darkMode={darkMode} icon={graphics.COIN} value={userData.coins} label="Coins" />
                 </View>}
 
@@ -224,12 +224,12 @@ export default function ProfilePage({ attemptSignIn, setUserCredential }: Props)
                 </View>}
 
                 <ListGroup>
-                    <ListRow title="Contact Support" onPress={() => Linking.openURL("mailto:info@todoran.dev?subject=Crates%20%26%20Craters")} />
-                    <ListRow title="Sign Out" onPress={signOutPressed} last />
+                    <ListRow title="Contact Support" icon={graphics.GET_SUPPORT_ICON} onPress={() => Linking.openURL("mailto:info@todoran.dev?subject=Crates%20%26%20Craters")} />
+                    <ListRow title="Sign Out" icon={graphics.DOOR_ICON_YELLOW} onPress={signOutPressed} last />
                 </ListGroup>
 
                 <ListGroup>
-                    <ListRow title="Delete Account" onPress={() => setDeleting(true)} destructive last />
+                    <ListRow title="Delete Account" icon={graphics.DELETE_ICON} onPress={() => setDeleting(true)} destructive last />
                 </ListGroup>
             </View>
         </SubpageContainer>

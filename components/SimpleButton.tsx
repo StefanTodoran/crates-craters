@@ -26,6 +26,8 @@ interface Props {
   fillWidth?: boolean,
   extraMargin?: number | number[],
   doConfirmation?: string,
+  height?: number, // A fixed height, e.g. to match an adjacent text field.
+  centered?: boolean, // With fillWidth: center the icon and label instead of spreading them apart.
 }
 
 export default function SimpleButton({
@@ -42,6 +44,8 @@ export default function SimpleButton({
   fillWidth,
   extraMargin,
   doConfirmation,
+  height,
+  centered,
 }: Props) {
   const { darkMode } = useContext(GlobalContext);
   const useTheme = theme || purpleTheme;
@@ -103,6 +107,8 @@ export default function SimpleButton({
           paddingVertical: paddingVertical,
         },
         fillWidth ? staticStyles.fillWidth : {},
+        centered ? { justifyContent: "center" } : {},
+        height !== undefined ? { height, paddingVertical: 0, justifyContent: "center" } : {},
         extraMargin ? {
           marginTop: normalize(marginTop!),
           marginRight: normalize(marginRight!),

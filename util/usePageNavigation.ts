@@ -35,7 +35,9 @@ export function usePageNavigation({ onNavigate, onPageOpen }: Options) {
     const start = pendingOpen.current;
     if (!start) return;
     pendingOpen.current = undefined;
-    requestAnimationFrame(start); // Wait one frame after the commit so the page is on screen.
+    // Wait two frames after the commit: one for the page's views to mount on the UI
+    // thread, one more so that work isn't in the slide's first frames.
+    requestAnimationFrame(() => requestAnimationFrame(start));
   }, [view]);
 
   const openPage = useCallback((newView: PageView, pageNum: number | undefined, sameView: boolean) => {

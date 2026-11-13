@@ -122,6 +122,8 @@ const LABEL_SCALE = 11 / 14;
 const LABEL_RAISE = -(PADDING_V + INPUT_HEIGHT / 2);
 /** Space above the outline for the raised label. Siblings in a row can match it to line up. */
 export const INPUT_LABEL_ROOM = 8;
+/** Height of the outlined box, for siblings that should match it. */
+export const INPUT_FIELD_HEIGHT = 2 * PADDING_V + INPUT_HEIGHT;
 
 const styles = StyleSheet.create({
   container: {

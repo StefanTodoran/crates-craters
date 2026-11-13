@@ -1,16 +1,16 @@
 import { Timestamp } from "firebase/firestore";
 import { useContext, useEffect, useState } from "react";
-import { StyleSheet, Text, View, useWindowDimensions } from "react-native";
+import { Alert, StyleSheet, Text, View } from "react-native";
 import Toast from "react-native-toast-message";
 import BoardPreview from "../components/BoardPreview";
-import InputCard from "../components/InputCard";
+import InputLine, { INPUT_FIELD_HEIGHT, INPUT_LABEL_ROOM } from "../components/InputLine";
+import { ListGroup, ListRow } from "../components/ListGroup";
 import ResponsivePressable from "../components/ResponsivePressable";
 import SimpleButton from "../components/SimpleButton";
 import SubpageContainer from "../components/SubpageContainer";
 import GlobalContext from "../GlobalContext";
-import TextStyles, { normalize } from "../TextStyles";
+import { normalize } from "../TextStyles";
 import { colors, graphics } from "../Theme";
-import { calcPreviewTileSize } from "../util/board";
 import { postSolutionData, publishUserLevel, updateDocument } from "../util/database";
 import { requestSubpage } from "../util/store";
 import { useForceRefresh } from "../util/hooks";
@@ -30,7 +30,6 @@ export default function ManageLevel({
   playLevelCallback,
 }: Props) {
   const { darkMode, userData, userCredential } = useContext(GlobalContext);
-  const win = useWindowDimensions();
 
   const [levelTitle, setLevelTitle] = useState<string>("");
   const [refreshed, forceRefresh] = useForceRefresh();
@@ -41,7 +40,6 @@ export default function ManageLevel({
   }, [level, refreshed]);
 
   const previewWidth = 0.9;
-  const tileSize = level ? calcPreviewTileSize(level.board.width, previewWidth, win) : undefined;
 
   let hint;
   if (!userCredential) hint = "Log in to enable level sharing.";
@@ -95,155 +93,209 @@ export default function ManageLevel({
     });
   }
 
+  function confirmThen(message: string, onConfirm: () => void) {
+    Alert.alert("Are you sure?", message, [
+      { text: "Cancel", style: "cancel" },
+      { text: "Confirm", style: "destructive", onPress: onConfirm },
+    ], { cancelable: true, userInterfaceStyle: darkMode ? "dark" : "light" });
+  }
+
   if (!level) return;
+
+  const textColor = darkMode ? colors.OFF_WHITE : colors.TEXT_COLOR;
+  const theme = colors.RED_THEME;
+  const canShare = !!userCredential && userCredential.user.emailVerified && level.completed;
+  const titleChanged = !!levelTitle.trim() && levelTitle.trim() !== level.name;
+
   return (
-    <SubpageContainer center lessTopPad>
-      <InputCard
-        title={level.name}
-        hints={[
-          `Created ${new Date(level.created).toDateString()}.`,
-          level.shared ? `Shared since ${new Date(level.shared).toDateString()}.` : "Not publicly shared.",
-          level.bestSolution ? `Best solution: ${level.bestSolution.length} moves.` : "Not yet solved.",
-          // TODO: List the attempts, wins, and likes if shared and they are not all zero.
-        ]}
-        fields={[
-          {
-            label: "Level Title",
-            value: levelTitle,
-            onChange: setLevelTitle
-          },
-        ]}
-        buttonText="Save"
-        buttonCallback={() => {
-          updateLevel({ uuid: level.uuid, name: levelTitle }, false);
-          forceRefresh();
-        }}
-        buttonDisabled={levelTitle === level.name}
-      />
-
-      <ResponsivePressable
-        onPress={() => viewCallback(PageView.EDITOR)}
-        customStyle={styles.relative}
-        pressedSize={0.99}
-      >
-        <BoardPreview level={level} previewSize={3} previewWidth={previewWidth} />
-        {/* A View does the centering: textAlignVertical is Android-only, so a
-            full-size Text would render its label at the top on iOS. */}
-        <View style={[
-          styles.previewOverlay,
-          {
-            borderRadius: (tileSize ?? 0) / 5, // Same value as GameBoard borderRadius.
-            backgroundColor: darkMode ? colors.OFF_WHITE_TRANSPARENT(0.45) : colors.NEAR_BLACK_TRANSPARENT(0.45),
-          }
-        ]}>
-          <Text style={[
-            styles.previewOverlayText,
-            { color: darkMode ? colors.NEAR_BLACK : colors.OFF_WHITE },
-          ]}>Edit Board</Text>
+    <SubpageContainer lessTopPad>
+      <View style={styles.page}>
+        <View style={styles.header}>
+          <Text style={[styles.name, { color: textColor }]} numberOfLines={2}>{level.name}</Text>
+          <Text style={styles.caption}>Created {formatDate(level.created)}</Text>
         </View>
-      </ResponsivePressable>
 
-      <View style={{ marginTop: normalize(10) }} />
-      <View style={[styles.buttonsRow, { width: win.width * 0.45, marginHorizontal: win.width * 0.225 }]}>
-        <SimpleButton
-          onPress={() => {
-            playLevelCallback(level.uuid);
-            viewCallback(PageView.PLAY);
-          }}
-          text="Playtest Level"
-          icon={graphics.PLAY_ICON}
-          fillWidth
-          extraMargin={[6, 5]}
-          square
-          main
-        />
-        <SimpleButton
-          onPress={() => viewCallback(PageView.SOLUTION)}
-          text="View Solution"
-          icon={graphics.KEY}
-          theme={colors.GREEN_THEME}
-          disabled={!level.bestSolution}
-          fillWidth
-          extraMargin={[6, 5]}
-          square
-        />
-      </View>
+        <ResponsivePressable
+          onPress={() => viewCallback(PageView.EDITOR)}
+          customStyle={styles.preview}
+          pressedSize={0.99}
+        >
+          <BoardPreview level={level} previewSize={3} previewWidth={previewWidth} />
+        </ResponsivePressable>
 
-      <View style={[styles.buttonsRow, { width: win.width * 0.45, marginHorizontal: win.width * 0.225 }]}>
-        {level.shared ?
-          <SimpleButton
-            doConfirmation="Are you sure you want to make this level private? All likes and attempts will be lost permanently."
-            onPress={unshareLevel}
-            icon={graphics.OPTIONS_ICON}
-            theme={colors.RED_THEME}
-            text={"Make Private"}
-            disabled={!userCredential}
-            fillWidth
-            extraMargin={[6, 5]}
-            square
-          />
-          :
-          <>
+        <View style={styles.stats}>
+          <Stat darkMode={darkMode} label="Best solution" value={level.bestSolution ? `${level.bestSolution.length} moves` : "Unsolved"} />
+          <Stat darkMode={darkMode} label="Visibility" value={level.shared ? "Shared" : "Private"} />
+        </View>
+
+        <View style={styles.actions}>
+          <View style={styles.actionCell}>
             <SimpleButton
-              onPress={shareLevel}
-              text="Share Online"
-              icon={graphics.SHARE_ICON}
-              disabled={!level.completed || !userCredential || !userCredential.user.emailVerified || !!level.shared}
+              onPress={() => viewCallback(PageView.EDITOR)}
+              text="Edit Board"
+              icon={graphics.HAMMER_ICON_WHITE}
+              theme={theme}
               fillWidth
-              extraMargin={[6, 5]}
-              square
+              centered
+              main
             />
-          </>
-        }
-        <SimpleButton
-          doConfirmation="Are you sure you want to delete this level? This action is irreversible."
-          onPress={handleDeleteLevel}
-          icon={graphics.DELETE_ICON}
-          theme={colors.RED_THEME}
-          text={"Delete Level"}
-          fillWidth
-          extraMargin={[6, 5]}
-          square
-        />
-      </View>
+          </View>
+          <View style={styles.actionCell}>
+            <SimpleButton
+              onPress={() => {
+                playLevelCallback(level.uuid);
+                viewCallback(PageView.PLAY);
+              }}
+              text="Playtest"
+              icon={graphics.PLAY_ICON}
+              fillWidth
+              centered
+              main
+            />
+          </View>
+        </View>
 
-      <View style={styles.hintWrap}>
-        <Text style={TextStyles.paragraph(darkMode)}>{hint}</Text>
+        <View style={styles.renameRow}>
+          <InputLine label="Level title" value={levelTitle} onChange={setLevelTitle} darkMode={darkMode} doFlex />
+          <View style={{ marginTop: INPUT_LABEL_ROOM }}>
+            <SimpleButton
+              text="Save"
+              onPress={() => {
+                updateLevel({ uuid: level.uuid, name: levelTitle.trim() }, false);
+                forceRefresh();
+              }}
+              disabled={!titleChanged}
+              theme={theme}
+              extraMargin={[10, 0, 0, 0]}
+              height={INPUT_FIELD_HEIGHT}
+              main
+            />
+          </View>
+        </View>
+
+        <Text style={styles.sectionLabel}>Sharing</Text>
+        <ListGroup>
+          <ListRow
+            title="View Solution"
+            icon={graphics.KEY}
+            subtitle={level.bestSolution ? undefined : "Beat the level once to record a solution."}
+            onPress={() => viewCallback(PageView.SOLUTION)}
+            disabled={!level.bestSolution}
+          />
+          {level.shared ?
+            <ListRow
+              title="Make Private"
+              icon={graphics.OPTIONS_ICON}
+              subtitle={`Shared since ${formatDate(level.shared)}.`}
+              onPress={() => confirmThen("Making this level private permanently removes all of its likes and attempts.", unshareLevel)}
+              disabled={!userCredential}
+              last
+            /> :
+            <ListRow
+              title="Share Online"
+              icon={graphics.SHARE_ICON}
+              subtitle={canShare ? "Publish this level for everyone to play." : hint}
+              onPress={shareLevel}
+              disabled={!canShare}
+              last
+            />
+          }
+        </ListGroup>
+
+        <ListGroup>
+          <ListRow
+            title="Delete Level"
+            icon={graphics.DELETE_ICON}
+            onPress={() => confirmThen("Deleting this level can't be undone.", handleDeleteLevel)}
+            destructive
+            last
+          />
+        </ListGroup>
       </View>
     </SubpageContainer>
   );
 }
 
+function formatDate(date: string) {
+  return new Date(date).toLocaleDateString(undefined, { month: "long", day: "numeric", year: "numeric" });
+}
+
+function Stat({ label, value, darkMode }: { label: string, value: string, darkMode: boolean }) {
+  return (
+    <View style={[styles.stat, { backgroundColor: colors.RED_THEME.MAIN_TRANSPARENT(darkMode ? 0.15 : 0.2) }]}>
+      <Text style={[styles.statValue, { color: darkMode ? colors.OFF_WHITE : colors.TEXT_COLOR }]}>{value}</Text>
+      <Text style={styles.statLabel}>{label}</Text>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
-  previewOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    justifyContent: "center",
-    alignItems: "center",
-    overflow: "hidden",
+  page: {
+    width: "100%",
+    paddingTop: normalize(12),
+    paddingBottom: normalize(24),
   },
-  previewOverlayText: {
-    textAlign: "center",
+  header: {
+    alignItems: "center",
+    marginBottom: normalize(16),
+  },
+  name: {
     fontFamily: "Montserrat-Medium",
     fontWeight: "bold",
-    textTransform: "uppercase",
-    fontSize: normalize(32),
+    fontSize: normalize(24),
+    textAlign: "center",
+    marginBottom: normalize(2),
+  },
+  caption: {
+    fontFamily: "Montserrat-Regular",
+    fontSize: normalize(13),
+    color: colors.DIM_GRAY,
+  },
+  preview: {
+    alignSelf: "center",
+  },
+  stats: {
+    flexDirection: "row",
+    gap: normalize(10),
+    marginTop: normalize(16),
+  },
+  stat: {
+    flex: 1,
+    alignItems: "center",
+    paddingVertical: normalize(12),
+    borderRadius: normalize(14),
+  },
+  statValue: {
+    fontFamily: "Montserrat-Medium",
+    fontWeight: "bold",
+    fontSize: normalize(18),
+  },
+  statLabel: {
+    fontFamily: "Montserrat-Regular",
+    fontSize: normalize(12),
+    color: colors.DIM_GRAY,
+    marginTop: normalize(2),
+  },
+  actions: {
+    flexDirection: "row",
+    gap: normalize(10),
+    marginTop: normalize(10),
+  },
+  actionCell: {
+    flex: 1,
+  },
+  sectionLabel: {
+    fontFamily: "Montserrat-Medium",
+    fontSize: normalize(12),
     letterSpacing: 1,
+    textTransform: "uppercase",
+    color: colors.DIM_GRAY,
+    marginTop: normalize(20),
+    marginBottom: normalize(8),
   },
-  buttonsRow: {
-    marginTop: normalize(5),
+  renameRow: {
     flexDirection: "row",
-    justifyContent: "center",
+    alignItems: "center",
+    marginTop: normalize(14),
   },
-  relative: {
-    position: "relative",
-  },
-  continer: {
-    marginTop: normalize(12),
-    marginBottom: normalize(12),
-  },
-  hintWrap: {
-    flexDirection: "row",
-    justifyContent: "center",
-    marginTop: normalize(12),
-  }
 });

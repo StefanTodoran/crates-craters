@@ -23,26 +23,32 @@ interface RowProps {
   onPress?: () => void, // Pressable rows show a chevron (unless destructive).
   accessory?: ReactNode, // Shown on the right instead of the chevron.
   icon?: ImageSourcePropType, // Shown before the title.
+  subtitle?: string, // A smaller line under the title, e.g. why the row is disabled.
+  disabled?: boolean,
 }
 
-export function ListRow({ title, last, destructive, onPress, accessory, icon }: RowProps) {
+export function ListRow({ title, last, destructive, onPress, accessory, icon, subtitle, disabled }: RowProps) {
   const { darkMode } = useContext(GlobalContext);
   const textColor = destructive ? colors.RED_THEME.TINT_COLOR : (darkMode ? colors.OFF_WHITE : colors.TEXT_COLOR);
 
   return (
     <Pressable
       onPress={onPress}
-      disabled={!onPress}
+      disabled={!onPress || disabled}
       accessibilityRole={onPress ? "button" : undefined}
       style={({ pressed }) => [
         styles.row,
         !last && styles.separator,
+        disabled && { opacity: 0.45 },
         pressed && { backgroundColor: colors.DIM_GRAY_TRANSPARENT(0.12) },
       ]}
     >
       <View style={styles.leading}>
         {icon && <Image source={icon} style={styles.icon} />}
-        <Text style={[styles.title, { color: textColor }]}>{title}</Text>
+        <View style={styles.titles}>
+          <Text style={[styles.title, { color: textColor }]}>{title}</Text>
+          {!!subtitle && <Text style={styles.subtitle}>{subtitle}</Text>}
+        </View>
       </View>
       {accessory ?? (onPress && !destructive && <Text style={styles.chevron}>›</Text>)}
     </Pressable>
@@ -50,10 +56,11 @@ export function ListRow({ title, last, destructive, onPress, accessory, icon }: 
 }
 
 /** A row with a system switch, tinted with the given color. */
-export function SwitchRow({ title, value, onToggle, color, last }: { title: string, value: boolean, onToggle: () => void, color: string, last?: boolean }) {
+export function SwitchRow({ title, value, onToggle, color, last, icon }: { title: string, value: boolean, onToggle: () => void, color: string, last?: boolean, icon?: ImageSourcePropType }) {
   return (
     <ListRow
       title={title}
+      icon={icon}
       last={last}
       accessory={<Switch value={value} onValueChange={onToggle} trackColor={{ true: color }} accessibilityLabel={title} />}
     />
@@ -89,9 +96,18 @@ const styles = StyleSheet.create({
     width: normalize(26),
     height: normalize(26),
   },
+  titles: {
+    flex: 1,
+  },
   title: {
     fontFamily: "Montserrat-Regular",
     fontSize: normalize(16),
+  },
+  subtitle: {
+    fontFamily: "Montserrat-Regular",
+    fontSize: normalize(12),
+    color: colors.DIM_GRAY,
+    marginTop: normalize(2),
   },
   chevron: {
     fontSize: normalize(22),

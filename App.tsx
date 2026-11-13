@@ -17,7 +17,8 @@ import LevelsPage from "./pages/LevelsPage";
 import PlayLevel from "./pages/PlayLevel";
 import StorePage from "./pages/StorePage";
 import ViewSolution from "./pages/ViewSolution";
-import { colors } from "./Theme";
+import { colors, purpleTheme } from "./Theme";
+import LevelCard from "./components/LevelCard";
 import { UserAccountDocument, checkForOfficialLevelUpdates, getUserData } from "./util/database";
 import { auth } from "./util/firebase";
 import { useBooleanSetting, useNumberSetting } from "./util/hooks";
@@ -261,6 +262,17 @@ export default function App() {
           Android); only the page contents and toasts are inset into the safe area. */}
       <View style={styles.container}>
 
+        {/* Measure a level card once at startup, hidden under the menu. Otherwise the
+            first level list to open measures one itself and only then mounts its cards,
+            which lands in the middle of the page's slide-in and stalls it. */}
+        {!levelElementHeight && officialLevels.length > 0 && <View
+          pointerEvents="none"
+          style={styles.measurer}
+          onLayout={(event) => setElementHeight(event.nativeEvent.layout.height)}
+        >
+          <LevelCard onPlay={() => { }} levelIndex={0} level={officialLevels[0]} darkMode={darkMode} useTheme={purpleTheme} />
+        </View>}
+
         <Menu notificationCounts={notificationCounts} openPage={switchView} />
 
         <Animated.View
@@ -395,6 +407,13 @@ function panelStyle(animState: Animated.Value, darkMode: boolean, screenHeight: 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  measurer: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    opacity: 0,
   },
   safeArea: {
     flex: 1,
