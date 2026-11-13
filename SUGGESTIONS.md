@@ -68,8 +68,10 @@ Open items from `APP_REVIEW.md`, plus a few found since. The 15 quick-win fixes,
 
 ## Features
 
-23. Add undo and an eraser to the editor.
+A. Add undo and an eraser to the editor.
 
-24. Show overall progress on the Levels page (e.g. "5/30 complete").
+B. Show overall progress on the Levels page (e.g. "5/30 complete").
 
-25. Trim the Guide's wall of text and lean on in-context tutorial hints instead.
+C. Trim the Guide's wall of text and lean on in-context tutorial hints instead.
+
+D. Use the real system search bar on the Shared levels page through a small native wrapper: `UISearchBar` on iOS and the Material search field on Android, exposed as one component (`value`, `onChangeText`, `placeholder`, `onSubmit`). React Native only offers the system search bar inside a native-stack navigation header, which the app doesn't use, and the existing packages are unmaintained and don't support the New Architecture. Needs a native rebuild.
