@@ -1769,30 +1769,6 @@ PODS:
     - ReactCommon/turbomodule/core
     - SwiftUIIntrospect (~> 1.0)
     - Yoga
-  - react-native-menu (1.2.4):
-    - DoubleConversion
-    - glog
-    - hermes-engine
-    - RCT-Folly (= 2024.11.18.00)
-    - RCTRequired
-    - RCTTypeSafety
-    - React-Core
-    - React-debug
-    - React-Fabric
-    - React-featureflags
-    - React-graphics
-    - React-hermes
-    - React-ImageManager
-    - React-jsi
-    - React-NativeModulesApple
-    - React-RCTFabric
-    - React-renderercss
-    - React-rendererdebug
-    - React-utils
-    - ReactCodegen
-    - ReactCommon/turbomodule/bridging
-    - ReactCommon/turbomodule/core
-    - Yoga
   - react-native-mmkv (3.3.1):
     - DoubleConversion
     - glog
@@ -2408,7 +2384,6 @@ DEPENDENCIES:
   - React-Mapbuffer (from `../node_modules/react-native/ReactCommon`)
   - React-microtasksnativemodule (from `../node_modules/react-native/ReactCommon/react/nativemodule/microtasks`)
   - react-native-bottom-tabs (from `../node_modules/react-native-bottom-tabs`)
-  - "react-native-menu (from `../node_modules/@react-native-menu/menu`)"
   - react-native-mmkv (from `../node_modules/react-native-mmkv`)
   - react-native-safe-area-context (from `../node_modules/react-native-safe-area-context`)
   - "react-native-slider (from `../node_modules/@react-native-community/slider`)"
@@ -2588,8 +2563,6 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native/ReactCommon/react/nativemodule/microtasks"
   react-native-bottom-tabs:
     :path: "../node_modules/react-native-bottom-tabs"
-  react-native-menu:
-    :path: "../node_modules/@react-native-menu/menu"
   react-native-mmkv:
     :path: "../node_modules/react-native-mmkv"
   react-native-safe-area-context:
@@ -2736,7 +2709,6 @@ SPEC CHECKSUMS:
   React-Mapbuffer: 70a29536f84ddffca4a91097651d2b8f194f7c67
   React-microtasksnativemodule: ff05e894231c44c21135d1d23a82b87656d98eeb
   react-native-bottom-tabs: 874076da86f3bff8f1098592900b58961098033a
-  react-native-menu: 9efed55ad478c20b85bbd5c376f15b2cc5e41181
   react-native-mmkv: 13760112e963d1b7c35a698fb7e899c5f4e9f35c
   react-native-safe-area-context: 562163222d999b79a51577eda2ea8ad2c32b4d06
   react-native-slider: 78ccabe016aef7418b1a846b31115b4165c4dde6

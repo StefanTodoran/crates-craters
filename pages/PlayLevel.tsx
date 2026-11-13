@@ -4,17 +4,17 @@ import Toast from "../util/toast";
 import BackButton from "../assets/BackButton";
 import GameBoard from "../components/GameBoard";
 import Inventory from "../components/Inventory";
-import NativeMenu, { NativeMenuItem } from "../components/NativeMenu";
+import MenuButton from "../components/MenuButton";
 import MoveCounter from "../components/MoveCounter";
 import Player from "../components/Player";
 import SimpleButton from "../components/SimpleButton";
 import TutorialHint from "../components/TutorialHint";
 import GlobalContext from "../GlobalContext";
 import TextStyles, { normalize } from "../TextStyles";
-import { colors, graphics } from "../Theme";
+import { colors, graphics, modalBackground } from "../Theme";
 import { calcBoardTileSize } from "../util/board";
 import { likeUserLevel, markUserLevelCompleted, postSolutionData } from "../util/database";
-import { useSoundEventPlayers } from "../util/hooks";
+import { useFadeModal, useSoundEventPlayers } from "../util/hooks";
 import { getData, markLevelCompleted, metadataKeys } from "../util/loader";
 import { Game } from "../util/logic";
 import { PlayAction } from "../util/playSession";
@@ -94,9 +94,17 @@ export default function PlayLevel({
     onJump: (path) => dispatch({ type: "jump", path }),
   });
 
+  const { modalOpen, anim, toggleModal } = useFadeModal(350);
   const animatedStyles = useMemo(() => ({
+    buttonsRow: dynamicStyles.buttonsRow(anim),
+    modal: dynamicStyles.modal(anim, darkMode),
     indicator: dynamicStyles.indicator(pressAnim, darkMode),
   }), [darkMode]);
+
+  function restartLevel() {
+    dispatch({ type: "restart" });
+    toggleModal();
+  }
 
   const introducesMechanics = Object.hasOwn(level, "introduces");
   // Auto-show the tutorial only until the level has been beaten; Help still opens it.
@@ -115,20 +123,15 @@ export default function PlayLevel({
     [PlayMode.SHARED]: toLevelSearch,
   };
 
-  const returnAction = {
-    [PlayMode.STANDARD]: { title: "Level Select", onPress: toLevelSelect },
-    [PlayMode.PLAYTEST]: { title: "Keep Editing", onPress: toEditor },
-    [PlayMode.SHARED]: { title: "Level Search", onPress: toLevelSearch },
-  }[mode];
-  const pauseMenuItems: NativeMenuItem[] = [
-    { id: "undo", title: "Undo Move", sfSymbol: "arrow.uturn.backward", disabled: !canUndo, onPress: () => dispatch({ type: "undo" }) },
-    { id: "return", title: returnAction.title, sfSymbol: mode === PlayMode.PLAYTEST ? "hammer" : "door.left.hand.open", onPress: returnAction.onPress },
-    { id: "restart", title: "Restart Level", sfSymbol: "arrow.counterclockwise", destructive: true, onPress: () => dispatch({ type: "restart" }) },
-  ];
-
-  let postWinActionBtn;
+  let returnMenuButton, postWinActionBtn;
   switch (mode) {
     case PlayMode.STANDARD:
+      returnMenuButton = <MenuButton
+        label={"Level Select"}
+        icon={graphics.DOOR_ICON}
+        onPress={toLevelSelect}
+        fillWidth
+      />;
       postWinActionBtn = <SimpleButton
         onPress={goNextLevel}
         icon={graphics.PLAY_ICON}
@@ -137,6 +140,12 @@ export default function PlayLevel({
       />;
       break;
     case PlayMode.PLAYTEST:
+      returnMenuButton = <MenuButton
+        label={"Keep Editing"}
+        icon={graphics.HAMMER_ICON}
+        onPress={toEditor}
+        fillWidth
+      />;
       postWinActionBtn = <SimpleButton
         onPress={toEditor}
         text="Keep Editing"
@@ -146,6 +155,12 @@ export default function PlayLevel({
       />;
       break;
     case PlayMode.SHARED:
+      returnMenuButton = <MenuButton
+        label={"Level Search"}
+        icon={graphics.DOOR_ICON}
+        onPress={toLevelSearch}
+        fillWidth
+      />;
       postWinActionBtn = <SimpleButton
         onPress={async () => {
           const success = await likeUserLevel(level.uuid, userCredential!.user.uid);
@@ -205,18 +220,47 @@ export default function PlayLevel({
           {game.won && <WinScreen coins={game.coins} moves={game.moveHistory.length} bestMoves={level.bestSolution?.length} />}
         </View>
 
+        {/* PAUSE MENU COMPONENTS */}
+        {modalOpen && <Animated.View style={[
+          staticStyles.modal,
+          { paddingHorizontal: win.width * 0.225 },
+          animatedStyles.modal,
+        ]}>
+          <Text style={dynamicStyles.subtitle(darkMode)}>Menu</Text>
+          <MenuButton
+            label="Restart Level"
+            icon={graphics.BOMB}
+            theme={colors.RED_THEME}
+            onPress={restartLevel}
+            fillWidth
+          />
+          <MenuButton
+            label="Undo Move"
+            icon={graphics.ONE_WAY_ONE_DIR}
+            theme={colors.BLUE_THEME}
+            onPress={() => dispatch({ type: "undo" })}
+            disabled={!canUndo}
+            fillWidth
+          />
+          {returnMenuButton}
+          <MenuButton
+            label="Resume Game"
+            icon={graphics.KEY}
+            theme={colors.GREEN_THEME}
+            onPress={toggleModal}
+            fillWidth
+          />
+        </Animated.View>}
 
-        <View style={staticStyles.buttonsRow}>
+        <Animated.View style={animatedStyles.buttonsRow}>
           <SimpleButton text={mode === PlayMode.PLAYTEST ? "Exit" : "Back"} onPress={modeToBackPage[mode]} Svg={BackButton} square extraMargin={[7.5, 0]} />
 
           {introducesMechanics && !game.won &&
             <SimpleButton onPress={() => setShowTutorial(true)} icon={graphics.LIGHTBULB_ICON} text="Help" square main extraMargin={[7.5, 0]} />}
 
-          {!game.won && <NativeMenu items={pauseMenuItems} title="Menu">
-            <SimpleButton icon={graphics.MENU_ICON} text="Menu" main extraMargin={[7.5, 0]} />
-          </NativeMenu>}
+          {!game.won && <SimpleButton onPress={toggleModal} icon={graphics.MENU_ICON} text="Menu" main extraMargin={[7.5, 0]} />}
           {game.won && postWinActionBtn}
-        </View>
+        </Animated.View>
 
       </View>
       {introducesMechanics && showTutorial && <TutorialHint introduces={(level as OfficialLevel).introduces!} hideTutorial={() => setShowTutorial(false)} />}
@@ -228,6 +272,18 @@ const dynamicStyles = {
   subtitle: (darkMode: boolean): TextStyle => ({
     ...TextStyles.subtitle(darkMode),
     marginBottom: -normalize(5),
+  }),
+  buttonsRow: (anim: Animated.Value) => ({
+    flexDirection: "row" as const,
+    marginTop: normalize(10),
+    opacity: anim.interpolate({
+      inputRange: [0, 1],
+      outputRange: [1, 0],
+    }),
+  }),
+  modal: (anim: Animated.Value, darkMode: boolean) => ({
+    backgroundColor: modalBackground(darkMode),
+    opacity: anim,
   }),
   indicator: (anim: Animated.Value, darkMode: boolean) => ({
     backgroundColor: (darkMode) ? colors.OFF_WHITE_TRANSPARENT(0.2) : colors.NEAR_BLACK_TRANSPARENT(0.1),
@@ -283,9 +339,11 @@ const staticStyles = StyleSheet.create({
     top: 1, left: 1, right: 1, bottom: 1,
     overflow: "hidden",
   },
-  buttonsRow: {
-    flexDirection: "row",
-    marginTop: normalize(10),
+  modal: {
+    ...StyleSheet.absoluteFillObject,
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
   },
   indicator: {
     position: "absolute",

@@ -1,9 +1,8 @@
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
-import { Modal, ScrollView, StyleSheet, Switch, Text, View, useWindowDimensions } from "react-native";
+import { FlatList, Modal, ScrollView, StyleSheet, Switch, Text, View, useWindowDimensions } from "react-native";
 import Toast from "../util/toast";
 import FilterChip from "../components/FilterChip";
-import NativeMenu, { NativeMenuItem } from "../components/NativeMenu";
-import SearchField from "../components/SearchField";
+import InputLine from "../components/InputLine";
 import { IndicatorIcon } from "../components/LevelCard";
 import SimpleButton from "../components/SimpleButton";
 import SliderBar from "../components/SliderBar";
@@ -152,6 +151,7 @@ export default function UserLevels({
         completedLevels: getData(metadataKeys.completedLevels) || [],
     }), [userLevels]);
     const { likedLevels } = localLists;
+    const scrollRef = useRef<FlatList<Filter>>(null);
 
     const [filters, setFilters] = useState(new Set<Filter>());
     const toggleFilter = (filter: Filter) => {
@@ -167,6 +167,10 @@ export default function UserLevels({
         alreadyEnabled ? newFilters.delete(filter) : newFilters.add(filter);
         setFilters(newFilters);
     };
+
+    useEffect(() => {
+        scrollRef.current?.scrollToOffset({ offset: 0, animated: false });
+    }, [filters]);
 
     const [lengthFilterEnabled, setLengthFilterEnabled] = useState(false);
     const [minSolutionLength, setMinSolutionLength] = useState(50);
@@ -194,15 +198,6 @@ export default function UserLevels({
         });
     });
     const validFilters = [...filters, ...inactiveFilters];
-
-    // The quick filters as a system dropdown (checkmarks on the active ones).
-    const filterMenuItems: NativeMenuItem[] = Object.values(Filter).map(filter => ({
-        id: filter,
-        title: filter,
-        checked: filters.has(filter),
-        disabled: loading || !validFilters.includes(filter),
-        onPress: () => toggleFilter(filter),
-    }));
 
     const params: SearchParams = {
         filters,
@@ -302,7 +297,14 @@ export default function UserLevels({
             <LevelSelect
                 headerComponent={<View style={{ width: win.width }}>
                     <View style={{ marginHorizontal: "5%", flexDirection: "row", alignItems: "center", marginBottom: normalize(10) }}>
-                        <SearchField value={searchQuery} onChange={setSearchQuery} placeholder="Search levels" />
+                        <InputLine
+                            label={"Search"}
+                            value={searchQuery}
+                            onChange={setSearchQuery}
+                            darkMode={darkMode}
+                            fullBorder
+                            doFlex
+                        />
                         <SimpleButton
                             icon={graphics.FILTER_ICON}
                             onPress={toggleModal}
@@ -311,15 +313,22 @@ export default function UserLevels({
                             main
                         />
                     </View>
-                    <View style={styles.filterMenuRow}>
-                        <NativeMenu items={filterMenuItems} title="Quick Filters">
-                            <SimpleButton
-                                text={filters.size ? [...filters].join(", ") : "All Levels"}
-                                icon={graphics.FILTER_ICON}
-                                disabled={loading}
-                            />
-                        </NativeMenu>
-                    </View>
+                    <FlatList
+                        horizontal
+                        ref={scrollRef}
+                        // overScrollMode="never"
+                        showsHorizontalScrollIndicator={false}
+                        style={{ flexGrow: 0 }}
+                        contentContainerStyle={styles.filterChipsRow}
+                        data={validFilters}
+                        renderItem={({ item, index }) => <FilterChip
+                            key={index}
+                            text={item}
+                            active={filters.has(item)}
+                            onPress={() => toggleFilter(item)}
+                            disabled={loading}
+                        />}
+                    />
                 </View>}
                 footerText={`Showing ${filteredLevels.length} of ${Math.max(matchingCount, filteredLevels.length)} levels`}
 
@@ -454,13 +463,10 @@ export default function UserLevels({
 }
 
 const styles = StyleSheet.create({
-    filterMenuRow: {
-        flexDirection: "row",
+    filterChipsRow: {
         paddingHorizontal: "5%",
+        marginTop: "1%",
         marginBottom: "1%",
-    },
-    filterSwitch: {
-        marginVertical: normalize(8),
     },
     section: {
         flexDirection: "column",
@@ -476,6 +482,9 @@ const styles = StyleSheet.create({
         paddingBottom: normalize(24),
         alignItems: "center",
         justifyContent: "space-between",
+    },
+    filterSwitch: {
+        marginVertical: normalize(8),
     },
     wrappedList: {
         flexDirection: "row",

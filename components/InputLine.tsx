@@ -1,13 +1,13 @@
 import { useEffect, useRef, useState } from "react";
-import { Animated, StyleSheet, TextInput, View } from "react-native";
-import { normalize } from "../TextStyles";
+import { Animated, LayoutChangeEvent, StyleSheet, TextInput, View } from "react-native";
+import Svg, { Path } from "react-native-svg";
 import { colors } from "../Theme";
 
 export interface InputLineProps {
   label: string,
   value: string,
   onChange?: (newValue: string) => void,
-  fullBorder?: boolean,
+  fullBorder?: boolean, // Kept for compatibility: every field is outlined now.
   disabled?: boolean,
   darkMode?: boolean,
   isSensitive?: boolean,
@@ -17,14 +17,14 @@ export interface InputLineProps {
 }
 
 /**
- * InputLine is an augmentation of the basic TextInput that has
- * a fancy animation for the label.
+ * An outlined text field. The label rests inside the field and, when focused or
+ * filled, shrinks onto the top border, which opens a gap behind it (so it works on
+ * any background). The gap is drawn with the outline's dash pattern.
  */
 export default function InputLine({
   label,
   value,
   onChange,
-  fullBorder,
   disabled,
   darkMode,
   isSensitive,
@@ -34,34 +34,42 @@ export default function InputLine({
 }: InputLineProps) {
   const [focused, setFocus] = useState(false);
   const raised = value !== "" || focused;
-  const anim = useRef(new Animated.Value(raised ? 1 : 0)).current;
+  const labelAnim = useRef(new Animated.Value(raised ? 1 : 0)).current;
+  const [size, setSize] = useState({ width: 0, height: 0 });
+  const [labelWidth, setLabelWidth] = useState(0);
 
   useEffect(() => {
-    // Native driver: the label only animates transform, so this never re-lays out
-    // text on the JS thread (which made the label jitter and slowed typing).
-    Animated.timing(anim, {
-      toValue: raised ? 1 : 0,
-      duration: 250,
-      useNativeDriver: true,
-    }).start();
+    Animated.timing(labelAnim, { toValue: raised ? 1 : 0, duration: 200, useNativeDriver: true }).start();
   }, [raised]);
 
+  const borderColor = disabled ? colors.DIM_GRAY_TRANSPARENT(0.1) :
+    focused ? colors.DIM_GRAY_TRANSPARENT(0.7) : colors.DIM_GRAY_TRANSPARENT(0.3);
+
+  // The outline: a rounded rect drawn as one path that starts just after the label's
+  // gap on the top edge, goes clockwise, and stops just before it.
+  const outline = outlinePath(size.width, size.height, raised ? labelWidth * LABEL_SCALE + 2 * GAP_PADDING : 0);
+
   return (
-    <View style={[
-      styles.container,
-      fullBorder && styles.fullBorderContainer,
-      disabled && { borderColor: colors.DIM_GRAY_TRANSPARENT(0.1) },
-      doFlex && { flex: 1, marginBottom: 0 },
-    ]}>
+    <View
+      style={[styles.container, doFlex && { flex: 1, marginBottom: 0 }]}
+      onLayout={(event: LayoutChangeEvent) => {
+        const { width, height } = event.nativeEvent.layout;
+        setSize({ width, height });
+      }}
+    >
+      {size.width > 0 && <Svg width={size.width} height={size.height} style={styles.outline} pointerEvents="none">
+        <Path d={outline} fill="none" stroke={borderColor} strokeWidth={BORDER} />
+      </Svg>}
+
       <Animated.Text
+        onLayout={(event: LayoutChangeEvent) => setLabelWidth(event.nativeEvent.layout.width)}
         style={[
           styles.label,
-          fullBorder && styles.fullBorderLabel,
           {
-            color: raised ? colors.DIM_GRAY_TRANSPARENT(0.8) : colors.DIM_GRAY_TRANSPARENT(0.5),
+            color: raised ? colors.DIM_GRAY_TRANSPARENT(0.85) : colors.DIM_GRAY_TRANSPARENT(0.5),
             transform: [
-              { translateY: anim.interpolate({ inputRange: [0, 1], outputRange: [0, LABEL_RAISE] }) },
-              { scale: anim.interpolate({ inputRange: [0, 1], outputRange: [1, LABEL_SCALE] }) },
+              { translateY: labelAnim.interpolate({ inputRange: [0, 1], outputRange: [0, LABEL_RAISE] }) },
+              { scale: labelAnim.interpolate({ inputRange: [0, 1], outputRange: [1, LABEL_SCALE] }) },
             ],
           },
         ]}
@@ -96,37 +104,51 @@ export default function InputLine({
   );
 }
 
+function outlinePath(width: number, height: number, gap: number) {
+  const o = BORDER / 2; // Keep the stroke inside the view.
+  const right = width - o, bottom = height - o, r = RADIUS;
+  const gapStart = PADDING_H - GAP_PADDING;
+  const gapEnd = gapStart + gap;
+  return [
+    `M ${gapEnd} ${o}`,
+    `H ${right - r}`, `A ${r} ${r} 0 0 1 ${right} ${o + r}`,
+    `V ${bottom - r}`, `A ${r} ${r} 0 0 1 ${right - r} ${bottom}`,
+    `H ${o + r}`, `A ${r} ${r} 0 0 1 ${o} ${bottom - r}`,
+    `V ${o + r}`, `A ${r} ${r} 0 0 1 ${o + r} ${o}`,
+    `H ${gapStart}`,
+  ].join(" ");
+}
+
 // Explicit geometry so iOS (whose TextInput has no default padding) and Android
-// (whose TextInput does) lay out identically, and the label can be positioned
-// from known values instead of percentages.
-// Plain points rather than normalize(), so the label math below stays exact.
-const INPUT_HEIGHT = 26;
-const TOP_SPACE = 16; // Room above the input for the raised label.
-const TEXT_INSET = 6;
+// (whose TextInput does) lay out identically, and the label math stays exact.
+const INPUT_HEIGHT = 24;
+const PADDING_V = 11; // Above and below the input, inside the outline.
+const PADDING_H = 16;
+const RADIUS = 8;
+const BORDER = 1;
+const GAP_PADDING = 4; // Space between the raised label and the line on each side.
 const LABEL_FONT_SIZE = 14;
-const LABEL_SCALE = 10 / 14;
-// Moves the label's center from the input's center to the middle of TOP_SPACE.
-const LABEL_RAISE = -(TOP_SPACE / 2 + INPUT_HEIGHT / 2);
+const LABEL_SCALE = 11 / 14;
+// Moves the label's center from the input's center onto the top border.
+const LABEL_RAISE = -(PADDING_V + INPUT_HEIGHT / 2);
 
 const styles = StyleSheet.create({
   container: {
     position: "relative",
-    paddingTop: TOP_SPACE,
-    paddingBottom: 4,
-    borderBottomWidth: 1,
-    borderColor: colors.DIM_GRAY_TRANSPARENT(0.3),
-    marginBottom: 7.5,
+    paddingVertical: PADDING_V,
+    paddingHorizontal: PADDING_H,
+    marginTop: 8, // Room for the half of the raised label above the line.
+    marginBottom: 10,
   },
-  fullBorderContainer: {
-    paddingBottom: normalize(10),
-    paddingHorizontal: normalize(12),
-    borderWidth: 1,
-    borderRadius: normalize(8),
+  outline: {
+    position: "absolute",
+    top: 0,
+    left: 0,
   },
   label: {
     position: "absolute",
-    top: TOP_SPACE,
-    left: TEXT_INSET,
+    top: PADDING_V,
+    left: PADDING_H,
     height: INPUT_HEIGHT,
     lineHeight: INPUT_HEIGHT,
     fontSize: LABEL_FONT_SIZE,
@@ -134,14 +156,11 @@ const styles = StyleSheet.create({
     fontWeight: "normal",
     transformOrigin: "left center", // Shrink toward the left edge, not the center.
   },
-  fullBorderLabel: {
-    left: normalize(12) + TEXT_INSET,
-  },
   input: {
     width: "100%",
     height: INPUT_HEIGHT,
     paddingVertical: 0,
-    paddingHorizontal: TEXT_INSET,
+    paddingHorizontal: 0,
     fontSize: LABEL_FONT_SIZE,
     fontFamily: "Montserrat-Regular",
     fontWeight: "normal",

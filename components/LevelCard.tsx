@@ -1,11 +1,10 @@
 import { memo, useEffect, useRef } from "react";
-import { Animated, Image, ImageSourcePropType, Share, StyleSheet, Text, View, useWindowDimensions } from "react-native";
+import { Animated, Image, ImageSourcePropType, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import TextStyles, { normalize } from "../TextStyles";
 import { Theme, colors, graphics } from "../Theme";
 import { getAppState } from "../util/store";
 import { Level, SharedLevel } from "../util/types";
 import BoardPreview from "./BoardPreview";
-import NativeMenu, { NativeMenuItem } from "./NativeMenu";
 import SimpleButton from "./SimpleButton";
 
 export enum IndicatorIcon {
@@ -81,25 +80,6 @@ const LevelCard = memo(function ({
   if (level.official || useTheme.NAME === "PURPLE") iconSource = level.completed ? graphics.CRATER : graphics.CRATE;
   else iconSource = graphics.METAL_CRATE;
 
-  // Long press opens a system context menu with the card's actions.
-  const menuItems: NativeMenuItem[] = [];
-  if (!isLocked) menuItems.push(resumeCallback ?
-    { id: "resume", title: "Resume", sfSymbol: "play.fill", onPress: resumeCallback } :
-    { id: "play", title: "Play", sfSymbol: "play.fill", onPress: () => onPlay(levelIndex) });
-  if (onSecondButton && secondButtonText) menuItems.push({
-    id: "second",
-    title: secondButtonText,
-    sfSymbol: secondButtonText.startsWith("Like") ? "heart" : "hammer",
-    disabled: secondButtonDisabled,
-    onPress: () => onSecondButton(levelIndex),
-  });
-  if (Object.hasOwn(level, "user_name")) menuItems.push({
-    id: "share",
-    title: "Share",
-    sfSymbol: "square.and.arrow.up",
-    onPress: () => shareLevel(level as SharedLevel),
-  });
-
   return (
     <Animated.View style={[
       styles.container,
@@ -119,9 +99,6 @@ const LevelCard = memo(function ({
       },
     ]}>
 
-      {/* Long press on the header or preview opens a system context menu. Not on the
-          buttons: the native menu view takes the taps of anything inside it. */}
-      <NativeMenu items={menuItems} title={level.name} openOnLongPress>
       <View style={styles.row}>
         <View style={styles.rowFlexStart}>
           {/* Icon & Number */}
@@ -155,11 +132,8 @@ const LevelCard = memo(function ({
         </View>
       </View>
 
-      </NativeMenu>
-
       <View style={styles.row}>
 
-        <NativeMenu items={menuItems} title={level.name} openOnLongPress>
         <BoardPreview
           level={level}
           previewSize={2}
@@ -182,7 +156,6 @@ const LevelCard = memo(function ({
             ]}>{stats}</Text>
           </View>}
         </BoardPreview>
-        </NativeMenu>
 
         <View style={styles.buttonsContainer}>
           {!resumeCallback && <SimpleButton
@@ -215,15 +188,6 @@ const LevelCard = memo(function ({
     </Animated.View>
   );
 });
-
-/** Opens the system share sheet for a shared level (found in-app by searching its name). */
-function shareLevel(level: SharedLevel) {
-  // Called from the context menu: iOS can't present the sheet until the menu has
-  // finished dismissing.
-  setTimeout(() => Share.share({
-    message: `Try "${level.name}" by ${level.user_name} in Crates & Craters! Search for it in the Shared levels.`,
-  }).catch(() => { }), 500);
-}
 
 export default LevelCard;
 

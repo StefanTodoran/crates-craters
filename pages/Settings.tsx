@@ -2,8 +2,7 @@ import { useContext, useState } from "react";
 import { Platform, StyleSheet, Switch, Text, View } from "react-native";
 import GlobalContext from "../GlobalContext";
 import TextStyles, { normalize } from "../TextStyles";
-import { colors, graphics } from "../Theme";
-import MenuButton from "../components/MenuButton";
+import { colors } from "../Theme";
 import SliderBar from "../components/SliderBar";
 import SubpageContainer from "../components/SubpageContainer";
 import { useOnUnmount } from "../util/hooks";
@@ -48,13 +47,6 @@ export default function Settings({
         <SettingSwitch label="Sounds" value={playAudio} onToggle={audioModeCallback} />
         <SettingSwitch label="Haptics" value={haptics} onToggle={hapticsCallback} />
 
-        <MenuButton
-          label="Change App Theme"
-          icon={graphics.THEME_ICON}
-          disabled={true}
-          theme={colors.GREEN_THEME}
-          fillWidth
-        />
 
         <View style={{ height: 15 }} />
         <SliderBar label="Drag Sensitivity" value={newDragSens} units={"%"}
