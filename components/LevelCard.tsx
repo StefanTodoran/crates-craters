@@ -1,13 +1,11 @@
 import { memo, useEffect, useRef } from "react";
-import { Animated, Dimensions, Image, StyleSheet, Text, View } from "react-native";
+import { Animated, Image, ImageSourcePropType, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import TextStyles, { normalize } from "../TextStyles";
 import { Theme, colors, graphics } from "../Theme";
-import { isPageAnimating } from "../util/events";
+import { getAppState } from "../util/store";
 import { Level, SharedLevel } from "../util/types";
 import BoardPreview from "./BoardPreview";
 import SimpleButton from "./SimpleButton";
-
-const win = Dimensions.get("window");
 
 export enum IndicatorIcon {
   NONE,
@@ -15,23 +13,34 @@ export enum IndicatorIcon {
   SHARED,
 }
 
+/**
+ * Props are all primitives or stable references (callbacks take the card's index), so
+ * the memo skips re-rendering cards whose level hasn't changed.
+ */
 interface LevelCardProps {
-  playCallback?: () => void, // The callback used to initiate the current level for playing.
-  resumeCallback?: () => void, // Used to resume play if this level is currently being played.
+  onPlay: (index: number) => void, // Starts playing this level.
+  onResume?: () => void, // Resumes play, if this level is the one in progress.
+  showResume?: boolean, // Show Resume instead of Play.
   level: Level,
   levelIndex: number,
   darkMode: boolean,
   useTheme: Theme,
   noNumber?: boolean,
   indicatorIcon?: IndicatorIcon,
-  stats?: string[],
+  stats?: string, // Shown over the board preview, one stat per line.
   isLocked?: boolean,
-  children?: React.ReactNode,
+
+  // An optional second button under Play.
+  secondButtonText?: string,
+  secondButtonIcon?: ImageSourcePropType,
+  secondButtonDisabled?: boolean,
+  onSecondButton?: (index: number) => void,
 }
 
 const LevelCard = memo(function ({
-  playCallback,
-  resumeCallback,
+  onPlay,
+  onResume,
+  showResume,
   level,
   levelIndex,
   darkMode,
@@ -40,11 +49,16 @@ const LevelCard = memo(function ({
   indicatorIcon,
   stats,
   isLocked,
-  children,
+  secondButtonText,
+  secondButtonIcon,
+  secondButtonDisabled,
+  onSecondButton,
 }: LevelCardProps) {
+  const win = useWindowDimensions();
+  const resumeCallback = showResume ? onResume : undefined;
   // Cards mounted while the page panel slides in skip their entrance animation,
   // otherwise they fade/scale separately from the panel.
-  const skipEntrance = useRef(isPageAnimating()).current;
+  const skipEntrance = useRef(getAppState().pageAnimating).current;
   const anim = useRef(new Animated.Value(skipEntrance ? 1 : 0)).current;
   const setAnimTo = (animState: number, callback?: () => void) => {
     Animated.timing(anim, {
@@ -70,6 +84,7 @@ const LevelCard = memo(function ({
     <Animated.View style={[
       styles.container,
       {
+        width: win.width * 0.9,
         borderColor: useTheme.DARK_COLOR,
         borderWidth: resumeCallback ? 2 : 1,
         paddingHorizontal: resumeCallback ? normalize(15) - 2 : normalize(15),
@@ -138,17 +153,17 @@ const LevelCard = memo(function ({
             <Text style={[
               styles.boardOverlayText,
               { color: darkMode ? colors.NEAR_BLACK : colors.OFF_WHITE },
-            ]}>{stats.join("\n")}</Text>
+            ]}>{stats}</Text>
           </View>}
         </BoardPreview>
 
         <View style={styles.buttonsContainer}>
-          {playCallback && <SimpleButton
+          {!resumeCallback && <SimpleButton
             text={isLocked ? "Locked" : "Play"}
             icon={isLocked ? graphics.LOCK_ICON_WHITE : graphics.PLAY_ICON}
             main={true}
             theme={useTheme}
-            onPress={playCallback}
+            onPress={() => onPlay(levelIndex)}
             disabled={isLocked}
           />}
 
@@ -160,7 +175,13 @@ const LevelCard = memo(function ({
             onPress={resumeCallback}
           />}
 
-          {children}
+          {onSecondButton && <SimpleButton
+            text={secondButtonText}
+            disabled={secondButtonDisabled}
+            icon={secondButtonIcon}
+            onPress={() => onSecondButton(levelIndex)}
+            theme={useTheme}
+          />}
         </View>
       </View>
 
@@ -175,7 +196,6 @@ const styles = StyleSheet.create({
     flexDirection: "column",
     justifyContent: "center",
     alignItems: "center",
-    width: win.width * 0.9,
     paddingBottom: normalize(5),
     borderRadius: normalize(10),
     marginVertical: normalize(10),

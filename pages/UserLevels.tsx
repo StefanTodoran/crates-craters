@@ -1,5 +1,5 @@
-import { useCallback, useContext, useEffect, useRef, useState } from "react";
-import { Animated, Dimensions, FlatList, StyleSheet, Text, View } from "react-native";
+import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { Animated, FlatList, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import Toast from "react-native-toast-message";
 import FilterChip from "../components/FilterChip";
 import InputLine from "../components/InputLine";
@@ -10,13 +10,11 @@ import GlobalContext from "../GlobalContext";
 import TextStyles, { normalize } from "../TextStyles";
 import { graphics, purpleTheme } from "../Theme";
 import { ExplicitOrder, QueryFilter, attemptUserLevel, likeUserLevel, queryUserLevels } from "../util/database";
-import { useDebounce } from "../util/hooks";
+import { useDebounce, useFadeModal } from "../util/hooks";
 import { getData, metadataKeys, parseCompressedBoardData } from "../util/loader";
 import { areSetsEqual } from "../util/Set";
-import { PageView, SharedLevel } from "../util/types";
+import { Level, PageView, SharedLevel } from "../util/types";
 import LevelSelect from "./LevelSelect";
-
-const win = Dimensions.get("window");
 
 enum Filter {
     POPULAR = "Popular",
@@ -66,6 +64,59 @@ interface SearchParams {
     maxWinrate: number,
 }
 
+interface LocalLevelLists {
+    likedLevels: string[],
+    attemptedLevels: string[],
+    completedLevels: string[],
+}
+
+function didParamsChange(a: SearchParams, b: SearchParams) {
+    return !areSetsEqual(a.filters, b.filters) ||
+        a.lengthFilterEnabled !== b.lengthFilterEnabled ||
+        a.winrateFilterEnabled !== b.winrateFilterEnabled ||
+        a.minSolutionLength !== b.minSolutionLength ||
+        a.maxSolutionLength !== b.maxSolutionLength ||
+        a.minWinrate !== b.minWinrate ||
+        a.maxWinrate !== b.maxWinrate;
+}
+
+/** Turns the search filters into a shared levels query (see queryUserLevels). */
+export function buildUserLevelQuery(params: SearchParams, lists: LocalLevelLists) {
+    const { filters } = params;
+
+    const orderFields: ExplicitOrder[] = [];
+    if (filters.has(Filter.POPULAR)) orderFields.push({ field: "likes", order: "desc" });
+    orderFields.push({ field: "shared", order: filters.has(Filter.NEWEST) ? "desc" : "asc" });
+
+    const filterFields: QueryFilter[] = [{ field: "public", operator: "==", value: true }];
+    if (filters.has(Filter.UNATTEMPTED)) {
+        filterFields.push({ field: "attempts", operator: "==", value: 0 });
+    }
+    if (filters.has(Filter.UNBEATEN)) {
+        filterFields.push({ field: "wins", operator: "==", value: 0 });
+        filterFields.push({ field: "attempts", operator: "!=", value: 0 });
+    }
+    if (params.lengthFilterEnabled) {
+        filterFields.push({ field: "best", operator: ">", value: params.minSolutionLength });
+        filterFields.push({ field: "best", operator: "<=", value: params.maxSolutionLength });
+    }
+    if (params.winrateFilterEnabled) {
+        filterFields.push({ field: "winrate", operator: ">=", value: params.minWinrate / 100 });
+        filterFields.push({ field: "winrate", operator: "<=", value: params.maxWinrate / 100 });
+    }
+
+    // Liked/Played/Completed restrict results to a known list of level ids, and
+    // Unplayed excludes one. Ids are document names (documents have no "uuid"
+    // field; parseQuerySnapshot adds it client-side), so match on "__name__".
+    let includeIds: string[] | undefined;
+    if (filters.has(Filter.LIKED)) includeIds = lists.likedLevels;
+    if (filters.has(Filter.PLAYED)) includeIds = lists.attemptedLevels;
+    if (filters.has(Filter.COMPLETED)) includeIds = lists.completedLevels;
+    const excludeIds = filters.has(Filter.UNPLAYED) ? lists.attemptedLevels : [];
+
+    return { orderFields, filterFields, includeIds, excludeIds };
+}
+
 interface Props {
     viewCallback: (newView: PageView, newPage?: number) => void,
     playLevelCallback: (level?: SharedLevel) => void,
@@ -87,32 +138,17 @@ export default function UserLevels({
 }: Props) {
     const { darkMode, userCredential } = useContext(GlobalContext);
 
-    const [modalOpen, setModalOpen] = useState(false);
-    const fadeModalAnim = useRef(new Animated.Value(0)).current;
-    const toggleModal = useCallback(() => {
-        const start = (modalOpen) ? 1 : 0;
-        const end = (modalOpen) ? 0 : 1;
-        const modalWasOpen = modalOpen;
+    const win = useWindowDimensions();
+    const { modalOpen, anim: fadeModalAnim, toggleModal } = useFadeModal(200);
 
-        if (!modalWasOpen) { // If modal was not open
-            setModalOpen(true); // Set modal to open
-        }
-
-        fadeModalAnim.setValue(start);
-        Animated.timing(fadeModalAnim, {
-            toValue: end,
-            duration: 200,
-            useNativeDriver: true
-        }).start(() => {
-            if (modalWasOpen) {
-                setModalOpen(false);
-            }
-        });
-    }, [modalOpen]);
-
-    const likedLevels = getData(metadataKeys.likedLevels) || [];
-    const attemptedLevels = getData(metadataKeys.attemptedLevels) || [];
-    const completedLevels = getData(metadataKeys.completedLevels) || [];
+    // Read from storage only when the shown levels change (e.g. after a like), not on
+    // every render: these parse JSON, and renders happen on each search keystroke.
+    const localLists = useMemo((): LocalLevelLists => ({
+        likedLevels: getData(metadataKeys.likedLevels) || [],
+        attemptedLevels: getData(metadataKeys.attemptedLevels) || [],
+        completedLevels: getData(metadataKeys.completedLevels) || [],
+    }), [userLevels]);
+    const { likedLevels } = localLists;
     const scrollRef = useRef<FlatList<Filter>>(null);
 
     const [filters, setFilters] = useState(new Set<Filter>());
@@ -161,64 +197,24 @@ export default function UserLevels({
     });
     const validFilters = [...filters, ...inactiveFilters];
 
-    const prevParams = useRef<SearchParams>({
-        filters: new Set<Filter>(),
-        lengthFilterEnabled: false,
-        minSolutionLength: 50,
-        maxSolutionLength: 150,
-        winrateFilterEnabled: false,
-        minWinrate: 25,
-        maxWinrate: 95,
-    });
+    const params: SearchParams = {
+        filters,
+        lengthFilterEnabled,
+        minSolutionLength,
+        maxSolutionLength,
+        winrateFilterEnabled,
+        minWinrate,
+        maxWinrate,
+    };
+    const prevParams = useRef<SearchParams>(params);
+
     // Incremented per fetch, so a slow older response can't overwrite a newer one.
     const latestRequest = useRef(0);
-    const fetchLevels = async (
-        filters: Set<Filter>,
-        numLoaded: number,
-        likedLevels: string[],
-        attemptedLevels: string[],
-        completedLevels: string[],
-    ) => {
+    const fetchLevels = async () => {
         const requestId = ++latestRequest.current;
         setLoading(true);
         try {
-            const orderFields: ExplicitOrder[] = [];
-            if (filters.has(Filter.POPULAR)) orderFields.push({ field: "likes", order: "desc" });
-            orderFields.push({ field: "shared", order: filters.has(Filter.NEWEST) ? "desc" : "asc" });
-
-            const filterFields: QueryFilter[] = [];
-            filterFields.push({ field: "public", operator: "==", value: true });
-            if (filters.has(Filter.UNATTEMPTED)) {
-                filterFields.push({ field: "attempts", operator: "==", value: 0 });
-            }
-            if (filters.has(Filter.UNBEATEN)) {
-                filterFields.push({ field: "wins", operator: "==", value: 0 });
-                filterFields.push({ field: "attempts", operator: "!=", value: 0 });
-            }
-
-            // Liked/Played/Completed restrict results to a known list of level ids, and
-            // Unplayed excludes one. Ids are document names (documents have no "uuid"
-            // field; parseQuerySnapshot adds it client-side), so match on "__name__".
-            let includeIds: string[] | undefined;
-            if (filters.has(Filter.LIKED)) includeIds = likedLevels;
-            if (filters.has(Filter.PLAYED)) includeIds = attemptedLevels;
-            if (filters.has(Filter.COMPLETED)) includeIds = completedLevels;
-            const excludeIds = filters.has(Filter.UNPLAYED) ? attemptedLevels : [];
-
-            // if (searchQuery) {
-            //     const keywords = [...searchQuery.toLowerCase().split(/\s+/)];
-            //     filterInList("array_contains_any", keywords, "keywords");
-            // }
-
-            if (lengthFilterEnabled) {
-                filterFields.push({ field: "best", operator: ">", value: minSolutionLength });
-                filterFields.push({ field: "best", operator: "<=", value: maxSolutionLength });
-            }
-            if (winrateFilterEnabled) {
-                filterFields.push({ field: "winrate", operator: ">=", value: minWinrate / 100 });
-                filterFields.push({ field: "winrate", operator: "<=", value: maxWinrate / 100 });
-            }
-
+            const { orderFields, filterFields, includeIds, excludeIds } = buildUserLevelQuery(params, localLists);
             const { data, count } = await queryUserLevels(orderFields, filterFields, numLoaded, includeIds, excludeIds);
             if (requestId !== latestRequest.current) return true; // A newer fetch superseded this one.
 
@@ -228,7 +224,7 @@ export default function UserLevels({
                     return [{
                         ...doc,
                         board: parseCompressedBoardData(doc.board),
-                        completed: completedLevels.includes(doc.uuid),
+                        completed: localLists.completedLevels.includes(doc.uuid),
                     }];
                 } catch (error) {
                     // Skip malformed levels instead of breaking the whole list.
@@ -245,51 +241,50 @@ export default function UserLevels({
             return false;
         }
     };
-    const parametrizedFetchLevels = () => fetchLevels(filters, numLoaded, likedLevels, attemptedLevels, completedLevels);
-    const didParamsChange = () => {
-        if (!areSetsEqual(filters, prevParams.current.filters)) return true;
-        if (lengthFilterEnabled !== prevParams.current.lengthFilterEnabled) return true;
-        if (winrateFilterEnabled !== prevParams.current.winrateFilterEnabled) return true;
-        if (minSolutionLength !== prevParams.current.minSolutionLength) return true;
-        if (maxSolutionLength !== prevParams.current.maxSolutionLength) return true;
-        if (minWinrate !== prevParams.current.minWinrate) return true;
-        if (maxWinrate !== prevParams.current.maxWinrate) return true;
-        return false;
-    };
 
-    const debouncedFetchLevels = useDebounce(parametrizedFetchLevels, 1000);
-    useEffect(() => { 
-        if (userLevels.length === 0) parametrizedFetchLevels();
+    const debouncedFetchLevels = useDebounce(fetchLevels, 1000);
+    useEffect(() => {
+        if (userLevels.length === 0) fetchLevels();
     }, []); // Fetch levels on mount.
+
+    // Refetch when the filters change (debounced, as chips are often tapped in a row),
+    // or when the filter modal closes with changed sliders. Not while the modal is open.
     useEffect(() => {
         if (modalOpen) return;
-        if (didParamsChange()) debouncedFetchLevels();
-        prevParams.current = {
-            filters,
-            lengthFilterEnabled,
-            minSolutionLength,
-            maxSolutionLength,
-            winrateFilterEnabled,
-            minWinrate,
-            maxWinrate,
-        };
-    }, [filters, numLoaded]); // }, [filters, numLoaded, searchQuery]);
+        if (didParamsChange(params, prevParams.current)) debouncedFetchLevels();
+        prevParams.current = params;
+    }, [filters, numLoaded]);
     useEffect(() => {
         if (modalOpen) return;
-        if (didParamsChange()) parametrizedFetchLevels();
-        prevParams.current = {
-            filters,
-            lengthFilterEnabled,
-            minSolutionLength,
-            maxSolutionLength,
-            winrateFilterEnabled,
-            minWinrate,
-            maxWinrate,
-        };
+        if (didParamsChange(params, prevParams.current)) fetchLevels();
+        prevParams.current = params;
     }, [modalOpen]);
 
-    let filteredLevels = userLevels;
-    if (searchQuery) filteredLevels = userLevels.filter(level => level.name.toLowerCase().includes(searchQuery.toLowerCase()) || level.user_name.toLowerCase().includes(searchQuery.toLowerCase()));
+    const filteredLevels = useMemo(() => {
+        if (!searchQuery) return userLevels;
+        const query = searchQuery.toLowerCase();
+        return userLevels.filter(level => level.name.toLowerCase().includes(query) || level.user_name.toLowerCase().includes(query));
+    }, [userLevels, searchQuery]);
+
+    const getStats = useCallback((level: Level) => {
+        const targetLevel = level as SharedLevel;
+        const stats = [];
+
+        const winrate = Math.min(100, Math.round(100 * targetLevel.wins / targetLevel.attempts));
+        if (isNaN(winrate)) stats.push("No attempts yet!");
+        else if (targetLevel.wins === 0) stats.push("Never beaten!");
+        else stats.push(`${winrate}% solve rate (${getRange(winrate / 100, difficultyRanges)})`);
+
+        const solnLen = targetLevel.bestSolution!.length;
+        stats.push(`${getRange(solnLen, lengthRanges)} solution`);
+        stats.push(`(Best: ${solnLen} moves)`);
+
+        if (userCredential && targetLevel.user_uid === userCredential.user.uid) {
+            stats.push("Made by you!");
+        }
+
+        return stats;
+    }, [userCredential]);
 
     return (
         <>
@@ -366,32 +361,14 @@ export default function UserLevels({
                     },
                 }
                 }
-                // @ts-expect-error
-                getStats={(targetLevel: SharedLevel) => {
-                    const stats = [];
-
-                    let winrate = Math.min(100, Math.round(100 * targetLevel.wins / targetLevel.attempts));
-                    if (isNaN(winrate)) stats.push("No attempts yet!");
-                    else if (targetLevel.wins === 0) stats.push("Never beaten!");
-                    else stats.push(`${winrate}% solve rate (${getRange(winrate / 100, difficultyRanges)})`);
-
-                    const solnLen = targetLevel.bestSolution!.length;
-                    stats.push(`${getRange(solnLen, lengthRanges)} solution`);
-                    stats.push(`(Best: ${solnLen} moves)`);
-
-                    if (userCredential && targetLevel.user_uid === userCredential.user.uid) {
-                        stats.push("Made by you!");
-                    }
-
-                    return stats;
-                }}
+                getStats={getStats}
                 levels={filteredLevels}
                 scrollTo={scrollTo}
                 allowResume
                 elementHeight={elementHeight}
                 storeElementHeightCallback={storeElementHeightCallback}
                 indicatorIcon={IndicatorIcon.COMPLETION}
-                onRefresh={parametrizedFetchLevels}
+                onRefresh={fetchLevels}
                 overrideRefreshing={loading}
                 onEndReached={() => {
                     // If this triggers, there are no more levels to load!
@@ -409,7 +386,7 @@ export default function UserLevels({
                 styles.modal,
                 {
                     opacity: fadeModalAnim,
-                    backgroundColor: darkMode ? "rgba(0, 0, 0, 0.95)" : "rgba(255, 255, 255, 0.95)",
+                    backgroundColor: darkMode ? "rgba(0, 0, 0, 0.95)" : "rgba(255, 255, 255, 0.95)", // More opaque than the shared backdrop: the list behind is busy.
                 },
             ]}>
                 <View style={styles.section}>

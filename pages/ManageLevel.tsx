@@ -12,7 +12,7 @@ import TextStyles, { normalize } from "../TextStyles";
 import { colors, graphics } from "../Theme";
 import { calcPreviewTileSize } from "../util/board";
 import { postSolutionData, publishUserLevel, updateDocument } from "../util/database";
-import { doPageChange } from "../util/events";
+import { requestSubpage } from "../util/store";
 import { useForceRefresh } from "../util/hooks";
 import { deleteLevel, updateLevel } from "../util/loader";
 import { PageView, UserLevel } from "../util/types";
@@ -87,7 +87,7 @@ export default function ManageLevel({
 
   function handleDeleteLevel() {
     deleteLevel(level);
-    doPageChange(0);
+    requestSubpage(0);
     Toast.show({
       type: "success",
       text1: "Level deletion completed.",

@@ -2,7 +2,7 @@ import { useContext, useState } from "react";
 import InputCard from "../components/InputCard";
 import GlobalContext from "../GlobalContext";
 import { createBlankBoard } from "../util/board";
-import { doPageChange } from "../util/events";
+import { requestSubpage } from "../util/store";
 import { generateUUID } from "../util/loader";
 import { UserLevel } from "../util/types";
 
@@ -46,7 +46,7 @@ export default function CreateLevel({ createLevelCallback, existingLevelNames }:
           user_name: userData!.user_name,
         });
         setLevelTitle("");
-        doPageChange(1);
+        requestSubpage(1);
       }}
       buttonDisabled={!levelTitle || !userCredential}
     />

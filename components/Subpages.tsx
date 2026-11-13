@@ -1,12 +1,12 @@
 import { useContext, useEffect, useRef, useState } from "react";
 import GlobalContext from "../GlobalContext";
-import { Animated, ImageURISource, StyleSheet, View, Platform } from "react-native";
+import { Animated, ImageURISource, Platform, StyleSheet, View } from "react-native";
 import TabView from "react-native-bottom-tabs";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { SFSymbol } from "sf-symbols-typescript";
 import { normalize } from "../TextStyles";
 import { colors, tintFor } from "../Theme";
-import { eventEmitter, takeInitialSubpage } from "../util/events";
+import { subpageChanged, takeInitialSubpage, useAppStore } from "../util/store";
 import IconButton from "./IconButton";
 
 /** Extra bottom padding scrolling pages need so their end clears the floating iOS tab bar. */
@@ -25,6 +25,17 @@ interface Props {
   disabledPages?: boolean[],
 }
 
+/** Runs onRequest for each requestSubpage() call made while mounted. */
+function useSubpageRequests(onRequest: (index: number) => void) {
+  const request = useAppStore(state => state.subpageRequest);
+  const seenId = useRef(request?.id); // Ignore a request left over from before mounting.
+  useEffect(() => {
+    if (!request || request.id === seenId.current) return;
+    seenId.current = request.id;
+    onRequest(request.index);
+  }, [request]);
+}
+
 export default function Subpages(props: Props) {
   // iOS gets the native tab bar (Liquid Glass on iOS 26+); Android keeps the custom one.
   return Platform.OS === "ios" ? <NativeSubpages {...props} /> : <CustomSubpages {...props} />;
@@ -40,13 +51,10 @@ function NativeSubpages({ pageTabs, pageComponents, disabledPages }: Props) {
     return initial < pageComponents.length ? initial : 0;
   });
 
-  useEffect(() => {
-    const listener = eventEmitter.addListener("doPageChange", (newIndex: number) => {
-      setIndex(newIndex);
-      eventEmitter.emit("pageWasChanged");
-    });
-    return () => listener.remove();
-  }, []);
+  useSubpageRequests((newIndex) => {
+    setIndex(newIndex);
+    subpageChanged();
+  });
 
   const routes = pageTabs.map((tab, tabIndex) => ({
     key: String(tabIndex),
@@ -64,7 +72,7 @@ function NativeSubpages({ pageTabs, pageComponents, disabledPages }: Props) {
         // preventsDefault only stops the native bar from switching; JS is still told about the press.
         if (disabledPages?.[newIndex]) return;
         setIndex(newIndex);
-        eventEmitter.emit("pageWasChanged");
+        subpageChanged();
       }}
       renderScene={({ route }) => (
         // Native tab scenes have no background of their own.
@@ -99,18 +107,14 @@ function CustomSubpages({ pageTabs, pageComponents, disabledPages }: Props) {
     setAnimTo(0, () => {
       setPage(newPageState);
       setAnimTo(1);
-      eventEmitter.emit("pageWasChanged");
+      subpageChanged();
     });
   }
-
-  useEffect(() => {
-    const listener = eventEmitter.addListener("doPageChange", updatePageState);
-    return () => listener.remove();
-  }, [currentPage, setPage]);
+  useSubpageRequests(updatePageState);
 
   return (
     <>
-      <Animated.View style={styles.pageContainer(anim)}>
+      <Animated.View style={[styles.pageContainer, { opacity: anim }]}>
         {pageComponents[currentPage]}
       </Animated.View>
 
@@ -130,7 +134,7 @@ function CustomSubpages({ pageTabs, pageComponents, disabledPages }: Props) {
   );
 }
 
-const styles = StyleSheet.create<any>({
+const styles = StyleSheet.create({
   menu: {
     position: "relative",
     flexDirection: "row",
@@ -148,13 +152,12 @@ const styles = StyleSheet.create<any>({
     alignItems: "center",
     justifyContent: "center",
   },
-  pageContainer: (anim: Animated.Value) => ({
+  pageContainer: {
     flex: 1,
     width: "100%",
     height: "100%",
     flexDirection: "column",
     alignItems: "center",
     justifyContent: "center",
-    opacity: anim,
-  }),
+  },
 });

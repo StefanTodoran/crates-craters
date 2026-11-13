@@ -1,21 +1,29 @@
-import React, { useEffect, useMemo, useRef } from "react";
-import { Animated, Image, StyleProp, StyleSheet, View } from "react-native";
+import React, { memo, useEffect, useMemo, useRef } from "react";
+import { Animated, Image, ImageStyle, StyleSheet, View, ViewStyle } from "react-native";
 import { colors, graphics } from "../Theme";
 import { getIconSrc } from "../util/board";
 import { Game, findConnectedMetalComponent, isValidMove, pushIceBlock } from "../util/logic";
 import { Offset, TileType, offsetToDirection } from "../util/types";
+import { TouchAnim } from "../util/useGameInput";
 import BombBoardTile from "./BombBoardTile";
 
 const ICE_BLOCK_LINE_SIZE = 5;
 
 interface Props {
   game: Game,
-  touch: { x: number, y: number },
+  touch: TouchAnim,
   darkMode: boolean,
   tileSize: number,
 }
 
-export default function Player({
+type Side = "top" | "left" | "right" | "bottom";
+
+/**
+ * Draws the player and the drag preview: the player and any pushable tile in the drag
+ * direction follow the finger, and sliding ice blocks show their path. The drag offset
+ * comes in as Animated values, so this only re-renders when the game changes.
+ */
+export default memo(function Player({
   game,
   touch,
   darkMode,
@@ -44,10 +52,9 @@ export default function Player({
   }, [game.won]);
 
   const playerSrc = (darkMode) ? graphics.PLAYER_OUTLINED_DARK : graphics.PLAYER_OUTLINED;
-  const tileStyle = {
-    width: tileSize,
-    height: tileSize,
-  };
+  const tileStyle = { width: tileSize, height: tileSize };
+  const drag = useMemo(() => dragNodes(touch, tileSize), [touch, tileSize]);
+  const optionInnerStyle = useMemo(() => optionTileInner(optionsAnim, darkMode), [darkMode]);
 
   const [options, pushables, iceBlockPreviews] = useMemo(() => {
     // We only add selectors on adjacent tiles where the player could actually move.
@@ -74,8 +81,8 @@ export default function Player({
       // after a double-tap jump), since detaching a native-driven node doesn't reliably
       // write the static value back to the view.
       newOptions.push(
-        <View key={index} style={styles.optionTile(game.player.x + offset.dx, game.player.y + offset.dy, tileSize, shouldHighlight)}>
-          <Animated.View style={styles.optionTileInner(optionsAnim, darkMode)} />
+        <View key={index} style={optionTile(game.player.x + offset.dx, game.player.y + offset.dy, tileSize, shouldHighlight)}>
+          <Animated.View style={optionInnerStyle} />
         </View>
       );
 
@@ -87,40 +94,44 @@ export default function Player({
     });
 
     return [newOptions, newPushables, newIceBlockPreviews];
-  }, [game, tileSize, darkMode]);
+  }, [game, tileSize, darkMode, optionInnerStyle]);
 
   return (
     <>
       {!game.won && options}
 
       {/* Ice block slide path previews */}
-      {renderIceBlockPreview(iceBlockPreviews[0], tileSize, darkMode, -touch.y, "top")}
-      {renderIceBlockPreview(iceBlockPreviews[1], tileSize, darkMode, -touch.x, "left")}
-      {renderIceBlockPreview(iceBlockPreviews[2], tileSize, darkMode, touch.x, "right")}
-      {renderIceBlockPreview(iceBlockPreviews[3], tileSize, darkMode, touch.y, "bottom")}
+      {renderIceBlockPreview(iceBlockPreviews[0], tileSize, darkMode, drag, "top")}
+      {renderIceBlockPreview(iceBlockPreviews[1], tileSize, darkMode, drag, "left")}
+      {renderIceBlockPreview(iceBlockPreviews[2], tileSize, darkMode, drag, "right")}
+      {renderIceBlockPreview(iceBlockPreviews[3], tileSize, darkMode, drag, "bottom")}
 
-      {/* Pushables tiles previews */}
-      <View style={styles.adjacentTileContainer(game.player.x, game.player.y - 1, tileSize, touch.y, false, false)}>
+      {/* Pushables tiles previews: each only moves away from the player. */}
+      <Animated.View style={[styles.absolute, at(game.player.x, game.player.y - 1, tileSize), { transform: [{ translateY: drag.top.toward }] }]}>
         {pushables[0]}
-      </View>
-      <View style={styles.adjacentTileContainer(game.player.x - 1, game.player.y, tileSize, touch.x, true, false)}>
+      </Animated.View>
+      <Animated.View style={[styles.absolute, at(game.player.x - 1, game.player.y, tileSize), { transform: [{ translateX: drag.left.toward }] }]}>
         {pushables[1]}
-      </View>
-      <View style={styles.adjacentTileContainer(game.player.x + 1, game.player.y, tileSize, touch.x, true, true)}>
+      </Animated.View>
+      <Animated.View style={[styles.absolute, at(game.player.x + 1, game.player.y, tileSize), { transform: [{ translateX: drag.right.toward }] }]}>
         {pushables[2]}
-      </View>
-      <View style={styles.adjacentTileContainer(game.player.x, game.player.y + 1, tileSize, touch.y, false, true)}>
+      </Animated.View>
+      <Animated.View style={[styles.absolute, at(game.player.x, game.player.y + 1, tileSize), { transform: [{ translateY: drag.bottom.toward }] }]}>
         {pushables[3]}
-      </View>
+      </Animated.View>
 
-      <View style={styles.playerContainer(game.player.x, game.player.y, tileSize, touch.x, touch.y)}>
+      <Animated.View style={[
+        styles.absolute,
+        at(game.player.x, game.player.y, tileSize),
+        { transform: [{ translateY: drag.y }, { translateX: drag.x }, { scale: drag.scale }] },
+      ]}>
         <Image style={tileStyle} source={playerSrc} />
-      </View>
+      </Animated.View>
     </>
   );
-}
+});
 
-function getAdjacentTile(game: Game, offset: Offset, tileSize: number, tileStyle: StyleProp<any>, isValidMove: boolean) {
+function getAdjacentTile(game: Game, offset: Offset, tileSize: number, tileStyle: ImageStyle, isValidMove: boolean) {
   if (!isValidMove) {
     return <View style={tileStyle} />;
   }
@@ -190,191 +201,153 @@ function getIceBlockPreview(game: Game, offset: Offset, isValidMove: boolean): I
   return null;
 }
 
-function renderIceBlockPreview(iceBlockPreview: IceBlockPreview | null, tileSize: number, darkMode: boolean, touchMove: number, side: "top" | "left" | "right" | "bottom") {
-  if (!iceBlockPreview) return <></>;
+/** Animated nodes derived from the drag offset, built once per tile size. */
+function dragNodes(touch: TouchAnim, tileSize: number) {
+  const t = tileSize;
+  const clamp = "clamp" as const;
+  // The drag along one side's direction (positive = toward that side), capped at a tile.
+  const along = (value: Animated.Value, sign: 1 | -1) =>
+    value.interpolate({ inputRange: [-t, t], outputRange: [-t * sign, t * sign], extrapolate: clamp });
+  // How far the drag has moved toward a side, from 0 to a tile, and that as a 0..1 fraction.
+  const side = (value: Animated.Value, sign: 1 | -1) => {
+    const signed = along(value, sign);
+    return {
+      signed,
+      toward: value.interpolate(sign > 0 ?
+        { inputRange: [0, t], outputRange: [0, t], extrapolate: clamp } :
+        { inputRange: [-t, 0], outputRange: [-t, 0], extrapolate: clamp }),
+      fraction: value.interpolate(sign > 0 ?
+        { inputRange: [0, t], outputRange: [0, 1], extrapolate: clamp } :
+        { inputRange: [-t, 0], outputRange: [1, 0], extrapolate: clamp }),
+    };
+  };
 
-  const headX = ["top", "left"].includes(side) ? iceBlockPreview.topX : iceBlockPreview.bottomX;
-  const headY = ["top", "left"].includes(side) ? iceBlockPreview.topY : iceBlockPreview.bottomY;
+  return {
+    x: along(touch.x, 1),
+    y: along(touch.y, 1),
+    scale: touch.magnitude.interpolate({ inputRange: [0, t], outputRange: [0.975, 1.05], extrapolate: clamp }),
+    top: side(touch.y, -1),
+    left: side(touch.x, -1),
+    right: side(touch.x, 1),
+    bottom: side(touch.y, 1),
+  };
+}
+
+type DragNodes = ReturnType<typeof dragNodes>;
+
+function renderIceBlockPreview(preview: IceBlockPreview | null, tileSize: number, darkMode: boolean, drag: DragNodes, side: Side) {
+  if (!preview) return null;
+
+  const headX = side === "top" || side === "left" ? preview.topX : preview.bottomX;
+  const headY = side === "top" || side === "left" ? preview.topY : preview.bottomY;
+  const color = darkMode ? colors.OFF_WHITE : colors.BLUE_THEME.DARK_COLOR;
+  const { signed, fraction } = drag[side];
 
   return (
     <>
-      <View style={styles.iceBlockPreview(iceBlockPreview.topX, iceBlockPreview.topY, iceBlockPreview.width, iceBlockPreview.height, tileSize, touchMove, side, darkMode)} />
-      <View style={styles.iceBlockGhost(headX, headY, tileSize, touchMove, darkMode)} />
-      <View style={styles.iceBlockHead(headX, headY, tileSize, touchMove, side, darkMode)} />
+      <Animated.View style={iceBlockLine(preview, tileSize, signed, fraction, side, color)} />
+      <Animated.View style={iceBlockGhost(headX, headY, tileSize, fraction, color)} />
+      <Animated.View style={iceBlockHead(headX, headY, tileSize, fraction, side, color)} />
     </>
   );
 }
 
-function unsignedMax(num: number, max: number) {
-  return Math.abs(num) > max ? Math.sign(num) * max : num;
+function at(xPos: number, yPos: number, tileSize: number): ViewStyle {
+  return { left: xPos * tileSize, top: yPos * tileSize };
 }
 
-const styles = StyleSheet.create<any>({
-  // tile: (size: number) => ({
-  //   width: size,
-  //   height: size,
-  // }),
-  playerContainer: (xPos: number, yPos: number, tileSize: number, touchX: number, touchY: number) => ({
-    position: "absolute",
-    left: xPos * tileSize,
-    top: yPos * tileSize,
-    transform: [
-      {
-        translateY: unsignedMax(touchY, tileSize),
-      },
-      {
-        translateX: unsignedMax(touchX, tileSize),
-      },
-      {
-        scale: 0.975 + (Math.min(tileSize, Math.max(Math.abs(touchX), Math.abs(touchY))) / tileSize * 0.075),
-      },
-    ],
-  }),
-  adjacentTileContainer: (xPos: number, yPos: number, tileSize: number, touchMove: number, isHorizontal: boolean, clampPositive: boolean) => ({
-    position: "absolute",
-    left: xPos * tileSize,
-    top: yPos * tileSize,
-    transform: [
-      isHorizontal ? {
-        translateX: clampPositive ?
-          Math.max(0, unsignedMax(touchMove, tileSize)) :
-          Math.min(0, unsignedMax(touchMove, tileSize)),
-      } : {
-        translateY: clampPositive ?
-          Math.max(0, unsignedMax(touchMove, tileSize)) :
-          Math.min(0, unsignedMax(touchMove, tileSize)),
-      },
-    ],
-  }),
-  optionTile: (xPos: number, yPos: number, size: number, valid: boolean) => ({
+function optionTile(xPos: number, yPos: number, size: number, valid: boolean): ViewStyle {
+  return {
     position: "absolute",
     left: xPos * size,
     top: yPos * size,
     width: size,
     height: size,
     opacity: valid ? 1 : 0,
-  }),
-  optionTileInner: (anim: Animated.Value, darkMode: boolean) => ({
+  };
+}
+
+function optionTileInner(anim: Animated.Value, darkMode: boolean) {
+  return {
     width: "100%",
     height: "100%",
-    opacity: anim.interpolate({ // was originally static 0.4
-      inputRange: [0, 1],
-      outputRange: [0.75, 0.3],
-    }),
-
-    borderColor: (darkMode) ? colors.OFF_WHITE : colors.DIM_GRAY,
+    opacity: anim.interpolate({ inputRange: [0, 1], outputRange: [0.75, 0.3] }),
+    borderColor: darkMode ? colors.OFF_WHITE : colors.DIM_GRAY,
     borderStyle: "solid",
     borderWidth: 1,
+    transform: [{ scale: anim.interpolate({ inputRange: [0, 1], outputRange: [0.8, 0.95] }) }],
+  } as const;
+}
 
-    transform: [
-      {
-        scale: anim.interpolate({
-          inputRange: [0, 1],
-          outputRange: [0.8, 0.95],
-        }),
-      },
-    ],
-  }),
-  iceBlockPreview: (
-    xPos: number, yPos: number,
-    width: number, height: number,
-    tileSize: number,
-    touchMove: number,
-    side: "top" | "left" | "right" | "bottom",
-    darkMode: boolean,
-  ) => {
-    let topPos = (yPos * tileSize) + (tileSize / 2);
-    let leftPos = (xPos * tileSize) + (tileSize / 2);
+/** The line along an ice block's slide path, which shortens as the drag pulls in. */
+function iceBlockLine(
+  preview: IceBlockPreview,
+  tileSize: number,
+  signed: Animated.AnimatedInterpolation<number>,
+  fraction: Animated.AnimatedInterpolation<number>,
+  side: Side,
+  color: string,
+) {
+  const lineSize = ICE_BLOCK_LINE_SIZE;
+  let top: number | Animated.AnimatedNode = preview.topY * tileSize + tileSize / 2;
+  let left: number | Animated.AnimatedNode = preview.topX * tileSize + tileSize / 2;
+  let width: number | Animated.AnimatedNode = Math.max(lineSize, preview.width * tileSize);
+  let height: number | Animated.AnimatedNode = Math.max(lineSize, preview.height * tileSize);
 
-    const line_size = ICE_BLOCK_LINE_SIZE;
-    let lineWidth = Math.max(line_size, width * tileSize);
-    let lineHeight = Math.max(line_size, height * tileSize);
+  if (side === "top") {
+    left -= lineSize / 2;
+    top += tileSize / 4; // Leave room for the head.
+    height = Animated.subtract(height - tileSize / 4, signed);
+  } else if (side === "left") {
+    top -= lineSize / 2;
+    left += tileSize / 4;
+    width = Animated.subtract(width - tileSize / 4, signed);
+  } else if (side === "bottom") {
+    left -= lineSize / 2;
+    top = Animated.add(top, signed);
+    height = Animated.subtract(height - tileSize / 4, signed);
+  } else {
+    top -= lineSize / 2;
+    left = Animated.add(left, signed);
+    width = Animated.subtract(width - tileSize / 4, signed);
+  }
 
-    if (side === "top") {
-      // Adjust for line size
-      leftPos -= line_size / 2;
+  return { position: "absolute", top, left, width, height, backgroundColor: color, opacity: fraction } as const;
+}
 
-      // Adjust for head size
-      topPos += tileSize / 4;
-      lineHeight -= tileSize / 4;
+function iceBlockGhost(xPos: number, yPos: number, tileSize: number, fraction: Animated.AnimatedInterpolation<number>, color: string) {
+  const size = tileSize * 0.8; // Block size for pushables
+  return {
+    position: "absolute",
+    left: xPos * tileSize + tileSize * 0.1,
+    top: yPos * tileSize + tileSize * 0.1,
+    width: size,
+    height: size,
+    backgroundColor: color,
+    opacity: Animated.multiply(fraction, 0.5),
+  } as const;
+}
 
-      // Adjust for touchMove
-      lineHeight -= unsignedMax(touchMove, tileSize);
-    } else if (side === "left") {
-      topPos -= line_size / 2;
-      leftPos += tileSize / 4;
-      lineWidth -= tileSize / 4;
-      lineWidth -= unsignedMax(touchMove, tileSize);
-    } else if (side === "bottom") {
-      leftPos -= line_size / 2;
-      lineHeight -= tileSize / 4;
-      // Adjust for touchMove
-      topPos += unsignedMax(touchMove, tileSize);
-      lineHeight -= unsignedMax(touchMove, tileSize);
-    } else if (side === "right") {
-      lineWidth -= tileSize / 4;
-      topPos -= line_size / 2;
-      // Adjust for touchMove
-      leftPos += unsignedMax(touchMove, tileSize);
-      lineWidth -= unsignedMax(touchMove, tileSize);
-    }
+function iceBlockHead(xPos: number, yPos: number, tileSize: number, fraction: Animated.AnimatedInterpolation<number>, side: Side, color: string) {
+  const size = tileSize / 4;
+  return {
+    position: "absolute",
+    left: xPos * tileSize + tileSize / 2 - size,
+    top: yPos * tileSize + tileSize / 2 - size,
+    width: 0,
+    height: 0,
+    borderWidth: size,
+    borderStyle: "solid",
+    borderTopColor: side === "bottom" ? color : "transparent",
+    borderLeftColor: side === "right" ? color : "transparent",
+    borderRightColor: side === "left" ? color : "transparent",
+    borderBottomColor: side === "top" ? color : "transparent",
+    opacity: fraction,
+  } as const;
+}
 
-    return {
-      position: "absolute",
-      top: topPos,
-      left: leftPos,
-      backgroundColor: darkMode ? colors.OFF_WHITE : colors.BLUE_THEME.DARK_COLOR,
-      width: lineWidth,
-      height: lineHeight,
-      opacity: Math.max(0, unsignedMax(touchMove, tileSize)) / tileSize,
-    };
-  },
-  iceBlockGhost: (
-    xPos: number, yPos: number,
-    tileSize: number,
-    touchMove: number,
-    darkMode: boolean,
-  ) => {
-    const size = tileSize * 0.8; // Block size for pushables
-
-    let topPos = (yPos * tileSize) + (tileSize * 0.1); // Adjust for size
-    let leftPos = (xPos * tileSize) + (tileSize * 0.1); // Adjust for size
-
-    return {
-      position: "absolute",
-      left: leftPos,
-      top: topPos,
-      width: size,
-      height: size,
-      backgroundColor: darkMode ? colors.OFF_WHITE : colors.BLUE_THEME.DARK_COLOR,
-      opacity: Math.max(0, unsignedMax(touchMove, tileSize)) / tileSize * 0.5,
-    };
-  },
-  iceBlockHead: (
-    xPos: number, yPos: number,
-    tileSize: number,
-    touchMove: number,
-    side: "top" | "left" | "right" | "bottom",
-    darkMode: boolean,
-  ) => {
-    const size = tileSize / 4;
-    const topPos = (yPos * tileSize) + (tileSize / 2) - size;
-    const leftPos = (xPos * tileSize) + (tileSize / 2) - size;
-    const color = darkMode ? colors.OFF_WHITE : colors.BLUE_THEME.DARK_COLOR;
-
-    return {
-      position: "absolute",
-      left: leftPos,
-      top: topPos,
-      width: 0,
-      height: 0,
-      borderWidth: size,
-      borderStyle: "solid",
-      borderTopColor: side === "bottom" ? color : "transparent",
-      borderLeftColor: side === "right" ? color : "transparent",
-      borderRightColor: side === "left" ? color : "transparent",
-      borderBottomColor: side === "top" ? color : "transparent",
-      opacity: Math.max(0, unsignedMax(touchMove, tileSize)) / tileSize,
-    };
+const styles = StyleSheet.create({
+  absolute: {
+    position: "absolute",
   },
 });

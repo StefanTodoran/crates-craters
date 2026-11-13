@@ -1,9 +1,9 @@
 import { AudioPlayer, useAudioPlayer } from "expo-audio";
 import { useCallback, useContext, useEffect, useRef, useState } from "react";
-import { View } from "react-native";
+import { Animated, View } from "react-native";
 import { useMMKVBoolean, useMMKVNumber } from "react-native-mmkv";
 import GlobalContext, { defaultSettings } from "../GlobalContext";
-import { eventEmitter } from "./events";
+import { useAppStore } from "./store";
 import { SoundEvent } from "./logic";
 
 /**
@@ -23,20 +23,41 @@ export function useBoardPosition() {
     });
   }, []);
 
+  const pageOpenedCount = useAppStore(state => state.pageOpenedCount);
   useEffect(() => {
     // measure() doesn't see native-driven transforms until their final value is synced
     // back after the animation ends, so wait briefly before re-measuring.
-    const timers: ReturnType<typeof setTimeout>[] = [];
-    const listener = eventEmitter.addListener("pageOpened", () => {
-      timers.push(setTimeout(remeasure, 100), setTimeout(remeasure, 500));
-    });
-    return () => {
-      listener.remove();
-      timers.forEach(clearTimeout);
-    };
-  }, [remeasure]);
+    const timers = [setTimeout(remeasure, 100), setTimeout(remeasure, 500)];
+    return () => timers.forEach(clearTimeout);
+  }, [pageOpenedCount, remeasure]);
 
   return { boardRef, boardPosition, remeasure };
+}
+
+/**
+ * An in-page modal that fades in and out. The modal stays mounted (modalOpen) until
+ * its fade out finishes.
+ */
+export function useFadeModal(duration: number) {
+  const [modalOpen, setModalOpen] = useState(false);
+  const anim = useRef(new Animated.Value(0)).current;
+
+  const isOpen = useRef(false); // Flips immediately, while modalOpen waits for the fade out.
+
+  const toggleModal = useCallback(() => {
+    isOpen.current = !isOpen.current;
+    if (isOpen.current) {
+      setModalOpen(true);
+      Animated.timing(anim, { toValue: 1, duration, useNativeDriver: true }).start();
+    } else {
+      // Reopening mid-fade interrupts this animation, so the modal stays mounted.
+      Animated.timing(anim, { toValue: 0, duration, useNativeDriver: true }).start(({ finished }) => {
+        if (finished) setModalOpen(false);
+      });
+    }
+  }, [duration]);
+
+  return { modalOpen, anim, toggleModal };
 }
 
 export function useOnUnmount(callback: () => void, dependencies: React.DependencyList) {

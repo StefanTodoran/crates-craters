@@ -1,10 +1,9 @@
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
-import { FlatList, ImageSourcePropType, StyleSheet, Text, View } from "react-native";
+import { FlatList, ImageSourcePropType, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { TAB_BAR_CLEARANCE } from "../components/Subpages";
 import Toast from "react-native-toast-message";
 import EmptyList, { EmptyListProps } from "../components/EmptyList";
 import LevelCard, { IndicatorIcon } from "../components/LevelCard";
-import SimpleButton from "../components/SimpleButton";
 import GlobalContext from "../GlobalContext";
 import TextStyles, { normalize } from "../TextStyles";
 import { Theme, purpleTheme } from "../Theme";
@@ -71,6 +70,7 @@ export default function LevelSelect({
   storeElementHeightCallback,
 }: Props) {
   const { darkMode } = useContext(GlobalContext);
+  const win = useWindowDimensions();
   const [refreshing, setRefreshing] = useState(false);
   const useTheme = theme || purpleTheme;
 
@@ -101,8 +101,8 @@ export default function LevelSelect({
   }, [scrollTo, loadedLevels]);
 
   const doRefresh = useCallback(() => {
+    if (!onRefresh) return;
     setRefreshing(true);
-    // @ts-expect-error We won't call doRefresh if onRefresh isn't defined.
     onRefresh().then((success) => {
       setRefreshing(false);
       if (success) {
@@ -121,19 +121,30 @@ export default function LevelSelect({
     });
   }, [onRefresh]); // onRefresh closes over the caller's current filters, so it must stay fresh.
 
-  const openLevel = useCallback((levelIndex: number) => {
-    playLevelCallback(levels[levelIndex].uuid, levelIndex);
-    viewCallback(PageView.PLAY);
-  }, [levels]);
+  // Card callbacks are stable (they take the card's index and read current props
+  // through this ref), so memoized cards don't re-render when the parent does.
+  const latest = useRef({ levels, playLevelCallback, resumeLevelCallback, viewCallback, secondButtonProps });
+  latest.current = { levels, playLevelCallback, resumeLevelCallback, viewCallback, secondButtonProps };
 
-  const resumeLevel = useCallback(() => {
-    resumeLevelCallback && resumeLevelCallback();
+  const openLevel = useCallback((levelIndex: number) => {
+    const { levels, playLevelCallback, viewCallback } = latest.current;
+    playLevelCallback(levels[levelIndex].uuid, levelIndex);
     viewCallback(PageView.PLAY);
   }, []);
 
+  const resumeLevel = useCallback(() => {
+    latest.current.resumeLevelCallback?.();
+    latest.current.viewCallback(PageView.PLAY);
+  }, []);
+
   const secondButtonOnPress = useCallback((levelIndex: number) => {
-    secondButtonProps!.callback!(levels[levelIndex].uuid, levelIndex);
-  }, [levels]);
+    const { levels, secondButtonProps } = latest.current;
+    secondButtonProps?.callback?.(levels[levelIndex].uuid, levelIndex);
+  }, []);
+
+  // getItemLayout offsets must include everything above the first card.
+  const [headerHeight, setHeaderHeight] = useState(0);
+  const listTopPadding = win.width * 0.05; // paddingVertical "5%" resolves against the list's width.
 
   return (
     <>
@@ -146,7 +157,7 @@ export default function LevelSelect({
         style={{ opacity: 0 }}
       >
         <LevelCard
-          playCallback={() => { }}
+          onPlay={() => { }}
           levelIndex={0}
           level={levels[0]}
           darkMode={darkMode}
@@ -178,7 +189,8 @@ export default function LevelSelect({
             setLoadedLevels(Math.min(levels.length, loadedLevels + 10));
             onEndReached && onEndReached();
           }}
-          ListHeaderComponent={headerComponent}
+          ListHeaderComponent={headerComponent &&
+            <View onLayout={(event) => setHeaderHeight(event.nativeEvent.layout.height)}>{headerComponent}</View>}
           ListEmptyComponent={<EmptyList
             {...emptyListProps}
             onPress={emptyListProps.onPress || doRefresh}
@@ -192,38 +204,30 @@ export default function LevelSelect({
           onRefresh={onRefresh ? doRefresh : undefined}
 
           renderItem={({ item, index }) => {
-            const playCallback = () => openLevel(index);
-            const sbCallback = () => secondButtonOnPress(index);
-
-            const isLocked = isOfficial && index > lastBeatenLevel + 1;
-
-            let showResumeOption = item.uuid === scrollTo;
-            if (!allowResume) showResumeOption = false;
+            const evaluate = <T,>(value: T | ((uuid: string, index: number) => T) | undefined) =>
+              typeof value === "function" ? (value as (uuid: string, index: number) => T)(item.uuid, index) : value;
 
             return <LevelCard
-              playCallback={showResumeOption ? undefined : playCallback}
-              resumeCallback={showResumeOption ? resumeLevel : undefined}
-              stats={getStats && getStats(item)}
+              onPlay={openLevel}
+              onResume={resumeLevel}
+              showResume={allowResume && item.uuid === scrollTo}
+              stats={getStats?.(item)?.join("\n")}
               levelIndex={index}
-              level={displayLevels[index]}
+              level={item}
               darkMode={darkMode}
               useTheme={useTheme}
               noNumber={noNumber}
               indicatorIcon={indicatorIcon}
-              isLocked={isLocked}
-            >
-              {secondButtonProps && <SimpleButton
-                text={typeof secondButtonProps.text === "function" ? secondButtonProps.text(item.uuid, index) : secondButtonProps.text}
-                disabled={typeof secondButtonProps.disabled === "function" ? secondButtonProps.disabled(item.uuid, index) : secondButtonProps.disabled}
-                icon={secondButtonProps.icon}
-                onPress={sbCallback}
-                theme={useTheme}
-              />}
-            </LevelCard>
+              isLocked={isOfficial && index > lastBeatenLevel + 1}
+              secondButtonText={evaluate(secondButtonProps?.text)}
+              secondButtonIcon={secondButtonProps?.icon}
+              secondButtonDisabled={evaluate(secondButtonProps?.disabled)}
+              onSecondButton={secondButtonProps ? secondButtonOnPress : undefined}
+            />;
           }}
           keyExtractor={item => item.uuid}
           getItemLayout={(_data, index) => (
-            { length: elementHeight, offset: elementHeight * index, index }
+            { length: elementHeight, offset: listTopPadding + headerHeight + elementHeight * index, index }
           )}
           onLayout={() => {
             if (scrollIndex) scrollRef.current?.scrollToIndex({ index: scrollIndex, animated: false });

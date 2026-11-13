@@ -3,8 +3,8 @@ import * as NavigationBar from "expo-navigation-bar";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import { UserCredential, onAuthStateChanged, signInAnonymously, signInWithEmailAndPassword } from "firebase/auth";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { Animated, Appearance, BackHandler, Dimensions, Platform, StatusBar as RNStatusBar, StyleSheet, View } from "react-native";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Animated, Appearance, BackHandler, Platform, StatusBar as RNStatusBar, StyleSheet, View, useWindowDimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Toast from "react-native-toast-message";
 import Header from "./components/Header";
@@ -19,15 +19,14 @@ import StorePage from "./pages/StorePage";
 import ViewSolution from "./pages/ViewSolution";
 import { colors } from "./Theme";
 import { UserAccountDocument, checkForOfficialLevelUpdates, getUserData } from "./util/database";
-import { doPageChange, doPageOpened, eventEmitter, setInitialSubpage, setPageAnimating } from "./util/events";
 import { auth } from "./util/firebase";
 import { useBooleanSetting, useNumberSetting } from "./util/hooks";
-import { createLevel, getData, getLevelData, getStoredLevels, metadataKeys, storage } from "./util/loader";
-import { Game, initializeGameObj } from "./util/logic";
+import { createLevel, getData, getLevelData, metadataKeys, storage, syncLevelsWithStorage } from "./util/loader";
+import { usePlaySession } from "./util/playSession";
+import { setAppState, setEditorLevel, updateNotificationCount, useAppStore } from "./util/store";
 import { toastConfig } from "./util/toasts";
+import { usePageNavigation } from "./util/usePageNavigation";
 import { Level, PageView, PlayMode, SharedLevel, UserLevel } from "./util/types";
-
-const win = Dimensions.get("window");
 
 /**
  * App is the main entry point into the application. App contains global state,
@@ -74,60 +73,7 @@ export default function App() {
   }, [fontsLoaded]);
 
   const insets = useSafeAreaInsets();
-
-  const pageAnim = useRef(new Animated.Value(0)).current;
-  const setAnimTo = (animState: number, callback?: () => void) => {
-    // Make sure than 0 <= animState <= 1, interpolated styles assume on this.
-    Animated.timing(pageAnim, {
-      toValue: animState,
-      duration: 300,
-      useNativeDriver: true
-    }).start(callback);
-  }
-
-  const [view, setView] = useState(PageView.MENU);
-  const [scrollToBottom, setScrollToBottom] = useState(false);
-
-  useEffect(() => {
-    const listener = eventEmitter.addListener("pageWasChanged", () => setScrollToBottom(false));
-    return () => listener.remove();
-  }, []);
-
-  const pendingOpen = useRef<(() => void) | undefined>(undefined);
-  useEffect(() => {
-    const start = pendingOpen.current;
-    if (!start) return;
-    pendingOpen.current = undefined;
-    // Wait one frame after the commit so the page is actually on screen.
-    requestAnimationFrame(start);
-  }, [view]);
-
-  const openPageView = useCallback((newView: PageView, pageNum?: number, sameView?: boolean) => {
-    if (pageNum !== undefined && !sameView) {
-      // The page mounts fresh, so its Subpages can start on the right tab instead of
-      // sliding in tab 0 and cross-fading after the open animation.
-      setInitialSubpage(pageNum);
-    }
-    setPageAnimating();
-    const startOpen = () => setAnimTo(1, () => {
-      if (pageNum !== undefined && sameView) doPageChange(pageNum);
-      doPageOpened();
-    });
-    if (sameView) {
-      startOpen(); // Already mounted, nothing to wait for.
-    } else {
-      // Start the slide only once the new page has rendered. The slide runs on the
-      // native driver, so starting it immediately let it finish while JS was still
-      // mounting the page, leaving an empty panel that filled in at the end.
-      pendingOpen.current = startOpen;
-      setView(newView);
-    }
-
-    // Non-standard play modes are set when calling App.tsx to 
-    // begin play, and therefore should be cleared when play is left.
-    if (newView !== PageView.PLAY) setPlayMode(PlayMode.STANDARD);
-  }, []);
-
+  const win = useWindowDimensions();
 
   const [darkMode, setDarkMode] = useBooleanSetting("darkMode");
   // Native views (the iOS tab bar's glass, system controls) follow the app's own
@@ -137,8 +83,8 @@ export default function App() {
   const [doubleTapDelay, setTapDelay] = useNumberSetting("doubleTapDelay");
   const [playAudio, setAudioMode] = useBooleanSetting("playAudio");
 
-  const toggleDarkMode = () => setDarkMode(darkMode => !darkMode);
-  const toggleAudioMode = () => setAudioMode(playAudio => !playAudio);
+  const toggleDarkMode = useCallback(() => setDarkMode(darkMode => !darkMode), []);
+  const toggleAudioMode = useCallback(() => setAudioMode(playAudio => !playAudio), []);
 
   useEffect(() => {
     if (Platform.OS !== "android") return;
@@ -147,9 +93,12 @@ export default function App() {
     NavigationBar.setBackgroundColorAsync("transparent");
   }, []);
 
-  const [levels, setLevels] = useState<Level[]>([]);
-  const [userLevels, setUserLevels] = useState<SharedLevel[]>([]); // We store this here so that the fetch doesn't need to be called every time the shared levels page is mounted.
-  const [notificationCounts, setNotificationCounts] = useState([0, 0, 0, 0]);
+  const levels = useAppStore(state => state.levels);
+  const editorLevel = useAppStore(state => state.editorLevel);
+  const notificationCounts = useAppStore(state => state.notificationCounts);
+  const scrollToBottom = useAppStore(state => state.scrollToBottom);
+
+  const [userLevels, setUserLevels] = useState<SharedLevel[]>([]); // Kept here so the shared levels fetch isn't redone every time that page mounts.
   const [userCredential, setUserCredential] = useState<UserCredential>();
   const [userData, setUserData] = useState<UserAccountDocument | null>();
 
@@ -192,160 +141,118 @@ export default function App() {
         if (String(error?.message).startsWith("No document")) setUserData(null);
         else console.error("Failed to fetch user data:", error);
       });
-    // TODO: Put a Toast message here? What to do if fail?
   }, [userCredential]);
 
-  const syncLevelStateWithStorage = useRef((_uuid?: string) => { });
-  const updateNotificationCounts = useRef((_index: number, _change: number) => { });
-
-  const [playLevel, setPlayLevel] = useState<Level>(); // The level currently being played.
-  const [currentGame, setGameState] = useState<Game>(); // The game state of the level being played.
-  const [gameHistory, setGameHistory] = useState<Game[]>([]); // The past game states, used for undoing moves.
-  const [editorLevel, setEditorLevel] = useState<UserLevel>(); // The level object being edited.
-  const [playMode, setPlayMode] = useState<PlayMode>(PlayMode.STANDARD); // Different level types may require slightly different behavior.
-
   useEffect(() => {
-    syncLevelStateWithStorage.current = (uuid?: string) => {
-      if (!uuid) {
-        const storedLevels = getStoredLevels();
-        setLevels(storedLevels);
-
-        // Clear the editor level only if it no longer exists (e.g. it was deleted).
-        if (editorLevel && !storedLevels.some(level => level.uuid === editorLevel.uuid)) {
-          setEditorLevel(undefined);
-        }
-        return;
-      } // else if uuid is defined:
-
-      const updatedLevel = getLevelData(uuid);
-      if (!updatedLevel) return;
-      setLevels(prev => prev.map(level => level.uuid === updatedLevel.uuid ? updatedLevel : level));
-
-      // Refresh this additional state variable if necessary.
-      if (uuid === editorLevel?.uuid) setEditorLevel(updatedLevel as UserLevel);
-    };
-  }, [levels, editorLevel]);
-
-  useEffect(() => {
-    updateNotificationCounts.current = (index: number, change: number) => {
-      const newNotificationCounts = [...notificationCounts];
-      if (change === 0) newNotificationCounts[index] = 0;
-      else newNotificationCounts[index] += change;
-      setNotificationCounts(newNotificationCounts);
-    };
-  }, [notificationCounts]);
-
-  useEffect(() => {
-    syncLevelStateWithStorage.current();
+    syncLevelsWithStorage();
     checkForOfficialLevelUpdates()
       .then((numUpdated) => {
-        updateNotificationCounts.current(0, numUpdated);
-        syncLevelStateWithStorage.current();
+        updateNotificationCount(0, numUpdated);
+        syncLevelsWithStorage();
       })
       // Expected when offline: keep using the locally stored levels.
       .catch((error) => console.warn("Failed to check for official level updates:", error));
-
-    const handleSyncRequest = (uuid?: string) => syncLevelStateWithStorage.current(uuid);
-    const syncListener = eventEmitter.addListener("doStateStorageSync", handleSyncRequest);
-
-    const handleNotificationRequest = (event: any) => updateNotificationCounts.current(event.index, event.change);
-    const notificationListener = eventEmitter.addListener("doNotificationsUpdate", handleNotificationRequest);
-
-    return () => {
-      syncListener.remove();
-      notificationListener.remove();
-    }
   }, []);
+
+  const [session, dispatch] = usePlaySession(); // The level being played, its game state and undo history.
+  const playLevel = session.level;
+
+  const playLevelFromObj = useCallback((level: Level) => dispatch({ type: "load", level }), []);
 
   const changePlayLevel = useCallback((uuid: string) => {
     const levelObject = getLevelData(uuid);
     if (levelObject) playLevelFromObj(levelObject);
   }, []);
 
-  const playLevelFromObj = useCallback((level: Level) => {
-    setPlayLevel(level);
-    const newGame = initializeGameObj(level);
-    setGameState(newGame);
-    setGameHistory([]);
-  }, []);
+  // Only walk official levels (in the order the Levels page shows them): the full list
+  // also holds custom levels, which "Next Level" would otherwise load in STANDARD mode
+  // and then post official solution data for.
+  const officialLevels = useMemo(() => levels.filter(level => level.official), [levels]);
+  const ownLevels = useMemo(
+    () => levels.filter(level => !level.official && level.user_name === userData?.user_name),
+    [levels, userData?.user_name],
+  );
 
   const getNextLevel = useCallback(() => {
-    // Only walk official levels (in the order the Levels page shows them): the full
-    // list also holds custom levels, which "Next Level" would otherwise load in
-    // STANDARD mode and then post official solution data for.
-    const officialLevels = levels.filter(level => level.official);
-    const nextIndex = officialLevels.findIndex(level => level.uuid === playLevel!.uuid) + 1;
+    const nextIndex = officialLevels.findIndex(level => level.uuid === playLevel?.uuid) + 1;
     const nextLevel = nextIndex > 0 ? officialLevels[nextIndex] : undefined;
     if (nextLevel) playLevelFromObj(nextLevel);
-  }, [levels, playLevel]);
+  }, [officialLevels, playLevel]);
 
   const startEditingLevel = useCallback((uuid: string) => {
-    const levelObject = getLevelData(uuid);
-    setEditorLevel(levelObject as UserLevel);
+    setEditorLevel(getLevelData(uuid) as UserLevel);
   }, []);
 
-  // Declared after the state and callbacks it reads, so they can be listed as
-  // dependencies (previously only [view], which left playLevel/playMode stale).
-  const switchView = useCallback((newView: PageView, pageNum?: number) => {
-    setScrollToBottom(false);
-    if (view === PageView.PLAY && newView === PageView.EDITOR) {
-      // If we are coming from PageView.PLAY, playLevel must not be undefined.
-      startEditingLevel(playLevel!.uuid);
-    }
+  // Read by the navigation callbacks, which are created once.
+  const sessionRef = useRef(session);
+  sessionRef.current = session;
 
-    if (view === PageView.PLAY && newView === PageView.LEVELS && playMode === PlayMode.SHARED) {
-      // If we were playing a shared level and are now returning to the search page, we need to clear the userLevels state to trigger a refresh on mount..
-      setUserLevels([]);
-    }
+  const { view, pageAnim, switchView } = usePageNavigation({
+    onNavigate: (from, to) => {
+      setAppState({ scrollToBottom: false });
+      const { level, mode } = sessionRef.current;
 
-    if (newView < notificationCounts.length) {
-      updateNotificationCounts.current(newView, 0);
-    }
+      // Editing from the play page (playtesting) edits the level being played.
+      if (from === PageView.PLAY && to === PageView.EDITOR && level) startEditingLevel(level.uuid);
 
-    if (newView === PageView.MENU) { // PAGE -> MENU
-      setAnimTo(0, () => setView(newView));
-    } else if (view === PageView.MENU) { // MENU -> PAGE
-      openPageView(newView, pageNum);
-    } else { // PAGE -> PAGE
-      setAnimTo(0, () => openPageView(newView, pageNum, newView === view));
-    }
-  }, [view, playLevel, playMode, notificationCounts, startEditingLevel, openPageView]);
+      // Returning from a shared level to the search page: clear the list so it refetches.
+      if (from === PageView.PLAY && to === PageView.LEVELS && mode === PlayMode.SHARED) setUserLevels([]);
+
+      if (to < notificationCounts.length) updateNotificationCount(to, 0);
+    },
+    // Non-standard play modes are set when play begins, so clear them once play is left.
+    onPageOpen: (newView) => {
+      if (newView !== PageView.PLAY) dispatch({ type: "setMode", mode: PlayMode.STANDARD });
+    },
+  });
 
   const createNewLevel = useCallback((level: UserLevel) => {
-    setEditorLevel(level);
     createLevel(level);
-    const levels = getStoredLevels();
-    setLevels(levels);
+    setEditorLevel(level);
+    syncLevelsWithStorage();
   }, []);
 
   const playSharedLevel = useCallback((level: SharedLevel | undefined) => {
     if (level) playLevelFromObj(level); // If undefined we simply resume.
-    setPlayMode(PlayMode.SHARED);
+    dispatch({ type: "setMode", mode: PlayMode.SHARED });
   }, []);
 
   const beginPlaytesting = useCallback((uuid: string) => {
     changePlayLevel(uuid);
-    setPlayMode(PlayMode.PLAYTEST);
+    dispatch({ type: "setMode", mode: PlayMode.PLAYTEST });
   }, []);
 
-  useEffect(() => { // TODO: update this method?
-    const backAction = () => {
+  useEffect(() => {
+    const subscription = BackHandler.addEventListener("hardwareBackPress", () => {
       if (view === PageView.PLAY || view === PageView.EDITOR) return true;
       if (view !== PageView.MENU) switchView(PageView.MENU);
       return true;
-    }
-
-    const subscription = BackHandler.addEventListener("hardwareBackPress", backAction);
+    });
     return () => subscription.remove();
   }, [view]);
+
+  const returnHome = useCallback(() => switchView(PageView.MENU), []);
+  const requestScrollToBottom = useCallback(() => {
+    setAppState({ scrollToBottom: false });
+    setTimeout(() => setAppState({ scrollToBottom: true }), 100);
+  }, []);
 
   // This is used so that the level select component only needs to calculate
   // the level select element height one time.
   const [levelElementHeight, setElementHeight] = useState(0);
 
+  // Memoized so context consumers (every board tile, button, etc.) don't re-render
+  // whenever App does, e.g. on every game move.
+  const globalContext = useMemo(
+    () => ({ darkMode, dragSensitivity, doubleTapDelay, playAudio, userCredential, userData }),
+    [darkMode, dragSensitivity, doubleTapDelay, playAudio, userCredential, userData],
+  );
+
+  const panel = useMemo(() => panelStyle(pageAnim, darkMode, win.height), [darkMode, win.height]);
+
   if (!fontsLoaded) return <></>;
   return (
-    <GlobalContext.Provider value={{ darkMode, dragSensitivity, doubleTapDelay, playAudio, userCredential, userData }}>
+    <GlobalContext.Provider value={globalContext}>
       {/* Menu and the page panel's background extend edge-to-edge on iOS (matching
           Android); only the page contents and toasts are inset into the safe area. */}
       <View style={styles.container}>
@@ -353,7 +260,7 @@ export default function App() {
         <Menu notificationCounts={notificationCounts} openPage={switchView} />
 
         <Animated.View
-          style={styles.modal(pageAnim, darkMode)}
+          style={panel}
           pointerEvents={view === PageView.MENU ? "none" : "auto"}
         >
           {/* Static insets instead of a SafeAreaView: this panel is translated while it
@@ -363,11 +270,8 @@ export default function App() {
           {![PageView.PLAY, PageView.EDITOR, PageView.SOLUTION].includes(view) && <View style={styles.header}>
             <Header
               pageView={view}
-              returnHome={() => switchView(PageView.MENU)}
-              scrollToBottom={() => {
-                setScrollToBottom(false);
-                setTimeout(() => setScrollToBottom(true), 100);
-              }}
+              returnHome={returnHome}
+              scrollToBottom={requestScrollToBottom}
             />
           </View>}
 
@@ -377,8 +281,8 @@ export default function App() {
                 viewCallback={switchView}
                 playLevelCallback={changePlayLevel}
                 playSharedLevelCb={playSharedLevel}
-                scrollTo={scrollToBottom ? "last" : (!currentGame?.won ? playLevel?.uuid : undefined)}
-                levels={levels.filter(lvl => lvl.official)}
+                scrollTo={scrollToBottom ? "last" : (!session.game?.won ? playLevel?.uuid : undefined)}
+                levels={officialLevels}
                 userLevels={userLevels}
                 setUserLevels={setUserLevels}
                 elementHeight={levelElementHeight}
@@ -386,16 +290,15 @@ export default function App() {
               />
             }
 
-            {view === PageView.PLAY &&
+            {view === PageView.PLAY && playLevel && session.game &&
               <PlayLevel
                 viewCallback={switchView}
                 nextLevelCallback={getNextLevel}
-                gameStateCallback={setGameState}
-                gameHistoryCallback={setGameHistory}
-                level={playLevel!}
-                game={currentGame!}
-                history={gameHistory!}
-                mode={playMode}
+                dispatch={dispatch}
+                level={playLevel}
+                game={session.game}
+                canUndo={session.checkpoints.length > 0}
+                mode={session.mode}
               />
             }
 
@@ -405,7 +308,7 @@ export default function App() {
                 playLevelCallback={beginPlaytesting}
                 startEditingCallback={startEditingLevel}
                 createNewLevelCallback={createNewLevel}
-                levels={levels.filter(lvl => !lvl.official && lvl.user_name === userData?.user_name)}
+                levels={ownLevels}
                 editorLevel={editorLevel}
                 elementHeight={levelElementHeight}
                 storeElementHeightCallback={setElementHeight}
@@ -461,33 +364,8 @@ export default function App() {
   );
 }
 
-const styles = StyleSheet.create<any>({
-  container: {
-    flex: 1,
-  },
-  safeArea: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  page: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    width: win.width,
-  },
-  // No opacity here: the header already fades with its parent modal, and a second
-  // opacity on the same value made it lag the panel (effective opacity anim²).
-  header: {
-    paddingTop: RNStatusBar.currentHeight,
-    flexDirection: "row",
-    justifyContent: "center",
-    paddingBottom: "2%",
-    width: win.width,
-    borderBottomWidth: 1,
-    borderColor: colors.DIM_GRAY_TRANSPARENT(0.2),
-  },
-  modal: (animState: Animated.Value, darkMode: boolean) => ({
+function panelStyle(animState: Animated.Value, darkMode: boolean, screenHeight: number) {
+  return {
     ...StyleSheet.absoluteFillObject,
     overflow: "hidden", // Clip children to the animated rounded corners.
     alignItems: "center",
@@ -503,8 +381,37 @@ const styles = StyleSheet.create<any>({
     transform: [{
       translateY: animState.interpolate({
         inputRange: [0, 1],
-        outputRange: [Platform.OS === "ios" ? win.height : win.height * 0.2, 0],
+        outputRange: [Platform.OS === "ios" ? screenHeight : screenHeight * 0.2, 0],
       }),
     }],
-  }),
+  } as const;
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  safeArea: {
+    flex: 1,
+    width: "100%",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  page: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    width: "100%",
+  },
+  // No opacity here: the header already fades with its parent modal, and a second
+  // opacity on the same value made it lag the panel (effective opacity anim²).
+  header: {
+    paddingTop: RNStatusBar.currentHeight,
+    flexDirection: "row",
+    justifyContent: "center",
+    paddingBottom: "2%",
+    width: "100%",
+    borderBottomWidth: 1,
+    borderColor: colors.DIM_GRAY_TRANSPARENT(0.2),
+  },
 });

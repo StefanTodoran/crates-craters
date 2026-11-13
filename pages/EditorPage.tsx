@@ -6,7 +6,7 @@ import { IndicatorIcon } from "../components/LevelCard";
 import Subpages, { SubpageTab } from "../components/Subpages";
 import GlobalContext from "../GlobalContext";
 import { colors, graphics } from "../Theme";
-import { doPageChange } from "../util/events";
+import { requestSubpage } from "../util/store";
 import { Level, PageView, UserLevel } from "../util/types";
 import CreateLevel from "./CreateLevel";
 import LevelSelect from "./LevelSelect";
@@ -57,7 +57,7 @@ export default function EditorPage({
         icon: graphics.HAMMER_ICON_RED,
         callback: (uuid: string) => {
           startEditingCallback(uuid);
-          doPageChange(1);
+          requestSubpage(1);
         },
       }}
       levels={!!userCredential ? levels : []}

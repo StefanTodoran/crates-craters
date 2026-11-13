@@ -1,7 +1,6 @@
 import { DocumentData, DocumentReference, Query, QuerySnapshot, Timestamp, WhereFilterOp, addDoc, arrayUnion, collection, doc, getCountFromServer, getDoc, getDocs, increment, limit, orderBy, query, runTransaction, setDoc, updateDoc, where, writeBatch } from "firebase/firestore";
-import { doStateStorageSync } from "./events";
 import { auth, db } from "./firebase";
-import { compressBoardData, getData, getLocalUserData, getStoredLevelCount, metadataKeys, multiStoreLevels, parseCompressedBoardData, setData } from "./loader";
+import { compressBoardData, getData, getLocalUserData, getStoredLevelCount, metadataKeys, multiStoreLevels, parseCompressedBoardData, setData, syncLevelsWithStorage } from "./loader";
 import { Direction, OfficialLevel, SharedLevel, Tutorial, UserLevel } from "./types";
 
 import { User, UserCredential, deleteUser } from "firebase/auth";
@@ -78,7 +77,7 @@ export async function refreshLevelsFromServer(): Promise<boolean> {
   if (levels.length === 0) return false; // For some reason firestore getDocs returns an empty snapshot instead of failing when offline.
 
   multiStoreLevels(levels);
-  doStateStorageSync();
+  syncLevelsWithStorage();
   return true;
 }
 

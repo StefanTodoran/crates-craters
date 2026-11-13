@@ -1,6 +1,6 @@
 import { MMKV } from "react-native-mmkv";
 import { FlatBoard } from "./board";
-import { doNotificationsUpdate, doStateStorageSync } from "./events";
+import { setAppState, updateNotificationCount } from "./store";
 import { countInstancesInBoard } from "./logic";
 import { BombTile, Direction, Level, LevelObjectType, LocalUserData, OfficialLevel, OneWayTile, TileType, UserLevel, isLevelWellFormed } from "./types";
 
@@ -135,7 +135,7 @@ export function createLevel(level: UserLevel) {
 
   // TODO: All state storage sync functions could maybe be replaced with
   // a number of event listeners on MMKV.
-  doStateStorageSync(level.uuid);
+  syncLevelsWithStorage(level.uuid);
 }
 
 export function updateLevel(updatedLevel: UserLevel, boardChange: boolean = true) {
@@ -157,7 +157,7 @@ export function updateLevel(updatedLevel: UserLevel, boardChange: boolean = true
   }
 
   setData(level.uuid, level);
-  doStateStorageSync(level.uuid);
+  syncLevelsWithStorage(level.uuid);
 }
 
 export function deleteLevel(level: Level, keySet: metadataKeys = metadataKeys.customLevelKeys) {
@@ -172,7 +172,7 @@ export function deleteLevel(level: Level, keySet: metadataKeys = metadataKeys.cu
     console.error(`Attempted delete of level with uuid ${level.uuid} but no corresponding key was found in "${keySet}"!`)
   }
 
-  doStateStorageSync();
+  syncLevelsWithStorage();
 }
 
 export function multiStoreLevels(levels: Level[]) {
@@ -208,13 +208,13 @@ export function markLevelCompleted(uuid: string, moveHistory: Direction[]) {
   level.completed = true;
 
   setData(uuid, level);
-  doStateStorageSync(uuid);
+  syncLevelsWithStorage(uuid);
 
   if (level.official && !wasCompleted) {
     // We only want to give coins for the first time an official level is completed.
     const gain = countInstancesInBoard(level.board, TileType.COIN);
     modifyCoinBalance(gain);
-    doNotificationsUpdate(2, 1);
+    updateNotificationCount(2, 1);
   }
 }
 
@@ -341,3 +341,26 @@ export function generateUUID() {
 // Potholes (lots of craters)
 // Demolition Man (no craters only bombs)
 // Payday (tons of coins)
+
+/**
+ * Reloads levels from storage after it changes: one level by uuid, or all of them.
+ * Keeps the editor's level in step, and clears it if it was deleted.
+ */
+export function syncLevelsWithStorage(uuid?: string) {
+  if (!uuid) {
+    const levels = getStoredLevels();
+    setAppState(({ editorLevel }) => ({
+      levels,
+      editorLevel: editorLevel && levels.some(level => level.uuid === editorLevel.uuid) ? editorLevel : undefined,
+    }));
+    return;
+  }
+
+  const updated = getLevelData(uuid);
+  if (!updated) return;
+  setAppState(({ levels, editorLevel }) => ({
+    levels: levels.map(level => level.uuid === uuid ? updated : level),
+    editorLevel: editorLevel?.uuid === uuid ? updated as UserLevel : editorLevel,
+  }));
+}
+

@@ -1,5 +1,5 @@
-import { useContext, useMemo } from "react";
-import { Dimensions, Image, Platform, StyleSheet, Text, View } from "react-native";
+import { memo, useContext, useMemo } from "react";
+import { Image, ImageStyle, Platform, StyleSheet, Text, TextStyle, View, ViewStyle, useWindowDimensions } from "react-native";
 import GlobalContext from "../GlobalContext";
 import { colors } from "../Theme";
 import { TileIcon } from "../assets/Icons";
@@ -9,8 +9,6 @@ import { findConnectedMetalComponent, isPushable, Position } from "../util/logic
 import { BombTile, FlatTile, LayeredTile, TileType } from "../util/types";
 import DiamondGlint from "./DiamondGlint";
 
-const win = Dimensions.get("window");
-
 interface Props {
   board: FlatBoard | LayeredBoard,
   playerPosition?: Position,  // If provided, this means the adjacent tiles will be displayed by the player component.
@@ -18,13 +16,19 @@ interface Props {
   children?: React.ReactNode,
 }
 
-export default function GameBoard({
+/**
+ * Draws a board. Memoized: on the play page, everything that moves (the player, drag
+ * previews, jump indicators) is drawn in an overlay instead of as children, so the
+ * board only re-renders when the board or player position changes.
+ */
+export default memo(function GameBoard({
   board,
   playerPosition,
   overrideTileSize,
   children,
 }: Props) {
   const { darkMode } = useContext(GlobalContext);
+  const win = useWindowDimensions();
 
   const tileSize = overrideTileSize ? overrideTileSize : calcBoardTileSize(board.width, board.height, win);
   const useSvg = Platform.OS === "ios";
@@ -95,8 +99,12 @@ export default function GameBoard({
       return <View key={j} style={styles.tile(bgColor, tileSize)} />;
     }
 
-    // This should never happen, because it would only occur if tile.id is TileType.EMPTY which is handled above.
-    if (!iconSrc) throw new Error("Invalid tile! Tile: " + tile);
+    // Only empty tiles lack an icon, and those are handled above. Draw unknown tiles
+    // (e.g. from a newer app version) as empty rather than crashing the page.
+    if (!iconSrc) {
+      console.warn("No icon for tile:", JSON.stringify(tile));
+      return <View key={j} style={styles.tile(bgColor, tileSize)} />;
+    }
 
     const tileGraphic = useSvg ?
       <TileIcon key={j} bgColor={bgColor} tileSize={tileSize} tileData={tile} /> :
@@ -155,7 +163,7 @@ export default function GameBoard({
       {children}
     </View>
   );
-}
+});
 
 function isEven(num: number) { return num % 2 === 0; }
 
@@ -172,7 +180,7 @@ function willPlayerComponentHandleRender(_board: LayeredBoard, x: number, y: num
 //   return (dx === 1 && dy === 0) || (dx === 0 && dy === 1);
 // }
 
-const styles = StyleSheet.create<any>({
+const staticStyles = StyleSheet.create({
   board: {
     position: "relative",
     borderWidth: 1,
@@ -189,21 +197,28 @@ const styles = StyleSheet.create<any>({
   absolute: {
     position: "absolute",
   },
-  wallTile: (bgColor: string, borderColor: string, size: number) => ({
+  bombContainer: {
+    paddingTop: "17.5%",
+    paddingRight: "5%",
+  },
+});
+
+const styles = {
+  ...staticStyles,
+  wallTile: (bgColor: string, borderColor: string, size: number): ViewStyle => ({
     width: size,
     height: size,
     backgroundColor: bgColor,
     borderColor: borderColor,
     borderStyle: "solid",
-    // borderWidth: 5,
   }),
-  tile: (bgColor: string, size: number, rotation: number = 0) => ({
+  tile: (bgColor: string, size: number, rotation: number = 0): ImageStyle & ViewStyle => ({
     width: size,
     height: size,
     backgroundColor: bgColor,
     transform: [{ rotate: `${rotation}deg` }],
   }),
-  entityContainer: (size: number) => ({
+  entityContainer: (size: number): ViewStyle => ({
     position: "absolute",
     width: size,
     height: size,
@@ -212,14 +227,10 @@ const styles = StyleSheet.create<any>({
     justifyContent: "center",
     alignItems: "center",
   }),
-  bombContainer: {
-    paddingTop: "17.5%",
-    paddingRight: "5%",
-  },
-  bombText: (size: number) => ({
+  bombText: (size: number): TextStyle => ({
     fontSize: size * 0.3,
     fontFamily: "Montserrat-Regular",
     fontWeight: "normal",
     color: "white",
   }),
-});
+};

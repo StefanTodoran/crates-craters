@@ -178,3 +178,7 @@ const mainColors = {
 // EXPORTING
 export let colors = mainColors;
 export let graphics = mainGraphics;
+/** The translucent backdrop behind in-page modals (pause menu, tool picker, win screen). */
+export function modalBackground(darkMode: boolean) {
+  return darkMode ? "rgba(0, 0, 0, 0.85)" : "rgba(255, 255, 255, 0.85)";
+}
