@@ -70,7 +70,8 @@ export default function Settings({
           />
           <MenuButton
             onPress={hapticsCallback}
-            label={haptics ? "Haptics: On" : "Haptics: Off"}
+            label="Toggle Haptics"
+            icon={graphics.HAPTICS_ICON}
             theme={colors.GREEN_THEME}
             fillWidth
           />

@@ -2,7 +2,7 @@ import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "r
 import { FlatList, Modal, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import Toast from "react-native-toast-message";
 import FilterChip from "../components/FilterChip";
-import InputLine from "../components/InputLine";
+import InputLine, { INPUT_LABEL_ROOM } from "../components/InputLine";
 import { IndicatorIcon } from "../components/LevelCard";
 import SimpleButton from "../components/SimpleButton";
 import SliderBar from "../components/SliderBar";
@@ -305,13 +305,17 @@ export default function UserLevels({
                             fullBorder
                             doFlex
                         />
-                        <SimpleButton
-                            icon={graphics.FILTER_ICON}
-                            onPress={toggleModal}
-                            extraMargin={[10, 0, 0, 0]}
-                            square
-                            main
-                        />
+                        {/* The field reserves room above its outline for the raised
+                            label; match it so the button centers on the outline. */}
+                        <View style={{ marginTop: INPUT_LABEL_ROOM }}>
+                            <SimpleButton
+                                icon={graphics.FILTER_ICON}
+                                onPress={toggleModal}
+                                extraMargin={[10, 0, 0, 0]}
+                                square
+                                main
+                            />
+                        </View>
                     </View>
                     <FlatList
                         horizontal

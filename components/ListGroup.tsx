@@ -1,5 +1,5 @@
 import { ReactNode, useContext } from "react";
-import { Pressable, StyleSheet, Switch, Text, View } from "react-native";
+import { Image, ImageSourcePropType, Pressable, StyleSheet, Switch, Text, View } from "react-native";
 import GlobalContext from "../GlobalContext";
 import { normalize } from "../TextStyles";
 import { colors } from "../Theme";
@@ -22,9 +22,10 @@ interface RowProps {
   destructive?: boolean,
   onPress?: () => void, // Pressable rows show a chevron (unless destructive).
   accessory?: ReactNode, // Shown on the right instead of the chevron.
+  icon?: ImageSourcePropType, // Shown before the title.
 }
 
-export function ListRow({ title, last, destructive, onPress, accessory }: RowProps) {
+export function ListRow({ title, last, destructive, onPress, accessory, icon }: RowProps) {
   const { darkMode } = useContext(GlobalContext);
   const textColor = destructive ? colors.RED_THEME.TINT_COLOR : (darkMode ? colors.OFF_WHITE : colors.TEXT_COLOR);
 
@@ -39,7 +40,10 @@ export function ListRow({ title, last, destructive, onPress, accessory }: RowPro
         pressed && { backgroundColor: colors.DIM_GRAY_TRANSPARENT(0.12) },
       ]}
     >
-      <Text style={[styles.title, { color: textColor }]}>{title}</Text>
+      <View style={styles.leading}>
+        {icon && <Image source={icon} style={styles.icon} />}
+        <Text style={[styles.title, { color: textColor }]}>{title}</Text>
+      </View>
       {accessory ?? (onPress && !destructive && <Text style={styles.chevron}>›</Text>)}
     </Pressable>
   );
@@ -74,6 +78,16 @@ const styles = StyleSheet.create({
   separator: {
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.DIM_GRAY_TRANSPARENT(0.25),
+  },
+  leading: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: normalize(12),
+  },
+  icon: {
+    width: normalize(26),
+    height: normalize(26),
   },
   title: {
     fontFamily: "Montserrat-Regular",

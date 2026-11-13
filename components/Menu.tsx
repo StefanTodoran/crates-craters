@@ -72,10 +72,17 @@ export default memo(function Menu({ notificationCounts, openPage }: Props) {
   const scrollX = useRef(new Animated.Value(0)).current;
 
   const animated = useMemo(() => {
-    const page = Animated.divide(scrollX, win.width); // Scroll position in pages.
+    // Scroll position in pages, clamped: iOS bounce overscroll pushes it past either
+    // end, and the native driver ignores `extrapolate` for color outputs (it only
+    // clamps numbers), so the colors must be fed an already-clamped value.
+    const page = Animated.divide(scrollX, win.width).interpolate({
+      inputRange: [0, menuPages.length - 1],
+      outputRange: [0, menuPages.length - 1],
+      extrapolate: "clamp",
+    });
     return {
       onScroll: Animated.event([{ nativeEvent: { contentOffset: { x: scrollX } } }], { useNativeDriver: true }),
-      background: page.interpolate({ inputRange, outputRange: pageColors, extrapolate: "clamp" }),
+      background: page.interpolate({ inputRange, outputRange: pageColors }),
       pageOpacity: menuPages.map((_, idx) => page.interpolate({ inputRange, outputRange: createPageOutputRange(idx) })),
       nodeColor: menuPages.map((_, idx) => page.interpolate({ inputRange, outputRange: createNodeOutputRange(idx) })),
     };

@@ -120,13 +120,15 @@ const LABEL_FONT_SIZE = 14;
 const LABEL_SCALE = 11 / 14;
 // Moves the label's center from the input's center onto the top border.
 const LABEL_RAISE = -(PADDING_V + INPUT_HEIGHT / 2);
+/** Space above the outline for the raised label. Siblings in a row can match it to line up. */
+export const INPUT_LABEL_ROOM = 8;
 
 const styles = StyleSheet.create({
   container: {
     position: "relative",
     paddingVertical: PADDING_V,
     paddingHorizontal: PADDING_H,
-    marginTop: 8, // Room for the half of the raised label above the line.
+    marginTop: INPUT_LABEL_ROOM, // Room for the half of the raised label above the line.
     marginBottom: 10,
   },
   sides: {
