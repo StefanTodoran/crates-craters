@@ -4,7 +4,7 @@ import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import { UserCredential, onAuthStateChanged, signInAnonymously, signInWithEmailAndPassword } from "firebase/auth";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Animated, BackHandler, Dimensions, Platform, StatusBar as RNStatusBar, StyleSheet, View } from "react-native";
+import { Animated, Appearance, BackHandler, Dimensions, Platform, StatusBar as RNStatusBar, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Toast from "react-native-toast-message";
 import Header from "./components/Header";
@@ -130,6 +130,9 @@ export default function App() {
 
 
   const [darkMode, setDarkMode] = useBooleanSetting("darkMode");
+  // Native views (the iOS tab bar's glass, system controls) follow the app's own
+  // dark mode setting rather than the system one.
+  useEffect(() => Appearance.setColorScheme(darkMode ? "dark" : "light"), [darkMode]);
   const [dragSensitivity, setSensitivity] = useNumberSetting("dragSensitivity");
   const [doubleTapDelay, setTapDelay] = useNumberSetting("doubleTapDelay");
   const [playAudio, setAudioMode] = useBooleanSetting("playAudio");

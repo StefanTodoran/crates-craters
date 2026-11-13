@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
+import GlobalContext from "../GlobalContext";
 import { Animated, ImageURISource, StyleSheet, View, Platform } from "react-native";
 import TabView from "react-native-bottom-tabs";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -33,6 +34,7 @@ function NativeSubpages({ pageTabs, pageComponents, disabledPages }: Props) {
   // App pads the whole screen by the bottom inset; the native tab bar handles the home
   // indicator itself, so extend it down into that padding.
   const insets = useSafeAreaInsets();
+  const { darkMode } = useContext(GlobalContext);
   const [index, setIndex] = useState(() => {
     const initial = takeInitialSubpage() ?? 0;
     return initial < pageComponents.length ? initial : 0;
@@ -63,7 +65,8 @@ function NativeSubpages({ pageTabs, pageComponents, disabledPages }: Props) {
         eventEmitter.emit("pageWasChanged");
       }}
       renderScene={({ route }) => (
-        <View style={styles.nativePage}>{pageComponents[Number(route.key)]}</View>
+        // Native tab scenes have no background of their own.
+        <View style={[styles.nativePage, { backgroundColor: darkMode ? "black" : "white" }]}>{pageComponents[Number(route.key)]}</View>
       )}
       tabBarActiveTintColor={pageTabs[index]?.color}
       hapticFeedbackEnabled
