@@ -107,22 +107,21 @@ export default function LoginPage({ setUserCredential }: Props) {
                             main
                         />
                         <SimpleButton
-                            text="Create Account"
-                            onPress={() => setPageMode(PageMode.SIGNUP)}
-                            theme={colors.YELLOW_THEME}
-                            icon={graphics.FLAG}
-                            fillWidth
-                            square
-                            extraMargin={[0, 8]}
-                        />
-                    </View>
-                    <View style={styles.pageModeRow}>
-                        <SimpleButton
                             text="Continue with Google"
                             Svg={GoogleLogo}
                             theme={colors.YELLOW_THEME}
                             onPress={continueWithGoogle}
                             disabled={loading}
+                            fillWidth
+                            square
+                            extraMargin={[0, 8]}
+                            main
+                        />
+                        <SimpleButton
+                            text="Create Account"
+                            onPress={() => setPageMode(PageMode.SIGNUP)}
+                            theme={colors.YELLOW_THEME}
+                            icon={graphics.FLAG}
                             fillWidth
                             square
                             extraMargin={[0, 8]}
