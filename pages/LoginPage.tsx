@@ -329,8 +329,7 @@ const styles = StyleSheet.create({
     pageModeRow: {
         alignItems: "center",
         justifyContent: "center",
-        // width: win.width * 0.45,
-        marginHorizontal: win.width * 0.225,
+        marginHorizontal: win.width * 0.18,
     },
     buttonsRow: {
         flexDirection: "row",
