@@ -12,7 +12,7 @@ export interface AppState {
   editorLevel?: UserLevel, // The level open in the editor.
   notificationCounts: number[], // Badge counts for the home menu pages.
 
-  scrollToBottom: boolean, // Ask the Levels page to scroll to its last level.
+  scrollToLatest: boolean, // Ask the Levels page to scroll to the latest unlocked level.
   subpageRequest?: { index: number, id: number }, // Ask the mounted Subpages to switch tab.
   initialSubpage?: number, // The tab a freshly mounted Subpages should start on.
   pageAnimating: boolean, // The page panel is sliding in.
@@ -25,7 +25,7 @@ type Listener = () => void;
 let state: AppState = {
   levels: [],
   notificationCounts: [0, 0, 0, 0],
-  scrollToBottom: false,
+  scrollToLatest: false,
   pageAnimating: false,
   pageOpenedCount: 0,
 };
@@ -72,7 +72,7 @@ export function requestSubpage(index: number) {
 
 /** Called by Subpages whenever the visible tab changes. */
 export function subpageChanged() {
-  if (state.scrollToBottom) setAppState({ scrollToBottom: false });
+  if (state.scrollToLatest) setAppState({ scrollToLatest: false });
 }
 
 /** The tab a newly mounted Subpages should start on; consumed once. */

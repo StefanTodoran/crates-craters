@@ -1,5 +1,5 @@
 import Slider from "@react-native-community/slider";
-import { useContext } from "react";
+import { useContext, useEffect, useState } from "react";
 import { Platform, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import GlobalContext from "../GlobalContext";
 import { normalize } from "../TextStyles";
@@ -34,6 +34,14 @@ function NativeSliderBar({
   const useTheme = theme || purpleTheme;
   const mainColor = useTheme.MAIN_COLOR;
 
+  // The native slider applies `value` before its range, and only sends props that differ
+  // from its previous (or, for a recycled view, default) props, so a fresh slider clamped
+  // its value to a stale range and started at one end. The first render therefore sends a
+  // range that's sure to differ, and the second the real range and value: by then the
+  // value always fits the range already applied. Hidden until then.
+  const [settled, setSettled] = useState(false);
+  useEffect(() => setSettled(true), []);
+
   function stepperDecrement() {
     if (stepperWrapAround) {
       const newValue = value - stepSize;
@@ -61,10 +69,10 @@ function NativeSliderBar({
 
       <View style={styles.barContainer}>
         <Slider
-          style={styles.slider}
-          value={value}
-          minimumValue={minValue}
-          maximumValue={maxValue}
+          style={[styles.slider, { opacity: settled ? 1 : 0 }]}
+          value={settled ? value : minValue - 1}
+          minimumValue={settled ? minValue : minValue - 1}
+          maximumValue={settled ? maxValue : maxValue + 1}
           step={stepSize > 0 ? stepSize : 1}
           onValueChange={changeCallback}
           minimumTrackTintColor={mainColor}

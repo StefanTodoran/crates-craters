@@ -2,6 +2,7 @@
 const mainGraphics = {
   DOOR: require("./assets/main_theme/door.png"),
   KEY: require("./assets/main_theme/key.png"),
+  KEY_PURPLE: require("./assets/main_theme/key_purple.png"),
   CRATE: require("./assets/main_theme/crate.png"),
   CRATER: require("./assets/main_theme/crater.png"),
   COIN: require("./assets/main_theme/coin.png"),

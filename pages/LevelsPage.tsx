@@ -56,7 +56,7 @@ export default function LevelsPage({
             // Solved levels can replay the player's best solution.
             secondButtonProps={{
                 text: (uuid) => levels.find(level => level.uuid === uuid)?.bestSolution ? "Solution" : undefined,
-                icon: graphics.KEY,
+                icon: graphics.KEY_PURPLE,
                 callback: (uuid) => {
                     const level = levels.find(level => level.uuid === uuid);
                     if (!level?.bestSolution) return;

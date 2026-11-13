@@ -225,7 +225,7 @@ export default function ProfilePage({ attemptSignIn, setUserCredential }: Props)
 
                 <ListGroup>
                     <ListRow title="Contact Support" icon={graphics.GET_SUPPORT_ICON} onPress={() => Linking.openURL("mailto:info@todoran.dev?subject=Crates%20%26%20Craters")} />
-                    <ListRow title="Sign Out" icon={graphics.DOOR_ICON_YELLOW} onPress={signOutPressed} last />
+                    <ListRow title="Sign Out" icon={graphics.DOOR_ICON_YELLOW} onPress={signOutPressed} action last />
                 </ListGroup>
 
                 <ListGroup>

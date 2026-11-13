@@ -7,7 +7,7 @@ import MoveCounter from "../components/MoveCounter";
 import SimpleButton from "../components/SimpleButton";
 import SliderBar from "../components/SliderBar";
 import GlobalContext from "../GlobalContext";
-import TextStyles from "../TextStyles";
+import TextStyles, { normalize } from "../TextStyles";
 import { colors } from "../Theme";
 import { useSoundEventPlayers } from "../util/hooks";
 import { doGameMove, Game, initializeGameObj, Position, SoundEvent } from "../util/logic";
@@ -103,5 +103,6 @@ const styles = StyleSheet.create({
   },
   buttonsRow: {
     flexDirection: "row",
+    marginTop: -normalize(8), // The slider already has padding below it.
   },
 });

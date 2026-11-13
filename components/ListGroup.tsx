@@ -24,10 +24,11 @@ interface RowProps {
   accessory?: ReactNode, // Shown on the right instead of the chevron.
   icon?: ImageSourcePropType, // Shown before the title.
   subtitle?: string, // A smaller line under the title, e.g. why the row is disabled.
+  action?: boolean, // Performs an action in place (no chevron) rather than navigating.
   disabled?: boolean,
 }
 
-export function ListRow({ title, last, destructive, onPress, accessory, icon, subtitle, disabled }: RowProps) {
+export function ListRow({ title, last, destructive, onPress, accessory, icon, subtitle, disabled, action }: RowProps) {
   const { darkMode } = useContext(GlobalContext);
   const textColor = destructive ? colors.RED_THEME.TINT_COLOR : (darkMode ? colors.OFF_WHITE : colors.TEXT_COLOR);
 
@@ -50,7 +51,7 @@ export function ListRow({ title, last, destructive, onPress, accessory, icon, su
           {!!subtitle && <Text style={styles.subtitle}>{subtitle}</Text>}
         </View>
       </View>
-      {accessory ?? (onPress && !destructive && <Text style={styles.chevron}>›</Text>)}
+      {accessory ?? (onPress && !destructive && !action && <Text style={styles.chevron}>›</Text>)}
     </Pressable>
   );
 }

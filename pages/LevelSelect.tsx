@@ -1,5 +1,6 @@
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { useAppStore } from "../util/store";
+import { useScrollToTop } from "../components/Subpages";
 import { FlatList, ImageSourcePropType, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { TAB_BAR_CLEARANCE } from "../components/Subpages";
 import Toast from "react-native-toast-message";
@@ -12,7 +13,7 @@ import { Level, PageView } from "../util/types";
 
 interface SecondButtonProps {
   text?: string | ((uuid: string, index: number) => string | undefined), // No text hides the button.
-  icon?: ImageSourcePropType,
+  icon?: ImageSourcePropType | ((uuid: string, index: number) => ImageSourcePropType),
   callback?: (uuid: string, index: number) => void, // Triggers an effect on the current level.
   disabled?: boolean | ((uuid: string, index: number) => boolean),
 }
@@ -89,6 +90,7 @@ export default function LevelSelect({
   }, [levels]);
 
   const scrollRef = useRef<FlatList<Level>>(null);
+  useScrollToTop(() => scrollRef.current?.scrollToOffset({ offset: 0, animated: true }));
   let scrollIndex = levels.findIndex(level => level.uuid === scrollTo);
   if (scrollIndex === -1) scrollIndex = lastBeatenLevel;  // If a level is not currently in progress/resumable, scroll to the last beaten level.
   scrollIndex = Math.max(0, scrollIndex);
@@ -99,7 +101,8 @@ export default function LevelSelect({
 
   useEffect(() => {
     if (levels.length === 0) return;
-    if (scrollTo === "last") scrollRef.current?.scrollToIndex({ index: displayLevels.length - 1, animated: true });
+    // "latest": the latest unlocked level, the one after the last beaten.
+    if (scrollTo === "latest") scrollRef.current?.scrollToIndex({ index: Math.min(lastBeatenLevel + 1, displayLevels.length - 1), animated: true });
   }, [scrollTo, loadedLevels]);
 
   const doRefresh = useCallback(() => {
@@ -226,7 +229,7 @@ export default function LevelSelect({
               indicatorIcon={indicatorIcon}
               isLocked={isOfficial && index > lastBeatenLevel + 1}
               secondButtonText={evaluate(secondButtonProps?.text)}
-              secondButtonIcon={secondButtonProps?.icon}
+              secondButtonIcon={evaluate(secondButtonProps?.icon)}
               secondButtonDisabled={evaluate(secondButtonProps?.disabled)}
               onSecondButton={secondButtonProps ? secondButtonOnPress : undefined}
             />;

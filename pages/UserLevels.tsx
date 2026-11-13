@@ -1,5 +1,5 @@
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
-import { FlatList, Modal, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
+import { FlatList, Modal, Platform, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import Toast from "react-native-toast-message";
 import FilterChip from "../components/FilterChip";
 import InputLine, { INPUT_LABEL_ROOM } from "../components/InputLine";
@@ -10,10 +10,12 @@ import GlobalContext from "../GlobalContext";
 import TextStyles, { normalize } from "../TextStyles";
 import { colors, graphics, purpleTheme } from "../Theme";
 import { ExplicitOrder, QueryFilter, attemptUserLevel, likeUserLevel, queryUserLevels } from "../util/database";
+import { configurePresentedSheet } from "../modules/sheet-detents";
 import { useDebounce } from "../util/hooks";
+import { getAppState, setEditorLevel } from "../util/store";
 import { getData, metadataKeys, parseCompressedBoardData } from "../util/loader";
 import { areSetsEqual } from "../util/Set";
-import { Level, PageView, SharedLevel } from "../util/types";
+import { Level, PageView, SharedLevel, UserLevel } from "../util/types";
 import LevelSelect from "./LevelSelect";
 
 enum Filter {
@@ -137,6 +139,12 @@ export default function UserLevels({
     storeElementHeightCallback,
 }: Props) {
     const { darkMode, userCredential } = useContext(GlobalContext);
+
+    const isOwnLevel = (uuid: string) =>
+        !!userCredential && filteredLevels.find(lvl => lvl.uuid === uuid)?.user_uid === userCredential.user.uid;
+    // Your shared levels are also stored locally (same uuid) unless shared from another device.
+    const findLocalLevel = (uuid: string) =>
+        getAppState().levels.find(level => level.uuid === uuid && !level.official) as UserLevel | undefined;
 
     const win = useWindowDimensions();
     // The full filters panel is a native sheet (swipe down to dismiss on iOS).
@@ -344,18 +352,28 @@ export default function UserLevels({
                     // TODO: Add attempt tracking for official levels too.
                     attemptUserLevel(uuid, userCredential?.user.uid);
                 }}
+                // Like, or for your own levels (which you can't like) Manage, which opens
+                // the level's manage page in the editor.
                 secondButtonProps={{
                     text: (uuid: string) => {
+                        if (isOwnLevel(uuid)) return "Manage";
                         const likeCount = filteredLevels.find(lvl => lvl.uuid === uuid)!.likes;
                         return (likedLevels.includes(uuid) ? "Liked" : "Like") + ` (${likeCount})`;
                     },
                     disabled: (uuid: string) => {
-                        return !userCredential ||
-                            likedLevels.includes(uuid) ||
-                            filteredLevels.find(lvl => lvl.uuid === uuid)!.user_uid === userCredential.user.uid
+                        if (isOwnLevel(uuid)) return !findLocalLevel(uuid); // Created on another device.
+                        return !userCredential || likedLevels.includes(uuid);
                     },
-                    icon: graphics.LIKE_ICON,
+                    icon: (uuid: string) => isOwnLevel(uuid) ? graphics.HAMMER_ICON : graphics.LIKE_ICON,
                     callback: async (uuid: string) => {
+                        if (isOwnLevel(uuid)) {
+                            const localLevel = findLocalLevel(uuid);
+                            if (!localLevel) return;
+                            setEditorLevel(localLevel);
+                            viewCallback(PageView.MANAGE, 1);
+                            return;
+                        }
+
                         const success = await likeUserLevel(uuid, userCredential!.user.uid);
                         if (!success) {
                             Toast.show({
@@ -397,9 +415,12 @@ export default function UserLevels({
                 presentationStyle="pageSheet"
                 animationType="slide"
                 onRequestClose={() => setModalOpen(false)} // Swipe down (iOS) or back button (Android).
+                // iOS: open at half height on the system's see-through sheet material.
+                onShow={() => configurePresentedSheet()}
+                backdropColor={ios ? "transparent" : undefined} // Modal paints white over the sheet material otherwise.
             >
             <ScrollView
-                style={{ backgroundColor: darkMode ? colors.NEAR_BLACK : colors.OFF_WHITE }}
+                style={{ backgroundColor: ios ? "transparent" : (darkMode ? colors.NEAR_BLACK : colors.OFF_WHITE) }}
                 contentContainerStyle={styles.modal}
             >
                 <View style={styles.section}>
@@ -471,6 +492,8 @@ export default function UserLevels({
         </>
     );
 }
+
+const ios = Platform.OS === "ios";
 
 const styles = StyleSheet.create({
     filterChipsRow: {

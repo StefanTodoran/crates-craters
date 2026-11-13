@@ -1,4 +1,4 @@
-import { useContext, useEffect, useRef, useState } from "react";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
 import GlobalContext from "../GlobalContext";
 import { Animated, ImageURISource, Platform, StyleSheet, View } from "react-native";
 import TabView from "react-native-bottom-tabs";
@@ -23,6 +23,30 @@ interface Props {
   pageTabs: SubpageTab[],
   pageComponents: React.ReactNode[],
   disabledPages?: boolean[],
+}
+
+/** Counts taps on a tab that's already active; each subpage gets its own tab's count. */
+const ScrollToTopContext = createContext(0);
+
+/**
+ * Calls scrollToTop when the user taps the current page's tab again, the usual iOS
+ * gesture for jumping back to the top. For the scrollable view of a subpage.
+ */
+export function useScrollToTop(scrollToTop: () => void) {
+  const taps = useContext(ScrollToTopContext);
+  const seen = useRef(taps);
+  useEffect(() => {
+    if (taps === seen.current) return;
+    seen.current = taps;
+    scrollToTop();
+  }, [taps]);
+}
+
+/** Per-tab counts of taps on the already active tab. */
+function useReselectCounts(tabCount: number) {
+  const [counts, setCounts] = useState(() => Array<number>(tabCount).fill(0));
+  const reselect = (index: number) => setCounts(counts => counts.map((count, i) => i === index ? count + 1 : count));
+  return [counts, reselect] as const;
 }
 
 /** Runs onRequest for each requestSubpage() call made while mounted. */
@@ -55,6 +79,7 @@ function NativeSubpages({ pageTabs, pageComponents, disabledPages }: Props) {
     setIndex(newIndex);
     subpageChanged();
   });
+  const [reselectCounts, reselect] = useReselectCounts(pageComponents.length);
 
   const routes = pageTabs.map((tab, tabIndex) => ({
     key: String(tabIndex),
@@ -71,12 +96,17 @@ function NativeSubpages({ pageTabs, pageComponents, disabledPages }: Props) {
       onIndexChange={(newIndex) => {
         // preventsDefault only stops the native bar from switching; JS is still told about the press.
         if (disabledPages?.[newIndex]) return;
+        if (newIndex === index) return reselect(newIndex); // Tapped the current tab again.
         setIndex(newIndex);
         subpageChanged();
       }}
       renderScene={({ route }) => (
         // Native tab scenes have no background of their own.
-        <View style={[styles.nativePage, { backgroundColor: darkMode ? "black" : "white" }]}>{pageComponents[Number(route.key)]}</View>
+        <View style={[styles.nativePage, { backgroundColor: darkMode ? "black" : "white" }]}>
+          <ScrollToTopContext.Provider value={reselectCounts[Number(route.key)]}>
+            {pageComponents[Number(route.key)]}
+          </ScrollToTopContext.Provider>
+        </View>
       )}
       tabBarActiveTintColor={pageTabs[index] && (darkMode ? pageTabs[index].color : tintFor(pageTabs[index].color))}
       tabBarInactiveTintColor={colors.DIM_GRAY}
@@ -102,6 +132,7 @@ function CustomSubpages({ pageTabs, pageComponents, disabledPages }: Props) {
     const initial = takeInitialSubpage() ?? 0;
     return initial < pageComponents.length ? initial : 0;
   });
+  const [reselectCounts, reselect] = useReselectCounts(pageComponents.length);
   const updatePageState = (newPageState: number) => {
     if (newPageState === currentPage) return;
     setAnimTo(0, () => {
@@ -115,7 +146,9 @@ function CustomSubpages({ pageTabs, pageComponents, disabledPages }: Props) {
   return (
     <>
       <Animated.View style={[styles.pageContainer, { opacity: anim }]}>
-        {pageComponents[currentPage]}
+        <ScrollToTopContext.Provider value={reselectCounts[currentPage]}>
+          {pageComponents[currentPage]}
+        </ScrollToTopContext.Provider>
       </Animated.View>
 
       <View style={styles.menu}>
@@ -126,7 +159,7 @@ function CustomSubpages({ pageTabs, pageComponents, disabledPages }: Props) {
             color={pageTab.color}
             label={pageTab.label}
             icon={pageTab.icon}
-            onPress={() => updatePageState(pageIndex)}
+            onPress={() => pageIndex === currentPage ? reselect(pageIndex) : updatePageState(pageIndex)}
             disabled={disabledPages && disabledPages[pageIndex]}
           />)}
       </View>

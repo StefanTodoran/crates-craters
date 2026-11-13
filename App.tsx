@@ -108,7 +108,7 @@ export default function App() {
   const levels = useAppStore(state => state.levels);
   const editorLevel = useAppStore(state => state.editorLevel);
   const notificationCounts = useAppStore(state => state.notificationCounts);
-  const scrollToBottom = useAppStore(state => state.scrollToBottom);
+  const scrollToLatest = useAppStore(state => state.scrollToLatest);
   const solution = useAppStore(state => state.solution);
 
   const [userLevels, setUserLevels] = useState<SharedLevel[]>([]); // Kept here so the shared levels fetch isn't redone every time that page mounts.
@@ -202,7 +202,7 @@ export default function App() {
 
   const { view, pageAnim, switchView } = usePageNavigation({
     onNavigate: (from, to) => {
-      setAppState({ scrollToBottom: false });
+      setAppState({ scrollToLatest: false });
       const { level, mode } = sessionRef.current;
 
       // Editing from the play page (playtesting) edits the level being played.
@@ -245,9 +245,9 @@ export default function App() {
   }, [view]);
 
   const returnHome = useCallback(() => switchView(PageView.MENU), []);
-  const requestScrollToBottom = useCallback(() => {
-    setAppState({ scrollToBottom: false });
-    setTimeout(() => setAppState({ scrollToBottom: true }), 100);
+  const requestScrollToLatest = useCallback(() => {
+    setAppState({ scrollToLatest: false });
+    setTimeout(() => setAppState({ scrollToLatest: true }), 100);
   }, []);
 
   // This is used so that the level select component only needs to calculate
@@ -299,7 +299,7 @@ export default function App() {
             <Header
               pageView={view}
               returnHome={returnHome}
-              scrollToBottom={requestScrollToBottom}
+              scrollToLatest={requestScrollToLatest}
             />
           </View>}
 
@@ -309,7 +309,7 @@ export default function App() {
                 viewCallback={switchView}
                 playLevelCallback={changePlayLevel}
                 playSharedLevelCb={playSharedLevel}
-                scrollTo={scrollToBottom ? "last" : (!session.game?.won ? playLevel?.uuid : undefined)}
+                scrollTo={scrollToLatest ? "latest" : (!session.game?.won ? playLevel?.uuid : undefined)}
                 levels={officialLevels}
                 userLevels={userLevels}
                 setUserLevels={setUserLevels}

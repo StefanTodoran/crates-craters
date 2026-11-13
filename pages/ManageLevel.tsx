@@ -188,6 +188,7 @@ export default function ManageLevel({
           {level.shared ?
             <ListRow
               title="Make Private"
+              action
               icon={graphics.OPTIONS_ICON}
               subtitle={`Shared since ${formatDate(level.shared)}.`}
               onPress={() => confirmThen("Making this level private permanently removes all of its likes and attempts.", unshareLevel)}
@@ -196,6 +197,7 @@ export default function ManageLevel({
             /> :
             <ListRow
               title="Share Online"
+              action
               icon={graphics.SHARE_ICON}
               subtitle={canShare ? "Publish this level for everyone to play." : hint}
               onPress={shareLevel}

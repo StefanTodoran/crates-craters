@@ -42,7 +42,6 @@ export default function CreateLevel({ createLevelCallback, existingLevelNames }:
     requestSubpage(1);
   }
 
-  const count = existingLevelNames.length;
   const textColor = darkMode ? colors.OFF_WHITE : colors.TEXT_COLOR;
 
   return (
@@ -74,9 +73,6 @@ export default function CreateLevel({ createLevelCallback, existingLevelNames }:
 
       <Text style={[styles.hint, duplicate && { color: colors.RED_THEME.TINT_COLOR }]}>{hint}</Text>
 
-      {count > 0 && <Text style={styles.sectionLabel}>
-        {count === 1 ? "1 level" : `${count} levels`}
-      </Text>}
     </View>
   );
 }
@@ -84,7 +80,7 @@ export default function CreateLevel({ createLevelCallback, existingLevelNames }:
 const styles = StyleSheet.create({
   container: {
     paddingTop: normalize(4),
-    paddingBottom: normalize(8),
+    paddingBottom: normalize(16),
   },
   heading: {
     fontFamily: "Montserrat-Medium",
@@ -101,13 +97,5 @@ const styles = StyleSheet.create({
     fontSize: normalize(13),
     color: colors.DIM_GRAY,
     marginTop: normalize(8),
-  },
-  sectionLabel: {
-    fontFamily: "Montserrat-Medium",
-    fontSize: normalize(12),
-    letterSpacing: 1,
-    textTransform: "uppercase",
-    color: colors.DIM_GRAY,
-    marginTop: normalize(20),
   },
 });
