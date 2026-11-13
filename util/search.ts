@@ -2,7 +2,7 @@ import { MinQueue } from "heapify";
 import { LayeredBoard } from "./board";
 import { Game, Position, canMoveTo, countInstancesInBoard, doGameMove } from "./logic";
 import { AnySet } from "./Set";
-import { Direction, TileType } from "./types";
+import { BombTile, Direction, TileType } from "./types";
 
 /**
  * This represents a compressed version of the Game interface which
@@ -50,9 +50,10 @@ function areGameStatesEqual(stateA: BaseGameState, stateB: BaseGameState): boole
 function areBoardStatesEqual(boardA: LayeredBoard, boardB: LayeredBoard): boolean {
   for (let y = 0; y < boardA.height; y++) {
     for (let x = 0; x < boardA.width; x++) {
-      // TODO: figure out equality check here
-      // const tileA = boardA.
-      // if (boardA[y][x] !== boardB[y][x]) return false;
+      const a = boardA.getLayer(y, x);
+      const b = boardB.getLayer(y, x);
+      if (a.foreground.id !== b.foreground.id || a.background.id !== b.background.id) return false;
+      if (a.foreground.id === TileType.BOMB && a.foreground.fuse !== (b.foreground as BombTile).fuse) return false;
     }
   }
 
@@ -118,8 +119,6 @@ interface SearchNode {
 }
 
 function printBoard(board: LayeredBoard, player: Position) {
-  const dimensions = [board.height, board.width];
-
   for (let i = 0; i < board.height; i++) {
     let row = "[";
     for (let j = 0; j < board.width; j++) {
