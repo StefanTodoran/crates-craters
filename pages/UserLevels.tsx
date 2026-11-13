@@ -10,7 +10,7 @@ import GlobalContext from "../GlobalContext";
 import TextStyles, { normalize } from "../TextStyles";
 import { colors, graphics, purpleTheme } from "../Theme";
 import { ExplicitOrder, QueryFilter, attemptUserLevel, likeUserLevel, queryUserLevels } from "../util/database";
-import { configurePresentedSheet } from "../modules/sheet-detents";
+import { prepareNextSheet } from "../modules/sheet-detents";
 import { useDebounce } from "../util/hooks";
 import { getAppState, setEditorLevel } from "../util/store";
 import { getData, metadataKeys, parseCompressedBoardData } from "../util/loader";
@@ -142,14 +142,17 @@ export default function UserLevels({
 
     const isOwnLevel = (uuid: string) =>
         !!userCredential && filteredLevels.find(lvl => lvl.uuid === uuid)?.user_uid === userCredential.user.uid;
-    // Your shared levels are also stored locally (same uuid) unless shared from another device.
+    // Sharing creates a new doc id, kept on the local level as db_id (missing if shared from another device).
     const findLocalLevel = (uuid: string) =>
-        getAppState().levels.find(level => level.uuid === uuid && !level.official) as UserLevel | undefined;
+        getAppState().levels.find(level => !level.official && (level as UserLevel).db_id === uuid) as UserLevel | undefined;
 
     const win = useWindowDimensions();
     // The full filters panel is a native sheet (swipe down to dismiss on iOS).
     const [modalOpen, setModalOpen] = useState(false);
-    const toggleModal = () => setModalOpen(open => !open);
+    const toggleModal = () => {
+        if (!modalOpen) prepareNextSheet(); // iOS: open at half height on the see-through sheet material.
+        setModalOpen(!modalOpen);
+    };
 
     // Read from storage only when the shown levels change (e.g. after a like), not on
     // every render: these parse JSON, and renders happen on each search keystroke.
@@ -415,8 +418,6 @@ export default function UserLevels({
                 presentationStyle="pageSheet"
                 animationType="slide"
                 onRequestClose={() => setModalOpen(false)} // Swipe down (iOS) or back button (Android).
-                // iOS: open at half height on the system's see-through sheet material.
-                onShow={() => configurePresentedSheet()}
                 backdropColor={ios ? "transparent" : undefined} // Modal paints white over the sheet material otherwise.
             >
             <ScrollView

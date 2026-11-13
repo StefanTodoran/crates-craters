@@ -2,14 +2,14 @@ import { requireOptionalNativeModule } from "expo-modules-core";
 import { Platform } from "react-native";
 
 const SheetDetents = Platform.OS === "ios"
-  ? requireOptionalNativeModule<{ configurePresentedSheet(clearBackground: boolean): Promise<void> }>("SheetDetents")
+  ? requireOptionalNativeModule<{ prepareNextSheet(clearBackground: boolean): void }>("SheetDetents")
   : null;
 
 /**
- * Makes the page sheet currently on screen open at half height (draggable to full) with
- * a see-through background. Call from a Modal's onShow. No-op on Android, or on a build
- * without the native module.
+ * Makes the next page sheet Modal open at half height (draggable to full) with a
+ * see-through background. Call right before setting the Modal visible. No-op on
+ * Android, or on a build without the native module.
  */
-export function configurePresentedSheet(clearBackground = true) {
-  return SheetDetents?.configurePresentedSheet(clearBackground);
+export function prepareNextSheet(clearBackground = true) {
+  SheetDetents?.prepareNextSheet(clearBackground);
 }
