@@ -1,5 +1,5 @@
 import { useContext, useEffect, useRef } from "react";
-import { Image, ImageSourcePropType, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Image, ImageSourcePropType, Platform, ScrollView, StyleSheet, Text, View } from "react-native";
 import GlobalContext from "../GlobalContext";
 import { normalize } from "../TextStyles";
 import { colors, graphics, purpleTheme } from "../Theme";
@@ -75,6 +75,7 @@ interface StripProps {
   options: ToolOptions,
   onSelect: (label: string) => void,
   width: number,
+  inset?: number, // Space before the first tool and after the last.
 }
 
 const TILE_WIDTH = normalize(58);
@@ -82,16 +83,16 @@ const TILE_GAP = normalize(6);
 export const STRIP_HEIGHT = normalize(62);
 
 /** A scrollable row of tools under the board. One tap switches tools. */
-export function ToolStrip({ selected, options, onSelect, width }: StripProps) {
+export function ToolStrip({ selected, options, onSelect, width, inset = 2 }: StripProps) {
   const { darkMode } = useContext(GlobalContext);
   const scrollRef = useRef<ScrollView>(null);
 
   // Keep the selected tool in view, e.g. after a long press on a bomb selects the bomb tool.
   useEffect(() => {
     const index = stripOrder.indexOf(selected);
-    const offset = index * (TILE_WIDTH + TILE_GAP) - (width - TILE_WIDTH) / 2;
+    const offset = inset + index * (TILE_WIDTH + TILE_GAP) - (width - TILE_WIDTH) / 2;
     scrollRef.current?.scrollTo({ x: Math.max(0, offset), animated: true });
-  }, [selected, width]);
+  }, [selected, width, inset]);
 
   return (
     <ScrollView
@@ -99,7 +100,7 @@ export function ToolStrip({ selected, options, onSelect, width }: StripProps) {
       horizontal
       showsHorizontalScrollIndicator={false}
       style={{ width, flexGrow: 0 }}
-      contentContainerStyle={styles.stripContent}
+      contentContainerStyle={[styles.stripContent, { paddingHorizontal: inset }]}
     >
       {stripOrder.map(label => {
         const tool = resolveTool(label, options);
@@ -227,18 +228,21 @@ interface PlacedBombProps {
 
 /** Shown in place of the tool options while a placed bomb is being edited. */
 export function PlacedBombRow({ fuse, setFuse, onDone, width }: PlacedBombProps) {
-  const doneWidth = normalize(96);
+  const doneWidth = DONE_SIZE;
   return (
-    <View style={[styles.options, styles.placedRow, { width }]}>
-      <SliderBar
-        label="Placed Bomb" value={fuse} units={" turns"}
-        minValue={1} maxValue={99} changeCallback={setFuse}
-        theme={colors.RED_THEME}
-        width={width - doneWidth - normalize(10) - 2 * STEPPER_ROOM}
-        showSteppers
-      />
-      <View style={{ width: doneWidth, marginLeft: STEPPER_ROOM + normalize(10) }}>
-        <SimpleButton text="Done" onPress={onDone} theme={colors.RED_THEME} main fillWidth centered />
+    <View style={[styles.options, { width }]}>
+      <View style={styles.placedRow}>
+        <SliderBar
+          label="Placed Bomb" value={fuse} units={" turns"}
+          minValue={1} maxValue={99} changeCallback={setFuse}
+          theme={colors.RED_THEME}
+          width={width - doneWidth - normalize(10) - 2 * STEPPER_ROOM}
+          showSteppers
+        />
+        {/* Lined up with the slider bar, which sits under the slider's label row. */}
+        <View style={styles.doneButton}>
+          <SimpleButton icon={graphics.CHECK_ICON_WHITE} onPress={onDone} theme={colors.RED_THEME} main square />
+        </View>
       </View>
     </View>
   );
@@ -246,11 +250,11 @@ export function PlacedBombRow({ fuse, setFuse, onDone, width }: PlacedBombProps)
 
 const STEPPER_ROOM = normalize(32); // The slider's stepper arrows sit outside its width.
 const MODE_SIZE = normalize(44);
+const DONE_SIZE = normalize(50) + 2; // Square button: icon (30), padding (2 × 10) and border.
 
 const styles = StyleSheet.create({
   stripContent: {
     gap: TILE_GAP,
-    paddingHorizontal: 2,
     alignItems: "center",
     height: STRIP_HEIGHT,
   },
@@ -279,9 +283,15 @@ const styles = StyleSheet.create({
   },
   placedRow: {
     flexDirection: "row",
-    justifyContent: "flex-start",
-    alignItems: "center",
+    alignItems: "flex-end",
+    width: "100%",
     paddingLeft: STEPPER_ROOM,
+  },
+  doneButton: {
+    marginLeft: STEPPER_ROOM + normalize(10),
+    // Center on the slider bar: its center is this far above the slider's bottom edge
+    // (bottom padding plus half the bar), and the button has a 5 vertical margin.
+    marginBottom: (Platform.OS === "ios" ? 10 + 32 / 2 : 15 + 3 / 2) - DONE_SIZE / 2 - normalize(5),
   },
   oneWayRow: {
     flexDirection: "row",

@@ -364,6 +364,8 @@ PODS:
   - fast_float (6.1.4)
   - FBLazyVector (0.79.6)
   - fmt (11.0.2)
+  - GlassView (1.0.0):
+    - ExpoModulesCore
   - glog (0.3.5)
   - GoogleSignIn (10.1.0):
     - AppAuth (~> 3.0)
@@ -2343,6 +2345,7 @@ DEPENDENCIES:
   - fast_float (from `../node_modules/react-native/third-party-podspecs/fast_float.podspec`)
   - FBLazyVector (from `../node_modules/react-native/Libraries/FBLazyVector`)
   - fmt (from `../node_modules/react-native/third-party-podspecs/fmt.podspec`)
+  - GlassView (from `../modules/glass-view/ios`)
   - glog (from `../node_modules/react-native/third-party-podspecs/glog.podspec`)
   - hermes-engine (from `../node_modules/react-native/sdks/hermes-engine/hermes-engine.podspec`)
   - RCT-Folly (from `../node_modules/react-native/third-party-podspecs/RCT-Folly.podspec`)
@@ -2486,6 +2489,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native/Libraries/FBLazyVector"
   fmt:
     :podspec: "../node_modules/react-native/third-party-podspecs/fmt.podspec"
+  GlassView:
+    :path: "../modules/glass-view/ios"
   glog:
     :podspec: "../node_modules/react-native/third-party-podspecs/glog.podspec"
   hermes-engine:
@@ -2661,6 +2666,7 @@ SPEC CHECKSUMS:
   fast_float: 06eeec4fe712a76acc9376682e4808b05ce978b6
   FBLazyVector: 07309209b7b914451b8f822544a18e2a0a85afff
   fmt: a40bb5bd0294ea969aaaba240a927bd33d878cdd
+  GlassView: d36524e80775ff57665353347bffbd72be1da4ef
   glog: 5683914934d5b6e4240e497e0f4a3b42d1854183
   GoogleSignIn: 6c0681460b202440022a4029ac0cbd71ef72068f
   GoogleUtilities: 7dc09b3fa9ecb5c2298b952313d14628b61b9da3

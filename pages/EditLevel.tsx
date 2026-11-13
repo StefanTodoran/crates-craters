@@ -11,7 +11,7 @@ import TextStyles, { normalize } from "../TextStyles";
 import { colors, graphics, purpleTheme } from "../Theme";
 import { useBoardPosition } from "../util/hooks";
 import { hapticErase, hapticSelection } from "../util/haptics";
-import { updateLevel } from "../util/loader";
+import { compressBoardData, updateLevel } from "../util/loader";
 import { getSpawnPosition, Position } from "../util/logic";
 import { wallTool } from "../util/tools";
 import { BombTile, Direction, OneWayTile, PageView, TileType, UserLevel } from "../util/types";
@@ -28,8 +28,9 @@ enum GestureMode {
   DONE, // The gesture already did its one thing (rotated a tile, opened a bomb's fuse).
 }
 
-const TOOLBAR_HEIGHT = normalize(40);
+const TOOLBAR_HEIGHT = normalize(46);
 const GAP = normalize(10);
+const TOOLBAR_ICON = normalize(30);
 
 interface Props {
   viewCallback: (newView: PageView, pageNum?: number) => void, // Sets the current view of the application.
@@ -64,8 +65,10 @@ export default function EditLevel({
   // A placed bomb whose fuse is being edited (after a long press on it).
   const [editingBomb, setEditingBomb] = useState<Position>();
 
-  const [unsavedChanges, setUnsavedChanges] = useState(false);
   const [unmodifiedLevel, setUnmodifiedLevel] = useState<UserLevel>(level);
+  // Compares boards, so undoing back to the saved board clears the unsaved dot.
+  const savedBoard = useMemo(() => unmodifiedLevel ? compressBoardData(unmodifiedLevel.board) : "", [unmodifiedLevel]);
+  const unsavedChanges = useMemo(() => !!level && compressBoardData(level.board) !== savedBoard, [level?.board, savedBoard]);
 
   // Undo and redo history: whole boards, one per edit gesture, so a drag stroke undoes at once.
   const history = useRef<Board[]>([]);
@@ -85,7 +88,6 @@ export default function EditLevel({
     const newLevel = { ...latest.current.level, board };
     // Move events can arrive faster than re-renders, so build the next change on this one.
     latest.current.level = newLevel;
-    setUnsavedChanges(true);
     levelCallback(newLevel);
   };
 
@@ -110,7 +112,6 @@ export default function EditLevel({
   const saveChanges = useCallback(() => {
     updateLevel(level, unsavedChanges); // Stores changes to MMKV
     setUnmodifiedLevel(level);
-    setUnsavedChanges(false);
   }, [level, unsavedChanges]);
 
   const exit = () => {
@@ -341,12 +342,12 @@ export default function EditLevel({
     <View style={styles.container} onLayout={onAreaLayout}>
       {!!area && <>
         <View style={[styles.toolbar, { width: contentWidth }]}>
-          <SimpleButton onPress={exit} text="Exit" Svg={BackButton} height={TOOLBAR_HEIGHT} />
+          <SimpleButton onPress={exit} text="Exit" icon={graphics.DOOR_ICON_PURPLE} height={TOOLBAR_HEIGHT} />
           <View style={styles.toolbarGroup}>
-            <ToolbarButton icon={graphics.UNDO_ICON} label="Undo" onPress={undo} disabled={historySizes.undo === 0} />
-            <ToolbarButton icon={graphics.REDO_ICON} label="Redo" onPress={redo} disabled={historySizes.redo === 0} />
+            <ToolbarButton Svg={BackButton} label="Undo" onPress={undo} disabled={historySizes.undo === 0} />
+            <ToolbarButton Svg={BackButton} flipped label="Redo" onPress={redo} disabled={historySizes.redo === 0} />
             <ToolbarButton icon={graphics.SAVE_ICON_PURPLE} label="Save" onPress={saveChanges} disabled={!unsavedChanges} badge={unsavedChanges} />
-            <ToolbarButton icon={graphics.PLAY_ICON} label="Playtest" onPress={playtest} main />
+            <ToolbarButton icon={graphics.PLAY_ICON} label="Playtest" text="Test" onPress={playtest} main />
           </View>
         </View>
 
@@ -363,7 +364,8 @@ export default function EditLevel({
           </View>
         </View>
 
-        <ToolStrip selected={toolLabel} options={toolOptions} onSelect={selectTool} width={contentWidth} />
+        {/* Edge to edge, with the first and last tools lined up with the board. */}
+        <ToolStrip selected={toolLabel} options={toolOptions} onSelect={selectTool} width={area.width} inset={(area.width - contentWidth) / 2} />
         <View style={styles.optionsArea}>
           {editingFuse ?
             <PlacedBombRow fuse={editedBombFuse} setFuse={setPlacedFuse} onDone={() => setEditingBomb(undefined)} width={contentWidth} /> :
@@ -375,29 +377,35 @@ export default function EditLevel({
 }
 
 interface ToolbarButtonProps {
-  icon: ImageSourcePropType,
-  label: string,
+  icon?: ImageSourcePropType,
+  Svg?: typeof BackButton,
+  flipped?: boolean, // Mirrors the Svg.
+  label: string, // For accessibility.
+  text?: string, // Shown next to the icon.
   onPress: () => void,
   disabled?: boolean,
   main?: boolean,
   badge?: boolean, // A dot in the corner, e.g. unsaved changes.
 }
 
-function ToolbarButton({ icon, label, onPress, disabled, main, badge }: ToolbarButtonProps) {
+function ToolbarButton({ icon, Svg, flipped, label, text, onPress, disabled, main, badge }: ToolbarButtonProps) {
   const { darkMode } = useContext(GlobalContext);
   return (
     <ResponsivePressable
       onPress={onPress}
       disabled={disabled}
       pressedSize={0.92}
-      customStyle={[styles.toolbarButton, {
+      accessibilityLabel={label}
+      customStyle={[styles.toolbarButton, text ? styles.toolbarButtonWithText : {}, {
         borderColor: purpleTheme.MAIN_COLOR,
         backgroundColor: main ? purpleTheme.MAIN_COLOR : (darkMode ? purpleTheme.NEAR_BLACK : purpleTheme.OFF_WHITE),
       }]}
       pressedStyle={{ backgroundColor: purpleTheme.MAIN_TRANSPARENT(main ? 0.8 : 0.3) }}
     >
-      <View accessible accessibilityRole="button" accessibilityLabel={label} accessibilityState={{ disabled }}>
-        <Image source={icon} style={styles.toolbarIcon} />
+      <View style={styles.toolbarButtonContent}>
+        {icon && <Image source={icon} style={styles.toolbarIcon} />}
+        {Svg && <Svg width={TOOLBAR_ICON} height={TOOLBAR_ICON} fillColor={purpleTheme.MAIN_COLOR} flipped={flipped} />}
+        {!!text && <Text allowFontScaling={false} style={[styles.toolbarText, { color: main ? "#fff" : purpleTheme.MAIN_COLOR }]}>{text}</Text>}
       </View>
       {badge && <View style={[styles.badge, { borderColor: darkMode ? purpleTheme.NEAR_BLACK : purpleTheme.OFF_WHITE }]} />}
     </ResponsivePressable>
@@ -430,9 +438,23 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
+  toolbarButtonWithText: {
+    width: undefined,
+    paddingLeft: normalize(6),
+    paddingRight: normalize(12),
+  },
+  toolbarButtonContent: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
   toolbarIcon: {
-    width: normalize(24),
-    height: normalize(24),
+    width: TOOLBAR_ICON,
+    height: TOOLBAR_ICON,
+  },
+  toolbarText: {
+    marginLeft: normalize(4),
+    fontSize: normalize(15),
+    fontFamily: "Montserrat-Regular",
   },
   badge: {
     position: "absolute",

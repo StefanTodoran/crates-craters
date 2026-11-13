@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Pressable, ViewStyle } from "react-native";
+import { AccessibilityState, Pressable, ViewStyle } from "react-native";
 
 interface Props {
     onPress?: () => void,
@@ -10,6 +10,8 @@ interface Props {
     pressedSize?: number, // Defaults to 0.98
     disabled?: boolean,
     children?: React.ReactNode,
+    accessibilityState?: AccessibilityState,
+    accessibilityLabel?: string,
 }
 
 export default function ResponsivePressable({
@@ -21,6 +23,8 @@ export default function ResponsivePressable({
     pressedSize,
     disabled,
     children,
+    accessibilityState,
+    accessibilityLabel,
 }: Props) {
     const [pressed, setPressedState] = useState(false);
     const _pressedSize = pressedSize || 0.98;
@@ -47,6 +51,9 @@ export default function ResponsivePressable({
             onPressIn={() => setPressedState(!disabled && !!onPress)}
             onPressOut={() => setPressedState(false)}
             hitSlop={hitSlop}
+            accessibilityRole="button"
+            accessibilityState={{ disabled, ...accessibilityState }}
+            accessibilityLabel={accessibilityLabel}
         >{children}</Pressable>
     );
 }

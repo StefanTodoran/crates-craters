@@ -1,0 +1,12 @@
+Pod::Spec.new do |s|
+  s.name           = 'GlassView'
+  s.version        = '1.0.0'
+  s.summary        = 'The iOS 26 Liquid Glass material as a React Native view.'
+  s.author         = ''
+  s.homepage       = 'https://todoran.dev'
+  s.platforms      = { :ios => '15.1' }
+  s.source         = { git: '' }
+  s.static_framework = true
+  s.dependency 'ExpoModulesCore'
+  s.source_files = '**/*.swift'
+end

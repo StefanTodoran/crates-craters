@@ -424,10 +424,21 @@ export default function UserLevels({
                 style={{ backgroundColor: ios ? "transparent" : (darkMode ? colors.NEAR_BLACK : colors.OFF_WHITE) }}
                 contentContainerStyle={styles.modal}
             >
-                <View style={styles.section}>
-                    <Text style={TextStyles.subtitle(darkMode)}>
-                        All Filters
+                {/* Apply sits at the top: the sheet resizes while it's dragged between
+                    heights, and a button pinned to the bottom jumped around with it. */}
+                <View style={styles.sheetHeader}>
+                    <Text allowFontScaling={false} style={[TextStyles.subtitle(darkMode), styles.sheetTitle]}>
+                        Filters
                     </Text>
+                    <SimpleButton
+                        icon={graphics.FILTER_ICON}
+                        text={"Apply"}
+                        onPress={toggleModal}
+                        main
+                    />
+                </View>
+
+                <View style={styles.section}>
 
                     <View style={styles.wrappedList}>
                         {Object.values(Filter).map((filter, index) => <FilterChip
@@ -440,11 +451,14 @@ export default function UserLevels({
                         />)}
                     </View>
 
-                    <Text style={[TextStyles.paragraph(darkMode), { marginBottom: 0 }]}>Desired Solution Length</Text>
-                    <SimpleButton
-                        text={lengthFilterEnabled ? "Disable Length Filter" : "Enable Length Filter"}
-                        onPress={() => setLengthFilterEnabled(!lengthFilterEnabled)}
-                    />
+                    <View style={styles.rangeRow}>
+                        <Text allowFontScaling={false} style={[TextStyles.paragraph(darkMode), styles.rangeLabel]}>Solution Length</Text>
+                        <FilterChip
+                            text={lengthFilterEnabled ? "Limited" : "Any"}
+                            active={lengthFilterEnabled}
+                            onPress={() => setLengthFilterEnabled(!lengthFilterEnabled)}
+                        />
+                    </View>
                     {lengthFilterEnabled && <>
                         <SliderBar
                             label="Minimum" value={minSolutionLength} units={" moves"}
@@ -458,12 +472,14 @@ export default function UserLevels({
                         />
                     </>}
 
-                    <View style={{ marginTop: normalize(25) }} />
-                    <Text style={[TextStyles.paragraph(darkMode), { marginBottom: 0 }]}>Desired Winrate</Text>
-                    <SimpleButton
-                        text={winrateFilterEnabled ? "Disable Winrate Filter" : "Enable Winrate Filter"}
-                        onPress={() => setWinrateFilterEnabled(!winrateFilterEnabled)}
-                    />
+                    <View style={[styles.rangeRow, { marginTop: normalize(20) }]}>
+                        <Text allowFontScaling={false} style={[TextStyles.paragraph(darkMode), styles.rangeLabel]}>Solve Rate</Text>
+                        <FilterChip
+                            text={winrateFilterEnabled ? "Limited" : "Any"}
+                            active={winrateFilterEnabled}
+                            onPress={() => setWinrateFilterEnabled(!winrateFilterEnabled)}
+                        />
+                    </View>
                     {winrateFilterEnabled && <>
                         <SliderBar
                             label="Minimum" value={minWinrate} units={"%"}
@@ -476,17 +492,6 @@ export default function UserLevels({
                             showSteppers
                         />
                     </>}
-                </View>
-
-                <View style={styles.section}>
-                    <SimpleButton
-                        icon={graphics.FILTER_ICON}
-                        text={"Apply Filters"}
-                        onPress={toggleModal}
-                        extraMargin={[0, 0, 30, 0]}
-                        square
-                        main
-                    />
                 </View>
             </ScrollView>
             </Modal>
@@ -511,11 +516,28 @@ const styles = StyleSheet.create({
         marginBottom: normalize(18),
     },
     modal: {
-        flexGrow: 1,
-        paddingTop: normalize(24),
-        paddingBottom: normalize(24),
+        paddingTop: normalize(20),
+        paddingBottom: normalize(40),
         alignItems: "center",
+    },
+    sheetHeader: {
+        flexDirection: "row",
         justifyContent: "space-between",
+        alignItems: "center",
+        width: "90%",
+    },
+    sheetTitle: {
+        marginVertical: 0,
+    },
+    rangeRow: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
+        width: "90%",
+        marginBottom: normalize(4),
+    },
+    rangeLabel: {
+        marginVertical: 0,
     },
     wrappedList: {
         flexDirection: "row",
@@ -523,7 +545,7 @@ const styles = StyleSheet.create({
         justifyContent: "flex-start",
         alignItems: "center",
         width: "100%",
-        paddingHorizontal: "5%",
-        marginBottom: normalize(25),
+        paddingHorizontal: "4%",
+        marginBottom: normalize(20),
     },
 });
