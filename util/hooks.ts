@@ -188,8 +188,10 @@ export function useSoundEventPlayers() {
   const iceSoundPlayer = useAudioPlayer(iceSound);
 
   function playSound(soundPlayer: AudioPlayer) {
-    soundPlayer.play();
+    // Rewind first: once a sound has finished, play() alone starts at the end and
+    // is silent, so playing then rewinding made every other move silent.
     soundPlayer.seekTo(0);
+    soundPlayer.play();
   }
 
   function playSoundEvent(soundEffect: SoundEvent | undefined) {

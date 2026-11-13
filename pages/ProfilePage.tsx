@@ -1,8 +1,9 @@
 import { AuthCredential, EmailAuthProvider, UserCredential, reauthenticateWithCredential, sendEmailVerification, signOut } from "firebase/auth";
 import { ReactNode, useContext, useState } from "react";
-import { Linking, Pressable, StyleSheet, Text, View } from "react-native";
-import Toast from "../util/toast";
+import { Image, ImageSourcePropType, Linking, Pressable, StyleSheet, Text, View } from "react-native";
+import Toast from "react-native-toast-message";
 import InputLine from "../components/InputLine";
+import { ListGroup, ListRow } from "../components/ListGroup";
 import SimpleButton from "../components/SimpleButton";
 import SubpageContainer from "../components/SubpageContainer";
 import GlobalContext from "../GlobalContext";
@@ -82,14 +83,15 @@ export default function ProfilePage({ attemptSignIn, setUserCredential }: Props)
                         </Text>
                     </View>
 
-                    <SimpleButton onPress={finishSignUp}
-                        text={busy ? "Creating Account..." : "Continue"}
-                        icon={graphics.SIGNUP_ICON}
-                        theme={theme}
-                        disabled={!newUsername || newUsername.length > MAX_USERNAME_LENGTH || busy}
-                        fillWidth
-                        main
-                    />
+                    <View style={styles.actions}>
+                        <SimpleButton onPress={finishSignUp}
+                            text={busy ? "Creating Account..." : "Continue"}
+                            icon={graphics.SIGNUP_ICON}
+                            theme={theme}
+                            disabled={!newUsername || newUsername.length > MAX_USERNAME_LENGTH || busy}
+                            main
+                        />
+                    </View>
                     <TextButton
                         text="Use a different account"
                         onPress={() => { signOutEverywhere().then(() => setUserCredential(undefined)); }}
@@ -148,14 +150,15 @@ export default function ProfilePage({ attemptSignIn, setUserCredential }: Props)
                     doFilter={false}
                     darkMode={darkMode}
                 />}
-                <SimpleButton onPress={deleteAccount}
-                    text={hasPassword ? "Delete Forever" : "Confirm with Google"}
-                    icon={graphics.DELETE_ICON}
-                    theme={colors.RED_THEME}
-                    disabled={(hasPassword && password.length < 6) || busy}
-                    fillWidth
-                    main
-                />
+                <View style={styles.actions}>
+                    <SimpleButton onPress={deleteAccount}
+                        text={hasPassword ? "Delete Forever" : "Confirm with Google"}
+                        icon={graphics.DELETE_ICON_WHITE}
+                        theme={colors.RED_THEME}
+                        disabled={(hasPassword && password.length < 6) || busy}
+                        main
+                    />
+                </View>
                 <TextButton text="Cancel" onPress={() => { setDeleting(false); setPassword(""); }} />
             </FormPage>
         </SubpageContainer>
@@ -206,9 +209,9 @@ export default function ProfilePage({ attemptSignIn, setUserCredential }: Props)
 
                 {/* Stats */}
                 {userData && <View style={styles.stats}>
-                    <Stat darkMode={darkMode} value={userData.completed.length} label="Solved" />
-                    <Stat darkMode={darkMode} value={userData.likes.length} label="Liked" />
-                    <Stat darkMode={darkMode} value={userData.coins} label="Coins" />
+                    <Stat darkMode={darkMode} icon={graphics.FLAG_ICON} value={userData.completed.length} label="Solved" />
+                    <Stat darkMode={darkMode} icon={graphics.LIKE_ICON} value={userData.likes.length} label="Liked" />
+                    <Stat darkMode={darkMode} icon={graphics.COIN} value={userData.coins} label="Coins" />
                 </View>}
 
                 {/* Only while unverified: verified accounts have nothing to do here. */}
@@ -220,14 +223,14 @@ export default function ProfilePage({ attemptSignIn, setUserCredential }: Props)
                     <TextButton text="Resend" onPress={resendVerification} color={darkMode ? theme.MAIN_COLOR : theme.TINT_COLOR} />
                 </View>}
 
-                <Group darkMode={darkMode}>
-                    <Row darkMode={darkMode} title="Contact Support" onPress={() => Linking.openURL("mailto:info@todoran.dev?subject=Crates%20%26%20Craters")} />
-                    <Row darkMode={darkMode} title="Sign Out" onPress={signOutPressed} last />
-                </Group>
+                <ListGroup>
+                    <ListRow title="Contact Support" onPress={() => Linking.openURL("mailto:info@todoran.dev?subject=Crates%20%26%20Craters")} />
+                    <ListRow title="Sign Out" onPress={signOutPressed} last />
+                </ListGroup>
 
-                <Group darkMode={darkMode}>
-                    <Row darkMode={darkMode} title="Delete Account" onPress={() => setDeleting(true)} destructive last />
-                </Group>
+                <ListGroup>
+                    <ListRow title="Delete Account" onPress={() => setDeleting(true)} destructive last />
+                </ListGroup>
             </View>
         </SubpageContainer>
     );
@@ -244,41 +247,15 @@ function FormPage({ title, description, darkMode, children }: { title: string, d
     );
 }
 
-function Stat({ value, label, darkMode }: { value: number, label: string, darkMode: boolean }) {
+function Stat({ icon, value, label, darkMode }: { icon: ImageSourcePropType, value: number, label: string, darkMode: boolean }) {
     return (
         <View style={[styles.stat, { backgroundColor: theme.MAIN_TRANSPARENT(darkMode ? 0.12 : 0.25) }]}>
-            <Text style={[styles.statValue, { color: darkMode ? theme.MAIN_COLOR : theme.TINT_COLOR }]} allowFontScaling={false}>{value}</Text>
+            <View style={styles.statValueRow}>
+                <Image source={icon} style={styles.statIcon} />
+                <Text style={[styles.statValue, { color: darkMode ? theme.MAIN_COLOR : theme.TINT_COLOR }]} allowFontScaling={false}>{value}</Text>
+            </View>
             <Text style={styles.statLabel} allowFontScaling={false}>{label}</Text>
         </View>
-    );
-}
-
-function Group({ darkMode, children }: { darkMode: boolean, children: ReactNode }) {
-    return (
-        <View style={[styles.group, {
-            backgroundColor: darkMode ? colors.OFF_WHITE_TRANSPARENT(0.06) : colors.NEAR_BLACK_TRANSPARENT(0.03),
-        }]}>
-            {children}
-        </View>
-    );
-}
-
-function Row({ title, onPress, destructive, last, darkMode }: { title: string, onPress: () => void, destructive?: boolean, last?: boolean, darkMode: boolean }) {
-    return (
-        <Pressable
-            onPress={onPress}
-            accessibilityRole="button"
-            style={({ pressed }) => [
-                styles.row,
-                !last && { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.DIM_GRAY_TRANSPARENT(0.25) },
-                pressed && { backgroundColor: colors.DIM_GRAY_TRANSPARENT(0.12) },
-            ]}
-        >
-            <Text style={[styles.rowTitle, { color: destructive ? colors.RED_THEME.TINT_COLOR : (darkMode ? colors.OFF_WHITE : colors.TEXT_COLOR) }]}>
-                {title}
-            </Text>
-            {!destructive && <Text style={styles.chevron}>›</Text>}
-        </Pressable>
     );
 }
 
@@ -338,6 +315,15 @@ const styles = StyleSheet.create({
         paddingVertical: normalize(12),
         borderRadius: normalize(14),
     },
+    statValueRow: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: normalize(6),
+    },
+    statIcon: {
+        width: normalize(20),
+        height: normalize(20),
+    },
     statValue: {
         fontFamily: "Montserrat-Medium",
         fontWeight: "bold",
@@ -357,29 +343,15 @@ const styles = StyleSheet.create({
         paddingHorizontal: normalize(16),
         marginBottom: normalize(16),
     },
-    group: {
-        borderRadius: normalize(14),
-        overflow: "hidden",
-        marginBottom: normalize(16),
-    },
-    row: {
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "space-between",
-        paddingVertical: normalize(14),
-        paddingHorizontal: normalize(16),
-    },
     rowTitle: {
         fontFamily: "Montserrat-Regular",
         fontSize: normalize(16),
     },
-    chevron: {
-        fontSize: normalize(22),
-        color: colors.DIM_GRAY_TRANSPARENT(0.6),
-        marginTop: -normalize(2),
-    },
     form: {
         width: "100%",
+    },
+    actions: {
+        alignItems: "center", // Buttons size to their label instead of the full width.
     },
     formTitle: {
         fontFamily: "Montserrat-Medium",

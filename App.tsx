@@ -6,6 +6,7 @@ import { UserCredential, onAuthStateChanged, signInAnonymously, signInWithEmailA
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Animated, Appearance, BackHandler, Platform, StatusBar as RNStatusBar, StyleSheet, View, useWindowDimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import Toast from "react-native-toast-message";
 import Header from "./components/Header";
 import Menu from "./components/Menu";
 import GlobalContext from "./GlobalContext";
@@ -24,6 +25,7 @@ import { createLevel, getData, getLevelData, metadataKeys, storage, syncLevelsWi
 import { setHapticsEnabled } from "./util/haptics";
 import { usePlaySession } from "./util/playSession";
 import { setAppState, setEditorLevel, updateNotificationCount, useAppStore } from "./util/store";
+import { toastConfig } from "./util/toasts";
 import { usePageNavigation } from "./util/usePageNavigation";
 import { Level, PageView, PlayMode, SharedLevel, UserLevel } from "./util/types";
 
@@ -353,6 +355,13 @@ export default function App() {
           </View>
         </Animated.View>
 
+        {/* Toast is absolutely positioned, so a SafeAreaView parent has no effect;
+            offset it below the status bar / Dynamic Island explicitly. */}
+        <Toast
+          position="top"
+          topOffset={insets.top + 8}
+          config={toastConfig}
+        />
       </View>
 
       <StatusBar translucent={true} hidden={true} />

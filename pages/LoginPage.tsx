@@ -1,10 +1,11 @@
 import { AuthCredential, EmailAuthProvider, GoogleAuthProvider, UserCredential, createUserWithEmailAndPassword, deleteUser, linkWithCredential, sendEmailVerification, signInWithEmailAndPassword } from "firebase/auth";
+import AppleLogo from "../assets/AppleLogo";
 import GoogleLogo from "../assets/GoogleLogo";
 import { signInWithGoogle } from "../util/googleAuth";
 import { Timestamp } from "firebase/firestore";
 import { useContext, useState } from "react";
 import { StyleSheet, Text, View, useWindowDimensions } from "react-native";
-import Toast from "../util/toast";
+import Toast from "react-native-toast-message";
 import InputLine from "../components/InputLine";
 import SimpleButton from "../components/SimpleButton";
 import SubpageContainer from "../components/SubpageContainer";
@@ -111,6 +112,22 @@ export default function LoginPage({ setUserCredential }: Props) {
                             Svg={GoogleLogo}
                             theme={colors.YELLOW_THEME}
                             onPress={continueWithGoogle}
+                            disabled={loading}
+                            fillWidth
+                            square
+                            extraMargin={[0, 8]}
+                            main
+                        />
+                        {/* Placeholder until Sign in with Apple is implemented. */}
+                        <SimpleButton
+                            text="Continue w/ Apple"
+                            Svg={AppleLogo}
+                            theme={colors.YELLOW_THEME}
+                            onPress={() => Toast.show({
+                                type: "info",
+                                text1: "Sign in with Apple is coming soon.",
+                                text2: "For now, use Google or an email account.",
+                            })}
                             disabled={loading}
                             fillWidth
                             square

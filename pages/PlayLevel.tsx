@@ -1,6 +1,6 @@
 import { Dispatch, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { Animated, StyleSheet, Text, TextStyle, View, useWindowDimensions } from "react-native";
-import Toast from "../util/toast";
+import Toast from "react-native-toast-message";
 import BackButton from "../assets/BackButton";
 import GameBoard from "../components/GameBoard";
 import Inventory from "../components/Inventory";

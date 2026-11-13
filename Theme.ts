@@ -30,6 +30,7 @@ const mainGraphics = {
   WALL_ICON: require("./assets/main_theme/wall_icon.png"),
   SAVE_ICON: require("./assets/main_theme/save_icon.png"),
   DELETE_ICON: require("./assets/main_theme/delete_icon.png"),
+  DELETE_ICON_WHITE: require("./assets/main_theme/delete_icon_white.png"),
   OPTIONS_ICON: require("./assets/main_theme/options_icon.png"),
   SHARE_ICON: require("./assets/main_theme/share_icon.png"),
   SHARE_ICON_RED: require("./assets/main_theme/share_icon_red.png"),

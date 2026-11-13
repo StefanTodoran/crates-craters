@@ -1,6 +1,6 @@
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
-import { FlatList, Modal, ScrollView, StyleSheet, Switch, Text, View, useWindowDimensions } from "react-native";
-import Toast from "../util/toast";
+import { FlatList, Modal, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
+import Toast from "react-native-toast-message";
 import FilterChip from "../components/FilterChip";
 import InputLine from "../components/InputLine";
 import { IndicatorIcon } from "../components/LevelCard";
@@ -415,7 +415,10 @@ export default function UserLevels({
                     </View>
 
                     <Text style={[TextStyles.paragraph(darkMode), { marginBottom: 0 }]}>Desired Solution Length</Text>
-                    <Switch value={lengthFilterEnabled} onValueChange={setLengthFilterEnabled} accessibilityLabel="Length filter" style={styles.filterSwitch} trackColor={{ true: purpleTheme.MAIN_COLOR }} />
+                    <SimpleButton
+                        text={lengthFilterEnabled ? "Disable Length Filter" : "Enable Length Filter"}
+                        onPress={() => setLengthFilterEnabled(!lengthFilterEnabled)}
+                    />
                     {lengthFilterEnabled && <>
                         <SliderBar
                             label="Minimum" value={minSolutionLength} units={" moves"}
@@ -431,7 +434,10 @@ export default function UserLevels({
 
                     <View style={{ marginTop: normalize(25) }} />
                     <Text style={[TextStyles.paragraph(darkMode), { marginBottom: 0 }]}>Desired Winrate</Text>
-                    <Switch value={winrateFilterEnabled} onValueChange={setWinrateFilterEnabled} accessibilityLabel="Winrate filter" style={styles.filterSwitch} trackColor={{ true: purpleTheme.MAIN_COLOR }} />
+                    <SimpleButton
+                        text={winrateFilterEnabled ? "Disable Winrate Filter" : "Enable Winrate Filter"}
+                        onPress={() => setWinrateFilterEnabled(!winrateFilterEnabled)}
+                    />
                     {winrateFilterEnabled && <>
                         <SliderBar
                             label="Minimum" value={minWinrate} units={"%"}
@@ -482,9 +488,6 @@ const styles = StyleSheet.create({
         paddingBottom: normalize(24),
         alignItems: "center",
         justifyContent: "space-between",
-    },
-    filterSwitch: {
-        marginVertical: normalize(8),
     },
     wrappedList: {
         flexDirection: "row",

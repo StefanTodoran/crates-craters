@@ -3,36 +3,19 @@ import { useContext } from "react";
 import { Platform, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import GlobalContext from "../GlobalContext";
 import { normalize } from "../TextStyles";
-import { purpleTheme, Theme } from "../Theme";
+import { purpleTheme } from "../Theme";
+import CustomSliderBar, { SliderBarProps } from "./CustomSliderBar";
 import StepperArrow from "./StepperArrow";
 
-
-interface Props {
-  label: string,
-  units: string,
-  value: number,
-  minValue: number,
-  maxValue: number,
-  changeCallback: (newValue: number) => void,
-  stepSize?: number,
-  showSteppers?: boolean,
-  stepperWrapAround?: boolean,
-  theme?: Theme,
+/**
+ * A labelled slider: the native UISlider on iOS, the app's custom slider on Android.
+ * Props are documented on CustomSliderBar.
+ */
+export default function SliderBar(props: SliderBarProps) {
+  return Platform.OS === "ios" ? <NativeSliderBar {...props} /> : <CustomSliderBar {...props} />;
 }
 
-/**
- * A labelled native slider (UISlider on iOS, SeekBar on Android).
- * @param {string} label The label to above the slider bar.
- * @param {string} units A string to be displayed by the value (e.g. "%", "px", or "" if none desired)
- * @param {number} value The current value of the slider.
- * @param {number} minValue
- * @param {number} maxValue
- * @param {Function} changeCallback The callback to use when the value inside is changed.
- * @param {number} stepSize The increment to snap values to. Defaults to 1.
- * @param {boolean} showSteppers
- * @param {boolean} stepperWrapAround Whether to wrap around the min and max values when the steppers are pressed.
- */
-export default function SliderBar({
+function NativeSliderBar({
   label,
   units,
   value,
@@ -42,7 +25,7 @@ export default function SliderBar({
   showSteppers,
   stepperWrapAround,
   theme,
-}: Props) {
+}: SliderBarProps) {
   const { darkMode } = useContext(GlobalContext);
   const win = useWindowDimensions();
   const barWidth = win.width / 2;
@@ -84,8 +67,7 @@ export default function SliderBar({
           onValueChange={changeCallback}
           minimumTrackTintColor={mainColor}
           maximumTrackTintColor={darkMode ? useTheme.DARK_COLOR : useTheme.LIGHT_COLOR}
-          // iOS: the system's white thumb (off-white in dark mode). Android: the theme color.
-          thumbTintColor={Platform.OS === "android" ? mainColor : darkMode ? useTheme.OFF_WHITE : undefined}
+          thumbTintColor={darkMode ? useTheme.OFF_WHITE : undefined} // System thumb in light mode.
           accessibilityLabel={label}
         />
 

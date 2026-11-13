@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from "react";
 import { Animated, LayoutChangeEvent, StyleSheet, TextInput, View } from "react-native";
-import Svg, { Path } from "react-native-svg";
 import { colors } from "../Theme";
 
 export interface InputLineProps {
@@ -18,8 +17,8 @@ export interface InputLineProps {
 
 /**
  * An outlined text field. The label rests inside the field and, when focused or
- * filled, shrinks onto the top border, which opens a gap behind it (so it works on
- * any background). The gap is drawn with the outline's dash pattern.
+ * filled, shrinks onto the top border while a gap opens in the border behind it (a
+ * real gap, so it works on any background). Everything animates on the native driver.
  */
 export default function InputLine({
   label,
@@ -35,7 +34,6 @@ export default function InputLine({
   const [focused, setFocus] = useState(false);
   const raised = value !== "" || focused;
   const labelAnim = useRef(new Animated.Value(raised ? 1 : 0)).current;
-  const [size, setSize] = useState({ width: 0, height: 0 });
   const [labelWidth, setLabelWidth] = useState(0);
 
   useEffect(() => {
@@ -45,21 +43,27 @@ export default function InputLine({
   const borderColor = disabled ? colors.DIM_GRAY_TRANSPARENT(0.1) :
     focused ? colors.DIM_GRAY_TRANSPARENT(0.7) : colors.DIM_GRAY_TRANSPARENT(0.3);
 
-  // The outline: a rounded rect drawn as one path that starts just after the label's
-  // gap on the top edge, goes clockwise, and stops just before it.
-  const outline = outlinePath(size.width, size.height, raised ? labelWidth * LABEL_SCALE + 2 * GAP_PADDING : 0);
+  const gap = labelWidth * LABEL_SCALE + 2 * GAP_PADDING;
 
   return (
-    <View
-      style={[styles.container, doFlex && { flex: 1, marginBottom: 0 }]}
-      onLayout={(event: LayoutChangeEvent) => {
-        const { width, height } = event.nativeEvent.layout;
-        setSize({ width, height });
-      }}
-    >
-      {size.width > 0 && <Svg width={size.width} height={size.height} style={styles.outline} pointerEvents="none">
-        <Path d={outline} fill="none" stroke={borderColor} strokeWidth={BORDER} />
-      </Svg>}
+    <View style={[styles.container, doFlex && { flex: 1, marginBottom: 0 }]}>
+      {/* The outline, in pieces so the top edge can open: sides and bottom, the two
+          rounded top corners, and the top edge between them. The top edge is a short
+          stub before the label plus a line that slides right (clipped at the corner)
+          to open the gap as the label rises into it. */}
+      <View pointerEvents="none" style={[styles.sides, { borderColor }]} />
+      <View pointerEvents="none" style={[styles.corner, styles.cornerLeft, { borderColor }]} />
+      <View pointerEvents="none" style={[styles.corner, styles.cornerRight, { borderColor }]} />
+      <View pointerEvents="none" style={styles.topEdge}>
+        <View style={[styles.topStub, { backgroundColor: borderColor }]} />
+        <Animated.View style={[
+          styles.topLine,
+          {
+            backgroundColor: borderColor,
+            transform: [{ translateX: labelAnim.interpolate({ inputRange: [0, 1], outputRange: [0, gap] }) }],
+          },
+        ]} />
+      </View>
 
       <Animated.Text
         onLayout={(event: LayoutChangeEvent) => setLabelWidth(event.nativeEvent.layout.width)}
@@ -104,21 +108,6 @@ export default function InputLine({
   );
 }
 
-function outlinePath(width: number, height: number, gap: number) {
-  const o = BORDER / 2; // Keep the stroke inside the view.
-  const right = width - o, bottom = height - o, r = RADIUS;
-  const gapStart = PADDING_H - GAP_PADDING;
-  const gapEnd = gapStart + gap;
-  return [
-    `M ${gapEnd} ${o}`,
-    `H ${right - r}`, `A ${r} ${r} 0 0 1 ${right} ${o + r}`,
-    `V ${bottom - r}`, `A ${r} ${r} 0 0 1 ${right - r} ${bottom}`,
-    `H ${o + r}`, `A ${r} ${r} 0 0 1 ${o} ${bottom - r}`,
-    `V ${o + r}`, `A ${r} ${r} 0 0 1 ${o + r} ${o}`,
-    `H ${gapStart}`,
-  ].join(" ");
-}
-
 // Explicit geometry so iOS (whose TextInput has no default padding) and Android
 // (whose TextInput does) lay out identically, and the label math stays exact.
 const INPUT_HEIGHT = 24;
@@ -140,10 +129,56 @@ const styles = StyleSheet.create({
     marginTop: 8, // Room for the half of the raised label above the line.
     marginBottom: 10,
   },
-  outline: {
+  sides: {
+    position: "absolute",
+    top: RADIUS,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    borderLeftWidth: BORDER,
+    borderRightWidth: BORDER,
+    borderBottomWidth: BORDER,
+    borderBottomLeftRadius: RADIUS,
+    borderBottomRightRadius: RADIUS,
+  },
+  corner: {
+    position: "absolute",
+    top: 0,
+    width: RADIUS,
+    height: RADIUS,
+    borderTopWidth: BORDER,
+  },
+  cornerLeft: {
+    left: 0,
+    borderLeftWidth: BORDER,
+    borderTopLeftRadius: RADIUS,
+  },
+  cornerRight: {
+    right: 0,
+    borderRightWidth: BORDER,
+    borderTopRightRadius: RADIUS,
+  },
+  topEdge: {
+    position: "absolute",
+    top: 0,
+    left: RADIUS,
+    right: RADIUS,
+    height: BORDER,
+    overflow: "hidden",
+  },
+  topStub: {
     position: "absolute",
     top: 0,
     left: 0,
+    width: PADDING_H - GAP_PADDING - RADIUS,
+    height: BORDER,
+  },
+  topLine: {
+    position: "absolute",
+    top: 0,
+    left: PADDING_H - GAP_PADDING - RADIUS,
+    right: 0,
+    height: BORDER,
   },
   label: {
     position: "absolute",
