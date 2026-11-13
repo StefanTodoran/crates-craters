@@ -61,6 +61,8 @@ function NativeSubpages({ pageTabs, pageComponents, disabledPages }: Props) {
     <TabView
       navigationState={{ index, routes }}
       onIndexChange={(newIndex) => {
+        // preventsDefault only stops the native bar from switching; JS is still told about the press.
+        if (disabledPages?.[newIndex]) return;
         setIndex(newIndex);
         eventEmitter.emit("pageWasChanged");
       }}
