@@ -14,6 +14,7 @@ interface Props {
   hapticsCallback: () => void,
   setSensitivityCallback: (sensitivity: number) => void,
   setTapDelayCallback: (delay: number) => void,
+  resetSettingsCallback: () => void,
 }
 
 export default function AccountSettings({
@@ -22,6 +23,7 @@ export default function AccountSettings({
   hapticsCallback,
   setSensitivityCallback,
   setTapDelayCallback,
+  resetSettingsCallback,
 }: Props) {
   const pageComponents = useMemo(() => {
     return [
@@ -32,6 +34,7 @@ export default function AccountSettings({
         hapticsCallback={hapticsCallback}
         setSensitivityCallback={setSensitivityCallback}
         setTapDelayCallback={setTapDelayCallback}
+        resetSettingsCallback={resetSettingsCallback}
       />,
       <About />,
     ];

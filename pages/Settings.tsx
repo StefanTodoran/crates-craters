@@ -1,9 +1,9 @@
 import { useContext, useState } from "react";
-import { Platform, StyleSheet, Text, View } from "react-native";
-import GlobalContext from "../GlobalContext";
+import { Alert, Platform, StyleSheet, Text, View } from "react-native";
+import GlobalContext, { defaultSettings } from "../GlobalContext";
 import TextStyles, { normalize } from "../TextStyles";
 import { colors, graphics } from "../Theme";
-import { ListGroup, SwitchRow } from "../components/ListGroup";
+import { ListGroup, ListRow, SwitchRow } from "../components/ListGroup";
 import MenuButton from "../components/MenuButton";
 import SliderBar from "../components/SliderBar";
 import SubpageContainer from "../components/SubpageContainer";
@@ -15,6 +15,7 @@ interface Props {
   hapticsCallback: () => void,
   setSensitivityCallback: (sensitivity: number) => void,
   setTapDelayCallback: (delay: number) => void,
+  resetSettingsCallback: () => void,
 }
 
 export default function Settings({
@@ -23,6 +24,7 @@ export default function Settings({
   hapticsCallback,
   setSensitivityCallback,
   setTapDelayCallback,
+  resetSettingsCallback,
 }: Props) {
   const { darkMode, dragSensitivity, doubleTapDelay, playAudio, haptics } = useContext(GlobalContext);
 
@@ -37,6 +39,20 @@ export default function Settings({
   }
 
   useOnUnmount(updateSettings, [newDragSens, newTapDelay]);
+
+  function confirmReset() {
+    Alert.alert("Reset settings?", "Dark mode, sounds, haptics, drag sensitivity and double tap delay go back to their defaults.", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Reset", style: "destructive", onPress: () => {
+          // The sliders hold their values locally until unmount, so reset those too.
+          setNewDragSens(defaultSettings.dragSensitivity);
+          setNewTapDelay(defaultSettings.doubleTapDelay);
+          resetSettingsCallback();
+        },
+      },
+    ], { cancelable: true, userInterfaceStyle: darkMode ? "dark" : "light" });
+  }
 
   return (
     <SubpageContainer center>
@@ -86,6 +102,20 @@ export default function Settings({
           minValue={100} maxValue={500} changeCallback={setNewTapDelay}
           theme={colors.GREEN_THEME}
         />
+
+        <View style={{ height: normalize(20) }} />
+        {ios ?
+          <ListGroup>
+            <ListRow title="Reset Settings" icon={graphics.RESET_ICON} onPress={confirmReset} last />
+          </ListGroup> :
+          <MenuButton
+            onPress={confirmReset}
+            label="Reset Settings"
+            icon={graphics.RESET_ICON}
+            theme={colors.GREEN_THEME}
+            fillWidth
+          />
+        }
       </View>
     </SubpageContainer>
   );

@@ -78,3 +78,5 @@ dist/
 # @end expo-cli
 
 serviceAccountKey.json
+# Local scratch output (screenshots for Figma, etc.)
+tmp/

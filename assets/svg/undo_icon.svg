@@ -1,7 +1,7 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100">
-  <!-- A U-turn arrow pointing back (left). Single color; tinted per theme in the app. -->
-  <g fill="none" stroke="#000" stroke-width="10" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M24 40 H60 A21 21 0 0 1 60 82 H38"/>
-    <path d="M38 24 L22 40 L38 56"/>
-  </g>
+<svg width="100" height="100" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g transform="translate(5 23.75) scale(1.5)">
+
+<path d="M20.1414 0.97623L20.3375 8.61181C37.4354 8.01101 62.1946 12.8734 58.3315 33.9762C53.8315 22.4683 34.1391 22.3134 20.9271 22.442L21.0184 30.9683L2.03099 16.5457L20.1414 0.97623Z" fill="#BEA9DF" fill-opacity="0.5"/>
+
+</g>
 </svg>

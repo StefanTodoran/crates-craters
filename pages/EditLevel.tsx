@@ -2,7 +2,6 @@ import { useAudioPlayer } from "expo-audio";
 import { useCallback, useContext, useMemo, useRef, useState } from "react";
 import { Animated, GestureResponderEvent, PanResponder, PanResponderGestureState, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import BackButton from "../assets/BackButton";
-import UndoIcon from "../assets/UndoIcon";
 import CurrentToolIndicator from "../components/CurrentToolIndicator";
 import GameBoard from "../components/GameBoard";
 import SimpleButton from "../components/SimpleButton";
@@ -232,7 +231,7 @@ export default function EditLevel({
       ]}>
         <View style={styles.controlsRow}>
           <View style={styles.controlCell}>
-            <SimpleButton onPress={undo} text="Undo" Svg={UndoIcon} disabled={!canUndo} fillWidth centered />
+            <SimpleButton onPress={undo} text="Undo" icon={graphics.UNDO_ICON} disabled={!canUndo} fillWidth centered />
           </View>
           <View style={styles.controlCell}>
             <SimpleButton onPress={toggleToolsModal} text="Change Tool" main={true} icon={graphics.MENU_ICON} fillWidth centered />
@@ -241,7 +240,9 @@ export default function EditLevel({
         <SimpleButton onPress={() => {
           saveChanges();
           viewCallback(PageView.MANAGE, 1);
-        }} text={unsavedChanges ? "Save & Exit" : "Exit"} Svg={BackButton} fillWidth centered />
+        }} text={unsavedChanges ? "Save & Exit" : "Exit"}
+          {...(unsavedChanges ? { icon: graphics.SAVE_ICON_PURPLE } : { Svg: BackButton })}
+          fillWidth centered />
       </Animated.View>
 
       {/* START MODAL */}
@@ -333,7 +334,8 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   controls: {
-    marginTop: normalize(15),
+    // The tool indicator above already has a bottom margin.
+    marginTop: -normalize(5),
   },
   controlsRow: {
     flexDirection: "row",

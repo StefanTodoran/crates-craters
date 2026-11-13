@@ -209,7 +209,7 @@ export default function ProfilePage({ attemptSignIn, setUserCredential }: Props)
 
                 {/* Stats */}
                 {userData && <View style={styles.stats}>
-                    <Stat darkMode={darkMode} icon={graphics.FLAG_ICON_YELLOW} value={userData.completed.length} label="Solved" />
+                    <Stat darkMode={darkMode} icon={graphics.FLAG} value={userData.completed.length} label="Solved" />
                     <Stat darkMode={darkMode} icon={graphics.LIKE_ICON_YELLOW} value={userData.likes.length} label="Liked" />
                     <Stat darkMode={darkMode} icon={graphics.COIN} value={userData.coins} label="Coins" />
                 </View>}

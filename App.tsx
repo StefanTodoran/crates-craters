@@ -9,7 +9,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Toast from "react-native-toast-message";
 import Header from "./components/Header";
 import Menu from "./components/Menu";
-import GlobalContext from "./GlobalContext";
+import GlobalContext, { defaultSettings } from "./GlobalContext";
 import EditLevel from "./pages/EditLevel";
 import EditorPage from "./pages/EditorPage";
 import SettingsPage from "./pages/HelpSettings";
@@ -90,6 +90,13 @@ export default function App() {
   const [haptics, setHaptics] = useBooleanSetting("haptics");
   useEffect(() => setHapticsEnabled(haptics), [haptics]);
   const toggleHaptics = useCallback(() => setHaptics(haptics => !haptics), []);
+  const resetSettings = useCallback(() => {
+    setDarkMode(defaultSettings.darkMode);
+    setAudioMode(defaultSettings.playAudio);
+    setHaptics(defaultSettings.haptics);
+    setSensitivity(defaultSettings.dragSensitivity);
+    setTapDelay(defaultSettings.doubleTapDelay);
+  }, []);
 
   useEffect(() => {
     if (Platform.OS !== "android") return;
@@ -361,6 +368,7 @@ export default function App() {
                 hapticsCallback={toggleHaptics}
                 setSensitivityCallback={setSensitivity}
                 setTapDelayCallback={setTapDelay}
+                resetSettingsCallback={resetSettings}
               />
             }
           </View>
