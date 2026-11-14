@@ -1,6 +1,6 @@
 # Suggestions
 
-Open items from `APP_REVIEW.md`, plus a few found since. Finished items are removed: the 15 quick-win fixes, the lock icon work, all earlier bug items, the security review fixes, the performance and code quality items, editor undo, and the account, Create Level and Manage Level redesigns. Items are grouped by type and numbered continuously. Each one is standalone, so edit or delete freely.
+Open items from `APP_REVIEW.md`, plus a few found since. Finished items are removed: the 15 quick-win fixes, the lock icon work, all earlier bug items, the security review fixes, the performance and code quality items, editor undo, and the account, Create Level and Manage Level redesigns, and the editor revamp (tool strip, toolbar with redo, eraser, bomb fuse editing), and the shared level cards (clean card layout, difficulty pills, instant likes, filter summary, Yours filter). Items are grouped by type and numbered continuously. Each one is standalone, so edit or delete freely.
 
 ## Security
 
@@ -22,23 +22,11 @@ Open items from `APP_REVIEW.md`, plus a few found since. Finished items are remo
 
 6. Icons are exported at 1× (100×100 px) but shown at up to ~3× density, so they're slightly soft on iPhones. Now that the SVG sources are in `assets/svg`, the `@2x`/`@3x` PNGs can be rendered from them by a script.
 
-## Editor
+## Shared Levels
 
-Ideas for an editor revamp, most impactful first. 1 and 2 together are the real revamp; the rest stand alone.
-
-7. Replace the Change Tool screen with a tool strip: a scrollable row of tool icons under the board, with the current tool highlighted, so switching is one tap. Bomb fuse and one-way rotation appear inline only when those tools are picked.
-
-8. Add a compact top toolbar: small icon buttons above the board for Undo, Redo, Playtest and Save, with a dot on Save when there are unsaved changes. This frees the bottom for the tool strip and adds redo.
-
-9. Check the level before Playtest or Share: small warnings for no spawn, no flag, coins the player can't reach, or keys without doors.
-
-10. Long-press a placed tile to edit it, such as a bomb's fuse or a one-way tile's direction, instead of setting these before placing.
-
-11. Later: rectangle fill, clear board and mirror mode.
+7. Replace the length and solve rate sliders with preset chips. Today each one is an on/off button plus two sliders (minimum and maximum), so narrowing to "short levels" takes three controls and a lot of fiddling, and the numbers mean little until you know the level pool. Instead give each a single-select chip row in the filters sheet: Length: Any · Short · Medium · Long, and Difficulty: Any · Easy · Medium · Hard. Difficulty uses the same buckets and colors as the card difficulty pill, so the filter and the cards speak the same language, and "New" levels (too few attempts) are left out of any difficulty but Any. The length buckets should come from the real spread of best solutions (most shared levels are probably under 30 moves, so e.g. Short ≤ 12, Medium 13 to 30, Long 31+), not the current 50 and 100 cutoffs. One tap each, no "enable" step, and the active choices show up in the summary line under the search bar. If exact ranges are still wanted, a two-thumb range slider is the alternative, but UIKit has no native one, so it would be custom on both platforms.
 
 ## Features
-
-A. Add an eraser tool to the editor (undo is done).
 
 B. Show overall progress on the Levels page (e.g. "5/30 complete").
 
