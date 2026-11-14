@@ -4,7 +4,6 @@ import Toast from "react-native-toast-message";
 import FilterChip from "../components/FilterChip";
 import InputLine, { INPUT_LABEL_ROOM } from "../components/InputLine";
 import { Difficulty, IndicatorIcon, StatChip, difficultyThemes } from "../components/LevelCard";
-import LevelDetailSheet from "../components/LevelDetailSheet";
 import BottomSheet from "../components/BottomSheet";
 import SimpleButton from "../components/SimpleButton";
 import SliderBar from "../components/SliderBar";
@@ -89,11 +88,11 @@ function solveRateChip(level: SharedLevel): StatChip | undefined {
 }
 
 const bestLength = (level: SharedLevel) => level.bestSolution?.length ?? level.best;
-const bestChip = (level: SharedLevel): StatChip =>
-    ({ label: `${bestLength(level)}`, icon: graphics.FLAG_ICON, accessibilityLabel: `Best solution: ${bestLength(level)} moves` });
-const likesChip = (level: SharedLevel): StatChip =>
-    ({ label: `${level.likes}`, icon: graphics.LIKE_ICON, accessibilityLabel: `${level.likes} likes` });
 const plural = (count: number, word: string) => `${count} ${word}${count === 1 ? "" : "s"}`;
+const bestChip = (level: SharedLevel): StatChip =>
+    ({ label: `Best: ${bestLength(level)}`, icon: graphics.FLAG_ICON, accessibilityLabel: `Best solution: ${bestLength(level)} moves` });
+const likesChip = (level: SharedLevel): StatChip =>
+    ({ label: plural(level.likes, "like"), icon: graphics.LIKE_ICON });
 
 /** When a level was shared: a date string, or a Firestore Timestamp on fetched levels. */
 function sharedDate(level: SharedLevel): Date | undefined {
@@ -131,8 +130,11 @@ export function buildUserLevelQuery(params: SearchParams, lists: LocalLevelLists
         filterFields.push({ field: "attempts", operator: "==", value: 0 });
     }
     if (filters.has(Filter.UNBEATEN)) {
+        // Nobody has solved it yet, whether or not anyone has tried. Also ordered by
+        // attempts (after the share date, so in effect only a tiebreak), which matches
+        // the indexes built for the earlier "attempts != 0" version of this query.
         filterFields.push({ field: "wins", operator: "==", value: 0 });
-        filterFields.push({ field: "attempts", operator: "!=", value: 0 });
+        orderFields.push({ field: "attempts", order: orderFields[orderFields.length - 1].order });
     }
     if (params.lengthFilterEnabled) {
         filterFields.push({ field: "best", operator: ">", value: params.minSolutionLength });
@@ -229,7 +231,6 @@ export default function UserLevels({
     const manageLevel = (uuid: string) => {
         const localLevel = findLocalLevel(uuid);
         if (!localLevel) return;
-        setDetailUuid(undefined);
         setEditorLevel(localLevel);
         viewCallback(PageView.MANAGE, 1);
     };
@@ -242,11 +243,6 @@ export default function UserLevels({
         attemptUserLevel(uuid, uid);
     };
 
-    // The level whose details sheet is open.
-    const [detailUuid, setDetailUuid] = useState<string>();
-    const openDetails = (uuid: string) => {
-        setDetailUuid(uuid);
-    };
     const scrollRef = useRef<FlatList<Filter>>(null);
 
     const [filters, setFilters] = useState(new Set<Filter>());
@@ -383,36 +379,25 @@ export default function UserLevels({
     }, [userLevels, searchQuery]);
 
     // Card chips. The best solution only shows once a player has beaten the level: until
-    // then it's the creator's own solution (sharing requires beating the level first).
+    // then it would be the creator's own solution, which gives too much away.
     const getStats = useCallback((level: Level): StatChip[] => {
         const shared = level as SharedLevel;
         return [difficultyChip(shared), solveRateChip(shared), shared.wins > 0 ? bestChip(shared) : undefined, likesChip(shared)]
             .filter(chip => chip !== undefined);
     }, []);
 
-    // Plays and wins are text, under the name on your own cards and under the pills in the sheet.
-    const playsAndWins = (level: SharedLevel) => `${plural(level.attempts, "play")} · ${plural(level.wins, "win")}`;
     const getSubtitle = useCallback((level: Level) => {
         const shared = level as SharedLevel;
-        return uid && shared.user_uid === uid ? `by you · ${playsAndWins(shared)}` : undefined;
+        return uid && shared.user_uid === uid ? "by you" : undefined;
     }, [uid]);
 
-    const getDetailStats = (level: SharedLevel): StatChip[] => {
-        const best = bestLength(level);
-        return [
-            difficultyChip(level),
-            solveRateChip(level),
-            level.wins > 0 ?
-                { label: `Best: ${best} moves`, icon: graphics.FLAG_ICON } :
-                { label: `Creator: ${best} moves`, icon: graphics.FLAG_ICON, accessibilityLabel: `Creator's solution: ${best} moves` },
-            { ...likesChip(level), label: plural(level.likes, "like") },
-        ].filter(chip => chip !== undefined);
-    };
-    const getDetailText = (level: SharedLevel) => {
-        const date = sharedDate(level);
-        const shared = date ? ` · shared ${date.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}` : "";
-        return playsAndWins(level) + shared;
-    };
+    // Plays, wins and when it was shared, in small print under the pills.
+    const getFootnote = useCallback((level: Level) => {
+        const shared = level as SharedLevel;
+        const date = sharedDate(shared);
+        const when = date ? ` · shared ${date.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}` : "";
+        return `${plural(shared.attempts, "play")} · ${plural(shared.wins, "win")}${when}`;
+    }, []);
 
     const cardActions: CardActions = {
         isLiked,
@@ -421,7 +406,6 @@ export default function UserLevels({
         // Manage your own levels; unavailable if shared from another device (no local copy).
         canManage: (uuid: string) => isOwnLevel(uuid) ? !!findLocalLevel(uuid) : undefined,
         onManage: manageLevel,
-        onOpenDetails: openDetails,
     };
 
     // What the list shows: the active filters, and how many levels match.
@@ -439,8 +423,6 @@ export default function UserLevels({
         setWinrateFilterEnabled(false);
         setSearchQuery("");
     };
-
-    const detailLevel = filteredLevels.find(level => level.uuid === detailUuid);
 
     return (
         <>
@@ -500,6 +482,7 @@ export default function UserLevels({
                 cardActions={cardActions}
                 getStats={getStats}
                 getSubtitle={getSubtitle}
+                getFootnote={getFootnote}
                 levels={filteredLevels}
                 scrollTo={scrollTo}
                 allowResume
@@ -594,24 +577,6 @@ export default function UserLevels({
                     </>}
                 </View>
             </BottomSheet>
-
-            <LevelDetailSheet
-                level={detailLevel}
-                stats={detailLevel ? getDetailStats(detailLevel) : []}
-                details={detailLevel ? getDetailText(detailLevel) : ""}
-                liked={!!detailLevel && isLiked(detailLevel.uuid)}
-                canLike={!!detailLevel && canLike(detailLevel.uuid)}
-                onLike={() => detailLevel && likeLevel(detailLevel.uuid)}
-                canManage={detailLevel && cardActions.canManage!(detailLevel.uuid)}
-                onManage={() => detailLevel && manageLevel(detailLevel.uuid)}
-                onPlay={() => {
-                    if (!detailLevel) return;
-                    setDetailUuid(undefined);
-                    playLevel(detailLevel.uuid);
-                    viewCallback(PageView.PLAY, 1);
-                }}
-                onClose={() => setDetailUuid(undefined)}
-            />
         </>
     );
 }

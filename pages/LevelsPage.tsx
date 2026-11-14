@@ -6,15 +6,45 @@ import { Difficulty, IndicatorIcon, StatChip, difficultyThemes } from "../compon
 import Subpages, { SubpageTab } from "../components/Subpages";
 import { graphics, purpleTheme } from "../Theme";
 import { refreshLevelsFromServer } from "../util/database";
-import { Level, PageView, SharedLevel } from "../util/types";
+import { Level, PageView, SharedLevel, Tutorial } from "../util/types";
 import { showSolution } from "../util/store";
 import LevelSelect from "./LevelSelect";
 import UserLevels from "./UserLevels";
 
-/** Official levels are ordered by difficulty: the first third Easy, then Medium, then Hard. */
-function officialDifficulty(index: number, total: number): Difficulty {
-    const fraction = index / Math.max(1, total);
-    return fraction < 1 / 3 ? "Easy" : fraction < 2 / 3 ? "Medium" : "Hard";
+const isTutorial = (level: Level) => level.official && level.introduces !== undefined;
+
+/**
+ * Official difficulty: tutorials are "Tutorial", and the rest go by position (they're
+ * ordered by difficulty): the last three are Hard, and before that the first half Easy
+ * and the second half Medium.
+ */
+function officialDifficulties(levels: Level[]): Map<string, Difficulty> {
+    const ranked = levels.filter(level => !isTutorial(level));
+    const hardFrom = Math.max(0, ranked.length - 3);
+    const mediumFrom = Math.ceil(hardFrom / 2);
+    const result = new Map<string, Difficulty>();
+    levels.forEach(level => { if (isTutorial(level)) result.set(level.uuid, "Tutorial"); });
+    ranked.forEach((level, index) =>
+        result.set(level.uuid, index >= hardFrom ? "Hard" : index >= mediumFrom ? "Medium" : "Easy"));
+    return result;
+}
+
+const tutorialNames: Partial<Record<Tutorial, string>> = {
+    [Tutorial.MOVEMENT]: "moving",
+    [Tutorial.OBJECTIVE]: "the goal",
+    [Tutorial.CRATES_CRATERS]: "crates and craters",
+    [Tutorial.ONEWAY_TILES]: "one-way tiles",
+    [Tutorial.DOORS_KEYS]: "doors and keys",
+    [Tutorial.BOMBS]: "bombs",
+    [Tutorial.METAL_CRATES]: "metal crates",
+    [Tutorial.ICE_BLOCKS]: "ice blocks",
+};
+
+/** Small print: what a tutorial teaches. */
+function officialFootnote(level: Level) {
+    if (!level.official || !level.introduces) return undefined;
+    const names = level.introduces.map(tutorial => tutorialNames[tutorial]).filter(name => !!name);
+    return names.length ? `Introduces ${names.join(" and ")}` : undefined;
 }
 
 interface Props {
@@ -40,10 +70,10 @@ export default function LevelsPage({
     setUserLevels,
     storeElementHeightCallback,
 }: Props) {
-    // Difficulty by position in the list, and the best solution once solved.
-    const levelIndex = useMemo(() => new Map(levels.map((level, index) => [level.uuid, index])), [levels]);
+    // Difficulty, and the best solution once solved.
+    const difficulties = useMemo(() => officialDifficulties(levels), [levels]);
     const officialStats = useCallback((level: Level): StatChip[] => {
-        const difficulty = officialDifficulty(levelIndex.get(level.uuid) ?? 0, levels.length);
+        const difficulty = difficulties.get(level.uuid) ?? "Easy";
         const stats: StatChip[] = [{ label: difficulty, theme: difficultyThemes[difficulty] }];
         if (level.bestSolution) stats.push({
             label: `Best: ${level.bestSolution.length}`,
@@ -51,7 +81,7 @@ export default function LevelsPage({
             accessibilityLabel: `Best solution: ${level.bestSolution.length} moves`,
         });
         return stats;
-    }, [levelIndex, levels.length]);
+    }, [difficulties]);
 
     const pageComponents = [
         <LevelSelect
@@ -73,6 +103,7 @@ export default function LevelsPage({
             isOfficial
             allowResume
             getStats={officialStats}
+            getFootnote={officialFootnote}
             // Solved levels can replay the player's best solution.
             secondButtonProps={{
                 text: (uuid) => levels.find(level => level.uuid === uuid)?.bestSolution ? "Solution" : undefined,

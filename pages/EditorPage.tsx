@@ -47,14 +47,25 @@ export default function EditorPage({
     buttonIcon: graphics.SHARE_ICON_RED,
   };
 
-  // Your levels: whether you've beaten them (needed to share), size, and if shared.
+  // Your levels: whether you've beaten them (needed to share), and whether they're shared.
   const editorStats = useCallback((level: Level): StatChip[] => {
     const stats: StatChip[] = level.bestSolution ?
       [{ label: `Best: ${level.bestSolution.length}`, icon: graphics.FLAG_ICON, accessibilityLabel: `Best solution: ${level.bestSolution.length} moves` }] :
-      [{ label: "Not beaten yet", theme: colors.ORANGE_THEME }];
-    stats.push({ label: `${level.board.width} × ${level.board.height}`, accessibilityLabel: `${level.board.width} by ${level.board.height} board` });
-    if ((level as UserLevel).shared) stats.push({ label: "Shared", theme: colors.GREEN_THEME });
+      [{ label: "Unsolved", theme: colors.ORANGE_THEME }];
+    stats.push((level as UserLevel).shared ?
+      { label: "Shared", theme: colors.GREEN_THEME } :
+      { label: "Private", theme: colors.BLUE_THEME });
     return stats;
+  }, []);
+
+  // Small print: the board size and when it was made (and shared).
+  const editorFootnote = useCallback((level: Level) => {
+    const { created, shared } = level as UserLevel;
+    const date = (value?: string) => value ? new Date(value).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" }) : undefined;
+    const parts = [`${level.board.width} × ${level.board.height} board`];
+    if (date(created)) parts.push(`created ${date(created)}`);
+    if (date(shared)) parts.push(`shared ${date(shared)}`);
+    return parts.join(" · ");
   }, []);
 
   const pageComponents = [
@@ -75,6 +86,7 @@ export default function EditorPage({
       elementHeight={elementHeight}
       indicatorIcon={IndicatorIcon.SHARED}
       getStats={editorStats}
+      getFootnote={editorFootnote}
       storeElementHeightCallback={storeElementHeightCallback}
       headerComponent={!!userCredential ? <CreateLevel createLevelCallback={createNewLevelCallback} existingLevelNames={existingLevelNames} /> : undefined}
       emptyListProps={{

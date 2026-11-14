@@ -18,14 +18,13 @@ interface SecondButtonProps {
   disabled?: boolean | ((uuid: string, index: number) => boolean),
 }
 
-/** Likes, Manage and details on a card's board preview (shared levels). */
+/** Like or Manage on a card's board preview (shared levels). */
 export interface CardActions {
   isLiked?: (uuid: string) => boolean,
   canLike?: (uuid: string) => boolean,
   onLike?: (uuid: string) => void,
   canManage?: (uuid: string) => boolean | undefined, // undefined: not your level, so no Manage button.
   onManage?: (uuid: string) => void,
-  onOpenDetails?: (uuid: string) => void,
 }
 
 interface Props {
@@ -43,6 +42,7 @@ interface Props {
   noNumber?: boolean,
   getStats?: (targetLevel: Level) => StatChip[] | undefined,
   getSubtitle?: (targetLevel: Level) => string | undefined, // Replaces the line under a card's name.
+  getFootnote?: (targetLevel: Level) => string | undefined, // Small print under a card's pills.
 
   scrollTo?: string, // The index in levels of the level currently being played (if a level is being played). 
   allowResume?: boolean,
@@ -74,6 +74,7 @@ export default function LevelSelect({
   noNumber,
   getStats,
   getSubtitle,
+  getFootnote,
   scrollTo,
   allowResume,
   isOfficial,
@@ -171,11 +172,6 @@ export default function LevelSelect({
     cardActions?.onManage?.(levels[levelIndex].uuid);
   }, []);
 
-  const openDetails = useCallback((levelIndex: number) => {
-    const { levels, cardActions } = latest.current;
-    cardActions?.onOpenDetails?.(levels[levelIndex].uuid);
-  }, []);
-
   // getItemLayout offsets must include everything above the first card.
   const [headerHeight, setHeaderHeight] = useState(0);
   const listTopPadding = win.width * 0.05; // paddingVertical "5%" resolves against the list's width.
@@ -252,6 +248,7 @@ export default function LevelSelect({
               showResume={allowResume && item.uuid === scrollTo}
               stats={getStats?.(item)}
               subtitle={getSubtitle?.(item)}
+              footnote={getFootnote?.(item)}
               levelIndex={index}
               level={item}
               darkMode={darkMode}
@@ -268,7 +265,6 @@ export default function LevelSelect({
               onLike={cardActions?.onLike ? likeLevel : undefined}
               onManage={canManage !== undefined && cardActions?.onManage ? manageLevel : undefined}
               manageDisabled={canManage === false}
-              onOpenDetails={cardActions?.onOpenDetails ? openDetails : undefined}
             />;
           }}
           keyExtractor={item => item.uuid}

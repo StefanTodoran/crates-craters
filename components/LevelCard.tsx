@@ -22,8 +22,9 @@ export interface StatChip {
   accessibilityLabel?: string, // When the label alone is unclear, e.g. "17" next to a flag.
 }
 
-export type Difficulty = "Easy" | "Medium" | "Hard";
+export type Difficulty = "Tutorial" | "Easy" | "Medium" | "Hard";
 export const difficultyThemes: Record<Difficulty, Theme> = {
+  Tutorial: colors.BLUE_THEME,
   Easy: colors.GREEN_THEME,
   Medium: colors.YELLOW_THEME,
   Hard: colors.RED_THEME,
@@ -57,14 +58,14 @@ interface LevelCardProps {
   liked?: boolean,
   canLike?: boolean, // False e.g. when signed out, or for your own level.
   onLike?: (index: number) => void,
-  onOpenDetails?: (index: number) => void, // Tapping the preview.
   // Your own level: a Manage button in that corner instead of the heart.
   onManage?: (index: number) => void,
   manageDisabled?: boolean,
-  subtitle?: string, // Replaces the line under the name (e.g. "by you · 12 plays").
+  subtitle?: string, // Replaces the line under the name.
+  footnote?: string, // A line of small print under the pills (e.g. plays and wins).
 }
 
-export const CARD_PREVIEW_RATIO = 0.34; // Preview height, as a fraction of the card's width.
+const CARD_PREVIEW_RATIO = 0.34; // Preview height, as a fraction of the card's width.
 const DOUBLE_TAP_MS = 260;
 
 const LevelCard = memo(function ({
@@ -86,10 +87,10 @@ const LevelCard = memo(function ({
   liked,
   canLike,
   onLike,
-  onOpenDetails,
   onManage,
   manageDisabled,
   subtitle,
+  footnote,
 }: LevelCardProps) {
   const win = useWindowDimensions();
   const cardWidth = win.width * 0.9;
@@ -120,29 +121,21 @@ const LevelCard = memo(function ({
     if (onLike && canLike && !liked) onLike(levelIndex);
   };
 
-  // One tap opens the details; two quick taps like the level instead.
+  // Two quick taps on the preview like the level.
   const lastTap = useRef(0);
-  const pendingOpen = useRef<ReturnType<typeof setTimeout>>(undefined);
-  useEffect(() => () => clearTimeout(pendingOpen.current), []);
   const onPreviewPress = () => {
     const now = Date.now();
-    if (onLike && now - lastTap.current < DOUBLE_TAP_MS) {
-      clearTimeout(pendingOpen.current);
-      lastTap.current = 0;
-      if (!canLike) return;
-      burst.setValue(0);
-      Animated.sequence([
-        Animated.spring(burst, { toValue: 1, friction: 4, tension: 140, useNativeDriver: true }),
-        Animated.timing(burst, { toValue: 2, duration: 250, delay: 250, useNativeDriver: true }),
-      ]).start();
-      like();
+    if (now - lastTap.current >= DOUBLE_TAP_MS) {
+      lastTap.current = now;
       return;
     }
-    lastTap.current = now;
-    if (!onOpenDetails) return;
-    if (!onLike || !canLike) return onOpenDetails(levelIndex);
-    clearTimeout(pendingOpen.current);
-    pendingOpen.current = setTimeout(() => onOpenDetails(levelIndex), DOUBLE_TAP_MS);
+    lastTap.current = 0;
+    burst.setValue(0);
+    Animated.sequence([
+      Animated.spring(burst, { toValue: 1, friction: 4, tension: 140, useNativeDriver: true }),
+      Animated.timing(burst, { toValue: 2, duration: 250, delay: 250, useNativeDriver: true }),
+    ]).start();
+    like();
   };
 
   // Fetched shared levels carry their creator's uid; your local levels don't.
@@ -159,7 +152,7 @@ const LevelCard = memo(function ({
     graphics.METAL_CRATE;
 
   const textColor = darkMode ? useTheme.MAIN_COLOR : useTheme.TINT_COLOR;
-  const previewPressable = !!onOpenDetails || (!!onLike && !!canLike);
+  const previewPressable = !!onLike && !!canLike;
 
   return (
     <Animated.View style={[
@@ -173,14 +166,16 @@ const LevelCard = memo(function ({
         transform: [{ scale: anim.interpolate({ inputRange: [0, 1], outputRange: [0.9, 1] }) }],
       },
     ]}>
-      <View style={[styles.preview, { height: previewHeight, backgroundColor: darkMode ? useTheme.NEAR_BLACK : useTheme.LIGHT_COLOR }]}>
-        {/* The tap target is a sibling of the corner button, so both are accessible. */}
+      <View style={[styles.preview, {
+        height: previewHeight,
+        backgroundColor: darkMode ? useTheme.NEAR_BLACK : useTheme.LIGHT_COLOR,
+        borderBottomColor: useTheme.MAIN_TRANSPARENT(0.8),
+      }]}>
+        {/* A sibling of the corner button, so that button stays accessible. */}
         <Pressable
           onPress={previewPressable ? onPreviewPress : undefined}
           disabled={!previewPressable}
-          accessible={!!onOpenDetails}
-          accessibilityRole={onOpenDetails ? "button" : undefined}
-          accessibilityLabel={onOpenDetails ? `${level.name} details` : undefined}
+          accessible={false} // The heart button is the accessible way to like.
           style={StyleSheet.absoluteFill}
         >
           <CardPreview level={level} width={cardWidth - 2} height={previewHeight} />
@@ -244,6 +239,9 @@ const LevelCard = memo(function ({
         <View style={styles.chips}>
           {stats?.map(chip => <Chip key={chip.label} chip={chip} cardTheme={useTheme} darkMode={darkMode} textColor={textColor} />)}
         </View>
+        <Text allowFontScaling={false} numberOfLines={1} style={[styles.footnote, { color: textColor }]}>
+          {footnote ?? ""}
+        </Text>
 
         <View style={styles.buttonRow}>
           {onSecondButton && !!secondButtonText && <View style={styles.button}>
@@ -290,25 +288,25 @@ export default LevelCard;
 
 const statsKey = (stats?: StatChip[]) => stats?.map(chip => `${chip.label}|${chip.theme?.NAME}`).join(",") ?? "";
 
-export function Chip({ chip, cardTheme, darkMode, textColor, large }: {
+function Chip({ chip, cardTheme, darkMode, textColor }: {
   chip: StatChip,
   cardTheme: Theme,
   darkMode: boolean,
   textColor: string,
-  large?: boolean,
 }) {
   const theme = chip.theme ?? cardTheme;
+  const color = chip.theme ? (darkMode ? theme.MAIN_COLOR : theme.TINT_COLOR) : textColor;
   return (
     <View
       accessible
       accessibilityLabel={chip.accessibilityLabel ?? chip.label}
-      style={[styles.chip, large && styles.chipLarge, { backgroundColor: theme.MAIN_TRANSPARENT(darkMode ? 0.25 : 0.3) }]}
+      style={[styles.chip, { backgroundColor: theme.MAIN_TRANSPARENT(darkMode ? 0.25 : 0.3) }]}
     >
-      {chip.icon && <Image source={chip.icon} style={[styles.chipIcon, large && styles.chipIconLarge]} />}
+      {/* The icon takes the text color, so it matches on any card theme. */}
+      {chip.icon && <Image source={chip.icon} style={[styles.chipIcon, { tintColor: color }]} />}
       <Text allowFontScaling={false} numberOfLines={1} style={[
         styles.chipText,
-        large && styles.chipTextLarge,
-        { color: chip.theme ? (darkMode ? theme.MAIN_COLOR : theme.TINT_COLOR) : textColor },
+        { color },
       ]}>
         {chip.label}
       </Text>
@@ -317,13 +315,12 @@ export function Chip({ chip, cardTheme, darkMode, textColor, large }: {
 }
 
 /** A round heart button: outlined, filled once liked. */
-export function LikeButton({ liked, canLike, onPress, pop, darkMode, inline }: {
+function LikeButton({ liked, canLike, onPress, pop, darkMode }: {
   liked: boolean,
   canLike: boolean,
   onPress: () => void,
   pop?: Animated.Value,
   darkMode: boolean,
-  inline?: boolean, // In the layout flow, instead of in the preview's corner.
 }) {
   return (
     <CornerButton
@@ -335,13 +332,12 @@ export function LikeButton({ liked, canLike, onPress, pop, darkMode, inline }: {
       selected={liked}
       pop={pop}
       darkMode={darkMode}
-      inline={inline}
     />
   );
 }
 
 /** A round icon button over the board preview, on a solid circle so it reads over any board. */
-function CornerButton({ icon, label, onPress, disabled, dimmed = disabled, selected, pop, darkMode, inline }: {
+function CornerButton({ icon, label, onPress, disabled, dimmed = disabled, selected, pop, darkMode }: {
   icon: ImageSourcePropType,
   label: string,
   onPress: () => void,
@@ -350,7 +346,6 @@ function CornerButton({ icon, label, onPress, disabled, dimmed = disabled, selec
   selected?: boolean,
   pop?: Animated.Value,
   darkMode: boolean,
-  inline?: boolean,
 }) {
   return (
     <Pressable
@@ -360,7 +355,7 @@ function CornerButton({ icon, label, onPress, disabled, dimmed = disabled, selec
       accessibilityRole="button"
       accessibilityLabel={label}
       accessibilityState={{ disabled: dimmed, selected }}
-      style={({ pressed }) => [styles.cornerButton, inline && styles.inline, pressed && { transform: [{ scale: 0.92 }] }, {
+      style={({ pressed }) => [styles.cornerButton, pressed && { transform: [{ scale: 0.92 }] }, {
         backgroundColor: darkMode ? colors.NEAR_BLACK_TRANSPARENT(0.75) : colors.OFF_WHITE_TRANSPARENT(0.9),
       }]}
     >
@@ -373,10 +368,10 @@ function CornerButton({ icon, label, onPress, disabled, dimmed = disabled, selec
 }
 
 /**
- * The board, as wide as the given width, cropped to the given height around the spawn.
+ * The board, as wide as the card, cropped to the preview's height around the spawn.
  * Every card has the same height, whatever its board's size.
  */
-export function CardPreview({ level, width, height }: { level: Level, width: number, height: number }) {
+function CardPreview({ level, width, height }: { level: Level, width: number, height: number }) {
   const { board } = level;
   const tileSize = Math.ceil(width / board.width);
   const rows = Math.min(board.height, Math.ceil(height / tileSize) + 1);
@@ -409,6 +404,13 @@ const styles = StyleSheet.create({
   preview: {
     width: "100%",
     overflow: "hidden",
+    borderBottomWidth: 1,
+  },
+  footnote: {
+    marginTop: normalize(6),
+    fontFamily: "Montserrat-Regular",
+    fontSize: normalize(13),
+    height: normalize(18), // Kept when empty, so every card has the same height.
   },
   info: {
     paddingHorizontal: normalize(12),
@@ -424,7 +426,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     flexWrap: "nowrap",
     overflow: "hidden",
-    gap: normalize(6),
+    gap: normalize(5),
     marginTop: normalize(8),
     height: CHIP_HEIGHT,
   },
@@ -440,30 +442,17 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     height: CHIP_HEIGHT,
-    paddingHorizontal: normalize(10),
+    paddingHorizontal: normalize(8),
     borderRadius: normalize(9),
-  },
-  chipLarge: {
-    height: normalize(32),
-    paddingHorizontal: normalize(10),
-    borderRadius: normalize(10),
   },
   chipIcon: {
     width: normalize(17),
     height: normalize(17),
     marginRight: normalize(5),
   },
-  chipIconLarge: {
-    width: normalize(18),
-    height: normalize(18),
-    marginRight: normalize(6),
-  },
   chipText: {
     fontFamily: "Montserrat-Medium",
-    fontSize: normalize(14),
-  },
-  chipTextLarge: {
-    fontSize: normalize(15),
+    fontSize: normalize(Platform.OS === "android" ? 13 : 14), // Android draws the font wider.
   },
   center: {
     justifyContent: "center",
@@ -530,11 +519,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     ...Platform.select({ android: { elevation: 2 } }),
-  },
-  inline: {
-    position: "relative",
-    top: 0,
-    right: 0,
   },
   cornerIcon: {
     width: normalize(26),
