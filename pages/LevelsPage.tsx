@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { ImageURISource } from "react-native";
 import OfficialIcon from "../assets/main_theme/official.png";
 import SharedIcon from "../assets/main_theme/shared.png";
-import { IndicatorIcon } from "../components/LevelCard";
+import { IndicatorIcon, StatChip } from "../components/LevelCard";
 import Subpages, { SubpageTab } from "../components/Subpages";
 import { graphics, purpleTheme } from "../Theme";
 import { refreshLevelsFromServer } from "../util/database";
@@ -10,6 +10,10 @@ import { Level, PageView, SharedLevel } from "../util/types";
 import { showSolution } from "../util/store";
 import LevelSelect from "./LevelSelect";
 import UserLevels from "./UserLevels";
+
+/** Official cards: the best solution, once solved. */
+const officialStats = (level: Level): StatChip[] => level.bestSolution ?
+    [{ label: `Best: ${level.bestSolution.length}`, icon: graphics.FLAG_ICON, accessibilityLabel: `Best solution: ${level.bestSolution.length} moves` }] : [];
 
 interface Props {
     viewCallback: (newView: PageView, newPage?: number) => void,
@@ -53,6 +57,7 @@ export default function LevelsPage({
             indicatorIcon={IndicatorIcon.COMPLETION}
             isOfficial
             allowResume
+            getStats={officialStats}
             // Solved levels can replay the player's best solution.
             secondButtonProps={{
                 text: (uuid) => levels.find(level => level.uuid === uuid)?.bestSolution ? "Solution" : undefined,

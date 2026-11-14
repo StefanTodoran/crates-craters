@@ -5,7 +5,7 @@ import { FlatList, ImageSourcePropType, StyleSheet, Text, View, useWindowDimensi
 import { TAB_BAR_CLEARANCE } from "../components/Subpages";
 import Toast from "react-native-toast-message";
 import EmptyList, { EmptyListProps } from "../components/EmptyList";
-import LevelCard, { IndicatorIcon } from "../components/LevelCard";
+import LevelCard, { IndicatorIcon, StatChip } from "../components/LevelCard";
 import GlobalContext from "../GlobalContext";
 import TextStyles, { normalize } from "../TextStyles";
 import { Theme, purpleTheme } from "../Theme";
@@ -18,19 +18,30 @@ interface SecondButtonProps {
   disabled?: boolean | ((uuid: string, index: number) => boolean),
 }
 
+/** Likes, Manage and details on a card's board preview (shared levels). */
+export interface CardActions {
+  isLiked?: (uuid: string) => boolean,
+  canLike?: (uuid: string) => boolean,
+  onLike?: (uuid: string) => void,
+  canManage?: (uuid: string) => boolean | undefined, // undefined: not your level, so no Manage button.
+  onManage?: (uuid: string) => void,
+  onOpenDetails?: (uuid: string) => void,
+}
+
 interface Props {
   viewCallback: (newView: PageView) => void, // Sets the current view of the application.
   playLevelCallback: (uuid: string, index: number) => void, // Sets the current play level in the parent state so it can be passed to the PlayLevel component and played.
   resumeLevelCallback?: () => void,
 
   secondButtonProps?: SecondButtonProps,
+  cardActions?: CardActions,
   headerComponent?: React.ReactElement,
   footerText?: string,
 
   theme?: Theme,
   levels: Level[],
   noNumber?: boolean,
-  getStats?: (targetLevel: Level) => string[] | undefined,
+  getStats?: (targetLevel: Level) => StatChip[] | undefined,
 
   scrollTo?: string, // The index in levels of the level currently being played (if a level is being played). 
   allowResume?: boolean,
@@ -54,6 +65,7 @@ export default function LevelSelect({
   playLevelCallback,
   resumeLevelCallback,
   secondButtonProps,
+  cardActions,
   headerComponent,
   footerText,
   theme,
@@ -128,8 +140,8 @@ export default function LevelSelect({
 
   // Card callbacks are stable (they take the card's index and read current props
   // through this ref), so memoized cards don't re-render when the parent does.
-  const latest = useRef({ levels, playLevelCallback, resumeLevelCallback, viewCallback, secondButtonProps });
-  latest.current = { levels, playLevelCallback, resumeLevelCallback, viewCallback, secondButtonProps };
+  const latest = useRef({ levels, playLevelCallback, resumeLevelCallback, viewCallback, secondButtonProps, cardActions });
+  latest.current = { levels, playLevelCallback, resumeLevelCallback, viewCallback, secondButtonProps, cardActions };
 
   const openLevel = useCallback((levelIndex: number) => {
     const { levels, playLevelCallback, viewCallback } = latest.current;
@@ -145,6 +157,21 @@ export default function LevelSelect({
   const secondButtonOnPress = useCallback((levelIndex: number) => {
     const { levels, secondButtonProps } = latest.current;
     secondButtonProps?.callback?.(levels[levelIndex].uuid, levelIndex);
+  }, []);
+
+  const likeLevel = useCallback((levelIndex: number) => {
+    const { levels, cardActions } = latest.current;
+    cardActions?.onLike?.(levels[levelIndex].uuid);
+  }, []);
+
+  const manageLevel = useCallback((levelIndex: number) => {
+    const { levels, cardActions } = latest.current;
+    cardActions?.onManage?.(levels[levelIndex].uuid);
+  }, []);
+
+  const openDetails = useCallback((levelIndex: number) => {
+    const { levels, cardActions } = latest.current;
+    cardActions?.onOpenDetails?.(levels[levelIndex].uuid);
   }, []);
 
   // getItemLayout offsets must include everything above the first card.
@@ -215,12 +242,13 @@ export default function LevelSelect({
           renderItem={({ item, index }) => {
             const evaluate = <T,>(value: T | ((uuid: string, index: number) => T) | undefined) =>
               typeof value === "function" ? (value as (uuid: string, index: number) => T)(item.uuid, index) : value;
+            const canManage = cardActions?.canManage?.(item.uuid);
 
             return <LevelCard
               onPlay={openLevel}
               onResume={resumeLevel}
               showResume={allowResume && item.uuid === scrollTo}
-              stats={getStats?.(item)?.join("\n")}
+              stats={getStats?.(item)}
               levelIndex={index}
               level={item}
               darkMode={darkMode}
@@ -232,6 +260,12 @@ export default function LevelSelect({
               secondButtonIcon={evaluate(secondButtonProps?.icon)}
               secondButtonDisabled={evaluate(secondButtonProps?.disabled)}
               onSecondButton={secondButtonProps ? secondButtonOnPress : undefined}
+              liked={cardActions?.isLiked?.(item.uuid)}
+              canLike={cardActions?.canLike?.(item.uuid)}
+              onLike={cardActions?.onLike ? likeLevel : undefined}
+              onManage={canManage !== undefined && cardActions?.onManage ? manageLevel : undefined}
+              manageDisabled={canManage === false}
+              onOpenDetails={cardActions?.onOpenDetails ? openDetails : undefined}
             />;
           }}
           keyExtractor={item => item.uuid}

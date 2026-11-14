@@ -61,6 +61,8 @@ const mainGraphics = {
   LIKE_ICON: require("./assets/main_theme/like_icon.png"),
   LIKE_ICON_WHITE: require("./assets/main_theme/like_icon_white.png"),
   LIKE_ICON_YELLOW: require("./assets/main_theme/like_icon_yellow.png"),
+  LIKE_ICON_OUTLINE: require("./assets/main_theme/like_icon_outline.png"),
+  LIKE_ICON_RED: require("./assets/main_theme/like_icon_red.png"),
   SIGNUP_ICON: require("./assets/main_theme/signup_icon.png"),
   MAIL_ICON: require("./assets/main_theme/mail_icon.png"),
   MAIL_ICON_GREEN: require("./assets/main_theme/mail_icon_green.png"),

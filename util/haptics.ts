@@ -28,6 +28,11 @@ export function hapticErase() {
   impact(Haptics.ImpactFeedbackStyle.Light);
 }
 
+/** A firm tap, e.g. liking a level. */
+export function hapticLike() {
+  impact(Haptics.ImpactFeedbackStyle.Medium);
+}
+
 export function hapticWin() {
   notify(Haptics.NotificationFeedbackType.Success);
 }

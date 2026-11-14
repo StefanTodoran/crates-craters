@@ -1,22 +1,24 @@
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
-import { FlatList, Modal, Platform, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
+import { FlatList, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import Toast from "react-native-toast-message";
 import FilterChip from "../components/FilterChip";
 import InputLine, { INPUT_LABEL_ROOM } from "../components/InputLine";
-import { IndicatorIcon } from "../components/LevelCard";
+import { IndicatorIcon, StatChip } from "../components/LevelCard";
+import LevelDetailSheet from "../components/LevelDetailSheet";
 import SimpleButton from "../components/SimpleButton";
 import SliderBar from "../components/SliderBar";
 import GlobalContext from "../GlobalContext";
 import TextStyles, { normalize } from "../TextStyles";
-import { colors, graphics, purpleTheme } from "../Theme";
+import { Theme, colors, graphics, purpleTheme } from "../Theme";
 import { ExplicitOrder, QueryFilter, attemptUserLevel, likeUserLevel, queryUserLevels } from "../util/database";
 import { prepareNextSheet } from "../modules/sheet-detents";
+import { hapticLike } from "../util/haptics";
 import { useDebounce } from "../util/hooks";
 import { getAppState, setEditorLevel } from "../util/store";
 import { getData, metadataKeys, parseCompressedBoardData } from "../util/loader";
 import { areSetsEqual } from "../util/Set";
 import { Level, PageView, SharedLevel, UserLevel } from "../util/types";
-import LevelSelect from "./LevelSelect";
+import LevelSelect, { CardActions } from "./LevelSelect";
 
 enum Filter {
     POPULAR = "Popular",
@@ -27,6 +29,7 @@ enum Filter {
     COMPLETED = "Completed",
     PLAYED = "Played Before",
     UNATTEMPTED = "No Attempts",
+    YOURS = "Yours", // Your own shared levels. Excludes every other filter.
 }
 
 const mutualExclusions = [
@@ -41,13 +44,7 @@ const difficultyRanges = {
     "Hard": [0, 0.5],
 } as Record<string, [number, number]>;
 
-const lengthRanges = {
-    "Short": [0, 50],
-    "Normal": [50, 100],
-    "Long": [100, Infinity],
-} as Record<string, [number, number]>;
-
-function getRange(value: number, ranges: Record<Filter, [number, number]>): string {
+function getRange(value: number, ranges: Record<string, [number, number]>): string {
     for (const [rank, range] of Object.entries(ranges)) {
         if (value > range[0] && value <= range[1]) return rank;
     }
@@ -70,6 +67,39 @@ interface LocalLevelLists {
     likedLevels: string[],
     attemptedLevels: string[],
     completedLevels: string[],
+    uid?: string, // The signed-in user, for Yours.
+}
+
+// The solve rate says little until a few people have tried a level.
+const MIN_ATTEMPTS_FOR_DIFFICULTY = 5;
+const difficultyThemes: Record<string, Theme> = {
+    Easy: colors.GREEN_THEME,
+    Medium: colors.YELLOW_THEME,
+    Hard: colors.RED_THEME,
+};
+
+/** A colored pill: New (too few attempts), Unbeaten, or Easy, Medium or Hard by solve rate. */
+function difficultyChip(level: SharedLevel): StatChip {
+    if (level.attempts < MIN_ATTEMPTS_FOR_DIFFICULTY) return { label: "New", theme: colors.BLUE_THEME, accessibilityLabel: "New: few attempts so far" };
+    if (level.wins === 0) return { label: "Unbeaten", theme: colors.ORANGE_THEME };
+    const difficulty = getRange(Math.min(1, level.wins / level.attempts), difficultyRanges);
+    return { label: difficulty, theme: difficultyThemes[difficulty] };
+}
+
+const bestChip = (level: SharedLevel): StatChip => {
+    const best = level.bestSolution?.length ?? level.best;
+    return { label: `${best}`, icon: graphics.FLAG_ICON, accessibilityLabel: `Best solution: ${best} moves` };
+};
+const likesChip = (level: SharedLevel): StatChip =>
+    ({ label: `${level.likes}`, icon: graphics.LIKE_ICON, accessibilityLabel: `${level.likes} likes` });
+const plural = (count: number, word: string) => `${count} ${word}${count === 1 ? "" : "s"}`;
+
+/** When a level was shared: a date string, or a Firestore Timestamp on fetched levels. */
+function sharedDate(level: SharedLevel): Date | undefined {
+    const shared = level.shared as unknown;
+    if (typeof shared === "string") return new Date(shared);
+    if (shared && typeof (shared as { toDate?: unknown }).toDate === "function") return (shared as { toDate: () => Date }).toDate();
+    return undefined;
 }
 
 function didParamsChange(a: SearchParams, b: SearchParams) {
@@ -91,6 +121,11 @@ export function buildUserLevelQuery(params: SearchParams, lists: LocalLevelLists
     orderFields.push({ field: "shared", order: filters.has(Filter.NEWEST) ? "desc" : "asc" });
 
     const filterFields: QueryFilter[] = [{ field: "public", operator: "==", value: true }];
+    if (filters.has(Filter.YOURS)) {
+        // Equality filters only, so no composite index is needed; sorted newest first after fetching.
+        filterFields.push({ field: "user_uid", operator: "==", value: lists.uid ?? "" });
+        return { orderFields: [], filterFields, includeIds: undefined, excludeIds: [] };
+    }
     if (filters.has(Filter.UNATTEMPTED)) {
         filterFields.push({ field: "attempts", operator: "==", value: 0 });
     }
@@ -140,8 +175,9 @@ export default function UserLevels({
 }: Props) {
     const { darkMode, userCredential } = useContext(GlobalContext);
 
+    const uid = userCredential?.user.uid;
     const isOwnLevel = (uuid: string) =>
-        !!userCredential && filteredLevels.find(lvl => lvl.uuid === uuid)?.user_uid === userCredential.user.uid;
+        !!uid && filteredLevels.find(lvl => lvl.uuid === uuid)?.user_uid === uid;
     // Sharing creates a new doc id, kept on the local level as db_id (missing if shared from another device).
     const findLocalLevel = (uuid: string) =>
         getAppState().levels.find(level => !level.official && (level as UserLevel).db_id === uuid) as UserLevel | undefined;
@@ -160,14 +196,67 @@ export default function UserLevels({
         likedLevels: getData(metadataKeys.likedLevels) || [],
         attemptedLevels: getData(metadataKeys.attemptedLevels) || [],
         completedLevels: getData(metadataKeys.completedLevels) || [],
-    }), [userLevels]);
+        uid,
+    }), [userLevels, uid]);
     const { likedLevels } = localLists;
+
+    // Likes show at once, before the server answers (and roll back if it fails).
+    const [optimisticLikes, setOptimisticLikes] = useState(new Set<string>());
+    const isLiked = (uuid: string) => likedLevels.includes(uuid) || optimisticLikes.has(uuid);
+    const canLike = (uuid: string) => !!uid && !isOwnLevel(uuid);
+    const latestLevels = useRef(userLevels);
+    latestLevels.current = userLevels;
+    const changeLikes = (uuid: string, delta: number) => setUserLevels(latestLevels.current.map(lvl =>
+        lvl.uuid === uuid ? { ...lvl, likes: lvl.likes + delta } : lvl
+    ));
+    const likeLevel = async (uuid: string) => {
+        if (!uid || isLiked(uuid) || isOwnLevel(uuid)) return;
+        hapticLike();
+        setOptimisticLikes(likes => new Set(likes).add(uuid));
+        changeLikes(uuid, 1);
+
+        const success = await likeUserLevel(uuid, uid);
+        if (success) return;
+        setOptimisticLikes(likes => { const next = new Set(likes); next.delete(uuid); return next; });
+        changeLikes(uuid, -1);
+        Toast.show({
+            type: "error",
+            text1: "Couldn't like level.",
+            text2: "Please check your connection and try again.",
+        });
+    };
+
+    const manageLevel = (uuid: string) => {
+        const localLevel = findLocalLevel(uuid);
+        if (!localLevel) return;
+        setDetailUuid(undefined);
+        setEditorLevel(localLevel);
+        viewCallback(PageView.MANAGE, 1);
+    };
+
+    const playLevel = (uuid: string) => {
+        const level = filteredLevels.find(level => level.uuid === uuid);
+        if (!level) return;
+        playLevelCallback(level);
+        // TODO: Add attempt tracking for official levels too.
+        attemptUserLevel(uuid, uid);
+    };
+
+    // The level whose details sheet is open.
+    const [detailUuid, setDetailUuid] = useState<string>();
+    const openDetails = (uuid: string) => {
+        prepareNextSheet();
+        setDetailUuid(uuid);
+    };
     const scrollRef = useRef<FlatList<Filter>>(null);
 
     const [filters, setFilters] = useState(new Set<Filter>());
     const toggleFilter = (filter: Filter) => {
+        const alreadyEnabled = filters.has(filter);
+        if (filter === Filter.YOURS) return setFilters(new Set(alreadyEnabled ? [] : [Filter.YOURS]));
+
         const newFilters = new Set(filters);
-        const alreadyEnabled = newFilters.has(filter);
+        newFilters.delete(Filter.YOURS);
 
         mutualExclusions.forEach(exclusionSet => {
             if (exclusionSet.has(filter)) {
@@ -197,7 +286,9 @@ export default function UserLevels({
 
     const [loading, setLoading] = useState(false);
 
-    const inactiveFilters = new Set(Object.values(Filter).filter(item => !filters.has(item)));
+    // Yours needs an account, and while it's on, the other filters are hidden.
+    const allFilters = Object.values(Filter).filter(filter => filter !== Filter.YOURS || !!uid);
+    const inactiveFilters = new Set(filters.has(Filter.YOURS) ? [] : allFilters.filter(item => !filters.has(item)));
     mutualExclusions.forEach(exclusionSet => {
         filters.forEach(activeFilter => {
             if (exclusionSet.has(activeFilter)) {
@@ -230,6 +321,8 @@ export default function UserLevels({
             const { orderFields, filterFields, includeIds, excludeIds } = buildUserLevelQuery(params, localLists);
             const { data, count } = await queryUserLevels(orderFields, filterFields, numLoaded, includeIds, excludeIds);
             if (requestId !== latestRequest.current) return true; // A newer fetch superseded this one.
+            if (filters.has(Filter.YOURS)) data.sort((a, b) =>
+                (sharedDate(b as unknown as SharedLevel)?.getTime() ?? 0) - (sharedDate(a as unknown as SharedLevel)?.getTime() ?? 0));
 
             setMatchingCount(count);
             setUserLevels(data.filter(doc => doc.public).flatMap(doc => {
@@ -283,25 +376,56 @@ export default function UserLevels({
         return userLevels.filter(level => level.name.toLowerCase().includes(query) || level.user_name.toLowerCase().includes(query));
     }, [userLevels, searchQuery]);
 
-    const getStats = useCallback((level: Level) => {
-        const targetLevel = level as SharedLevel;
-        const stats = [];
-
-        const winrate = Math.min(100, Math.round(100 * targetLevel.wins / targetLevel.attempts));
-        if (isNaN(winrate)) stats.push("No attempts yet!");
-        else if (targetLevel.wins === 0) stats.push("Never beaten!");
-        else stats.push(`${winrate}% solve rate (${getRange(winrate / 100, difficultyRanges)})`);
-
-        const solnLen = targetLevel.bestSolution!.length;
-        stats.push(`${getRange(solnLen, lengthRanges)} solution`);
-        stats.push(`(Best: ${solnLen} moves)`);
-
-        if (userCredential && targetLevel.user_uid === userCredential.user.uid) {
-            stats.push("Made by you!");
+    // Card chips. Your own levels show how they're doing instead of difficulty and best.
+    const getStats = useCallback((level: Level): StatChip[] => {
+        const shared = level as SharedLevel;
+        if (uid && shared.user_uid === uid) {
+            return [{ label: plural(shared.attempts, "play") }, { label: plural(shared.wins, "win") }, likesChip(shared)];
         }
+        return [difficultyChip(shared), bestChip(shared), likesChip(shared)];
+    }, [uid]);
 
+    // Everything, for the details sheet.
+    const getDetailStats = (level: SharedLevel): StatChip[] => {
+        const stats = [difficultyChip(level)];
+        if (level.attempts >= MIN_ATTEMPTS_FOR_DIFFICULTY && level.wins > 0) {
+            stats.push({ label: `${Math.round(100 * Math.min(1, level.wins / level.attempts))}% solve rate` });
+        }
+        stats.push({ label: plural(level.attempts, "play") }, { label: plural(level.wins, "win") });
+        const best = level.bestSolution?.length ?? level.best;
+        stats.push({ label: `Best: ${best} moves`, icon: graphics.FLAG_ICON }, { ...likesChip(level), label: plural(level.likes, "like") });
+        const date = sharedDate(level);
+        if (date) stats.push({ label: `Shared ${date.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}` });
         return stats;
-    }, [userCredential]);
+    };
+
+    const cardActions: CardActions = {
+        isLiked,
+        canLike,
+        onLike: likeLevel,
+        // Manage your own levels; unavailable if shared from another device (no local copy).
+        canManage: (uuid: string) => isOwnLevel(uuid) ? !!findLocalLevel(uuid) : undefined,
+        onManage: manageLevel,
+        onOpenDetails: openDetails,
+    };
+
+    // What the list shows: the active filters, and how many levels match.
+    const activeLabels = [...filters].map(String);
+    if (!filters.has(Filter.YOURS)) {
+        if (lengthFilterEnabled) activeLabels.push(`${minSolutionLength}–${maxSolutionLength} moves`);
+        if (winrateFilterEnabled) activeLabels.push(`${minWinrate}–${maxWinrate}% solved`);
+    }
+    if (searchQuery) activeLabels.push(`"${searchQuery}"`);
+    const shownCount = searchQuery ? filteredLevels.length : Math.max(matchingCount, filteredLevels.length);
+    const summary = [...activeLabels, plural(shownCount, "level")].join(" · ");
+    const clearFilters = () => {
+        setFilters(new Set());
+        setLengthFilterEnabled(false);
+        setWinrateFilterEnabled(false);
+        setSearchQuery("");
+    };
+
+    const detailLevel = filteredLevels.find(level => level.uuid === detailUuid);
 
     return (
         <>
@@ -344,54 +468,21 @@ export default function UserLevels({
                             disabled={loading}
                         />}
                     />
+                    <View style={styles.summaryRow}>
+                        <Text allowFontScaling={false} numberOfLines={1} style={[styles.summary, { color: darkMode ? purpleTheme.MAIN_COLOR : purpleTheme.TINT_COLOR }]}>
+                            {summary}
+                        </Text>
+                        {activeLabels.length > 0 && <Pressable onPress={clearFilters} hitSlop={10} accessibilityRole="button">
+                            <Text allowFontScaling={false} style={[styles.clear, { color: purpleTheme.DARK_COLOR }]}>Clear</Text>
+                        </Pressable>}
+                    </View>
                 </View>}
                 footerText={`Showing ${filteredLevels.length} of ${Math.max(matchingCount, filteredLevels.length)} levels`}
 
                 viewCallback={(newView: PageView) => viewCallback(newView, 1)}
                 resumeLevelCallback={playLevelCallback}
-                playLevelCallback={(uuid: string) => {
-                    const level = filteredLevels.find(level => level.uuid === uuid)!;
-                    playLevelCallback(level);
-                    // TODO: Add attempt tracking for official levels too.
-                    attemptUserLevel(uuid, userCredential?.user.uid);
-                }}
-                // Like, or for your own levels (which you can't like) Manage, which opens
-                // the level's manage page in the editor.
-                secondButtonProps={{
-                    text: (uuid: string) => {
-                        if (isOwnLevel(uuid)) return "Manage";
-                        const likeCount = filteredLevels.find(lvl => lvl.uuid === uuid)!.likes;
-                        return (likedLevels.includes(uuid) ? "Liked" : "Like") + ` (${likeCount})`;
-                    },
-                    disabled: (uuid: string) => {
-                        if (isOwnLevel(uuid)) return !findLocalLevel(uuid); // Created on another device.
-                        return !userCredential || likedLevels.includes(uuid);
-                    },
-                    icon: (uuid: string) => isOwnLevel(uuid) ? graphics.HAMMER_ICON : graphics.LIKE_ICON,
-                    callback: async (uuid: string) => {
-                        if (isOwnLevel(uuid)) {
-                            const localLevel = findLocalLevel(uuid);
-                            if (!localLevel) return;
-                            setEditorLevel(localLevel);
-                            viewCallback(PageView.MANAGE, 1);
-                            return;
-                        }
-
-                        const success = await likeUserLevel(uuid, userCredential!.user.uid);
-                        if (!success) {
-                            Toast.show({
-                                type: "error",
-                                text1: "Couldn't like level.",
-                                text2: "Please check your connection and try again.",
-                            });
-                            return;
-                        }
-                        setUserLevels(userLevels.map(lvl =>
-                            lvl.uuid === uuid ? { ...lvl, likes: lvl.likes + 1 } : lvl
-                        ));
-                    },
-                }
-                }
+                playLevelCallback={playLevel}
+                cardActions={cardActions}
                 getStats={getStats}
                 levels={filteredLevels}
                 scrollTo={scrollTo}
@@ -407,7 +498,9 @@ export default function UserLevels({
                     setNumLoaded(numLoaded + 10);
                 }}
                 emptyListProps={{
-                    textLines: ["Could not find any good matches for your search.", "Try widening your search to use less filters."],
+                    textLines: filters.has(Filter.YOURS) ?
+                        ["You haven't shared any levels yet.", "Share one from its page in the editor."] :
+                        ["Could not find any good matches for your search.", "Try widening your search to use less filters."],
                 }}
                 theme={purpleTheme}
                 noNumber
@@ -441,7 +534,7 @@ export default function UserLevels({
                 <View style={styles.section}>
 
                     <View style={styles.wrappedList}>
-                        {Object.values(Filter).map((filter, index) => <FilterChip
+                        {allFilters.map((filter, index) => <FilterChip
                             key={index}
                             text={filter}
                             active={filters.has(filter)}
@@ -495,6 +588,23 @@ export default function UserLevels({
                 </View>
             </ScrollView>
             </Modal>
+
+            <LevelDetailSheet
+                level={detailLevel}
+                stats={detailLevel ? getDetailStats(detailLevel) : []}
+                liked={!!detailLevel && isLiked(detailLevel.uuid)}
+                canLike={!!detailLevel && canLike(detailLevel.uuid)}
+                onLike={() => detailLevel && likeLevel(detailLevel.uuid)}
+                canManage={detailLevel && cardActions.canManage!(detailLevel.uuid)}
+                onManage={() => detailLevel && manageLevel(detailLevel.uuid)}
+                onPlay={() => {
+                    if (!detailLevel) return;
+                    setDetailUuid(undefined);
+                    playLevel(detailLevel.uuid);
+                    viewCallback(PageView.PLAY, 1);
+                }}
+                onClose={() => setDetailUuid(undefined)}
+            />
         </>
     );
 }
@@ -502,6 +612,23 @@ export default function UserLevels({
 const ios = Platform.OS === "ios";
 
 const styles = StyleSheet.create({
+    summaryRow: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
+        marginHorizontal: "5%",
+        marginTop: normalize(6),
+        gap: normalize(12),
+    },
+    summary: {
+        flex: 1,
+        fontFamily: "Montserrat-Regular",
+        fontSize: normalize(13),
+    },
+    clear: {
+        fontFamily: "Montserrat-Medium",
+        fontSize: normalize(14),
+    },
     filterChipsRow: {
         paddingHorizontal: "5%",
         marginTop: "1%",
