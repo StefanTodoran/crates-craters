@@ -5,7 +5,7 @@ import { FlatList, ImageSourcePropType, StyleSheet, Text, View, useWindowDimensi
 import { TAB_BAR_CLEARANCE } from "../components/Subpages";
 import Toast from "react-native-toast-message";
 import EmptyList, { EmptyListProps } from "../components/EmptyList";
-import LevelCard, { IndicatorIcon, StatChip } from "../components/LevelCard";
+import LevelCard, { FOOTNOTE_HEIGHT, IndicatorIcon, StatChip } from "../components/LevelCard";
 import GlobalContext from "../GlobalContext";
 import TextStyles, { normalize } from "../TextStyles";
 import { Theme, purpleTheme } from "../Theme";
@@ -176,6 +176,14 @@ export default function LevelSelect({
   const [headerHeight, setHeaderHeight] = useState(0);
   const listTopPadding = win.width * 0.05; // paddingVertical "5%" resolves against the list's width.
 
+  // Cards with a footnote are a fixed amount taller (elementHeight is measured without one).
+  const footnotes = useMemo(() => levels.map(level => getFootnote?.(level)), [levels, getFootnote]);
+  const cardOffsets = useMemo(() => {
+    const offsets = [0];
+    footnotes.forEach(footnote => offsets.push(offsets[offsets.length - 1] + elementHeight + (footnote ? FOOTNOTE_HEIGHT : 0)));
+    return offsets;
+  }, [footnotes, elementHeight]);
+
   return (
     <>
       {/* This component exists just to calculate the height of level cards. */}
@@ -248,7 +256,7 @@ export default function LevelSelect({
               showResume={allowResume && item.uuid === scrollTo}
               stats={getStats?.(item)}
               subtitle={getSubtitle?.(item)}
-              footnote={getFootnote?.(item)}
+              footnote={footnotes[index]}
               levelIndex={index}
               level={item}
               darkMode={darkMode}
@@ -269,7 +277,7 @@ export default function LevelSelect({
           }}
           keyExtractor={item => item.uuid}
           getItemLayout={(_data, index) => (
-            { length: elementHeight, offset: listTopPadding + headerHeight + elementHeight * index, index }
+            { length: cardOffsets[index + 1] - cardOffsets[index], offset: listTopPadding + headerHeight + cardOffsets[index], index }
           )}
           onLayout={() => {
             if (scrollIndex) scrollRef.current?.scrollToIndex({ index: scrollIndex, animated: false });

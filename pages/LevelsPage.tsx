@@ -6,7 +6,7 @@ import { Difficulty, IndicatorIcon, StatChip, difficultyThemes } from "../compon
 import Subpages, { SubpageTab } from "../components/Subpages";
 import { graphics, purpleTheme } from "../Theme";
 import { refreshLevelsFromServer } from "../util/database";
-import { Level, PageView, SharedLevel, Tutorial } from "../util/types";
+import { Level, PageView, SharedLevel } from "../util/types";
 import { showSolution } from "../util/store";
 import LevelSelect from "./LevelSelect";
 import UserLevels from "./UserLevels";
@@ -27,24 +27,6 @@ function officialDifficulties(levels: Level[]): Map<string, Difficulty> {
     ranked.forEach((level, index) =>
         result.set(level.uuid, index >= hardFrom ? "Hard" : index >= mediumFrom ? "Medium" : "Easy"));
     return result;
-}
-
-const tutorialNames: Partial<Record<Tutorial, string>> = {
-    [Tutorial.MOVEMENT]: "moving",
-    [Tutorial.OBJECTIVE]: "the goal",
-    [Tutorial.CRATES_CRATERS]: "crates and craters",
-    [Tutorial.ONEWAY_TILES]: "one-way tiles",
-    [Tutorial.DOORS_KEYS]: "doors and keys",
-    [Tutorial.BOMBS]: "bombs",
-    [Tutorial.METAL_CRATES]: "metal crates",
-    [Tutorial.ICE_BLOCKS]: "ice blocks",
-};
-
-/** Small print: what a tutorial teaches. */
-function officialFootnote(level: Level) {
-    if (!level.official || !level.introduces) return undefined;
-    const names = level.introduces.map(tutorial => tutorialNames[tutorial]).filter(name => !!name);
-    return names.length ? `Introduces ${names.join(" and ")}` : undefined;
 }
 
 interface Props {
@@ -103,7 +85,6 @@ export default function LevelsPage({
             isOfficial
             allowResume
             getStats={officialStats}
-            getFootnote={officialFootnote}
             // Solved levels can replay the player's best solution.
             secondButtonProps={{
                 text: (uuid) => levels.find(level => level.uuid === uuid)?.bestSolution ? "Solution" : undefined,

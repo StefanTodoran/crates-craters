@@ -67,6 +67,10 @@ interface LevelCardProps {
 
 const CARD_PREVIEW_RATIO = 0.34; // Preview height, as a fraction of the card's width.
 const DOUBLE_TAP_MS = 260;
+const FOOTNOTE_MARGIN = normalize(6);
+const FOOTNOTE_LINE = normalize(18);
+/** How much taller a card with a footnote is. */
+export const FOOTNOTE_HEIGHT = FOOTNOTE_MARGIN + FOOTNOTE_LINE;
 
 const LevelCard = memo(function ({
   onPlay,
@@ -239,9 +243,9 @@ const LevelCard = memo(function ({
         <View style={styles.chips}>
           {stats?.map(chip => <Chip key={chip.label} chip={chip} cardTheme={useTheme} darkMode={darkMode} textColor={textColor} />)}
         </View>
-        <Text allowFontScaling={false} numberOfLines={1} style={[styles.footnote, { color: textColor }]}>
-          {footnote ?? ""}
-        </Text>
+        {!!footnote && <Text allowFontScaling={false} numberOfLines={1} style={[styles.footnote, { color: textColor }]}>
+          {footnote}
+        </Text>}
 
         <View style={styles.buttonRow}>
           {onSecondButton && !!secondButtonText && <View style={styles.button}>
@@ -407,10 +411,10 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
   },
   footnote: {
-    marginTop: normalize(6),
+    marginTop: FOOTNOTE_MARGIN,
     fontFamily: "Montserrat-Regular",
     fontSize: normalize(13),
-    height: normalize(18), // Kept when empty, so every card has the same height.
+    height: FOOTNOTE_LINE, // Fixed, so a card's height is known without measuring it.
   },
   info: {
     paddingHorizontal: normalize(12),

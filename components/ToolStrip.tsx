@@ -49,8 +49,8 @@ const basicTool = (label: string) => tools.find(tool => tool.label === label)!;
 
 /** Strip order, by label. The bomb and one-way tools are built from the options. */
 const stripOrder = [
-  wallTool.label, "Crate", "Crater", "Ice Block", "Door", "Key", "Coin", "Flag", spawnTool.label,
-  "Bomb", metalCrateTool.label, diamondTool.label, "One Way", eraserTool.label,
+  wallTool.label, "One Way", "Crate", "Crater", "Ice Block", "Door", "Key", "Coin", "Flag",
+  "Bomb", metalCrateTool.label, diamondTool.label, eraserTool.label, spawnTool.label,
 ];
 
 /** The tool a strip label stands for, with the current options applied. */
@@ -291,7 +291,8 @@ const styles = StyleSheet.create({
     marginLeft: STEPPER_ROOM + normalize(10),
     // Center on the slider bar: its center is this far above the slider's bottom edge
     // (bottom padding plus half the bar), and the button has a 5 vertical margin.
-    marginBottom: (Platform.OS === "ios" ? 10 + 32 / 2 : 15 + 3 / 2) - DONE_SIZE / 2 - normalize(5),
+    // (iOS: the native slider is 40 tall, whatever its style says.)
+    marginBottom: (Platform.OS === "ios" ? 10 + 40 / 2 : 15 + 3 / 2) - DONE_SIZE / 2 - normalize(5),
   },
   oneWayRow: {
     flexDirection: "row",
