@@ -42,6 +42,7 @@ interface Props {
   levels: Level[],
   noNumber?: boolean,
   getStats?: (targetLevel: Level) => StatChip[] | undefined,
+  getSubtitle?: (targetLevel: Level) => string | undefined, // Replaces the line under a card's name.
 
   scrollTo?: string, // The index in levels of the level currently being played (if a level is being played). 
   allowResume?: boolean,
@@ -72,6 +73,7 @@ export default function LevelSelect({
   levels,
   noNumber,
   getStats,
+  getSubtitle,
   scrollTo,
   allowResume,
   isOfficial,
@@ -249,6 +251,7 @@ export default function LevelSelect({
               onResume={resumeLevel}
               showResume={allowResume && item.uuid === scrollTo}
               stats={getStats?.(item)}
+              subtitle={getSubtitle?.(item)}
               levelIndex={index}
               level={item}
               darkMode={darkMode}

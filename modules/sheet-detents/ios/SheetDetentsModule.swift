@@ -23,10 +23,11 @@ public class SheetDetentsModule: Module {
     }
   }
 
-  static func configure(_ presented: UIViewController) {
+  /// Returns whether it configured the sheet.
+  static func configure(_ presented: UIViewController) -> Bool {
     guard let clearBackground = pendingClearBackground,
           NSStringFromClass(type(of: presented)).contains("ModalHostViewController"),
-          let sheet = presented.sheetPresentationController else { return }
+          let sheet = presented.sheetPresentationController else { return false }
     pendingClearBackground = nil
     sheet.detents = [.medium(), .large()]
     sheet.selectedDetentIdentifier = .medium
@@ -34,6 +35,37 @@ public class SheetDetentsModule: Module {
     if clearBackground {
       presented.view.backgroundColor = .clear
     }
+    return true
+  }
+
+  /// React Native's modal sets isModalInPresentation, so UIKit never dismisses it on its
+  /// own: a swipe down only asks React Native to close it (onRequestClose). Taps on the
+  /// dimmed area above the sheet do nothing, so this makes them ask the same way.
+  static func addTapOutsideToClose(_ presented: UIViewController) {
+    guard let controller = presented.presentationController, let container = controller.containerView else { return }
+    let tap = OutsideTapRecognizer(target: OutsideTapRecognizer.self, action: #selector(OutsideTapRecognizer.handle(_:)))
+    tap.presented = presented
+    tap.cancelsTouchesInView = false
+    tap.delegate = tap
+    container.addGestureRecognizer(tap)
+  }
+}
+
+private class OutsideTapRecognizer: UITapGestureRecognizer, UIGestureRecognizerDelegate {
+  weak var presented: UIViewController?
+
+  // The sheet's dimming view has its own tap recognizer; recognize alongside it.
+  func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer,
+                         shouldRecognizeSimultaneouslyWith other: UIGestureRecognizer) -> Bool {
+    true
+  }
+
+  @objc static func handle(_ tap: OutsideTapRecognizer) {
+    guard let presented = tap.presented, let view = presented.view, let container = tap.view,
+          let controller = presented.presentationController else { return }
+    let sheetFrame = view.convert(view.bounds, to: container)
+    if sheetFrame.contains(tap.location(in: container)) { return }
+    controller.delegate?.presentationControllerDidAttemptToDismiss?(controller)
   }
 }
 
@@ -50,8 +82,11 @@ extension UIViewController {
   }
 
   @objc private func sheetDetents_present(_ controller: UIViewController, animated: Bool, completion: (() -> Void)?) {
-    SheetDetentsModule.configure(controller)
+    let configured = SheetDetentsModule.configure(controller)
     // Implementations are swapped, so this calls UIKit's original present.
-    sheetDetents_present(controller, animated: animated, completion: completion)
+    sheetDetents_present(controller, animated: animated) {
+      if configured { SheetDetentsModule.addTapOutsideToClose(controller) }
+      completion?()
+    }
   }
 }

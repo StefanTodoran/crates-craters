@@ -1,17 +1,17 @@
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
-import { FlatList, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
+import { FlatList, Pressable, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import Toast from "react-native-toast-message";
 import FilterChip from "../components/FilterChip";
 import InputLine, { INPUT_LABEL_ROOM } from "../components/InputLine";
-import { IndicatorIcon, StatChip } from "../components/LevelCard";
+import { Difficulty, IndicatorIcon, StatChip, difficultyThemes } from "../components/LevelCard";
 import LevelDetailSheet from "../components/LevelDetailSheet";
+import BottomSheet from "../components/BottomSheet";
 import SimpleButton from "../components/SimpleButton";
 import SliderBar from "../components/SliderBar";
 import GlobalContext from "../GlobalContext";
 import TextStyles, { normalize } from "../TextStyles";
-import { Theme, colors, graphics, purpleTheme } from "../Theme";
+import { colors, graphics, purpleTheme } from "../Theme";
 import { ExplicitOrder, QueryFilter, attemptUserLevel, likeUserLevel, queryUserLevels } from "../util/database";
-import { prepareNextSheet } from "../modules/sheet-detents";
 import { hapticLike } from "../util/haptics";
 import { useDebounce } from "../util/hooks";
 import { getAppState, setEditorLevel } from "../util/store";
@@ -72,24 +72,25 @@ interface LocalLevelLists {
 
 // The solve rate says little until a few people have tried a level.
 const MIN_ATTEMPTS_FOR_DIFFICULTY = 5;
-const difficultyThemes: Record<string, Theme> = {
-    Easy: colors.GREEN_THEME,
-    Medium: colors.YELLOW_THEME,
-    Hard: colors.RED_THEME,
-};
 
 /** A colored pill: New (too few attempts), Unbeaten, or Easy, Medium or Hard by solve rate. */
 function difficultyChip(level: SharedLevel): StatChip {
     if (level.attempts < MIN_ATTEMPTS_FOR_DIFFICULTY) return { label: "New", theme: colors.BLUE_THEME, accessibilityLabel: "New: few attempts so far" };
-    if (level.wins === 0) return { label: "Unbeaten", theme: colors.ORANGE_THEME };
+    if (level.wins === 0) return { label: "Unsolved", theme: colors.ORANGE_THEME };
     const difficulty = getRange(Math.min(1, level.wins / level.attempts), difficultyRanges);
-    return { label: difficulty, theme: difficultyThemes[difficulty] };
+    return { label: difficulty, theme: difficultyThemes[difficulty as Difficulty] };
 }
 
-const bestChip = (level: SharedLevel): StatChip => {
-    const best = level.bestSolution?.length ?? level.best;
-    return { label: `${best}`, icon: graphics.FLAG_ICON, accessibilityLabel: `Best solution: ${best} moves` };
-};
+/** The solve rate, colored like the difficulty pill; only once the difficulty is known. */
+function solveRateChip(level: SharedLevel): StatChip | undefined {
+    if (level.attempts < MIN_ATTEMPTS_FOR_DIFFICULTY || level.wins === 0) return;
+    const rate = Math.round(100 * Math.min(1, level.wins / level.attempts));
+    return { label: `${rate}% solved`, theme: difficultyChip(level).theme, accessibilityLabel: `${rate}% solve rate` };
+}
+
+const bestLength = (level: SharedLevel) => level.bestSolution?.length ?? level.best;
+const bestChip = (level: SharedLevel): StatChip =>
+    ({ label: `${bestLength(level)}`, icon: graphics.FLAG_ICON, accessibilityLabel: `Best solution: ${bestLength(level)} moves` });
 const likesChip = (level: SharedLevel): StatChip =>
     ({ label: `${level.likes}`, icon: graphics.LIKE_ICON, accessibilityLabel: `${level.likes} likes` });
 const plural = (count: number, word: string) => `${count} ${word}${count === 1 ? "" : "s"}`;
@@ -186,7 +187,6 @@ export default function UserLevels({
     // The full filters panel is a native sheet (swipe down to dismiss on iOS).
     const [modalOpen, setModalOpen] = useState(false);
     const toggleModal = () => {
-        if (!modalOpen) prepareNextSheet(); // iOS: open at half height on the see-through sheet material.
         setModalOpen(!modalOpen);
     };
 
@@ -245,7 +245,6 @@ export default function UserLevels({
     // The level whose details sheet is open.
     const [detailUuid, setDetailUuid] = useState<string>();
     const openDetails = (uuid: string) => {
-        prepareNextSheet();
         setDetailUuid(uuid);
     };
     const scrollRef = useRef<FlatList<Filter>>(null);
@@ -285,6 +284,7 @@ export default function UserLevels({
     const [searchQuery, setSearchQuery] = useState("");
 
     const [loading, setLoading] = useState(false);
+    const [loadFailed, setLoadFailed] = useState(false);
 
     // Yours needs an account, and while it's on, the other filters are hidden.
     const allFilters = Object.values(Filter).filter(filter => filter !== Filter.YOURS || !!uid);
@@ -325,6 +325,7 @@ export default function UserLevels({
                 (sharedDate(b as unknown as SharedLevel)?.getTime() ?? 0) - (sharedDate(a as unknown as SharedLevel)?.getTime() ?? 0));
 
             setMatchingCount(count);
+            setLoadFailed(false);
             setUserLevels(data.filter(doc => doc.public).flatMap(doc => {
                 try {
                     // A level document is close to, but not exactly, a SharedLevel: it has
@@ -347,7 +348,12 @@ export default function UserLevels({
             return true;
         } catch (error) {
             console.warn("Failed to fetch shared levels:", error);
-            if (requestId === latestRequest.current) setLoading(false);
+            if (requestId !== latestRequest.current) return false;
+            // Don't leave the previous results up under filters they don't match.
+            setUserLevels([]);
+            setMatchingCount(0);
+            setLoadFailed(true);
+            setLoading(false);
             return false;
         }
     };
@@ -376,27 +382,36 @@ export default function UserLevels({
         return userLevels.filter(level => level.name.toLowerCase().includes(query) || level.user_name.toLowerCase().includes(query));
     }, [userLevels, searchQuery]);
 
-    // Card chips. Your own levels show how they're doing instead of difficulty and best.
+    // Card chips. The best solution only shows once a player has beaten the level: until
+    // then it's the creator's own solution (sharing requires beating the level first).
     const getStats = useCallback((level: Level): StatChip[] => {
         const shared = level as SharedLevel;
-        if (uid && shared.user_uid === uid) {
-            return [{ label: plural(shared.attempts, "play") }, { label: plural(shared.wins, "win") }, likesChip(shared)];
-        }
-        return [difficultyChip(shared), bestChip(shared), likesChip(shared)];
+        return [difficultyChip(shared), solveRateChip(shared), shared.wins > 0 ? bestChip(shared) : undefined, likesChip(shared)]
+            .filter(chip => chip !== undefined);
+    }, []);
+
+    // Plays and wins are text, under the name on your own cards and under the pills in the sheet.
+    const playsAndWins = (level: SharedLevel) => `${plural(level.attempts, "play")} · ${plural(level.wins, "win")}`;
+    const getSubtitle = useCallback((level: Level) => {
+        const shared = level as SharedLevel;
+        return uid && shared.user_uid === uid ? `by you · ${playsAndWins(shared)}` : undefined;
     }, [uid]);
 
-    // Everything, for the details sheet.
     const getDetailStats = (level: SharedLevel): StatChip[] => {
-        const stats = [difficultyChip(level)];
-        if (level.attempts >= MIN_ATTEMPTS_FOR_DIFFICULTY && level.wins > 0) {
-            stats.push({ label: `${Math.round(100 * Math.min(1, level.wins / level.attempts))}% solve rate` });
-        }
-        stats.push({ label: plural(level.attempts, "play") }, { label: plural(level.wins, "win") });
-        const best = level.bestSolution?.length ?? level.best;
-        stats.push({ label: `Best: ${best} moves`, icon: graphics.FLAG_ICON }, { ...likesChip(level), label: plural(level.likes, "like") });
+        const best = bestLength(level);
+        return [
+            difficultyChip(level),
+            solveRateChip(level),
+            level.wins > 0 ?
+                { label: `Best: ${best} moves`, icon: graphics.FLAG_ICON } :
+                { label: `Creator: ${best} moves`, icon: graphics.FLAG_ICON, accessibilityLabel: `Creator's solution: ${best} moves` },
+            { ...likesChip(level), label: plural(level.likes, "like") },
+        ].filter(chip => chip !== undefined);
+    };
+    const getDetailText = (level: SharedLevel) => {
         const date = sharedDate(level);
-        if (date) stats.push({ label: `Shared ${date.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}` });
-        return stats;
+        const shared = date ? ` · shared ${date.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}` : "";
+        return playsAndWins(level) + shared;
     };
 
     const cardActions: CardActions = {
@@ -484,6 +499,7 @@ export default function UserLevels({
                 playLevelCallback={playLevel}
                 cardActions={cardActions}
                 getStats={getStats}
+                getSubtitle={getSubtitle}
                 levels={filteredLevels}
                 scrollTo={scrollTo}
                 allowResume
@@ -498,7 +514,8 @@ export default function UserLevels({
                     setNumLoaded(numLoaded + 10);
                 }}
                 emptyListProps={{
-                    textLines: filters.has(Filter.YOURS) ?
+                    textLines: loadFailed ? ["Couldn't load levels.", "Check your connection, then pull to refresh."] :
+                        filters.has(Filter.YOURS) ?
                         ["You haven't shared any levels yet.", "Share one from its page in the editor."] :
                         ["Could not find any good matches for your search.", "Try widening your search to use less filters."],
                 }}
@@ -506,17 +523,7 @@ export default function UserLevels({
                 noNumber
             />
 
-            <Modal
-                visible={modalOpen}
-                presentationStyle="pageSheet"
-                animationType="slide"
-                onRequestClose={() => setModalOpen(false)} // Swipe down (iOS) or back button (Android).
-                backdropColor={ios ? "transparent" : undefined} // Modal paints white over the sheet material otherwise.
-            >
-            <ScrollView
-                style={{ backgroundColor: ios ? "transparent" : (darkMode ? colors.NEAR_BLACK : colors.OFF_WHITE) }}
-                contentContainerStyle={styles.modal}
-            >
+            <BottomSheet visible={modalOpen} onClose={() => setModalOpen(false)} contentStyle={styles.modal}>
                 {/* Apply sits at the top: the sheet resizes while it's dragged between
                     heights, and a button pinned to the bottom jumped around with it. */}
                 <View style={styles.sheetHeader}>
@@ -586,12 +593,12 @@ export default function UserLevels({
                         />
                     </>}
                 </View>
-            </ScrollView>
-            </Modal>
+            </BottomSheet>
 
             <LevelDetailSheet
                 level={detailLevel}
                 stats={detailLevel ? getDetailStats(detailLevel) : []}
+                details={detailLevel ? getDetailText(detailLevel) : ""}
                 liked={!!detailLevel && isLiked(detailLevel.uuid)}
                 canLike={!!detailLevel && canLike(detailLevel.uuid)}
                 onLike={() => detailLevel && likeLevel(detailLevel.uuid)}
@@ -608,8 +615,6 @@ export default function UserLevels({
         </>
     );
 }
-
-const ios = Platform.OS === "ios";
 
 const styles = StyleSheet.create({
     summaryRow: {

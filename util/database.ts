@@ -381,7 +381,7 @@ export async function queryUserLevels(
       return Promise.all([
         getEntriesFromQuery<UserLevelDocument>(createFirebaseQuery("userLevels", pageSize, orderFields, chunkFilters)),
         // Count without the page limit, so "Showing X of Y" reports the real total.
-        getEntryCountFromQuery(createFirebaseQuery("userLevels", -1, [], chunkFilters)),
+        getEntryCountFromQuery(createFirebaseQuery("userLevels", -1, orderFields, chunkFilters)),
       ]);
     }));
     const merged = results.flatMap(([data]) => data).sort((a, b) => compareByOrder(a, b, orderFields));
@@ -392,12 +392,14 @@ export async function queryUserLevels(
 
   // Over-fetch so that, after dropping excluded levels, a full page remains.
   const q = createFirebaseQuery("userLevels", pageSize === -1 ? -1 : pageSize + excludeIds.length, orderFields, filters);
+  // Counts use the same ordering as the list: a query's ordering decides which composite
+  // index serves it, so an unordered count can need an index the list query doesn't.
   const excludedCountQueries = chunk(excludeIds, IN_FILTER_LIMIT).map(ids =>
-    getEntryCountFromQuery(createFirebaseQuery("userLevels", -1, [], [...filters, { field: "__name__", operator: "in", value: ids }]))
+    getEntryCountFromQuery(createFirebaseQuery("userLevels", -1, orderFields, [...filters, { field: "__name__", operator: "in", value: ids }]))
   );
   const [docs, total, ...excludedCounts] = await Promise.all([
     getEntriesFromQuery<UserLevelDocument>(q),
-    getEntryCountFromQuery(createFirebaseQuery("userLevels", -1, [], filters)),
+    getEntryCountFromQuery(createFirebaseQuery("userLevels", -1, orderFields, filters)),
     ...excludedCountQueries,
   ]);
   const data = docs.filter(doc => !excludeIds.includes(doc.uuid)).slice(0, pageSize === -1 ? undefined : pageSize);

@@ -1,17 +1,17 @@
-import { useContext } from "react";
-import { Image, Modal, Platform, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
+import { useContext, useState } from "react";
+import { Image, LayoutChangeEvent, StyleSheet, Text, View } from "react-native";
 import GlobalContext from "../GlobalContext";
 import TextStyles, { normalize } from "../TextStyles";
-import { colors, graphics, purpleTheme } from "../Theme";
-import { calcPreviewTileSize } from "../util/board";
+import { graphics, purpleTheme } from "../Theme";
 import { SharedLevel } from "../util/types";
-import GameBoard from "./GameBoard";
-import { Chip, LikeButton, StatChip } from "./LevelCard";
+import BottomSheet from "./BottomSheet";
+import { CARD_PREVIEW_RATIO, CardPreview, Chip, LikeButton, StatChip } from "./LevelCard";
 import SimpleButton from "./SimpleButton";
 
 interface Props {
   level?: SharedLevel, // Shown while set.
-  stats: StatChip[], // Everything known about the level.
+  stats: StatChip[],
+  details: string, // A line of text under the pills (plays, wins, when it was shared).
   liked: boolean,
   canLike: boolean,
   onLike: () => void,
@@ -22,28 +22,29 @@ interface Props {
 }
 
 /**
- * A shared level's details, opened from its card: all the stats, Like and Play, and the
- * whole board. A half-height sheet on iOS (call prepareNextSheet before setting `level`).
+ * A shared level's details, opened from its card: the same board preview, all the stats,
+ * and Like and Play. A half-height sheet on iOS; tap outside or swipe down to close.
  */
-export default function LevelDetailSheet({ level, stats, liked, canLike, onLike, canManage, onManage, onPlay, onClose }: Props) {
+export default function LevelDetailSheet({ level, stats, details, liked, canLike, onLike, canManage, onManage, onPlay, onClose }: Props) {
   const { darkMode } = useContext(GlobalContext);
-  const win = useWindowDimensions();
   const theme = purpleTheme;
+  const [width, setWidth] = useState(0);
+  const onLayout = (event: LayoutChangeEvent) => setWidth(event.nativeEvent.layout.width);
+  const previewHeight = Math.round(width * CARD_PREVIEW_RATIO);
 
   return (
-    <Modal
-      visible={!!level}
-      presentationStyle="pageSheet"
-      animationType="slide"
-      onRequestClose={onClose}
-      backdropColor={ios ? "transparent" : undefined}
-    >
-      {level && <ScrollView
-        style={{ backgroundColor: ios ? "transparent" : (darkMode ? colors.NEAR_BLACK : colors.OFF_WHITE) }}
-        contentContainerStyle={styles.content}
-      >
+    <BottomSheet visible={!!level} onClose={onClose} contentStyle={styles.content}>
+      {level && <View onLayout={onLayout}>
+        {width > 0 && <View style={[styles.preview, {
+          height: previewHeight,
+          borderColor: theme.MAIN_TRANSPARENT(0.8),
+          backgroundColor: darkMode ? theme.NEAR_BLACK : theme.LIGHT_COLOR,
+        }]}>
+          <CardPreview level={level} width={width - 2} height={previewHeight} />
+        </View>}
+
         <View style={styles.titleRow}>
-          <Image style={styles.icon} source={level.completed ? graphics.EXPLOSION : graphics.METAL_CRATE} />
+          <Image style={styles.icon} source={level.completed ? graphics.CRATER : graphics.CRATE} />
           <View style={styles.titleText}>
             <Text allowFontScaling={false} numberOfLines={2} style={[TextStyles.subtitle(darkMode, theme.DARK_COLOR), styles.name]}>
               {level.name}
@@ -65,6 +66,9 @@ export default function LevelDetailSheet({ level, stats, liked, canLike, onLike,
             large
           />)}
         </View>
+        <Text allowFontScaling={false} style={[styles.details, { color: darkMode ? theme.MAIN_COLOR : theme.TINT_COLOR }]}>
+          {details}
+        </Text>
 
         <View style={styles.buttons}>
           {canManage !== undefined ?
@@ -74,31 +78,32 @@ export default function LevelDetailSheet({ level, stats, liked, canLike, onLike,
             <SimpleButton text="Play" icon={graphics.PLAY_ICON} main onPress={onPlay} height={BUTTON_HEIGHT} fillWidth centered />
           </View>
         </View>
-
-        <View style={styles.board}>
-          <GameBoard board={level.board} overrideTileSize={calcPreviewTileSize(level.board.width, 0.9, win)} />
-        </View>
-      </ScrollView>}
-    </Modal>
+      </View>}
+    </BottomSheet>
   );
 }
 
-const ios = Platform.OS === "ios";
 const BUTTON_HEIGHT = normalize(46);
 
 const styles = StyleSheet.create({
   content: {
-    paddingTop: normalize(24),
+    paddingTop: normalize(20),
     paddingBottom: normalize(40),
     paddingHorizontal: "5%",
+  },
+  preview: {
+    borderWidth: 1,
+    borderRadius: normalize(14),
+    overflow: "hidden",
+    marginBottom: normalize(14),
   },
   titleRow: {
     flexDirection: "row",
     alignItems: "center",
   },
   icon: {
-    width: normalize(44),
-    height: normalize(44),
+    width: normalize(40),
+    height: normalize(40),
   },
   titleText: {
     flex: 1,
@@ -119,19 +124,20 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     flexWrap: "wrap",
     gap: normalize(8),
-    marginTop: normalize(16),
+    marginTop: normalize(14),
+  },
+  details: {
+    marginTop: normalize(10),
+    fontFamily: "Montserrat-Regular",
+    fontSize: normalize(14),
   },
   buttons: {
     flexDirection: "row",
     alignItems: "center",
     gap: normalize(12),
-    marginTop: normalize(18),
+    marginTop: normalize(14),
   },
   play: {
     flex: 1,
-  },
-  board: {
-    alignItems: "center",
-    marginTop: normalize(22),
   },
 });

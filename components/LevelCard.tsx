@@ -1,6 +1,5 @@
 import { memo, useEffect, useMemo, useRef } from "react";
 import { Animated, Image, ImageSourcePropType, Platform, Pressable, StyleSheet, Text, View, useWindowDimensions } from "react-native";
-import { GlassView, glassAvailable } from "../modules/glass-view";
 import TextStyles, { normalize } from "../TextStyles";
 import { Theme, colors, graphics } from "../Theme";
 import { getSpawnPosition } from "../util/logic";
@@ -22,6 +21,13 @@ export interface StatChip {
   theme?: Theme, // Colors the chip, e.g. green for Easy. Defaults to the card's theme.
   accessibilityLabel?: string, // When the label alone is unclear, e.g. "17" next to a flag.
 }
+
+export type Difficulty = "Easy" | "Medium" | "Hard";
+export const difficultyThemes: Record<Difficulty, Theme> = {
+  Easy: colors.GREEN_THEME,
+  Medium: colors.YELLOW_THEME,
+  Hard: colors.RED_THEME,
+};
 
 /**
  * Props are all primitives or stable references (callbacks take the card's index), so
@@ -55,9 +61,10 @@ interface LevelCardProps {
   // Your own level: a Manage button in that corner instead of the heart.
   onManage?: (index: number) => void,
   manageDisabled?: boolean,
+  subtitle?: string, // Replaces the line under the name (e.g. "by you · 12 plays").
 }
 
-export const CARD_PREVIEW_RATIO = 0.4; // Preview height, as a fraction of the card's width.
+export const CARD_PREVIEW_RATIO = 0.34; // Preview height, as a fraction of the card's width.
 const DOUBLE_TAP_MS = 260;
 
 const LevelCard = memo(function ({
@@ -82,6 +89,7 @@ const LevelCard = memo(function ({
   onOpenDetails,
   onManage,
   manageDisabled,
+  subtitle,
 }: LevelCardProps) {
   const win = useWindowDimensions();
   const cardWidth = win.width * 0.9;
@@ -139,16 +147,16 @@ const LevelCard = memo(function ({
 
   // Fetched shared levels carry their creator's uid; your local levels don't.
   const isShared = !level.official && Object.hasOwn(level, "user_uid");
-  let attributionText;
-  if (level.official) attributionText = level.introduces !== undefined ? "Tutorial Level" : "Standard Level";
+  let attributionText = subtitle;
+  if (attributionText !== undefined) { /* Given. */ }
+  else if (level.official) attributionText = level.introduces !== undefined ? "Tutorial Level" : "Standard Level";
   else if (Object.hasOwn(level, "user_name")) attributionText = `by ${(level as SharedLevel).user_name}`;
   else attributionText = "Designer unknown";
 
-  // Beaten official levels are craters, beaten shared ones explosions.
-  let iconSource;
-  if (level.official) iconSource = level.completed ? graphics.CRATER : graphics.CRATE;
-  else if (isShared) iconSource = level.completed ? graphics.EXPLOSION : graphics.METAL_CRATE;
-  else iconSource = graphics.METAL_CRATE;
+  // Levels to play are crates, craters once beaten; your own (in the editor) metal crates.
+  const iconSource = level.official || isShared ?
+    (level.completed ? graphics.CRATER : graphics.CRATE) :
+    graphics.METAL_CRATE;
 
   const textColor = darkMode ? useTheme.MAIN_COLOR : useTheme.TINT_COLOR;
   const previewPressable = !!onOpenDetails || (!!onLike && !!canLike);
@@ -188,7 +196,7 @@ const LevelCard = memo(function ({
         {!!onLike && <Animated.Image
           // @ts-expect-error pointerEvents works on Image, but isn't in its types.
           pointerEvents="none"
-          source={graphics.LIKE_ICON_RED}
+          source={graphics.LIKE_ICON}
           style={[styles.burst, {
             opacity: burst.interpolate({ inputRange: [0, 0.5, 1, 2], outputRange: [0, 1, 1, 0] }),
             transform: [{ scale: burst.interpolate({ inputRange: [0, 1, 2], outputRange: [0.3, 1, 1.15] }) }],
@@ -233,33 +241,39 @@ const LevelCard = memo(function ({
           </View>
         </View>
 
-        <View style={styles.bottomRow}>
-          <View style={styles.chips}>
-            {stats?.map(chip => <Chip key={chip.label} chip={chip} cardTheme={useTheme} darkMode={darkMode} textColor={textColor} />)}
-          </View>
+        <View style={styles.chips}>
+          {stats?.map(chip => <Chip key={chip.label} chip={chip} cardTheme={useTheme} darkMode={darkMode} textColor={textColor} />)}
+        </View>
 
-          {onSecondButton && !!secondButtonText && <View accessible accessibilityRole="button" accessibilityLabel={secondButtonText}>
+        <View style={styles.buttonRow}>
+          {onSecondButton && !!secondButtonText && <View style={styles.button}>
             <SimpleButton
+              text={secondButtonText}
               icon={secondButtonIcon}
               disabled={secondButtonDisabled}
               onPress={() => onSecondButton(levelIndex)}
               theme={useTheme}
               height={BUTTON_HEIGHT}
-              extraMargin={[0, 8, 0, 0]}
+              fillWidth
+              centered
             />
           </View>}
 
-          {resumeCallback ?
-            <SimpleButton text="Resume" icon={graphics.KEY_ICON} main theme={useTheme} onPress={resumeCallback} height={BUTTON_HEIGHT} /> :
-            <SimpleButton
-              text={isLocked ? "Locked" : "Play"}
-              icon={isLocked ? graphics.LOCK_ICON_WHITE : graphics.PLAY_ICON}
-              main
-              theme={useTheme}
-              onPress={() => onPlay(levelIndex)}
-              disabled={isLocked}
-              height={BUTTON_HEIGHT}
-            />}
+          <View style={styles.button}>
+            {resumeCallback ?
+              <SimpleButton text="Resume" icon={graphics.KEY_ICON} main theme={useTheme} onPress={resumeCallback} height={BUTTON_HEIGHT} fillWidth centered /> :
+              <SimpleButton
+                text={isLocked ? "Locked" : "Play"}
+                icon={isLocked ? graphics.LOCK_ICON_WHITE : graphics.PLAY_ICON}
+                main
+                theme={useTheme}
+                onPress={() => onPlay(levelIndex)}
+                disabled={isLocked}
+                height={BUTTON_HEIGHT}
+                fillWidth
+                centered
+              />}
+          </View>
         </View>
       </View>
     </Animated.View>
@@ -313,7 +327,7 @@ export function LikeButton({ liked, canLike, onPress, pop, darkMode, inline }: {
 }) {
   return (
     <CornerButton
-      icon={liked ? graphics.LIKE_ICON_RED : graphics.LIKE_ICON_OUTLINE}
+      icon={liked ? graphics.LIKE_ICON : graphics.LIKE_ICON_OUTLINE}
       label={liked ? "Liked" : "Like"}
       onPress={onPress}
       disabled={!canLike || liked}
@@ -326,7 +340,7 @@ export function LikeButton({ liked, canLike, onPress, pop, darkMode, inline }: {
   );
 }
 
-/** A round icon button over the board preview. Glass on iOS 26+. */
+/** A round icon button over the board preview, on a solid circle so it reads over any board. */
 function CornerButton({ icon, label, onPress, disabled, dimmed = disabled, selected, pop, darkMode, inline }: {
   icon: ImageSourcePropType,
   label: string,
@@ -346,12 +360,10 @@ function CornerButton({ icon, label, onPress, disabled, dimmed = disabled, selec
       accessibilityRole="button"
       accessibilityLabel={label}
       accessibilityState={{ disabled: dimmed, selected }}
-      style={({ pressed }) => [styles.cornerButton, inline && styles.inline, pressed && { transform: [{ scale: 0.92 }] }, !glassAvailable && {
-        backgroundColor: darkMode ? colors.NEAR_BLACK_TRANSPARENT(0.7) : colors.OFF_WHITE_TRANSPARENT(0.85),
+      style={({ pressed }) => [styles.cornerButton, inline && styles.inline, pressed && { transform: [{ scale: 0.92 }] }, {
+        backgroundColor: darkMode ? colors.NEAR_BLACK_TRANSPARENT(0.75) : colors.OFF_WHITE_TRANSPARENT(0.9),
       }]}
     >
-      {/* Tinted, so it stands out over a light board. */}
-      <GlassView style={StyleSheet.absoluteFill} tint={darkMode ? colors.NEAR_BLACK_TRANSPARENT(0.5) : colors.OFF_WHITE_TRANSPARENT(0.65)} />
       <Animated.Image
         source={icon}
         style={[styles.cornerIcon, { opacity: dimmed ? 0.5 : 1 }, pop && { transform: [{ scale: pop }] }]}
@@ -386,6 +398,7 @@ export function CardPreview({ level, width, height }: { level: Level, width: num
 }
 
 const BUTTON_HEIGHT = normalize(42);
+const CHIP_HEIGHT = normalize(30);
 
 const styles = StyleSheet.create({
   container: {
@@ -407,26 +420,28 @@ const styles = StyleSheet.create({
     alignItems: "center",
     height: normalize(44),
   },
-  bottomRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginTop: normalize(8),
-    height: BUTTON_HEIGHT,
-  },
   chips: {
-    flex: 1,
     flexDirection: "row",
     flexWrap: "nowrap",
     overflow: "hidden",
     gap: normalize(6),
-    marginRight: normalize(8),
+    marginTop: normalize(8),
+    height: CHIP_HEIGHT,
+  },
+  buttonRow: {
+    flexDirection: "row",
+    gap: normalize(10),
+    marginTop: normalize(5), // SimpleButton adds 5 more above and below.
+  },
+  button: {
+    flex: 1,
   },
   chip: {
     flexDirection: "row",
     alignItems: "center",
-    height: normalize(26),
-    paddingHorizontal: normalize(8),
-    borderRadius: normalize(8),
+    height: CHIP_HEIGHT,
+    paddingHorizontal: normalize(10),
+    borderRadius: normalize(9),
   },
   chipLarge: {
     height: normalize(32),
@@ -434,9 +449,9 @@ const styles = StyleSheet.create({
     borderRadius: normalize(10),
   },
   chipIcon: {
-    width: normalize(15),
-    height: normalize(15),
-    marginRight: normalize(4),
+    width: normalize(17),
+    height: normalize(17),
+    marginRight: normalize(5),
   },
   chipIconLarge: {
     width: normalize(18),
@@ -445,7 +460,7 @@ const styles = StyleSheet.create({
   },
   chipText: {
     fontFamily: "Montserrat-Medium",
-    fontSize: normalize(13),
+    fontSize: normalize(14),
   },
   chipTextLarge: {
     fontSize: normalize(15),

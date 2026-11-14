@@ -1,8 +1,8 @@
-import { useContext, useMemo } from "react";
+import { useCallback, useContext, useMemo } from "react";
 import { ImageURISource } from "react-native";
 import CreateIcon from "../assets/main_theme/create.png";
 import EditorIcon from "../assets/main_theme/editor.png";
-import { IndicatorIcon } from "../components/LevelCard";
+import { IndicatorIcon, StatChip } from "../components/LevelCard";
 import Subpages, { SubpageTab } from "../components/Subpages";
 import GlobalContext from "../GlobalContext";
 import { colors, graphics } from "../Theme";
@@ -47,6 +47,16 @@ export default function EditorPage({
     buttonIcon: graphics.SHARE_ICON_RED,
   };
 
+  // Your levels: whether you've beaten them (needed to share), size, and if shared.
+  const editorStats = useCallback((level: Level): StatChip[] => {
+    const stats: StatChip[] = level.bestSolution ?
+      [{ label: `Best: ${level.bestSolution.length}`, icon: graphics.FLAG_ICON, accessibilityLabel: `Best solution: ${level.bestSolution.length} moves` }] :
+      [{ label: "Not beaten yet", theme: colors.ORANGE_THEME }];
+    stats.push({ label: `${level.board.width} × ${level.board.height}`, accessibilityLabel: `${level.board.width} by ${level.board.height} board` });
+    if ((level as UserLevel).shared) stats.push({ label: "Shared", theme: colors.GREEN_THEME });
+    return stats;
+  }, []);
+
   const pageComponents = [
     <LevelSelect
       key={0}
@@ -64,6 +74,7 @@ export default function EditorPage({
       scrollTo={editorLevel?.uuid}
       elementHeight={elementHeight}
       indicatorIcon={IndicatorIcon.SHARED}
+      getStats={editorStats}
       storeElementHeightCallback={storeElementHeightCallback}
       headerComponent={!!userCredential ? <CreateLevel createLevelCallback={createNewLevelCallback} existingLevelNames={existingLevelNames} /> : undefined}
       emptyListProps={{
