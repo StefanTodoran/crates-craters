@@ -47,10 +47,13 @@ function blockedDirections(mode: OneWayMode, rotation: number): Direction[] {
 
 const basicTool = (label: string) => tools.find(tool => tool.label === label)!;
 
-/** Strip order, by label. The bomb and one-way tools are built from the options. */
+/**
+ * Strip order, by label. The bomb and one-way tools are built from the options.
+ * Diamonds are hidden for now (their tile and logic stay); add diamondTool.label after the metal crate to bring them back.
+ */
 const stripOrder = [
   wallTool.label, "One Way", "Crate", "Crater", "Ice Block", "Door", "Key", "Coin", "Flag",
-  "Bomb", metalCrateTool.label, diamondTool.label, eraserTool.label, spawnTool.label,
+  "Bomb", metalCrateTool.label, eraserTool.label, spawnTool.label,
 ];
 
 /** The tool a strip label stands for, with the current options applied. */

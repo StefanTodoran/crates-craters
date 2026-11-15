@@ -391,12 +391,12 @@ export default function UserLevels({
         return uid && shared.user_uid === uid ? "by you" : undefined;
     }, [uid]);
 
-    // Plays, wins and when it was shared, in small print under the pills.
+    // When it was shared, then plays and wins, in small print under the pills.
     const getFootnote = useCallback((level: Level) => {
         const shared = level as SharedLevel;
         const date = sharedDate(shared);
-        const when = date ? ` · shared ${date.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}` : "";
-        return `${plural(shared.attempts, "play")} · ${plural(shared.wins, "win")}${when}`;
+        const when = date ? `Shared ${date.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })} · ` : "";
+        return `${when}${plural(shared.attempts, "play")} · ${plural(shared.wins, "win")}`;
     }, []);
 
     const cardActions: CardActions = {

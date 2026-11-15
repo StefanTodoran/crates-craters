@@ -58,14 +58,15 @@ export default function EditorPage({
     return stats;
   }, []);
 
-  // Small print: the board size and when it was made (and shared).
+  // Small print: when it was made (and shared). No board size until custom sizes exist.
   const editorFootnote = useCallback((level: Level) => {
     const { created, shared } = level as UserLevel;
     const date = (value?: string) => value ? new Date(value).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" }) : undefined;
-    const parts = [`${level.board.width} × ${level.board.height} board`];
+    const parts: string[] = [];
     if (date(created)) parts.push(`created ${date(created)}`);
     if (date(shared)) parts.push(`shared ${date(shared)}`);
-    return parts.join(" · ");
+    const text = parts.join(" · ");
+    return text ? text[0].toUpperCase() + text.slice(1) : undefined;
   }, []);
 
   const pageComponents = [
