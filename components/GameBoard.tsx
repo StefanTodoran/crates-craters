@@ -5,8 +5,8 @@ import { colors } from "../Theme";
 import { TileIcon } from "../assets/Icons";
 import { PositionSet } from "../util/Set";
 import { calcBoardTileSize, FlatBoard, getIconSrc, LayeredBoard } from "../util/board";
-import { findConnectedMetalComponent, isPushable, Position } from "../util/logic";
-import { BombTile, FlatTile, LayeredTile, TileType } from "../util/types";
+import { findMovingMetalCrates, isPushable, Position } from "../util/logic";
+import { BombTile, FlatTile, LayeredTile, TileType, offsetToDirection } from "../util/types";
 import DiamondGlint from "./DiamondGlint";
 
 interface Props {
@@ -57,8 +57,8 @@ export default memo(function GameBoard({
       if (!isPushable(board, { x, y }, offset)) return;
 
       if (tile.id === TileType.METAL_CRATE) {
-        const component = findConnectedMetalComponent(board, { x, y });
-        component.forEach(p => handled.add(p));
+        // Only the crates that will move; obstructed ones in the group stay on the board.
+        findMovingMetalCrates(board, { x, y }, offsetToDirection(offset)).forEach(p => handled.add(p));
       } else {
         handled.add({ x, y });
       }
@@ -167,9 +167,12 @@ export default memo(function GameBoard({
 
 function isEven(num: number) { return num % 2 === 0; }
 
-function willPlayerComponentHandleRender(_board: LayeredBoard, x: number, y: number, playerPosition: Position | undefined, _tile_id: TileType, handled: PositionSet) {
+function willPlayerComponentHandleRender(_board: LayeredBoard, x: number, y: number, playerPosition: Position | undefined, tile_id: TileType, handled: PositionSet) {
+  // Check the tile type too: this runs for the background layer as well, and a one-way
+  // under a pushable crate must stay visible while the Player overlay draws the crate.
   return (
     !!playerPosition &&
+    [TileType.CRATE, TileType.METAL_CRATE, TileType.BOMB, TileType.ICE_BLOCK].includes(tile_id) &&
     handled.has({ x, y })
   );
 }

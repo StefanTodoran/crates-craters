@@ -146,6 +146,17 @@ function computeMovableMetals(board: LayeredBoard, metalPositions: Position[], m
 }
 
 /**
+ * Returns the metal crates that actually move when the crate at `start` is pushed in
+ * the given direction: its connected group minus any obstructed crates (and the crates
+ * behind them). Shared by the move logic and the swipe preview so they always agree.
+ */
+export function findMovingMetalCrates(board: LayeredBoard, start: Position, move: Direction): Position[] {
+  const component = findConnectedMetalComponent(board, start);
+  const willMove = computeMovableMetals(board, component, move);
+  return component.filter(p => willMove.has(p));
+}
+
+/**
  * Returns the player spawn position in the given level.
  * @param {LayeredBoard} board The board[][] you wish to search. 
  * @returns {Position} Returns a position of the form {y: number, x: number}
@@ -322,11 +333,9 @@ export function doGameMove(game: Game, move: Direction): [Game, boolean] {
   ) {
     // Magnetic metal crates: move connected component of metal crates, with obstructed ones left behind.
     if (moveToLayer.foreground.id === TileType.METAL_CRATE) {
-      const allMetalCrates = findConnectedMetalComponent(next.board, { x: moveTo.x, y: moveTo.y });
-      const willMove = computeMovableMetals(next.board, allMetalCrates, move);
-      const cratesToMove = allMetalCrates.filter(p => willMove.has(p));
+      const cratesToMove = findMovingMetalCrates(next.board, { x: moveTo.x, y: moveTo.y }, move);
 
-      if (willMove.size > 0) {
+      if (cratesToMove.length > 0) {
         // Clear from original locations first
         for (const p of cratesToMove) {
           next.board.setTile(p.y, p.x, emptyTile);
@@ -498,9 +507,7 @@ export function isPushable(board: LayeredBoard, position: Position, offset: Offs
   ) {
     // Magnetic metal crates: if pushing a metal crate, ensure at least the front-most can move.
     if (moveToLayer.foreground.id === TileType.METAL_CRATE) {
-      const metalPositions = findConnectedMetalComponent(board, position);
-      const willMove = computeMovableMetals(board, metalPositions, move);
-      return willMove.size > 0;
+      return findMovingMetalCrates(board, position, move).length > 0;
     }
 
     // Pushing a fill capable tile into a crater.

@@ -2,7 +2,7 @@ import React, { memo, useEffect, useMemo, useRef } from "react";
 import { Animated, Image, ImageStyle, StyleSheet, View, ViewStyle } from "react-native";
 import { colors, graphics } from "../Theme";
 import { getIconSrc } from "../util/board";
-import { Game, findConnectedMetalComponent, isValidMove, pushIceBlock } from "../util/logic";
+import { Game, findMovingMetalCrates, isValidMove, pushIceBlock } from "../util/logic";
 import { Offset, TileType, offsetToDirection } from "../util/types";
 import { TouchAnim } from "../util/useGameInput";
 import BombBoardTile from "./BombBoardTile";
@@ -157,7 +157,8 @@ function getAdjacentTile(game: Game, offset: Offset, tileSize: number, tileStyle
 
   let other: React.ReactElement | null = null;
   if (tile && id === TileType.METAL_CRATE) {
-    const component = findConnectedMetalComponent(game.board, { x: xPos, y: yPos });
+    // Only the crates that will actually move; obstructed ones stay drawn by the board.
+    const component = findMovingMetalCrates(game.board, { x: xPos, y: yPos }, offsetToDirection(offset));
     const icon = getIconSrc({ id: TileType.METAL_CRATE })!.icon;
     other = <>
       {component.map((p, idx) => (
