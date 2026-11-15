@@ -148,11 +148,13 @@ function computeMovableMetals(board: LayeredBoard, metalPositions: Position[], m
 /**
  * Returns the metal crates that actually move when the crate at `start` is pushed in
  * the given direction: its connected group minus any obstructed crates (and the crates
- * behind them). Shared by the move logic and the swipe preview so they always agree.
+ * behind them). If the pushed crate itself is stuck, nothing moves. Shared by the move
+ * logic and the swipe preview so they always agree (and matches the solver).
  */
 export function findMovingMetalCrates(board: LayeredBoard, start: Position, move: Direction): Position[] {
   const component = findConnectedMetalComponent(board, start);
   const willMove = computeMovableMetals(board, component, move);
+  if (!willMove.has(start)) return [];
   return component.filter(p => willMove.has(p));
 }
 
