@@ -354,7 +354,10 @@ export function syncLevelsWithStorage(uuid?: string) {
   const updated = getLevelData(uuid);
   if (!updated) return;
   setAppState(({ levels, editorLevel }) => ({
-    levels: levels.map(level => level.uuid === uuid ? updated : level),
+    // A level just created (e.g. a copied shared level) isn't in the list yet: add it.
+    levels: levels.some(level => level.uuid === uuid) ?
+      levels.map(level => level.uuid === uuid ? updated : level) :
+      [...levels, updated],
     editorLevel: editorLevel?.uuid === uuid ? updated as UserLevel : editorLevel,
   }));
 }

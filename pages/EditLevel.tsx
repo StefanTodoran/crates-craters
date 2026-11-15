@@ -114,10 +114,10 @@ export default function EditLevel({
     setUnmodifiedLevel(level);
   }, [level, unsavedChanges]);
 
-  const exit = () => {
-    const leave = () => viewCallback(PageView.MANAGE, 1);
+  // Leaving the editor (Exit or Playtest) asks to save or discard unsaved changes.
+  const confirmLeave = (message: string, leave: () => void) => {
     if (!unsavedChanges) return leave();
-    Alert.alert("Unsaved changes", "Save your changes before leaving?", [
+    Alert.alert("Unsaved changes", message, [
       // Restores the last saved version (not the one from when the editor opened, which
       // would pair an old board with the newer save's completed/bestSolution).
       { text: "Discard", style: "destructive", onPress: () => { levelCallback(unmodifiedLevel); leave(); } },
@@ -126,11 +126,13 @@ export default function EditLevel({
     ]);
   };
 
-  const playtest = () => {
-    saveChanges();
+  const exit = () => confirmLeave("Save your changes before leaving?", () => viewCallback(PageView.MANAGE, 1));
+
+  // Playtest plays the stored level, so it's the saved version either way.
+  const playtest = () => confirmLeave("Save your changes before playtesting?", () => {
     playtestLevel(level.uuid);
     viewCallback(PageView.PLAY);
-  };
+  });
 
   // The board gets whatever height the toolbar, tool strip and options leave free.
   const [area, setArea] = useState<{ width: number, height: number }>();
@@ -423,8 +425,9 @@ const styles = StyleSheet.create({
   toolbar: {
     height: TOOLBAR_HEIGHT,
     flexDirection: "row",
-    justifyContent: "space-between",
+    justifyContent: "center",
     alignItems: "center",
+    gap: normalize(8), // Same spacing as between the buttons in the group.
   },
   toolbarGroup: {
     flexDirection: "row",
