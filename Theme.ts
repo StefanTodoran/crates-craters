@@ -22,6 +22,8 @@ const mainGraphics = {
   ICE_BLOCK: require("./assets/main_theme/ice_block.png"),
   DIAMOND: require("./assets/main_theme/diamond.png"),
   DIAMOND_GLINT: require("./assets/main_theme/diamond_glint.png"),
+  COIN_GLINT: require("./assets/main_theme/coin_glint.png"),
+  FUSE_SPARK: require("./assets/main_theme/fuse_spark.png"),
   FILTER_PUSHABLE: require("./assets/main_theme/filter_pushable.png"),
   FILTER_PLAYER: require("./assets/main_theme/filter_player.png"),
 

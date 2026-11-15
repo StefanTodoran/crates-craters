@@ -1,6 +1,6 @@
 import { AudioPlayer, useAudioPlayer } from "expo-audio";
 import { useCallback, useContext, useEffect, useRef, useState } from "react";
-import { Animated, View } from "react-native";
+import { Animated, Easing, View } from "react-native";
 import { useMMKVBoolean, useMMKVNumber } from "react-native-mmkv";
 import GlobalContext, { defaultSettings } from "../GlobalContext";
 import { useAppStore } from "./store";
@@ -223,3 +223,43 @@ export function useSoundEventPlayers() {
 
   return playSoundEvent;
 } 
+/**
+ * A 0→1 clock that repeats every `duration` ms, for looping tile animations. Its phase
+ * comes from the wall clock, so every tile's clock agrees (staggering is done with
+ * explicit offsets) and a restart never visibly jumps. Each cycle is its own timing, so
+ * the loop also restarts itself if React Native stops it: an Animated value stops its
+ * animation whenever its last attached view detaches, e.g. when an animated component
+ * re-renders with new props.
+ */
+export function useLoopClock(duration: number, useNativeDriver: boolean) {
+  const value = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    let active = true;
+    let frame: number | undefined;
+
+    const run = () => {
+      if (!active) return;
+      const start = (Date.now() % duration) / duration;
+      value.setValue(start);
+      Animated.timing(value, {
+        toValue: 1,
+        duration: duration * (1 - start),
+        easing: Easing.linear,
+        useNativeDriver,
+        isInteraction: false,
+      }).start(() => {
+        if (active) frame = requestAnimationFrame(run);
+      });
+    };
+    run();
+
+    return () => {
+      active = false;
+      if (frame !== undefined) cancelAnimationFrame(frame);
+      value.stopAnimation();
+    };
+  }, [value, duration, useNativeDriver]);
+
+  return value;
+}

@@ -68,7 +68,7 @@ export default function ViewSolution({
     <View style={styles.container}>
       <View>
         <MoveCounter moveCount={currentGameState.moveHistory.length} />
-        <GameBoard board={currentGameState.board} />
+        <GameBoard board={currentGameState.board} animated />
         <Inventory coins={currentGameState.coins} maxCoins={currentGameState.maxCoins} keys={currentGameState.keys} />
       </View>
 

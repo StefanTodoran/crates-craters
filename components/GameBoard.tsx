@@ -1,18 +1,21 @@
 import { memo, useContext, useMemo } from "react";
 import { Image, ImageStyle, Platform, StyleSheet, Text, TextStyle, View, ViewStyle, useWindowDimensions } from "react-native";
 import GlobalContext from "../GlobalContext";
-import { colors } from "../Theme";
+import { colors, graphics } from "../Theme";
 import { TileIcon } from "../assets/Icons";
 import { PositionSet } from "../util/Set";
 import { calcBoardTileSize, FlatBoard, getIconSrc, LayeredBoard } from "../util/board";
 import { findMovingMetalCrates, isPushable, Position } from "../util/logic";
 import { BombTile, FlatTile, LayeredTile, TileType, offsetToDirection } from "../util/types";
-import DiamondGlint from "./DiamondGlint";
+import FuseSpark from "./FuseSpark";
+import TileGlint from "./TileGlint";
+import { AnimatedFlagIcon, AnimatedKeyIcon, AnimatedMetalCrateIcon } from "./AnimatedTiles";
 
 interface Props {
   board: FlatBoard | LayeredBoard,
   playerPosition?: Position,  // If provided, this means the adjacent tiles will be displayed by the player component.
   overrideTileSize?: number,
+  animated?: boolean, // Animate tiles (flag, sheens, glints, fuse sparks): only the play and solution pages.
   children?: React.ReactNode,
 }
 
@@ -25,6 +28,7 @@ export default memo(function GameBoard({
   board,
   playerPosition,
   overrideTileSize,
+  animated,
   children,
 }: Props) {
   const { darkMode } = useContext(GlobalContext);
@@ -106,9 +110,18 @@ export default memo(function GameBoard({
       return <View key={j} style={styles.tile(bgColor, tileSize)} />;
     }
 
-    const tileGraphic = useSvg ?
+    // Bombs always use the SVG: their fuse is drawn to the remaining countdown.
+    const tileGraphic = useSvg || tile.id === TileType.BOMB ?
       <TileIcon key={j} bgColor={bgColor} tileSize={tileSize} tileData={tile} /> :
       <Image key={j} style={styles.tile(bgColor, tileSize, iconSrc.rotation)} source={iconSrc.icon} />;
+
+    if (animated) {
+      // Stagger sheens diagonally so a group of crates shimmers in a wave instead of in unison.
+      const phase = ((i + j) * 0.06) % 1;
+      if (tile.id === TileType.FLAG) return <AnimatedFlagIcon key={j} tileSize={tileSize} bgColor={bgColor} />;
+      if (tile.id === TileType.KEY) return <AnimatedKeyIcon key={j} tileSize={tileSize} bgColor={bgColor} phase={phase} />;
+      if (tile.id === TileType.METAL_CRATE) return <AnimatedMetalCrateIcon key={j} tileSize={tileSize} bgColor={bgColor} phase={phase} />;
+    }
 
     if (tile.id === TileType.BOMB) {
       const contents = <>
@@ -118,14 +131,25 @@ export default memo(function GameBoard({
             {(tile as BombTile).fuse}
           </Text>
         </View>
+        {animated && <FuseSpark tileSize={tileSize} fuse={(tile as BombTile).fuse} />}
       </>;
 
       return <View key={j} style={styles.relative}>{contents}</View>;
-    } else if (tile.id === TileType.DIAMOND) {
+    } else if (tile.id === TileType.DIAMOND && animated) {
       const contents = <>
         {tileGraphic}
         <View style={styles.entityContainer(tileSize)}>
-          <DiamondGlint tileSize={tileSize} />
+          <TileGlint tileSize={tileSize} />
+        </View>
+      </>;
+
+      return <View key={j} style={styles.relative}>{contents}</View>;
+    } else if (tile.id === TileType.COIN && animated) {
+      // Coins sit centered in the tile (no entityContainer padding like the diamond).
+      const contents = <>
+        {tileGraphic}
+        <View style={styles.overlay(tileSize)}>
+          <TileGlint tileSize={tileSize} glintCount={3} source={graphics.COIN_GLINT} sizeRange={COIN_GLINT_SIZE} inset={0.2} />
         </View>
       </>;
 
@@ -164,6 +188,9 @@ export default memo(function GameBoard({
     </View>
   );
 });
+
+// Coin glints: white and larger than the diamond's, kept over the coin's face.
+const COIN_GLINT_SIZE: [number, number] = [0.2, 0.32];
 
 function isEven(num: number) { return num % 2 === 0; }
 
@@ -229,6 +256,11 @@ const styles = {
     paddingRight: "5%",
     justifyContent: "center",
     alignItems: "center",
+  }),
+  overlay: (size: number): ViewStyle => ({
+    position: "absolute",
+    width: size,
+    height: size,
   }),
   bombText: (size: number): TextStyle => ({
     fontSize: size * 0.3,

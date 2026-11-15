@@ -5,4 +5,5 @@
 <path d="M62 62V38H38V62H62ZM56.2308 56.2308H43.7692V43.7692H56.2308V56.2308Z" fill-rule="evenodd" clip-rule="evenodd" fill="#F98585"/>
 <path d="M90 90V10H20H10V90H90ZM80 80H20V20H80V80Z" fill-rule="evenodd" clip-rule="evenodd" fill="#F98585"/>
 <path opacity="0.1" d="M10 71L90 43.5V90H10V71Z" fill="#2A0E0E"/>
+<path opacity="0.1" d="M90 35.8748L10 63.3748V44.7498L90 17.2498V35.8748Z" fill="#FFFCFC"/>
 </svg>

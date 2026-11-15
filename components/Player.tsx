@@ -170,7 +170,7 @@ function getAdjacentTile(game: Game, offset: Offset, tileSize: number, tileStyle
       ))}
     </>;
   } else if (tile && id === TileType.BOMB) {
-    other = <BombBoardTile tile={tile} icon={getIconSrc(tile)!.icon} tileSize={tileSize} />;
+    other = <BombBoardTile tile={tile} tileSize={tileSize} />;
   }
 
   return <>

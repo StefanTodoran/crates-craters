@@ -1,22 +1,19 @@
-import { Image, ImageSourcePropType, Platform, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 import { TileIcon } from "../assets/Icons";
 import { BombTile, FlatTile } from "../util/types";
+import FuseSpark from "./FuseSpark";
 
 interface Props {
   tile: FlatTile,
-  icon: ImageSourcePropType,
   tileSize: number,
   bgColor?: string,
 }
 
 export default function BombBoardTile({
-  tile, icon, tileSize, bgColor
+  tile, tileSize, bgColor
 }: Props) {
-  const useSvg = Platform.OS === "ios";
-
-  const tileGraphic = useSvg ?
-    <TileIcon bgColor={bgColor} tileSize={tileSize} tileData={tile} /> :
-    <Image style={{ width: tileSize, height: tileSize, backgroundColor: bgColor }} source={icon} />;
+  // Always the SVG: the fuse is drawn to the remaining countdown.
+  const tileGraphic = <TileIcon bgColor={bgColor} tileSize={tileSize} tileData={tile} />;
 
   return <>
     {tileGraphic}
@@ -25,6 +22,8 @@ export default function BombBoardTile({
         {(tile as BombTile).fuse}
       </Text>
     </View>
+    {/* Only the play page's player overlay draws this, so the spark always runs. */}
+    <FuseSpark tileSize={tileSize} fuse={(tile as BombTile).fuse} />
   </>;
 }
 

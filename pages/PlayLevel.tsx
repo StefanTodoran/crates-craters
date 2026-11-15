@@ -194,7 +194,7 @@ export default function PlayLevel({
           <View ref={boardRef} style={staticStyles.centerContents} onLayout={remeasure}>
             <View>
               {/* The board is memoized; everything that moves is drawn on this overlay. */}
-              <GameBoard board={game.board} overrideTileSize={tileSize} playerPosition={game.player} />
+              <GameBoard board={game.board} overrideTileSize={tileSize} playerPosition={game.player} animated />
               <View style={[staticStyles.overlay, { borderRadius: tileSize / 5 }]} pointerEvents="none">
                 <Player game={game} touch={touch} darkMode={darkMode} tileSize={tileSize} />
 
