@@ -14,7 +14,7 @@ import { ExplicitOrder, QueryFilter, attemptUserLevel, likeUserLevel, queryUserL
 import { hapticLike } from "../util/haptics";
 import { useDebounce } from "../util/hooks";
 import { getAppState, setEditorLevel } from "../util/store";
-import { getData, metadataKeys, parseCompressedBoardData } from "../util/loader";
+import { createLevel, generateUUID, getData, metadataKeys, parseCompressedBoardData } from "../util/loader";
 import { areSetsEqual } from "../util/Set";
 import { Level, PageView, SharedLevel, UserLevel } from "../util/types";
 import LevelSelect, { CardActions } from "./LevelSelect";
@@ -176,7 +176,7 @@ export default function UserLevels({
     setUserLevels,
     storeElementHeightCallback,
 }: Props) {
-    const { darkMode, userCredential } = useContext(GlobalContext);
+    const { darkMode, userCredential, userData } = useContext(GlobalContext);
 
     const uid = userCredential?.user.uid;
     const isOwnLevel = (uuid: string) =>
@@ -399,6 +399,38 @@ export default function UserLevels({
         return `${when}${plural(shared.attempts, "play")} · ${plural(shared.wins, "win")}`;
     }, []);
 
+    // Copy a shared level into your own (local, private) levels and open it in Manage.
+    // Needs an account, like creating a level does.
+    const copyLevel = (uuid: string) => {
+        const shared = userLevels.find(level => level.uuid === uuid);
+        if (!shared || !userData) return;
+
+        // Level names are unique per user (case-insensitive), so number a repeat name.
+        const taken = new Set(getAppState().levels.filter(level => !level.official).map(level => level.name.toLowerCase()));
+        let name = shared.name;
+        for (let n = 2; taken.has(name.toLowerCase()); n++) name = `${shared.name} ${n}`;
+
+        const copy: UserLevel = {
+            name,
+            uuid: generateUUID(),
+            board: shared.board.clone(),
+            completed: false,
+            official: false,
+            created: new Date().toISOString(),
+            user_name: userData.user_name,
+        };
+        createLevel(copy);
+        setEditorLevel(copy);
+        viewCallback(PageView.MANAGE, 1);
+        Toast.show({ type: "success", text1: "Level copied", text2: `"${name}" is now in your levels.` });
+    };
+
+    const copyButtonProps = {
+        text: () => userData ? "Copy" : undefined, // No button when signed out.
+        icon: graphics.COPY_ICON_PURPLE,
+        callback: copyLevel,
+    };
+
     const cardActions: CardActions = {
         isLiked,
         canLike,
@@ -480,6 +512,7 @@ export default function UserLevels({
                 resumeLevelCallback={playLevelCallback}
                 playLevelCallback={playLevel}
                 cardActions={cardActions}
+                secondButtonProps={copyButtonProps}
                 getStats={getStats}
                 getSubtitle={getSubtitle}
                 getFootnote={getFootnote}
