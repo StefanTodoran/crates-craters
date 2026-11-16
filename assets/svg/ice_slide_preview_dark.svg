@@ -1,8 +1,10 @@
-<!-- Ice block slide preview at full drag (Player.tsx renderIceBlockPreview), 100px tiles.
-     The block starts in the first tile, is dragged one tile right, and will slide to the
-     fourth: path line from the dragged block's center, arrow head, and a ghost where it lands. -->
-<svg width="400" height="100" viewBox="0 0 400 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-<rect x="310" y="10" width="80" height="80" fill="#FEFAFF" fill-opacity="0.5"/>
-<rect x="150" y="47.5" width="177" height="5" fill="#FEFAFF"/>
-<path d="M325 25L350 50L325 75Z" fill="#FEFAFF"/>
+<!-- Ice block slide preview at full drag (Player.tsx renderIceBlockPreview), scaled from
+     an iPhone 17 Pro board (45pt tiles) to 100px tiles. The 5pt line and its 2pt tuck
+     under the head are fixed sizes in app, so here they're 5/45 and 2/45 of a tile.
+     The block starts in the first tile, is dragged one tile right, and will slide to
+     the third: path line from the dragged block's center, arrow head, landing ghost. -->
+<svg width="300" height="100" viewBox="0 0 300 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect x="210" y="10" width="80" height="80" fill="#FEFAFF" fill-opacity="0.5"/>
+<rect x="150" y="44.44" width="79.44" height="11.11" fill="#FEFAFF"/>
+<path d="M225 25L250 50L225 75Z" fill="#FEFAFF"/>
 </svg>

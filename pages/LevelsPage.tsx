@@ -1,9 +1,11 @@
-import { useCallback, useMemo } from "react";
-import { ImageURISource } from "react-native";
+import { useCallback, useContext, useMemo } from "react";
+import { ImageURISource, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import OfficialIcon from "../assets/main_theme/official.png";
 import SharedIcon from "../assets/main_theme/shared.png";
 import { Difficulty, IndicatorIcon, StatChip, difficultyThemes } from "../components/LevelCard";
 import Subpages, { SubpageTab } from "../components/Subpages";
+import GlobalContext from "../GlobalContext";
+import { normalize } from "../TextStyles";
 import { colors, graphics, purpleTheme } from "../Theme";
 import { refreshLevelsFromServer } from "../util/database";
 import { Level, OfficialLevel, PageView, SharedLevel } from "../util/types";
@@ -57,7 +59,7 @@ export default function LevelsPage({
     const officialStats = useCallback((level: Level): StatChip[] => {
         const difficulty = difficulties.get(level.uuid) ?? "Easy";
         const stats: StatChip[] = [{ label: difficulty, theme: difficultyThemes[difficulty] }];
-        if ((level as OfficialLevel).isNew && !level.completed) stats.unshift({ label: "New", theme: colors.ORANGE_THEME });
+        if ((level as OfficialLevel).isNew && !level.completed) stats.unshift({ label: "New", theme: colors.GREEN_THEME });
         if (level.bestSolution) stats.push({
             label: `Best: ${level.bestSolution.length}`,
             icon: graphics.FLAG_ICON,
@@ -66,9 +68,12 @@ export default function LevelsPage({
         return stats;
     }, [difficulties]);
 
+    const completedCount = levels.filter(level => level.completed).length;
+
     const pageComponents = [
         <LevelSelect
             key={0}
+            headerComponent={levels.length > 0 ? <ProgressBar completed={completedCount} total={levels.length} /> : undefined}
             viewCallback={viewCallback}
             playLevelCallback={playLevelCallback}
             levels={levels}
@@ -135,3 +140,51 @@ export default function LevelsPage({
         />
     );
 }
+
+/** How many official levels have been beaten, above the official level list. */
+function ProgressBar({ completed, total }: { completed: number, total: number }) {
+    const { darkMode } = useContext(GlobalContext);
+    const win = useWindowDimensions();
+    const fraction = total > 0 ? completed / total : 0;
+    const textColor = darkMode ? purpleTheme.MAIN_COLOR : purpleTheme.TINT_COLOR;
+
+    return (
+        <View style={{ width: win.width }} accessible accessibilityLabel={`${completed} of ${total} levels completed`}>
+            <View style={styles.progress}>
+                <View style={styles.progressLabels}>
+                    <Text allowFontScaling={false} style={[styles.progressText, { color: textColor }]}>Progress</Text>
+                    <Text allowFontScaling={false} style={[styles.progressText, { color: textColor }]}>{completed} / {total}</Text>
+                </View>
+                <View style={[styles.track, { backgroundColor: darkMode ? purpleTheme.NEAR_BLACK : purpleTheme.LIGHT_COLOR, borderColor: purpleTheme.MAIN_COLOR }]}>
+                    <View style={[styles.fill, { width: `${fraction * 100}%` }]} />
+                </View>
+            </View>
+        </View>
+    );
+}
+
+const styles = StyleSheet.create({
+    progress: {
+        marginHorizontal: "5%",
+        marginBottom: normalize(10),
+        gap: normalize(6),
+    },
+    progressLabels: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+    },
+    progressText: {
+        fontFamily: "Montserrat-Medium",
+        fontSize: normalize(13),
+    },
+    track: {
+        height: normalize(10),
+        borderRadius: normalize(5),
+        borderWidth: 1,
+        overflow: "hidden",
+    },
+    fill: {
+        height: "100%",
+        backgroundColor: purpleTheme.MAIN_COLOR,
+    },
+});

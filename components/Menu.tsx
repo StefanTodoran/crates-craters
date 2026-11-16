@@ -1,5 +1,5 @@
-import { memo, useMemo, useRef } from "react";
-import { Animated, Dimensions, StyleSheet, View, useWindowDimensions } from "react-native";
+import { memo, useEffect, useMemo, useRef } from "react";
+import { Animated, Dimensions, ScrollView, StyleSheet, View, useWindowDimensions } from "react-native";
 import BombGraphic from "../assets/bomb.png";
 import CoinGraphic from "../assets/coin_stack.png";
 import CrateGraphic from "../assets/crates.png";
@@ -60,6 +60,7 @@ function createNodeOutputRange(activeIndex: number) {
 interface Props {
   notificationCounts: number[],
   openPage: (target: PageView) => void,
+  view: PageView, // The open page. The menu turns to its section, so going home lands there.
 }
 
 /**
@@ -67,9 +68,19 @@ interface Props {
  * follow the scroll position on the native thread. Memoized, since App re-renders on
  * every game move while this stays mounted underneath.
  */
-export default memo(function Menu({ notificationCounts, openPage }: Props) {
+export default memo(function Menu({ notificationCounts, openPage, view }: Props) {
   const win = useWindowDimensions();
   const scrollX = useRef(new Animated.Value(0)).current;
+  const scrollRef = useRef<ScrollView>(null);
+
+  // A page can navigate to another section's page (e.g. copying a shared level opens it
+  // in the editor's Manage page), so turn to whichever section is open. Pages without a
+  // menu entry (play, editor, solution) leave the menu where it was. It's hidden under
+  // the page panel at this point, so the jump isn't animated.
+  useEffect(() => {
+    const index = menuPages.findIndex(page => page.target === view);
+    if (index !== -1) scrollRef.current?.scrollTo({ x: index * win.width, animated: false });
+  }, [view, win.width]);
 
   const animated = useMemo(() => {
     // Scroll position in pages, clamped: iOS bounce overscroll pushes it past either
@@ -96,6 +107,7 @@ export default memo(function Menu({ notificationCounts, openPage }: Props) {
       <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: animated.background }]} />
 
       <Animated.ScrollView
+        ref={scrollRef}
         horizontal
         pagingEnabled
         showsHorizontalScrollIndicator={false}

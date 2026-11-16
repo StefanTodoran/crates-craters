@@ -285,7 +285,7 @@ export default function App() {
           <LevelCard onPlay={() => { }} levelIndex={0} level={officialLevels[0]} darkMode={darkMode} useTheme={purpleTheme} />
         </View>}
 
-        <Menu notificationCounts={notificationCounts} openPage={switchView} />
+        <Menu notificationCounts={notificationCounts} openPage={switchView} view={view} />
 
         <Animated.View
           style={panel}

@@ -70,7 +70,7 @@ const tutorials: { [key in Tutorial]: TutorialContentPage } = {
     title: "Metal Crates",
     titleColor: colors.RED_THEME.MAIN_COLOR,
     theme: colors.RED_THEME,
-    content: "Metal crates are pushable like crates, but bombs can't destroy them and they can't fill craters. They are magnetic: touching metal crates stick together and move as a group. Any crate in the group that is blocked stays behind, and if the crate you push is blocked, none of them move.",
+    content: "Metal crates are solid pushable tiles similar to crates, but they cannot be blown up by bombs and cannot fill in craters. They are magnetic: adjacent metal crates move together.",
     images: [graphics.EXPLOSION, graphics.METAL_CRATE],
   },
   [Tutorial.ICE_BLOCKS]: {

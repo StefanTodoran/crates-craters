@@ -83,3 +83,4 @@ tmp/
 
 # Local env overrides (e.g. the simulator stand-in account)
 .env*.local
+ios/build-device/
