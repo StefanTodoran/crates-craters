@@ -1,0 +1,8 @@
+<!-- Ice block slide preview at full drag (Player.tsx renderIceBlockPreview), 100px tiles.
+     The block starts in the first tile, is dragged one tile right, and will slide to the
+     fourth: path line from the dragged block's center, arrow head, and a ghost where it lands. -->
+<svg width="400" height="100" viewBox="0 0 400 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect x="310" y="10" width="80" height="80" fill="#6AA7FD" fill-opacity="0.5"/>
+<rect x="150" y="47.5" width="177" height="5" fill="#6AA7FD"/>
+<path d="M325 25L350 50L325 75Z" fill="#6AA7FD"/>
+</svg>

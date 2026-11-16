@@ -18,7 +18,7 @@ import { useFadeModal, useSoundEventPlayers } from "../util/hooks";
 import { getData, markLevelCompleted, metadataKeys } from "../util/loader";
 import { Game } from "../util/logic";
 import { PlayAction } from "../util/playSession";
-import { OfficialLevel, PageView, PlayMode, SharedLevel, Level } from "../util/types";
+import { OfficialLevel, PageView, PlayMode, SharedLevel, Level, UserLevel } from "../util/types";
 import { hapticForEvent, hapticWin } from "../util/haptics";
 import { useGameInput } from "../util/useGameInput";
 import WinScreen from "./WinScreen";
@@ -139,21 +139,26 @@ export default function PlayLevel({
         extraMargin={[7.5, 0]}
       />;
       break;
-    case PlayMode.PLAYTEST:
+    case PlayMode.PLAYTEST: {
+      // Shared levels can't be edited (make them private first), so go back to Manage.
+      const editable = !(level as UserLevel).shared;
+      const label = editable ? "Keep Editing" : "Manage";
+      const onPress = editable ? toEditor : modeToBackPage[PlayMode.PLAYTEST];
       returnMenuButton = <MenuButton
-        label={"Keep Editing"}
+        label={label}
         icon={graphics.HAMMER_ICON}
-        onPress={toEditor}
+        onPress={onPress}
         fillWidth
       />;
       postWinActionBtn = <SimpleButton
-        onPress={toEditor}
-        text="Keep Editing"
+        onPress={onPress}
+        text={label}
         icon={graphics.HAMMER_ICON_WHITE}
         main
         extraMargin={[7.5, 0]}
       />;
       break;
+    }
     case PlayMode.SHARED:
       returnMenuButton = <MenuButton
         label={"Level Search"}
@@ -194,7 +199,7 @@ export default function PlayLevel({
           <View ref={boardRef} style={staticStyles.centerContents} onLayout={remeasure}>
             <View>
               {/* The board is memoized; everything that moves is drawn on this overlay. */}
-              <GameBoard board={game.board} overrideTileSize={tileSize} playerPosition={game.player} animated />
+              <GameBoard board={game.board} overrideTileSize={tileSize} hidePushables animated />
               <View style={[staticStyles.overlay, { borderRadius: tileSize / 5 }]} pointerEvents="none">
                 <Player game={game} touch={touch} darkMode={darkMode} tileSize={tileSize} />
 

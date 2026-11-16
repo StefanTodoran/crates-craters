@@ -158,6 +158,23 @@ export function findMovingMetalCrates(board: LayeredBoard, start: Position, move
   return component.filter(p => willMove.has(p));
 }
 
+/** Tiles that can be pushed (and so can move when the player does). */
+export const movableTiles = [...pushableTiles, TileType.ICE_BLOCK];
+
+/**
+ * The tiles that move when the player moves in the given direction: the pushed tile, or
+ * the metal crates of a pushed group that actually move. Empty if nothing would move.
+ * The single source of truth for the drag preview, which moves exactly these tiles.
+ */
+export function findMovingTiles(game: Game, move: Direction): Position[] {
+  const offset = directionToOffset(move);
+  const position = { x: game.player.x + offset.dx, y: game.player.y + offset.dy };
+  const tile = game.board.getTile(position.y, position.x, true);
+  if (!movableTiles.includes(tile.id) || !isValidMove(game, offset)) return [];
+  if (tile.id === TileType.METAL_CRATE) return findMovingMetalCrates(game.board, position, move);
+  return [position];
+}
+
 /**
  * Returns the player spawn position in the given level.
  * @param {LayeredBoard} board The board[][] you wish to search. 
@@ -381,7 +398,9 @@ export function doGameMove(game: Game, move: Direction): [Game, boolean] {
         next.soundEvent = SoundEvent.FILL;
       } else {
         next.board.setTile(endPos.y, endPos.x, moveToLayer.foreground);
-        next.soundEvent = SoundEvent.ICE;
+        // The slide sound only if it actually slid; a one-tile push sounds like a crate.
+        const slid = endPos.x !== oneFurther.x || endPos.y !== oneFurther.y;
+        next.soundEvent = slid ? SoundEvent.ICE : SoundEvent.PUSH;
       }
 
       next.board.setTile(moveTo.y, moveTo.x, emptyTile); // Clear original ice block tile.
