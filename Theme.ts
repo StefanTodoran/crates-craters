@@ -20,6 +20,8 @@ const mainGraphics = {
   PLAYER_OUTLINED_DARK: require("./assets/main_theme/player_outlined_dark.png"),
   METAL_CRATE: require("./assets/main_theme/metal_crate.png"),
   ICE_BLOCK: require("./assets/main_theme/ice_block.png"),
+  ICE_SLIDE_PREVIEW: require("./assets/main_theme/ice_slide_preview_light.png"),
+  ICE_SLIDE_PREVIEW_DARK: require("./assets/main_theme/ice_slide_preview_dark.png"),
   DIAMOND: require("./assets/main_theme/diamond.png"),
   DIAMOND_GLINT: require("./assets/main_theme/diamond_glint.png"),
   COIN_GLINT: require("./assets/main_theme/coin_glint.png"),

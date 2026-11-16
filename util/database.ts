@@ -89,12 +89,17 @@ async function fetchOfficialLevelsFromServer() {
 
   rawLevels.forEach(rawLevel => {
     const existingLevel: OfficialLevel | undefined = getData(rawLevel.uuid);
+    const board = parseCompressedBoardData(rawLevel.board);
+    // A redesigned level keeps its completion (so later levels stay unlocked), but the
+    // best solution was for the old board and wouldn't replay. Stored levels hold the
+    // board as its serialized form, so compare that.
+    const boardChanged = !!existingLevel && JSON.stringify(existingLevel.board) !== JSON.stringify(board);
     const updatedLevel: OfficialLevel = {
       uuid: rawLevel.uuid,
       name: rawLevel.name,
-      board: parseCompressedBoardData(rawLevel.board),
+      board,
       completed: !!existingLevel?.completed,
-      bestSolution: existingLevel?.bestSolution,
+      bestSolution: boardChanged ? undefined : existingLevel?.bestSolution,
       official: true,
       order: rawLevel.order,
       introduces: rawLevel.introduces,

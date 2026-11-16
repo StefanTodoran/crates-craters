@@ -185,6 +185,7 @@ const styles = StyleSheet.create({
     },
     fill: {
         height: "100%",
+        borderRadius: normalize(5),
         backgroundColor: purpleTheme.MAIN_COLOR,
     },
 });
