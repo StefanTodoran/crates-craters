@@ -106,6 +106,8 @@ export default function ManageLevel({
   const theme = colors.RED_THEME;
   const canShare = !!userCredential && userCredential.user.emailVerified && level.completed;
   const titleChanged = !!levelTitle.trim() && levelTitle.trim() !== level.name;
+  // A shared level's board is what players have been rating; make it private to edit it.
+  const editable = !level.shared;
 
   return (
     <SubpageContainer lessTopPad>
@@ -116,9 +118,9 @@ export default function ManageLevel({
         </View>
 
         <ResponsivePressable
-          onPress={() => viewCallback(PageView.EDITOR)}
+          onPress={editable ? () => viewCallback(PageView.EDITOR) : undefined}
           customStyle={styles.preview}
-          pressedSize={0.99}
+          pressedSize={editable ? 0.99 : 1}
         >
           <BoardPreview level={level} previewSize={3} previewWidth={previewWidth} />
         </ResponsivePressable>
@@ -134,6 +136,7 @@ export default function ManageLevel({
               onPress={() => viewCallback(PageView.EDITOR)}
               text="Edit Board"
               icon={graphics.HAMMER_ICON_WHITE}
+              disabled={!editable}
               theme={theme}
               fillWidth
               centered
@@ -190,7 +193,7 @@ export default function ManageLevel({
               title="Make Private"
               action
               icon={graphics.OPTIONS_ICON}
-              subtitle={`Shared since ${formatDate(level.shared)}.`}
+              subtitle={`Shared since ${formatDate(level.shared)}. Make private to edit the board.`}
               onPress={() => confirmThen("Making this level private permanently removes all of its likes and attempts.", unshareLevel)}
               disabled={!userCredential}
               last

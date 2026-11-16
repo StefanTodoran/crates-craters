@@ -32,6 +32,11 @@ async function main() {
         process.exit(1);
     }
 
+    // Clients only refetch official levels when this timestamp changes.
+    await admin.firestore().collection("metadata").doc("metadata").update({
+        officialLevelsUpdated: admin.firestore.Timestamp.now(),
+    });
+
     log(`Successfully pushed ${parsedLevels.length} levels to server.`);
     // @ts-ignore
     process.exit(0);

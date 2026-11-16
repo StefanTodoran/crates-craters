@@ -84,18 +84,21 @@ export async function refreshLevelsFromServer(): Promise<boolean> {
 async function fetchOfficialLevelsFromServer() {
   const rawLevels = await getAllEntries<OfficialLevelDocument>("officialLevels");
   const parsedLevels: OfficialLevel[] = [];
+  // On a fresh install every level arrives at once, so none of them is "new".
+  const hadLevels = getStoredLevelCount() > 0;
 
   rawLevels.forEach(rawLevel => {
-    const existingLevel: OfficialLevel = getData(rawLevel.uuid);
+    const existingLevel: OfficialLevel | undefined = getData(rawLevel.uuid);
     const updatedLevel: OfficialLevel = {
       uuid: rawLevel.uuid,
       name: rawLevel.name,
       board: parseCompressedBoardData(rawLevel.board),
-      completed: existingLevel?.completed,
+      completed: !!existingLevel?.completed,
       bestSolution: existingLevel?.bestSolution,
       official: true,
       order: rawLevel.order,
       introduces: rawLevel.introduces,
+      isNew: existingLevel ? existingLevel.isNew : hadLevels,
     };
 
     parsedLevels.push(updatedLevel);

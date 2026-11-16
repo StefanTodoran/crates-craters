@@ -114,7 +114,7 @@ export default function EditLevel({
     setUnmodifiedLevel(level);
   }, [level, unsavedChanges]);
 
-  // Leaving the editor (Exit or Playtest) asks to save or discard unsaved changes.
+  // Leaving the editor (Manage or Playtest) asks to save or discard unsaved changes.
   const confirmLeave = (message: string, leave: () => void) => {
     if (!unsavedChanges) return leave();
     Alert.alert("Unsaved changes", message, [
@@ -344,12 +344,12 @@ export default function EditLevel({
     <View style={styles.container} onLayout={onAreaLayout}>
       {!!area && <>
         <View style={[styles.toolbar, { width: contentWidth }]}>
-          <SimpleButton onPress={exit} text="Exit" icon={graphics.DOOR_ICON_PURPLE} height={TOOLBAR_HEIGHT} />
+          <SimpleButton onPress={exit} text="Manage" icon={graphics.HAMMER_ICON} height={TOOLBAR_HEIGHT} />
           <View style={styles.toolbarGroup}>
             <ToolbarButton Svg={BackButton} label="Undo" onPress={undo} disabled={historySizes.undo === 0} />
             <ToolbarButton Svg={BackButton} flipped label="Redo" onPress={redo} disabled={historySizes.redo === 0} />
             <ToolbarButton icon={graphics.SAVE_ICON_PURPLE} label="Save" onPress={saveChanges} disabled={!unsavedChanges} badge={unsavedChanges} />
-            <ToolbarButton icon={graphics.PLAY_ICON} label="Playtest" text="Test" onPress={playtest} main />
+            <ToolbarButton icon={graphics.PLAY_ICON} label="Playtest" text="Playtest" onPress={playtest} main />
           </View>
         </View>
 

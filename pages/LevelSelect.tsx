@@ -18,13 +18,11 @@ interface SecondButtonProps {
   disabled?: boolean | ((uuid: string, index: number) => boolean),
 }
 
-/** Like or Manage on a card's board preview (shared levels). */
+/** The like button on a card's board preview (shared levels). */
 export interface CardActions {
   isLiked?: (uuid: string) => boolean,
   canLike?: (uuid: string) => boolean,
   onLike?: (uuid: string) => void,
-  canManage?: (uuid: string) => boolean | undefined, // undefined: not your level, so no Manage button.
-  onManage?: (uuid: string) => void,
 }
 
 interface Props {
@@ -92,17 +90,9 @@ export default function LevelSelect({
   const [refreshing, setRefreshing] = useState(false);
   const useTheme = theme || purpleTheme;
 
-  const lastBeatenLevel = useMemo(() => {
-    let lastBeaten = -1;
-    for (let i = 0; i < levels.length; i++) {
-      if (levels[i].completed) {
-        lastBeaten = i;
-      } else {
-        break;
-      }
-    }
-    return lastBeaten;
-  }, [levels]);
+  // The furthest beaten level, not the end of the first beaten run: a level added
+  // earlier in the order mustn't re-lock everything the player already unlocked.
+  const lastBeatenLevel = useMemo(() => levels.findLastIndex(level => level.completed), [levels]);
 
   const scrollRef = useRef<FlatList<Level>>(null);
   useScrollToTop(() => scrollRef.current?.scrollToOffset({ offset: 0, animated: true }));
@@ -165,11 +155,6 @@ export default function LevelSelect({
   const likeLevel = useCallback((levelIndex: number) => {
     const { levels, cardActions } = latest.current;
     cardActions?.onLike?.(levels[levelIndex].uuid);
-  }, []);
-
-  const manageLevel = useCallback((levelIndex: number) => {
-    const { levels, cardActions } = latest.current;
-    cardActions?.onManage?.(levels[levelIndex].uuid);
   }, []);
 
   // getItemLayout offsets must include everything above the first card.
@@ -248,7 +233,6 @@ export default function LevelSelect({
           renderItem={({ item, index }) => {
             const evaluate = <T,>(value: T | ((uuid: string, index: number) => T) | undefined) =>
               typeof value === "function" ? (value as (uuid: string, index: number) => T)(item.uuid, index) : value;
-            const canManage = cardActions?.canManage?.(item.uuid);
 
             return <LevelCard
               onPlay={openLevel}
@@ -271,8 +255,6 @@ export default function LevelSelect({
               liked={cardActions?.isLiked?.(item.uuid)}
               canLike={cardActions?.canLike?.(item.uuid)}
               onLike={cardActions?.onLike ? likeLevel : undefined}
-              onManage={canManage !== undefined && cardActions?.onManage ? manageLevel : undefined}
-              manageDisabled={canManage === false}
             />;
           }}
           keyExtractor={item => item.uuid}

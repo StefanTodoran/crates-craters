@@ -425,19 +425,19 @@ export default function UserLevels({
         Toast.show({ type: "success", text1: "Level copied", text2: `"${name}" is now in your levels.` });
     };
 
-    const copyButtonProps = {
-        text: () => userData ? "Copy" : undefined, // No button when signed out.
-        icon: graphics.COPY_ICON_PURPLE,
-        callback: copyLevel,
+    // Copy someone else's level; your own levels go to their Manage page instead
+    // (unavailable if shared from another device, with no local copy).
+    const secondButtonProps = {
+        text: (uuid: string) => isOwnLevel(uuid) ? "Manage" : userData ? "Copy" : undefined, // No Copy when signed out.
+        icon: (uuid: string) => isOwnLevel(uuid) ? graphics.HAMMER_ICON : graphics.COPY_ICON_PURPLE,
+        disabled: (uuid: string) => isOwnLevel(uuid) && !findLocalLevel(uuid),
+        callback: (uuid: string) => isOwnLevel(uuid) ? manageLevel(uuid) : copyLevel(uuid),
     };
 
     const cardActions: CardActions = {
         isLiked,
         canLike,
         onLike: likeLevel,
-        // Manage your own levels; unavailable if shared from another device (no local copy).
-        canManage: (uuid: string) => isOwnLevel(uuid) ? !!findLocalLevel(uuid) : undefined,
-        onManage: manageLevel,
     };
 
     // What the list shows: the active filters, and how many levels match.
@@ -512,7 +512,7 @@ export default function UserLevels({
                 resumeLevelCallback={playLevelCallback}
                 playLevelCallback={playLevel}
                 cardActions={cardActions}
-                secondButtonProps={copyButtonProps}
+                secondButtonProps={secondButtonProps}
                 getStats={getStats}
                 getSubtitle={getSubtitle}
                 getFootnote={getFootnote}

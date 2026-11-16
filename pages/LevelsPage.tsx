@@ -4,9 +4,9 @@ import OfficialIcon from "../assets/main_theme/official.png";
 import SharedIcon from "../assets/main_theme/shared.png";
 import { Difficulty, IndicatorIcon, StatChip, difficultyThemes } from "../components/LevelCard";
 import Subpages, { SubpageTab } from "../components/Subpages";
-import { graphics, purpleTheme } from "../Theme";
+import { colors, graphics, purpleTheme } from "../Theme";
 import { refreshLevelsFromServer } from "../util/database";
-import { Level, PageView, SharedLevel } from "../util/types";
+import { Level, OfficialLevel, PageView, SharedLevel } from "../util/types";
 import { showSolution } from "../util/store";
 import LevelSelect from "./LevelSelect";
 import UserLevels from "./UserLevels";
@@ -57,6 +57,7 @@ export default function LevelsPage({
     const officialStats = useCallback((level: Level): StatChip[] => {
         const difficulty = difficulties.get(level.uuid) ?? "Easy";
         const stats: StatChip[] = [{ label: difficulty, theme: difficultyThemes[difficulty] }];
+        if ((level as OfficialLevel).isNew && !level.completed) stats.unshift({ label: "New", theme: colors.ORANGE_THEME });
         if (level.bestSolution) stats.push({
             label: `Best: ${level.bestSolution.length}`,
             icon: graphics.FLAG_ICON,

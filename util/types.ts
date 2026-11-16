@@ -158,6 +158,7 @@ export interface OfficialLevel extends LevelBase {
   official: true,
   order: number,
   introduces?: Tutorial[],
+  isNew?: boolean, // Added by a server update after this install had levels; shows a "New" badge until beaten.
 }
 
 type DateString = string; // In the form Date().toISOString();
@@ -213,6 +214,7 @@ const levelObjectProps: { [key in LevelObjectType]: levelObjectPropSet } = {
     },
     optional: {
       "introduces": "array",
+      "isNew": "boolean",
     },
   },
   [LevelObjectType.USER]: {

@@ -58,9 +58,6 @@ interface LevelCardProps {
   liked?: boolean,
   canLike?: boolean, // False e.g. when signed out, or for your own level.
   onLike?: (index: number) => void,
-  // Your own level: a Manage button in that corner instead of the heart.
-  onManage?: (index: number) => void,
-  manageDisabled?: boolean,
   subtitle?: string, // Replaces the line under the name.
   footnote?: string, // A line of small print under the pills (e.g. plays and wins).
 }
@@ -91,8 +88,6 @@ const LevelCard = memo(function ({
   liked,
   canLike,
   onLike,
-  onManage,
-  manageDisabled,
   subtitle,
   footnote,
 }: LevelCardProps) {
@@ -202,15 +197,7 @@ const LevelCard = memo(function ({
           }]}
         />}
 
-        {onManage ?
-          <CornerButton
-            icon={graphics.HAMMER_ICON}
-            label="Manage"
-            onPress={() => onManage(levelIndex)}
-            disabled={manageDisabled}
-            darkMode={darkMode}
-          /> :
-          !!onLike && <LikeButton liked={!!liked} canLike={!!canLike} onPress={like} pop={heartPop} darkMode={darkMode} />}
+        {!!onLike && <LikeButton liked={!!liked} canLike={!!canLike} onPress={like} pop={heartPop} darkMode={darkMode} />}
       </View>
 
       <View style={styles.info}>
