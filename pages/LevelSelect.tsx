@@ -1,19 +1,28 @@
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
-import { FlatList, ImageSourcePropType, StyleSheet, Text, View } from "react-native";
+import { useAppStore } from "../util/store";
+import { useScrollToTop } from "../components/Subpages";
+import { FlatList, ImageSourcePropType, StyleSheet, Text, View, useWindowDimensions } from "react-native";
+import { TAB_BAR_CLEARANCE } from "../components/Subpages";
 import Toast from "react-native-toast-message";
 import EmptyList, { EmptyListProps } from "../components/EmptyList";
-import LevelCard, { IndicatorIcon } from "../components/LevelCard";
-import SimpleButton from "../components/SimpleButton";
+import LevelCard, { FOOTNOTE_HEIGHT, IndicatorIcon, StatChip } from "../components/LevelCard";
 import GlobalContext from "../GlobalContext";
 import TextStyles, { normalize } from "../TextStyles";
 import { Theme, purpleTheme } from "../Theme";
 import { Level, PageView } from "../util/types";
 
 interface SecondButtonProps {
-  text?: string | ((uuid: string, index: number) => string),
-  icon?: ImageSourcePropType,
+  text?: string | ((uuid: string, index: number) => string | undefined), // No text hides the button.
+  icon?: ImageSourcePropType | ((uuid: string, index: number) => ImageSourcePropType),
   callback?: (uuid: string, index: number) => void, // Triggers an effect on the current level.
   disabled?: boolean | ((uuid: string, index: number) => boolean),
+}
+
+/** The like button on a card's board preview (shared levels). */
+export interface CardActions {
+  isLiked?: (uuid: string) => boolean,
+  canLike?: (uuid: string) => boolean,
+  onLike?: (uuid: string) => void,
 }
 
 interface Props {
@@ -22,13 +31,16 @@ interface Props {
   resumeLevelCallback?: () => void,
 
   secondButtonProps?: SecondButtonProps,
+  cardActions?: CardActions,
   headerComponent?: React.ReactElement,
   footerText?: string,
 
   theme?: Theme,
   levels: Level[],
   noNumber?: boolean,
-  getStats?: (targetLevel: Level) => string[] | undefined,
+  getStats?: (targetLevel: Level) => StatChip[] | undefined,
+  getSubtitle?: (targetLevel: Level) => string | undefined, // Replaces the line under a card's name.
+  getFootnote?: (targetLevel: Level) => string | undefined, // Small print under a card's pills.
 
   scrollTo?: string, // The index in levels of the level currently being played (if a level is being played). 
   allowResume?: boolean,
@@ -52,12 +64,15 @@ export default function LevelSelect({
   playLevelCallback,
   resumeLevelCallback,
   secondButtonProps,
+  cardActions,
   headerComponent,
   footerText,
   theme,
   levels,
   noNumber,
   getStats,
+  getSubtitle,
+  getFootnote,
   scrollTo,
   allowResume,
   isOfficial,
@@ -70,22 +85,17 @@ export default function LevelSelect({
   storeElementHeightCallback,
 }: Props) {
   const { darkMode } = useContext(GlobalContext);
+  const win = useWindowDimensions();
+  const pageAnimating = useAppStore(state => state.pageAnimating);
   const [refreshing, setRefreshing] = useState(false);
   const useTheme = theme || purpleTheme;
 
-  const lastBeatenLevel = useMemo(() => {
-    let lastBeaten = -1;
-    for (let i = 0; i < levels.length; i++) {
-      if (levels[i].completed) {
-        lastBeaten = i;
-      } else {
-        break;
-      }
-    }
-    return lastBeaten;
-  }, [levels]);
+  // The furthest beaten level, not the end of the first beaten run: a level added
+  // earlier in the order mustn't re-lock everything the player already unlocked.
+  const lastBeatenLevel = useMemo(() => levels.findLastIndex(level => level.completed), [levels]);
 
   const scrollRef = useRef<FlatList<Level>>(null);
+  useScrollToTop(() => scrollRef.current?.scrollToOffset({ offset: 0, animated: true }));
   let scrollIndex = levels.findIndex(level => level.uuid === scrollTo);
   if (scrollIndex === -1) scrollIndex = lastBeatenLevel;  // If a level is not currently in progress/resumable, scroll to the last beaten level.
   scrollIndex = Math.max(0, scrollIndex);
@@ -96,12 +106,13 @@ export default function LevelSelect({
 
   useEffect(() => {
     if (levels.length === 0) return;
-    if (scrollTo === "last") scrollRef.current?.scrollToIndex({ index: displayLevels.length - 1, animated: true });
+    // "latest": the latest unlocked level, the one after the last beaten.
+    if (scrollTo === "latest") scrollRef.current?.scrollToIndex({ index: Math.min(lastBeatenLevel + 1, displayLevels.length - 1), animated: true });
   }, [scrollTo, loadedLevels]);
 
   const doRefresh = useCallback(() => {
+    if (!onRefresh) return;
     setRefreshing(true);
-    // @ts-expect-error We won't call doRefresh if onRefresh isn't defined.
     onRefresh().then((success) => {
       setRefreshing(false);
       if (success) {
@@ -118,21 +129,45 @@ export default function LevelSelect({
         });
       }
     });
-  }, []);
+  }, [onRefresh]); // onRefresh closes over the caller's current filters, so it must stay fresh.
+
+  // Card callbacks are stable (they take the card's index and read current props
+  // through this ref), so memoized cards don't re-render when the parent does.
+  const latest = useRef({ levels, playLevelCallback, resumeLevelCallback, viewCallback, secondButtonProps, cardActions });
+  latest.current = { levels, playLevelCallback, resumeLevelCallback, viewCallback, secondButtonProps, cardActions };
 
   const openLevel = useCallback((levelIndex: number) => {
+    const { levels, playLevelCallback, viewCallback } = latest.current;
     playLevelCallback(levels[levelIndex].uuid, levelIndex);
     viewCallback(PageView.PLAY);
-  }, [levels]);
+  }, []);
 
   const resumeLevel = useCallback(() => {
-    resumeLevelCallback && resumeLevelCallback();
-    viewCallback(PageView.PLAY);
+    latest.current.resumeLevelCallback?.();
+    latest.current.viewCallback(PageView.PLAY);
   }, []);
 
   const secondButtonOnPress = useCallback((levelIndex: number) => {
-    secondButtonProps!.callback!(levels[levelIndex].uuid, levelIndex);
-  }, [levels]);
+    const { levels, secondButtonProps } = latest.current;
+    secondButtonProps?.callback?.(levels[levelIndex].uuid, levelIndex);
+  }, []);
+
+  const likeLevel = useCallback((levelIndex: number) => {
+    const { levels, cardActions } = latest.current;
+    cardActions?.onLike?.(levels[levelIndex].uuid);
+  }, []);
+
+  // getItemLayout offsets must include everything above the first card.
+  const [headerHeight, setHeaderHeight] = useState(0);
+  const listTopPadding = win.width * 0.05; // paddingVertical "5%" resolves against the list's width.
+
+  // Cards with a footnote are a fixed amount taller (elementHeight is measured without one).
+  const footnotes = useMemo(() => levels.map(level => getFootnote?.(level)), [levels, getFootnote]);
+  const cardOffsets = useMemo(() => {
+    const offsets = [0];
+    footnotes.forEach(footnote => offsets.push(offsets[offsets.length - 1] + elementHeight + (footnote ? FOOTNOTE_HEIGHT : 0)));
+    return offsets;
+  }, [footnotes, elementHeight]);
 
   return (
     <>
@@ -145,7 +180,7 @@ export default function LevelSelect({
         style={{ opacity: 0 }}
       >
         <LevelCard
-          playCallback={() => { }}
+          onPlay={() => { }}
           levelIndex={0}
           level={levels[0]}
           darkMode={darkMode}
@@ -173,11 +208,16 @@ export default function LevelSelect({
 
           data={displayLevels}
           initialNumToRender={cardsPerScreen}
+          // While the page panel slides in, render only the visible cards. FlatList
+          // otherwise mounts its next batch of off-screen cards (each board preview is
+          // many views) a few frames in, which stalls the UI thread mid-slide.
+          windowSize={pageAnimating ? 1 : undefined}
           onEndReached={() => {
             setLoadedLevels(Math.min(levels.length, loadedLevels + 10));
             onEndReached && onEndReached();
           }}
-          ListHeaderComponent={headerComponent}
+          ListHeaderComponent={headerComponent &&
+            <View onLayout={(event) => setHeaderHeight(event.nativeEvent.layout.height)}>{headerComponent}</View>}
           ListEmptyComponent={<EmptyList
             {...emptyListProps}
             onPress={emptyListProps.onPress || doRefresh}
@@ -191,38 +231,35 @@ export default function LevelSelect({
           onRefresh={onRefresh ? doRefresh : undefined}
 
           renderItem={({ item, index }) => {
-            const playCallback = () => openLevel(index);
-            const sbCallback = () => secondButtonOnPress(index);
-
-            const isLocked = isOfficial && index > lastBeatenLevel + 1;
-
-            let showResumeOption = item.uuid === scrollTo;
-            if (!allowResume) showResumeOption = false;
+            const evaluate = <T,>(value: T | ((uuid: string, index: number) => T) | undefined) =>
+              typeof value === "function" ? (value as (uuid: string, index: number) => T)(item.uuid, index) : value;
 
             return <LevelCard
-              playCallback={showResumeOption ? undefined : playCallback}
-              resumeCallback={showResumeOption ? resumeLevel : undefined}
-              stats={getStats && getStats(item)}
+              onPlay={openLevel}
+              onResume={resumeLevel}
+              showResume={allowResume && item.uuid === scrollTo}
+              stats={getStats?.(item)}
+              subtitle={getSubtitle?.(item)}
+              footnote={footnotes[index]}
               levelIndex={index}
-              level={displayLevels[index]}
+              level={item}
               darkMode={darkMode}
               useTheme={useTheme}
               noNumber={noNumber}
               indicatorIcon={indicatorIcon}
-              isLocked={isLocked}
-            >
-              {secondButtonProps && <SimpleButton
-                text={typeof secondButtonProps.text === "function" ? secondButtonProps.text(item.uuid, index) : secondButtonProps.text}
-                disabled={typeof secondButtonProps.disabled === "function" ? secondButtonProps.disabled(item.uuid, index) : secondButtonProps.disabled}
-                icon={secondButtonProps.icon}
-                onPress={sbCallback}
-                theme={useTheme}
-              />}
-            </LevelCard>
+              isLocked={isOfficial && index > lastBeatenLevel + 1}
+              secondButtonText={evaluate(secondButtonProps?.text)}
+              secondButtonIcon={evaluate(secondButtonProps?.icon)}
+              secondButtonDisabled={evaluate(secondButtonProps?.disabled)}
+              onSecondButton={secondButtonProps ? secondButtonOnPress : undefined}
+              liked={cardActions?.isLiked?.(item.uuid)}
+              canLike={cardActions?.canLike?.(item.uuid)}
+              onLike={cardActions?.onLike ? likeLevel : undefined}
+            />;
           }}
           keyExtractor={item => item.uuid}
           getItemLayout={(_data, index) => (
-            { length: elementHeight, offset: elementHeight * index, index }
+            { length: cardOffsets[index + 1] - cardOffsets[index], offset: listTopPadding + headerHeight + cardOffsets[index], index }
           )}
           onLayout={() => {
             if (scrollIndex) scrollRef.current?.scrollToIndex({ index: scrollIndex, animated: false });
@@ -237,6 +274,7 @@ export default function LevelSelect({
 const styles = StyleSheet.create({
   container: {
     paddingVertical: "5%",
+    paddingBottom: TAB_BAR_CLEARANCE,
     alignItems: "center",
   },
   loadingText: {

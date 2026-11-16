@@ -78,7 +78,7 @@ export default function IconButton({
   );
 }
 
-const styles = StyleSheet.create<any>({
+const styles = StyleSheet.create({
   body: {
     marginTop: normalize(15),
     marginBottom: normalize(7.5),

@@ -1,5 +1,6 @@
 import { useContext } from "react";
 import { StyleSheet, Text } from "react-native";
+import { GlassView, glassAvailable } from "../modules/glass-view";
 import GlobalContext from "../GlobalContext";
 import { normalize } from "../TextStyles";
 import { Theme, purpleTheme } from "../Theme";
@@ -27,6 +28,30 @@ export default function FilterChip({
     const buttonColor = darkMode ? useTheme.DARK_COLOR : useTheme.MAIN_COLOR;
     const borderColor = darkMode ? useTheme.MAIN_COLOR : useTheme.DARK_COLOR;
     const bgColor = darkMode ? useTheme.NEAR_BLACK : useTheme.OFF_WHITE;
+
+    // iOS 26+: a Liquid Glass pill, tinted with the theme color when active.
+    if (glassAvailable) return (
+        <ResponsivePressable
+            onPress={onPress}
+            disabled={disabled}
+            accessibilityState={{ selected: active }}
+            customStyle={[
+                styles.container,
+                styles.glass,
+                { marginVertical: verticalMargin ? normalize(6) : 0 },
+            ]}
+        >
+            <GlassView style={StyleSheet.absoluteFill} tint={active ? useTheme.DARK_COLOR : undefined} />
+            <Text
+                allowFontScaling={false}
+                style={[
+                    styles.text,
+                    { color: active ? "#fff" : (darkMode ? useTheme.MAIN_COLOR : useTheme.TINT_COLOR) },
+                ]}>
+                {text}
+            </Text>
+        </ResponsivePressable>
+    );
 
     return (
         <ResponsivePressable
@@ -64,6 +89,11 @@ const styles = StyleSheet.create({
         paddingHorizontal: normalize(8),
         borderRadius: 24,
         borderWidth: 1,
+    },
+    glass: {
+        borderWidth: 0,
+        paddingVertical: normalize(9),
+        paddingHorizontal: normalize(14),
     },
     text: {
         fontFamily: "Montserrat-Regular",

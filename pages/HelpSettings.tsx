@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import AboutIcon from "../assets/main_theme/about.png";
 import GuideIcon from "../assets/main_theme/help.png";
 import SettingsIcon from "../assets/main_theme/settings.png";
-import Subpages from "../components/Subpages";
+import Subpages, { SubpageTab } from "../components/Subpages";
 import { colors } from "../Theme";
 import About from "./About";
 import HowToPlay from "./HowToPlay";
@@ -11,15 +11,19 @@ import Settings from "./Settings";
 interface Props {
   darkModeCallback: () => void,
   audioModeCallback: () => void,
+  hapticsCallback: () => void,
   setSensitivityCallback: (sensitivity: number) => void,
   setTapDelayCallback: (delay: number) => void,
+  resetSettingsCallback: () => void,
 }
 
 export default function AccountSettings({
   darkModeCallback,
   audioModeCallback,
+  hapticsCallback,
   setSensitivityCallback,
   setTapDelayCallback,
+  resetSettingsCallback,
 }: Props) {
   const pageComponents = useMemo(() => {
     return [
@@ -27,29 +31,34 @@ export default function AccountSettings({
       <Settings
         darkModeCallback={darkModeCallback}
         audioModeCallback={audioModeCallback}
+        hapticsCallback={hapticsCallback}
         setSensitivityCallback={setSensitivityCallback}
         setTapDelayCallback={setTapDelayCallback}
+        resetSettingsCallback={resetSettingsCallback}
       />,
       <About />,
     ];
   }, []);
 
-  const pageTabs = useMemo(() => {
+  const pageTabs = useMemo((): SubpageTab[] => {
     return [
       {
         label: "Guide",
         color: colors.GREEN_THEME.MAIN_COLOR,
         icon: GuideIcon,
+        sfSymbol: "book.fill",
       },
       {
         label: "Settings",
         color: colors.GREEN_THEME.MAIN_COLOR,
         icon: SettingsIcon,
+        sfSymbol: "gearshape.fill",
       },
       {
         label: "About",
         color: colors.GREEN_THEME.MAIN_COLOR,
         icon: AboutIcon,
+        sfSymbol: "info.circle.fill",
       },
     ];
   }, []);

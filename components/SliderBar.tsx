@@ -1,41 +1,21 @@
-import { useContext, useEffect, useRef, useState } from "react";
-import { Animated, Dimensions, GestureResponderEvent, PanResponder, PanResponderGestureState, StyleSheet, Text, View } from "react-native";
+import Slider from "@react-native-community/slider";
+import { useContext, useEffect, useState } from "react";
+import { Platform, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import GlobalContext from "../GlobalContext";
 import { normalize } from "../TextStyles";
-import { purpleTheme, Theme } from "../Theme";
+import { purpleTheme } from "../Theme";
+import CustomSliderBar, { SliderBarProps } from "./CustomSliderBar";
 import StepperArrow from "./StepperArrow";
 
-const win = Dimensions.get("window");
-const barWidth = win.width / 2;
-const leftGutterWidth = (win.width - barWidth) / 2;
-
-
-interface Props {
-  label: string,
-  units: string,
-  value: number,
-  minValue: number,
-  maxValue: number,
-  changeCallback: (newValue: number) => void,
-  stepSize?: number,
-  showSteppers?: boolean,
-  stepperWrapAround?: boolean,
-  theme?: Theme,
+/**
+ * A labelled slider: the native UISlider on iOS, the app's custom slider on Android.
+ * Props are documented on CustomSliderBar.
+ */
+export default function SliderBar(props: SliderBarProps) {
+  return Platform.OS === "ios" ? <NativeSliderBar {...props} /> : <CustomSliderBar {...props} />;
 }
 
-/** 
- * REQUIRED:
- * @param {string} label The label to above the slider bar.
- * @param {string} units A string to be displayed by the value (e.g. "%", "px", or "" if none desired)
- * @param {number} value The current value of the slider.
- * @param {number} minValue
- * @param {number} maxValue
- * @param {Function} changeCallback The callback to use when the value inside is changed.
- * @param {number} stepSize The increment to snap values to. Defaults to 1.
- * @param {boolean} showSteppers
- * @param {boolean} stepperWrapAround Whether to wrap around the min and max values when the steppers are pressed.
- */
-export default function SliderBar({
+function NativeSliderBar({
   label,
   units,
   value,
@@ -45,53 +25,22 @@ export default function SliderBar({
   showSteppers,
   stepperWrapAround,
   theme,
-}: Props) {
+  width,
+  labelColor,
+}: SliderBarProps) {
   const { darkMode } = useContext(GlobalContext);
-  const [pressed, setPressed] = useState(false);
+  const win = useWindowDimensions();
+  const barWidth = width ?? win.width / 2;
   const useTheme = theme || purpleTheme;
-
   const mainColor = useTheme.MAIN_COLOR;
-  const knobColor = darkMode ? useTheme.NEAR_BLACK : useTheme.OFF_WHITE;
 
-  function calcOffsetFromValue() {
-    let offset = barWidth * ((value - minValue) / (maxValue - minValue));
-    offset = Math.min(barWidth, Math.max(0, offset));
-    return offset;
-  }
-
-  const calcValueFromGesture = useRef((_gestureState: PanResponderGestureState) => value);
-  useEffect(() => {
-    calcValueFromGesture.current = (gestureState: PanResponderGestureState) => {
-      const fractionalPos = (gestureState.moveX - leftGutterWidth) / barWidth;
-      const newValue = fractionalPos * (maxValue - minValue) + minValue;
-      const effectiveStep = stepSize > 0 ? stepSize : 1;
-      const snappedValue = Math.round((newValue - minValue) / effectiveStep) * effectiveStep + minValue;
-      const boundedNewValue = Math.max(minValue, Math.min(maxValue, snappedValue));
-      return boundedNewValue;
-    };
-  }, [value, minValue, maxValue, stepSize]);
-
-  function onGestureMove(_evt: GestureResponderEvent, gestureState: PanResponderGestureState) {
-    const newValue = calcValueFromGesture.current(gestureState);
-    changeCallback(newValue);
-  }
-
-  const panResponder = useRef(
-    PanResponder.create({
-      // Ask to be the responder:
-      onStartShouldSetPanResponder: () => true,
-      onStartShouldSetPanResponderCapture: () => true,
-      onMoveShouldSetPanResponder: () => true,
-      onMoveShouldSetPanResponderCapture: () => true,
-      onPanResponderTerminationRequest: () => true,
-      onShouldBlockNativeResponder: () => true,
-
-      onPanResponderGrant: () => setPressed(true),
-      onPanResponderMove: onGestureMove,
-      onPanResponderRelease: () => setPressed(false),
-      onPanResponderTerminate: () => setPressed(false),
-    }),
-  ).current;
+  // The native slider applies `value` before its range, and only sends props that differ
+  // from its previous (or, for a recycled view, default) props, so a fresh slider clamped
+  // its value to a stale range and started at one end. The first render therefore sends a
+  // range that's sure to differ, and the second the real range and value: by then the
+  // value always fits the range already applied. Hidden until then.
+  const [settled, setSettled] = useState(false);
+  useEffect(() => setSettled(true), []);
 
   function stepperDecrement() {
     if (stepperWrapAround) {
@@ -112,21 +61,25 @@ export default function SliderBar({
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { width: barWidth }]}>
       <View style={styles.row}>
-        <Text allowFontScaling={false} style={styles.text(mainColor)}>{label}</Text>
-        <Text allowFontScaling={false} style={styles.text(mainColor)}>{value}{units}</Text>
+        <Text allowFontScaling={false} style={[styles.text, { color: labelColor ?? mainColor }]}>{label}</Text>
+        <Text allowFontScaling={false} style={[styles.text, { color: labelColor ?? mainColor }]}>{value}{units}</Text>
       </View>
 
       <View style={styles.barContainer}>
-        <View style={[styles.bar, { backgroundColor: mainColor }]} {...panResponder.panHandlers}>
-          <Animated.View style={styles.slider(
-            calcOffsetFromValue(),
-            pressed,
-            mainColor,
-            knobColor,
-          )}></Animated.View>
-        </View>
+        <Slider
+          style={[styles.slider, { opacity: settled ? 1 : 0 }]}
+          value={settled ? value : minValue - 1}
+          minimumValue={settled ? minValue : minValue - 1}
+          maximumValue={settled ? maxValue : maxValue + 1}
+          step={stepSize > 0 ? stepSize : 1}
+          onValueChange={changeCallback}
+          minimumTrackTintColor={mainColor}
+          maximumTrackTintColor={darkMode ? useTheme.DARK_COLOR : useTheme.LIGHT_COLOR}
+          thumbTintColor={darkMode ? useTheme.OFF_WHITE : undefined} // System thumb in light mode.
+          accessibilityLabel={label}
+        />
 
         {showSteppers && <>
           <StepperArrow color={mainColor!} onPress={stepperDecrement} flipped />
@@ -137,12 +90,11 @@ export default function SliderBar({
   );
 }
 
-const styles = StyleSheet.create<any>({
+const styles = StyleSheet.create({
   container: {
     position: "relative",
-    width: barWidth,
     paddingTop: 5,
-    paddingBottom: 15,
+    paddingBottom: 10,
   },
   row: {
     flexDirection: "row",
@@ -153,34 +105,14 @@ const styles = StyleSheet.create<any>({
     flexDirection: "row",
     alignItems: "center",
   },
-  bar: {
-    width: "100%",
-    height: 3,
-    borderRadius: 3,
+  slider: {
+    flex: 1,
+    height: 32,
   },
-  text: (color: string) => ({
-    marginBottom: normalize(10),
-    color: color,
+  text: {
+    marginBottom: normalize(4),
     fontFamily: "Montserrat-Regular",
     fontWeight: "normal",
     fontSize: normalize(15),
-  }),
-  slider: (xPos: number, pressed: boolean, color: string, fillColor: string) => ({
-    position: "absolute",
-    top: (pressed) ? -9 : -6,
-    left: xPos - 1 - ((pressed) ? 9 : 6),
-    height: (pressed) ? 21 : 15,
-    width: (pressed) ? 21 : 15,
-    borderRadius: (pressed) ? 11 : 7,
-    borderWidth: 1,
-    borderColor: color,
-    backgroundColor: fillColor,
-  }),
-
-  // transform: [{
-  //   translateY: anim.interpolate({
-  //     inputRange: [0, 1],
-  //     outputRange: [0, -7],
-  //   }),
-  // }],
+  },
 });

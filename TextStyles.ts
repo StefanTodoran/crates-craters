@@ -1,30 +1,34 @@
-import { Dimensions, PixelRatio, Platform, StyleSheet } from "react-native";
+import { Dimensions, PixelRatio, Platform, TextStyle } from "react-native";
 import { colors } from "./Theme";
 
-const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const SAMSUNG_S8_WIDTH = 384;
-const scale = SCREEN_WIDTH / SAMSUNG_S8_WIDTH;
+// Read on each call, so sizes computed during render follow window size changes
+// (module-level StyleSheets still use the size at launch).
+const screenWidth = () => Dimensions.get("window").width;
 
+// Sizes were tuned on Android, and iOS renders the same font size larger. These replace
+// a flat 4pt (iOS) / 2pt (Android) subtraction, which shrank small sizes to nothing
+// (normalize(4) was about 0); they match the old sizes in the common 16-30 range.
+const PLATFORM_FACTOR = Platform.OS === "ios" ? 0.85 : 0.92;
+
+/** Scales a size designed for a 384pt-wide screen to this screen's width. */
 export function normalize(size: number) {
-  const newSize = size * scale;
-  if (Platform.OS === "ios") {
-    return Math.round(PixelRatio.roundToNearestPixel(newSize)) - 4;
-  } else {
-    return Math.round(PixelRatio.roundToNearestPixel(newSize)) - 2;
-  }
+  return PixelRatio.roundToNearestPixel(size * (screenWidth() / SAMSUNG_S8_WIDTH) * PLATFORM_FACTOR);
 }
 
 export function sizeFromWidthPercent(percent: number, width: number, height: number) {
   const fraction = percent / 100;
-  const ratio = SCREEN_WIDTH * fraction / width;
+  const ratio = screenWidth() * fraction / width;
   return {
-    width: Math.round(SCREEN_WIDTH * fraction),
+    width: Math.round(screenWidth() * fraction),
     height: Math.round(ratio * height),
   };
 }
 
-export default StyleSheet.create<any>({
-  paragraph: (darkMode: boolean) => ({
+// Style functions (not a StyleSheet, whose values must be plain styles), typed so
+// mistakes in them are caught.
+export default {
+  paragraph: (darkMode: boolean): TextStyle => ({
     color: (darkMode) ? colors.OFF_WHITE : colors.TEXT_COLOR,
     fontFamily: "Montserrat-Regular",
     fontWeight: "normal",
@@ -32,11 +36,11 @@ export default StyleSheet.create<any>({
     marginBottom: normalize(10),
   }),
   
-  colored: (darkMode: boolean) => ({
+  colored: (darkMode: boolean): TextStyle => ({
     color: (darkMode) ? colors.MAIN_PURPLE : colors.DARK_PURPLE,
   }),
 
-  bold: (darkMode: boolean) => ({
+  bold: (darkMode: boolean): TextStyle => ({
     color: (darkMode) ? colors.MAIN_PURPLE : colors.DARK_PURPLE,
     fontFamily: "Montserrat-Medium",
     fontWeight: "bold",
@@ -45,7 +49,7 @@ export default StyleSheet.create<any>({
     letterSpacing: 0.5,
   }),
 
-  subtitle: (darkMode: boolean, colorOverride?: string) => ({
+  subtitle: (darkMode: boolean, colorOverride?: string): TextStyle => ({
     color: (colorOverride) ? colorOverride : ((darkMode) ? colors.MAIN_PURPLE : colors.DARK_PURPLE),
     fontFamily: "Montserrat-Medium",
     fontWeight: "bold",
@@ -55,4 +59,4 @@ export default StyleSheet.create<any>({
     marginBottom: normalize(8),
     marginTop: normalize(12),
   }),
-});
+};

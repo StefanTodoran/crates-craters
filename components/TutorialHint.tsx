@@ -14,6 +14,8 @@ interface TutorialContentPage {
   content: string,
   images: ImageSourcePropType[],
   spaceImages?: boolean,
+  // A 3:1 illustration shown instead of the images, with a dark mode variant.
+  wideImage?: { light: ImageSourcePropType, dark: ImageSourcePropType },
 }
 
 const tutorials: { [key in Tutorial]: TutorialContentPage } = {
@@ -70,7 +72,7 @@ const tutorials: { [key in Tutorial]: TutorialContentPage } = {
     title: "Metal Crates",
     titleColor: colors.RED_THEME.MAIN_COLOR,
     theme: colors.RED_THEME,
-    content: "Metal crates are solid pushable tiles similar to crates, but they cannot be blown up by bombs and cannot fill in craters.",
+    content: "Metal crates are solid pushable tiles similar to crates, but they cannot be blown up by bombs and cannot fill in craters. They are magnetic: adjacent metal crates move together.",
     images: [graphics.EXPLOSION, graphics.METAL_CRATE],
   },
   [Tutorial.ICE_BLOCKS]: {
@@ -78,7 +80,8 @@ const tutorials: { [key in Tutorial]: TutorialContentPage } = {
     titleColor: colors.BLUE_THEME.MAIN_COLOR,
     theme: colors.BLUE_THEME,
     content: "Ice blocks are solid pushable tiles similar to crates, but when pushed they slide until they come into contact with a non-empty tile.",
-    images: [graphics.ONE_WAY_ONE_DIR, graphics.ICE_BLOCK],
+    images: [],
+    wideImage: { light: graphics.ICE_SLIDE_PREVIEW, dark: graphics.ICE_SLIDE_PREVIEW_DARK },
   },
   [Tutorial.MISC]: {
     title: "Miscellaneous",
@@ -92,6 +95,16 @@ interface Props {
   introduces: Tutorial[],
   hideTutorial: () => void,
   onlyContent?: boolean,
+}
+
+function TutorialImages({ page, darkMode }: { page: TutorialContentPage, darkMode: boolean }) {
+  if (page.wideImage) return <Image style={styles.wideImage} source={darkMode ? page.wideImage.dark : page.wideImage.light} />;
+  return page.images.map((image, index) => {
+    let iconStyle: ImageStyle = styles.icon;
+    if (page.images.length === 1) iconStyle = styles.bigIcon;
+    if (index > 0 && page.spaceImages) iconStyle = styles.spacedIcon;
+    return <Image key={index} style={iconStyle} source={image} />;
+  });
 }
 
 export default function TutorialHint({ introduces, hideTutorial, onlyContent }: Props) {
@@ -132,12 +145,7 @@ export default function TutorialHint({ introduces, hideTutorial, onlyContent }: 
         </Text>
 
         <View style={styles.row}>
-          {tutorial[page].images.map((image, index) => {
-            let iconStyle: ImageStyle = styles.icon;
-            if (tutorial[page].images.length === 1) iconStyle = styles.bigIcon;
-            if (index > 0 && tutorial[page].spaceImages) iconStyle = styles.spacedIcon;
-            return <Image key={index} style={iconStyle} source={image} />;
-          })}
+          <TutorialImages page={tutorial[page]} darkMode={darkMode} />
         </View>
       </>
     );
@@ -164,12 +172,7 @@ export default function TutorialHint({ introduces, hideTutorial, onlyContent }: 
       </Text>
 
       <View style={styles.row}>
-        {tutorial[page].images.map((image, index) => {
-          let iconStyle: ImageStyle = styles.icon;
-          if (tutorial[page].images.length === 1) iconStyle = styles.bigIcon;
-          if (index > 0 && tutorial[page].spaceImages) iconStyle = styles.spacedIcon;
-          return <Image key={index} style={iconStyle} source={image} />;
-        })}
+        <TutorialImages page={tutorial[page]} darkMode={darkMode} />
       </View>
 
       <View style={styles.row}>
@@ -232,5 +235,11 @@ const styles = StyleSheet.create({
   bigIcon: {
     height: normalize(90),
     width: normalize(90),
+  },
+  // Three tiles wide, each tile the size of the other hints' icons.
+  wideImage: {
+    height: normalize(40),
+    width: normalize(120),
+    marginVertical: normalize(10),
   },
 });

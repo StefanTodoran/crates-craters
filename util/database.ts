@@ -1,12 +1,11 @@
-import { DocumentData, DocumentReference, Query, QuerySnapshot, Timestamp, WhereFilterOp, addDoc, collection, doc, getCountFromServer, getDocs, limit, orderBy, query, runTransaction, setDoc, updateDoc, where } from "firebase/firestore";
-import { doStateStorageSync } from "./events";
-import { db } from "./firebase";
-import { compressBoardData, getData, getLocalUserData, getStoredLevelCount, metadataKeys, multiStoreLevels, parseCompressedBoardData, setData } from "./loader";
+import { DocumentData, DocumentReference, Query, QuerySnapshot, Timestamp, UpdateData, WhereFilterOp, addDoc, arrayUnion, collection, doc, getCountFromServer, getDoc, getDocs, increment, limit, orderBy, query, runTransaction, setDoc, updateDoc, where, writeBatch } from "firebase/firestore";
+import { auth, db } from "./firebase";
+import { compressBoardData, getData, getLocalUserData, getStoredLevelCount, metadataKeys, multiStoreLevels, parseCompressedBoardData, setData, syncLevelsWithStorage } from "./loader";
 import { Direction, OfficialLevel, SharedLevel, Tutorial, UserLevel } from "./types";
 
-import { UserCredential } from "firebase/auth";
+import { User, UserCredential, deleteUser } from "firebase/auth";
 import { setLogLevel } from "firebase/firestore";
-setLogLevel("debug");
+if (__DEV__) setLogLevel("debug");
 
 // ======================== \\
 // DOCUMENT TYPE INTERFACES \\
@@ -28,7 +27,7 @@ export interface UserLevelDocument {
   name: string,
   board: string,
   user_name: string,
-  user_email: string,
+  user_uid: string,
   shared: Timestamp,
   attempts: number,
   wins: number,
@@ -56,7 +55,7 @@ export interface UserAccountDocument {
 // HIGH LEVEL FUNCTIONS \\
 
 export async function checkForOfficialLevelUpdates(): Promise<number> {
-  const metadata: MetadataDocument = await getSpecificEntryByName("metadata", "metadata");
+  const metadata = await getSpecificEntryByName<MetadataDocument>("metadata", "metadata");
   const updated: Timestamp = getData(metadataKeys.lastUpdatedOfficialLevels);
   const prevCount = getStoredLevelCount();
 
@@ -78,25 +77,33 @@ export async function refreshLevelsFromServer(): Promise<boolean> {
   if (levels.length === 0) return false; // For some reason firestore getDocs returns an empty snapshot instead of failing when offline.
 
   multiStoreLevels(levels);
-  doStateStorageSync();
+  syncLevelsWithStorage();
   return true;
 }
 
 async function fetchOfficialLevelsFromServer() {
-  const rawLevels: OfficialLevelDocument[] = await getAllEntries("officialLevels");
+  const rawLevels = await getAllEntries<OfficialLevelDocument>("officialLevels");
   const parsedLevels: OfficialLevel[] = [];
+  // On a fresh install every level arrives at once, so none of them is "new".
+  const hadLevels = getStoredLevelCount() > 0;
 
   rawLevels.forEach(rawLevel => {
-    const existingLevel: OfficialLevel = getData(rawLevel.uuid);
+    const existingLevel: OfficialLevel | undefined = getData(rawLevel.uuid);
+    const board = parseCompressedBoardData(rawLevel.board);
+    // A redesigned level keeps its completion (so later levels stay unlocked), but the
+    // best solution was for the old board and wouldn't replay. Stored levels hold the
+    // board as its serialized form, so compare that.
+    const boardChanged = !!existingLevel && JSON.stringify(existingLevel.board) !== JSON.stringify(board);
     const updatedLevel: OfficialLevel = {
       uuid: rawLevel.uuid,
       name: rawLevel.name,
-      board: parseCompressedBoardData(rawLevel.board),
-      completed: existingLevel?.completed,
-      bestSolution: existingLevel?.bestSolution,
+      board,
+      completed: !!existingLevel?.completed,
+      bestSolution: boardChanged ? undefined : existingLevel?.bestSolution,
       official: true,
       order: rawLevel.order,
       introduces: rawLevel.introduces,
+      isNew: existingLevel ? existingLevel.isNew : hadLevels,
     };
 
     parsedLevels.push(updatedLevel);
@@ -105,59 +112,57 @@ async function fetchOfficialLevelsFromServer() {
   return parsedLevels;
 }
 
-export async function likeUserLevel(level_id: string, user_email: string) {
+/** Display name given to levels whose creator deleted their account. */
+export const DELETED_USER_NAME = "Deleted user";
+
+// Each like, attempt and win is backed by a marker doc at userLevels/{level}/{kind}/{uid}.
+// The rules only let a counter go up by one in the same write that creates the
+// caller's marker, so each user can bump each counter once.
+type StatKind = "likes" | "attempts" | "wins";
+const markerRef = (level_id: string, kind: StatKind, uid: string) => doc(db, "userLevels", level_id, kind, uid);
+
+/** Increments a level counter once per user. Resolves true if this call recorded it. */
+async function recordUserLevelStat(level_id: string, uid: string, kind: StatKind, accountField: string) {
+  return runTransaction(db, async (transaction) => {
+    const marker = await transaction.get(markerRef(level_id, kind, uid));
+    if (marker.exists()) return false; // Already counted, e.g. from another device.
+
+    transaction.update(doc(db, "userLevels", level_id), { [kind]: increment(1) });
+    transaction.set(marker.ref, {});
+    transaction.update(doc(db, "userAccounts", uid), { [accountField]: arrayUnion(level_id) });
+    return true;
+  });
+}
+
+export async function likeUserLevel(level_id: string, uid: string) {
   const likedLevels = getData(metadataKeys.likedLevels) || [];
   if (likedLevels.includes(level_id)) return false;
 
   try {
-    const success = await runTransaction(db, async (transaction) => {
-      const userLevelRef = doc(db, "userLevels", level_id);
-      const userLevelDoc = await transaction.get(userLevelRef);
-      const userLevelData = userLevelDoc.data() as UserLevelDocument;
-
-      const userAccountRef = doc(db, "userAccounts", user_email);
-      likedLevels.push(level_id);
-
-      transaction.update(userLevelRef, { likes: userLevelData.likes + 1 });
-      transaction.update(userAccountRef, { likes: likedLevels });
-      setData(metadataKeys.likedLevels, likedLevels);
-      return true;
-    });
-
-    return success;
+    await recordUserLevelStat(level_id, uid, "likes", "likes");
+    // Only record locally once the server write has succeeded.
+    setData(metadataKeys.likedLevels, [...likedLevels, level_id]);
+    return true;
   } catch (error) {
     console.error("Error liking level:", level_id, error);
     return false;
   }
 }
 
-export async function attemptUserLevel(level_id: string, user_email?: string | null) {
+export async function attemptUserLevel(level_id: string, uid?: string | null) {
   const attemptedLevels = getData(metadataKeys.attemptedLevels) || [];
   if (attemptedLevels.includes(level_id)) return false;
-  if (!user_email) {
+  if (!uid) {
     // We still want to keep track, server side will be updated when the
     // user eventually makes an account.
-    attemptedLevels.push(level_id);
-    setData(metadataKeys.attemptedLevels, attemptedLevels);
+    setData(metadataKeys.attemptedLevels, [...attemptedLevels, level_id]);
     return false;
   }
 
   try {
-    const success = await runTransaction(db, async (transaction) => {
-      const userLevelRef = doc(db, "userLevels", level_id);
-      const userLevelDoc = await transaction.get(userLevelRef);
-      const userLevelData = userLevelDoc.data() as UserLevelDocument;
-
-      const userAccountRef = doc(db, "userAccounts", user_email);
-      attemptedLevels.push(level_id);
-
-      transaction.update(userLevelRef, { attempts: userLevelData.attempts + 1 });
-      transaction.update(userAccountRef, { attempted: attemptedLevels });
-      setData(metadataKeys.attemptedLevels, attemptedLevels);
-      return true;
-    });
-
-    return success;
+    await recordUserLevelStat(level_id, uid, "attempts", "attempted");
+    setData(metadataKeys.attemptedLevels, [...attemptedLevels, level_id]);
+    return true;
   } catch (error) {
     console.error("Error marking level attempted:", level_id, error);
     return false;
@@ -166,54 +171,44 @@ export async function attemptUserLevel(level_id: string, user_email?: string | n
 
 export async function markUserLevelCompleted(
   level: SharedLevel,
-  userEmail: string | null | undefined,
+  uid: string | null | undefined,
   moveHistory: Direction[],
 ) {
-  const userData = getLocalUserData();
   const completedLevels = getData(metadataKeys.completedLevels) || [];
-  const firstCompletion = !completedLevels.includes(level.uuid);
-  if (!userEmail) {
-    completedLevels.push(level.uuid);
-    setData(metadataKeys.completedLevels, completedLevels);
+  postSolutionData(level.uuid, moveHistory, "user_level");
+  if (!uid) {
+    if (!completedLevels.includes(level.uuid)) setData(metadataKeys.completedLevels, [...completedLevels, level.uuid]);
     return;
   }
 
   try {
-    const success = await runTransaction(db, async (transaction) => {
+    await runTransaction(db, async (transaction) => {
       const userLevelRef = doc(db, "userLevels", level.uuid);
       const userLevelDoc = await transaction.get(userLevelRef);
+      const winMarker = await transaction.get(markerRef(level.uuid, "wins", uid));
       const userLevelData = userLevelDoc.data() as UserLevelDocument;
-      const userAccountRef = doc(db, "userAccounts", userEmail);
 
-      const levelSolnRef = doc(collection(db, "levelSolutions"));
-      transaction.set(levelSolnRef, {
-        level_id: level.uuid,
-        user_email: userEmail,
-        local_uuid: userData?.uuid,
-        solution: moveHistory.join(""),
-        moves: moveHistory.length,
-        type: "user_level",
-      });
-
-      if (firstCompletion) {
-        completedLevels.push(level.uuid);
-        const updateData: Partial<UserLevelDocument> = {
-          wins: userLevelData.wins + 1,
-          winrate: (userLevelData.wins + 1) / userLevelData.attempts,
-        };
-        if (moveHistory.length < level.best) {
-          updateData.best = moveHistory.length;
-          updateData.bestSolution = moveHistory.join("");
-        }
-        transaction.update(userLevelRef, updateData);
+      const updateData: Partial<UserLevelDocument> = {};
+      if (!winMarker.exists()) {
+        updateData.wins = userLevelData.wins + 1;
+        // Attempts can lag behind wins (e.g. attempts made while signed out are only
+        // recorded locally), so clamp to keep the winrate a valid fraction.
+        updateData.winrate = Math.min(1, updateData.wins / Math.max(1, userLevelData.attempts));
+        transaction.set(winMarker.ref, {});
       }
+      if (moveHistory.length < userLevelData.best) {
+        updateData.best = moveHistory.length;
+        updateData.bestSolution = moveHistory.join("");
+      }
+      if (Object.keys(updateData).length) transaction.update(userLevelRef, updateData);
 
-      transaction.update(userAccountRef, { completed: completedLevels });
-      setData(metadataKeys.completedLevels, completedLevels);
-      return true;
+      // arrayUnion keeps entries added from other devices. Local storage is only
+      // written after the commit below, since this callback can be retried.
+      transaction.update(doc(db, "userAccounts", uid), { completed: arrayUnion(level.uuid) });
     });
 
-    return success;
+    if (!completedLevels.includes(level.uuid)) setData(metadataKeys.completedLevels, [...completedLevels, level.uuid]);
+    return true;
   } catch (error) {
     console.error("Error marking level completed:", level.uuid, error);
     return false;
@@ -226,64 +221,117 @@ export async function publishUserLevel(
   userCredential: UserCredential,
   shared: Timestamp,
 ) {
-  const userLevelRef = await runTransaction(db, async (transaction) => {
-    // Use the existing document name if we are publishing again, otherwise create a new document.
-    const userLevelRef = level.db_id ? doc(db, "userLevels", level.db_id) : doc(collection(db, "userLevels"));
-    const userLevelDoc: UserLevelDocument = {
-      name: level.name,
-      board: compressBoardData(level.board),
-      user_name: userData!.user_name,
-      user_email: userCredential!.user.email!,
-      shared: shared,
-      attempts: 0,
-      wins: 0,
-      winrate: 1,
-      likes: 0,
-      best: level.bestSolution!.length,
-      bestSolution: level.bestSolution!, // Guaranteed to be defined since button is disabled if !level.completed
-      keywords: [...level.name.toLowerCase().split(/\s+/), ...userData!.user_name.toLowerCase().split(/\s+/)],
-      public: true,
-    };
-    transaction.set(userLevelRef, userLevelDoc);
-
-    const levelSolnRef = doc(collection(db, "levelSolutions"));
-    transaction.set(levelSolnRef, {
-      level_id: level.uuid,
-      user_email: userCredential.user.email!,
-      local_uuid: userData!.local_uuid,
-      solution: level.bestSolution!,
-      moves: level.bestSolution!.length,
-      type: "user_level",
-    });
-
-    return userLevelRef;
-  });
-
+  // Use the existing document name if we are publishing again, otherwise create a new document.
+  const userLevelRef = level.db_id ? doc(db, "userLevels", level.db_id) : doc(collection(db, "userLevels"));
+  const userLevelDoc: UserLevelDocument = {
+    name: level.name,
+    board: compressBoardData(level.board),
+    user_name: userData!.user_name,
+    user_uid: userCredential!.user.uid,
+    shared: shared,
+    attempts: 0,
+    wins: 0,
+    winrate: 1,
+    likes: 0,
+    best: level.bestSolution!.length,
+    bestSolution: level.bestSolution!, // Guaranteed to be defined since button is disabled if !level.completed
+    keywords: [...level.name.toLowerCase().split(/\s+/), ...userData!.user_name.toLowerCase().split(/\s+/)],
+    public: true,
+  };
+  await setDoc(userLevelRef, userLevelDoc);
   return userLevelRef;
 }
 
+/** Local record of the shortest solution posted per user and level, so we only write improvements. */
+const POSTED_SOLUTIONS_KEY = "postedSolutionMoves";
+
+/**
+ * Records a solution at levelSolutions/{level}_{uid}, keeping only each user's shortest.
+ * Signed-out players post under their anonymous uid. Analytics only, so failures are ignored.
+ */
 export async function postSolutionData(
   level_id: string,
-  user_email: string | null | undefined,
-  moveHistory: Direction[],
+  moveHistory: Direction[] | string,
+  type: "official_level" | "user_level",
 ) {
-  const userData = getLocalUserData();
+  const uid = auth.currentUser?.uid;
+  if (!uid) return;
+
+  const solution = typeof moveHistory === "string" ? moveHistory : moveHistory.join("");
+  const posted: Record<string, number> = getData(POSTED_SOLUTIONS_KEY) || {};
+  const key = `${uid}/${level_id}`;
+  if (posted[key] !== undefined && posted[key] <= solution.length) return;
+
   try {
-    createDocument("levelSolutions", undefined, {
+    await setDoc(doc(db, "levelSolutions", `${level_id}_${uid}`), {
       level_id: level_id,
-      user_email: user_email ?? "undefined",
-      local_uuid: userData.uuid,
-      solution: moveHistory.join(""),
-      moves: moveHistory.length,
-      type: "official_level",
+      user_uid: uid,
+      solution: solution,
+      moves: solution.length,
+      type: type,
     });
+    setData(POSTED_SOLUTIONS_KEY, { ...posted, [key]: solution.length });
   } catch (error) {
-    console.error("Error posting solution data:", level_id, error);
+    // Rejected if the server already has a solution at least this short (e.g. from before
+    // this device tracked it), so remember not to retry this length.
+    if ((error as { code?: string } | undefined)?.code === "permission-denied") setData(POSTED_SOLUTIONS_KEY, { ...posted, [key]: solution.length });
+    else console.warn("Error posting solution data:", level_id, error);
   }
 }
 
-export async function getUserData(username: string) {
-  return getSpecificEntryByName("userAccounts", username);
+export async function getUserData(uid: string) {
+  return getSpecificEntryByName<UserAccountDocument>("userAccounts", uid);
+}
+
+// Usernames are claimed in usernames/{lowercased name} -> { uid }, which keeps them
+// unique and lets the rules check that published levels carry the creator's own name.
+const usernameRef = (userName: string) => doc(db, "usernames", userName.toLowerCase());
+
+export async function isUsernameTaken(userName: string) {
+  return (await getDoc(usernameRef(userName))).exists();
+}
+
+/** A new account doc, carrying over this device's local progress. */
+export function newAccountDoc(email: string, userName: string): UserAccountDocument {
+  const localUser = getLocalUserData();
+  return {
+    user_email: email,
+    user_name: userName,
+    likes: [],
+    attempted: getData(metadataKeys.attemptedLevels) || [],
+    completed: getData(metadataKeys.completedLevels) || [],
+    coins: getData(metadataKeys.coinBalance) || 0,
+    online_joined: Timestamp.now(),
+    local_uuid: localUser.uuid,
+    local_joined: Timestamp.fromDate(new Date(localUser.joined)),
+  };
+}
+
+/** Claims the username and creates the account doc in one write. */
+export async function createUserAccount(uid: string, accountDoc: UserAccountDocument) {
+  const batch = writeBatch(db);
+  batch.set(usernameRef(accountDoc.user_name), { uid });
+  batch.set(doc(db, "userAccounts", uid), accountDoc);
+  await batch.commit();
+}
+
+/**
+ * Deletes the account: published levels stay playable but are attributed to a deleted
+ * user, then the username, account doc and auth user are removed. The caller must have
+ * signed in recently (Firebase requires it for deleteUser).
+ */
+export async function deleteUserAccount(user: User, userName: string | undefined) {
+  const levels = await getDocs(query(collection(db, "userLevels"), where("user_uid", "==", user.uid)));
+  const batch = writeBatch(db);
+  levels.forEach(level => batch.update(level.ref, {
+    user_uid: "",
+    user_name: DELETED_USER_NAME,
+    keywords: (level.data().name as string).toLowerCase().split(/\s+/),
+  }));
+  if (userName) batch.delete(usernameRef(userName));
+  batch.delete(doc(db, "userAccounts", user.uid));
+  await batch.commit();
+  await deleteUser(user);
 }
 
 // ========================== \\
@@ -297,7 +345,74 @@ export interface ExplicitOrder {
 export interface QueryFilter {
   field: string,
   operator: WhereFilterOp,
-  value: any,
+  value: unknown,
+}
+
+/** Firestore allows at most 30 values in an "in" filter. */
+const IN_FILTER_LIMIT = 30;
+
+function chunk<T>(list: T[], size: number) {
+  const chunks: T[][] = [];
+  for (let i = 0; i < list.length; i += size) chunks.push(list.slice(i, i + size));
+  return chunks;
+}
+
+function compareByOrder(a: DocumentData, b: DocumentData, orderFields: ExplicitOrder[]) {
+  for (const { field, order } of orderFields) {
+    const av = a[field] instanceof Timestamp ? a[field].toMillis() : a[field];
+    const bv = b[field] instanceof Timestamp ? b[field].toMillis() : b[field];
+    if (av === bv) continue;
+    const result = av < bv ? -1 : 1;
+    return order === "asc" ? result : -result;
+  }
+  return 0;
+}
+
+/**
+ * Queries shared levels, optionally restricted to (includeIds) or excluding
+ * (excludeIds) specific level ids. Firestore caps "in" at 30 values and can't combine
+ * "not-in" with "!=", so includes are chunked and merged, and excludes are applied
+ * client-side with exact counts from chunked count queries.
+ */
+export async function queryUserLevels(
+  orderFields: ExplicitOrder[],
+  filters: QueryFilter[],
+  pageSize: number,
+  includeIds?: string[],
+  excludeIds: string[] = [],
+) {
+  if (includeIds !== undefined) {
+    if (includeIds.length === 0) return { data: [], count: 0 };
+    const chunks = chunk(includeIds, IN_FILTER_LIMIT);
+    const results = await Promise.all(chunks.map(ids => {
+      const chunkFilters: QueryFilter[] = [...filters, { field: "__name__", operator: "in", value: ids }];
+      return Promise.all([
+        getEntriesFromQuery<UserLevelDocument>(createFirebaseQuery("userLevels", pageSize, orderFields, chunkFilters)),
+        // Count without the page limit, so "Showing X of Y" reports the real total.
+        getEntryCountFromQuery(createFirebaseQuery("userLevels", -1, orderFields, chunkFilters)),
+      ]);
+    }));
+    const merged = results.flatMap(([data]) => data).sort((a, b) => compareByOrder(a, b, orderFields));
+    const data = merged.filter(doc => !excludeIds.includes(doc.uuid)).slice(0, pageSize);
+    const count = results.reduce((sum, [, n]) => sum + n, 0);
+    return { data, count };
+  }
+
+  // Over-fetch so that, after dropping excluded levels, a full page remains.
+  const q = createFirebaseQuery("userLevels", pageSize === -1 ? -1 : pageSize + excludeIds.length, orderFields, filters);
+  // Counts use the same ordering as the list: a query's ordering decides which composite
+  // index serves it, so an unordered count can need an index the list query doesn't.
+  const excludedCountQueries = chunk(excludeIds, IN_FILTER_LIMIT).map(ids =>
+    getEntryCountFromQuery(createFirebaseQuery("userLevels", -1, orderFields, [...filters, { field: "__name__", operator: "in", value: ids }]))
+  );
+  const [docs, total, ...excludedCounts] = await Promise.all([
+    getEntriesFromQuery<UserLevelDocument>(q),
+    getEntryCountFromQuery(createFirebaseQuery("userLevels", -1, orderFields, filters)),
+    ...excludedCountQueries,
+  ]);
+  const data = docs.filter(doc => !excludeIds.includes(doc.uuid)).slice(0, pageSize === -1 ? undefined : pageSize);
+  const count = total - excludedCounts.reduce((sum, n) => sum + n, 0);
+  return { data, count };
 }
 
 export function createFirebaseQuery(
@@ -328,9 +443,9 @@ export async function doesEntryExist(collectionName: string, fieldName: string, 
 //   return snap.data().count;
 // }
 
-export async function getAllEntries(collectionName: string) {
+export async function getAllEntries<T = DocumentData>(collectionName: string) {
   const querySnapshot = await getDocs(collection(db, collectionName));
-  return parseQuerySnapshot(querySnapshot);
+  return parseQuerySnapshot<T>(querySnapshot);
 }
 
 export async function getEntryCountFromQuery(q: Query) {
@@ -338,14 +453,14 @@ export async function getEntryCountFromQuery(q: Query) {
   return snap.data().count;
 }
 
-export async function getEntriesFromQuery(q: Query) {
+export async function getEntriesFromQuery<T = DocumentData>(q: Query) {
   const querySnapshot = await getDocs(q);
-  return parseQuerySnapshot(querySnapshot);
+  return parseQuerySnapshot<T>(querySnapshot);
 }
 
-export async function getSpecificEntry(q: Query) {
+export async function getSpecificEntry<T = DocumentData>(q: Query) {
   const querySnapshot = await getDocs(q);
-  const docs = parseQuerySnapshot(querySnapshot);
+  const docs = parseQuerySnapshot<T>(querySnapshot);
 
   if (docs.length === 0) {
     throw new Error(`No document matching query "${q}" found.`);
@@ -358,10 +473,10 @@ export async function getSpecificEntry(q: Query) {
   }
 }
 
-export async function getSpecificEntryByName(collectionName: string, docName: string) {
+export async function getSpecificEntryByName<T = DocumentData>(collectionName: string, docName: string) {
   const q = query(collection(db, collectionName), where("__name__", "==", docName));
   const querySnapshot = await getDocs(q);
-  const docs = parseQuerySnapshot(querySnapshot);
+  const docs = parseQuerySnapshot<T>(querySnapshot);
 
   if (docs.length === 0) {
     throw new Error(`No document "${docName}" found in collection "${collectionName}"`);
@@ -380,7 +495,7 @@ export async function getSpecificEntryByName(collectionName: string, docName: st
 export async function createDocument(
   collectionName: string,
   docName: string | undefined,
-  docContent: any,
+  docContent: DocumentData,
 ): Promise<DocumentReference> {
   let newDoc;
 
@@ -398,7 +513,7 @@ export async function createDocument(
 export async function updateDocument(
   collectionName: string,
   docName: string,
-  updateContent: any,
+  updateContent: UpdateData<DocumentData>,
 ): Promise<void> {
   const documentRef = doc(db, collectionName, docName);
   return await updateDoc(documentRef, updateContent);
@@ -407,14 +522,14 @@ export async function updateDocument(
 // ================ \\
 // HELPER FUNCTIONS \\
 
-function parseQuerySnapshot(snapshot: QuerySnapshot<DocumentData, DocumentData>) {
-  const docs: any[] = [];
+/** Document data plus its id (as both id and uuid). T is what the caller expects the collection to hold. */
+type ParsedDocument<T> = T & { id: string, uuid: string };
+
+function parseQuerySnapshot<T = DocumentData>(snapshot: QuerySnapshot<DocumentData, DocumentData>) {
+  const docs: ParsedDocument<T>[] = [];
   snapshot.forEach((doc) => {
     // doc.data() is never undefined for query doc snapshots
-    const next = doc.data();
-    next.id = doc.id;
-    next.uuid = doc.id;
-    docs.push(next);
+    docs.push({ ...doc.data() as T, id: doc.id, uuid: doc.id });
   });
 
   return docs;

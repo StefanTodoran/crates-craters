@@ -31,6 +31,7 @@ export enum TileType {
   ONEWAY,
   METAL_CRATE,
   ICE_BLOCK,
+  DIAMOND,
   OUTSIDE, // Used for out of bounds board queries. Other enum values shouldn't be reordered but this one can be.
 }
 
@@ -150,12 +151,14 @@ export enum Tutorial {
   METAL_CRATES = 7,
   ICE_BLOCKS = 8,
   MISC = 9,
+  // METAL_CRATES_2 = 10,
 }
 
 export interface OfficialLevel extends LevelBase {
   official: true,
   order: number,
   introduces?: Tutorial[],
+  isNew?: boolean, // Added by a server update after this install had levels; shows a "New" badge until beaten.
 }
 
 type DateString = string; // In the form Date().toISOString();
@@ -168,7 +171,7 @@ export interface UserLevel extends LevelBase {
 }
 
 export interface SharedLevel extends Exclude<UserLevel, "created"> {
-  user_email: string,
+  user_uid: string, // Firebase Auth uid of the creator. Emails are never stored on public level docs.
   shared: DateString,
   downloads: number,
   attempts: number,
@@ -211,6 +214,7 @@ const levelObjectProps: { [key in LevelObjectType]: levelObjectPropSet } = {
     },
     optional: {
       "introduces": "array",
+      "isNew": "boolean",
     },
   },
   [LevelObjectType.USER]: {
@@ -225,7 +229,7 @@ const levelObjectProps: { [key in LevelObjectType]: levelObjectPropSet } = {
   },
   [LevelObjectType.SHARED]: {
     required: {
-      "user_email": "string",
+      "user_uid": "string",
       "user_name": "string",
       "shared": "string",
       "downloads": "number",

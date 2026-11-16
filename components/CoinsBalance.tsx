@@ -56,7 +56,7 @@ export default function CoinsBalance({ currentBalance, startingBalance }: Props)
   );
 }
 
-const styles = StyleSheet.create<any>({
+const styles = StyleSheet.create({
   row: {
     flexDirection: "row",
     alignItems: "center",

@@ -22,8 +22,9 @@ interface GlobalContext {
   dragSensitivity: number,
   doubleTapDelay: number,
   playAudio: boolean,
+  haptics: boolean,
   userCredential?: UserCredential,
-  userData?: UserAccountDocument,
+  userData?: UserAccountDocument | null, // null: signed in, but no account doc yet (new Google user).
 }
 
 export const defaultSettings = {
@@ -31,6 +32,7 @@ export const defaultSettings = {
   dragSensitivity: 60,
   doubleTapDelay: 250,
   playAudio: true,
+  haptics: true,
 }
 
 const GC = createContext<GlobalContext>({ ...defaultSettings });

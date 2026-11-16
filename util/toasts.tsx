@@ -1,8 +1,8 @@
-import { BaseToast, ErrorToast } from "react-native-toast-message";
+import { BaseToast, BaseToastProps, ErrorToast } from "react-native-toast-message";
 import { colors } from "../Theme";
 
 export const toastConfig = {
-  success: (props: any) => (
+  success: (props: BaseToastProps) => (
     <BaseToast
       {...props}
       style={{ borderLeftColor: colors.GREEN_THEME.MAIN_COLOR, paddingVertical: 10, height: "auto" }}
@@ -18,7 +18,7 @@ export const toastConfig = {
       text2NumberOfLines={2}
     />
   ),
-  error: (props: any) => (
+  error: (props: BaseToastProps) => (
     <ErrorToast
       {...props}
       style={{ borderLeftColor: colors.RED_THEME.MAIN_COLOR, paddingVertical: 10, height: "auto" }}

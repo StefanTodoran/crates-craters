@@ -8,7 +8,7 @@ import SkipDownButton from "./SkipDownButton";
 interface Props {
   pageView: PageView,
   returnHome: () => void,
-  scrollToBottom: () => void,
+  scrollToLatest: () => void,
 }
 
 export enum PageTheme {
@@ -59,7 +59,7 @@ export function pageViewToPageTheme(pageView: PageView) {
   }
 }
 
-export default function Header({ pageView, returnHome, scrollToBottom }: Props) {
+export default function Header({ pageView, returnHome, scrollToLatest }: Props) {
   const pageTheme = pageViewToPageTheme(pageView);
   const theme = pageThemeData[pageTheme];
 
@@ -71,7 +71,7 @@ export default function Header({ pageView, returnHome, scrollToBottom }: Props) 
       {pageView === PageView.LEVELS && <View style={styles.leftMenuButton}>
         <SkipDownButton
           color={theme.color}
-          onPress={scrollToBottom}
+          onPress={scrollToLatest}
         />
       </View>}
       <View style={styles.rightMenuButton}>
@@ -84,7 +84,7 @@ export default function Header({ pageView, returnHome, scrollToBottom }: Props) 
   );
 }
 
-const styles = StyleSheet.create<any>({
+const styles = StyleSheet.create({
   leftMenuButton: {
     position: "absolute",
     top: StatusBar.currentHeight!,

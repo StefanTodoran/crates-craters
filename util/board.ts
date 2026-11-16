@@ -5,23 +5,6 @@ import { BackgroundTile, Direction, EmptyTile, FlatTile, ForegroundTile, Layered
 export const emptyTile: EmptyTile = { id: TileType.EMPTY };
 export const outsideTile: OutsideTile = { id: TileType.OUTSIDE };
 
-// const ForegroundTileTypes = [
-//   TileType.EMPTY,
-//   TileType.DOOR,
-//   TileType.KEY,
-//   TileType.CRATE,
-//   TileType.CRATER,
-//   TileType.COIN,
-//   TileType.SPAWN,
-//   TileType.FLAG,
-//   TileType.BOMB,
-//   TileType.EXPLOSION,
-//   TileType.LITTLE_EXPLOSION,
-//   TileType.METAL_CRATE,
-//   TileType.ICE_BLOCK,
-//   TileType.OUTSIDE,
-// ];
-
 const BackgroundTileTypes = [
   TileType.EMPTY,
   TileType.WALL,
@@ -238,6 +221,7 @@ export function getIconSrc(tile: FlatTile, darkMode?: boolean | undefined) {
   if (tile.id === TileType.LITTLE_EXPLOSION) return { icon: graphics.LITTLE_EXPLOSION, rotation: 0 };
   if (tile.id === TileType.METAL_CRATE) return { icon: graphics.METAL_CRATE, rotation: 0 };
   if (tile.id === TileType.ICE_BLOCK) return { icon: graphics.ICE_BLOCK, rotation: 0 };
+  if (tile.id === TileType.DIAMOND) return { icon: graphics.DIAMOND, rotation: 0 };
   
   if (tile.id === TileType.SPAWN) {
     if (darkMode === undefined) return { icon: graphics.PLAYER, rotation: 0 };

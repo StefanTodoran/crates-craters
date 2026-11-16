@@ -1,5 +1,6 @@
-import { useContext, useEffect, useMemo, useRef, useState } from "react";
-import { Animated, Dimensions, GestureResponderEvent, PanResponder, PanResponderGestureState, SafeAreaView, StyleSheet, Text, View } from "react-native";
+import { Dispatch, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { Animated, Pressable, StyleSheet, Text, TextStyle, View, useWindowDimensions } from "react-native";
+import Toast from "react-native-toast-message";
 import BackButton from "../assets/BackButton";
 import GameBoard from "../components/GameBoard";
 import Inventory from "../components/Inventory";
@@ -7,307 +8,111 @@ import MenuButton from "../components/MenuButton";
 import MoveCounter from "../components/MoveCounter";
 import Player from "../components/Player";
 import SimpleButton from "../components/SimpleButton";
+import TutorialHint from "../components/TutorialHint";
 import GlobalContext from "../GlobalContext";
 import TextStyles, { normalize } from "../TextStyles";
-import { colors, graphics } from "../Theme";
+import { colors, graphics, modalBackground } from "../Theme";
 import { calcBoardTileSize } from "../util/board";
 import { likeUserLevel, markUserLevelCompleted, postSolutionData } from "../util/database";
+import { useFadeModal, useSoundEventPlayers } from "../util/hooks";
 import { getData, markLevelCompleted, metadataKeys } from "../util/loader";
-import { Game, canMoveTo, doGameMove, initializeGameObj } from "../util/logic";
-// import { aStarSearch, basicHeuristic, compoundHeuristic } from "../util/search";
-import Toast from "react-native-toast-message";
-import TutorialHint from "../components/TutorialHint";
-import { Direction, Level, OfficialLevel, PageView, PlayMode, SharedLevel } from "../util/types";
-
-import { useSoundEventPlayers } from "../util/hooks";
+import { Game } from "../util/logic";
+import { PlayAction } from "../util/playSession";
+import { OfficialLevel, PageView, PlayMode, SharedLevel, Level, UserLevel } from "../util/types";
+import { hapticForEvent, hapticWin } from "../util/haptics";
+import { useGameInput } from "../util/useGameInput";
 import WinScreen from "./WinScreen";
-const win = Dimensions.get("window");
 
 interface Props {
-  viewCallback: (newView: PageView, newPage?: number) => void, // Sets the current view of the application. 
-  nextLevelCallback: (uuid: string) => void, // Request the parent update the level to the next level. 
-  gameStateCallback: (newState: Game) => void, // Updates the state of the game, stored in the parent for resumeability.
-  gameHistoryCallback: (newHistory: Game[]) => void, // Updates the history of the state of the game, stored in the parent for resumeability.
+  viewCallback: (newView: PageView, newPage?: number) => void, // Sets the current view of the application.
+  nextLevelCallback: () => void, // Request the parent load the next level.
+  dispatch: Dispatch<PlayAction>, // Updates the play session, stored in the parent for resumeability.
 
-  level: Level, // The level currently being played. 
+  level: Level, // The level currently being played.
   game: Game, // The current game state.
-  history: Game[],
+  canUndo: boolean,
   mode: PlayMode,
 }
 
-interface Position {
-  x: number,
-  y: number,
-}
-
-type Gesture = [boolean, boolean, boolean, boolean]; // up, down, left, right
-
 /**
- * This component handles a wide variety of tasks related to level playing. It
- * controls the PanResponder that handles input gestures, including both swipe
- * movement gestures and long press gestures. It relays such data to the GameBoard,
- * Player, and Inventory components.
- * 
- * The level to be played and current game state are passed to this component from
- * the parent. If the game state is empty, a new game is initialized based on the
- * provided level number. If there is already a game state, play is resumed from
- * that state.
- * 
- * Game sounds are also handled in this component.
+ * The play page. Input gestures are handled by useGameInput, and moves go to the play
+ * session reducer in App (so play can be resumed). Plays the sound of each new state.
  */
 export default function PlayLevel({
   viewCallback,
   nextLevelCallback,
-  gameStateCallback,
-  gameHistoryCallback,
+  dispatch,
   level,
   game,
-  history,
+  canUndo,
   mode,
 }: Props) {
-  const { darkMode, dragSensitivity, doubleTapDelay, userCredential } = useContext(GlobalContext);
-
-  function updateGameState(newState: Game) {
-    gameStateCallback(newState);
-    gameHistoryCallback([...history, game]);
-  }
-
+  const { darkMode, userCredential } = useContext(GlobalContext);
+  const win = useWindowDimensions();
   const playSoundEvent = useSoundEventPlayers();
 
-  // Player input related state. The touchMove state is used for the <Player/> component 
-  // preview of moves, gesture is used for actually completing those moves on release.
-  const [touchMove, setTouchMove] = useState({ y: 0, x: 0 });
-  const panResponderEnabled = useRef(true);
+  // Play the sound of each new game state (not the one we resumed into).
+  const prevGame = useRef(game);
+  useEffect(() => {
+    if (prevGame.current !== game) {
+      playSoundEvent(game.soundEvent);
+      if (game.won && !prevGame.current.won) hapticWin();
+      else hapticForEvent(game.soundEvent);
+    }
+    prevGame.current = game;
+  }, [game]);
 
   const [canLikeLevel, setCanLikeLevel] = useState(false);
   useEffect(() => {
     if (!level.hasOwnProperty("shared") || !userCredential) return;
 
     const likedLevels = getData(metadataKeys.likedLevels) || [];
-    setCanLikeLevel(!likedLevels.includes(level.uuid) && (level as SharedLevel).user_email != userCredential.user.email);
+    setCanLikeLevel(!likedLevels.includes(level.uuid) && (level as SharedLevel).user_uid !== userCredential.user.uid);
   }, []);
 
   useEffect(() => {
-    panResponderEnabled.current = !game.won;
-    if (game.won) {
-      if (mode === PlayMode.SHARED) {
-        markUserLevelCompleted((level as SharedLevel), userCredential?.user.email, game.moveHistory);
-      } else {
-        markLevelCompleted(level.uuid, game.moveHistory);
+    if (!game.won) return;
+    if (mode === PlayMode.SHARED) {
+      markUserLevelCompleted((level as SharedLevel), userCredential?.user.uid, game.moveHistory);
+    } else {
+      markLevelCompleted(level.uuid, game.moveHistory);
 
-        // We want to collect solution data for official levels, even without a user account.
-        if (mode === PlayMode.STANDARD) postSolutionData(level.uuid, userCredential?.user.email, game.moveHistory);
-      }
-    }
-  }, [game]);
-
-  // More player input state, we use these to keep track of double taps. We need to know
-  // the previous tap time so we can determine if the two taps happened fast enough, and
-  // we keep track of position show it is only a double tap if its the same square twice.
-  const prevTouchTime = useRef(Date.now());
-  const prevTouchPos = useRef<Position>(undefined);
-  const [touchPos, setTouchPos] = useState({ y: -1, x: -1 });
-  const pressAnim = useRef(new Animated.Value(0)).current;
-
-  const [pathFollowed, setPathFollowed] = useState<Position[]>([]);
-  const pathAnim = useRef(new Animated.Value(0)).current;
-
-  const handleGesture = useRef((_gesture: Gesture) => { });
-  useEffect(() => {
-    handleGesture.current = (gesture: Gesture) => {
-      const [up, down, left, right] = gesture;
-      // Exactly one of up, down, left, right must be true!
-      if (bti(up) + bti(down) + bti(left) + bti(right) !== 1) return;
-
-      let move;
-      if (up) move = Direction.UP;
-      else if (down) move = Direction.DOWN;
-      else if (left) move = Direction.LEFT;
-      else move = Direction.RIGHT;
-      const [newState, stateChanged] = doGameMove(game, move);
-
-      if (stateChanged) {
-        playSoundEvent(newState.soundEvent);
-        updateGameState(newState);
-      }
+      // We want to collect solution data for official levels, even without a user account
+      // (signed-out players post under their anonymous uid).
+      if (mode === PlayMode.STANDARD) postSolutionData(level.uuid, game.moveHistory, "official_level");
     }
   }, [game]);
 
   const tileSize = calcBoardTileSize(game.board.width, game.board.height, win);
-  const boardPosition = useRef({ x: 0, y: 0 });
+  const {
+    panHandlers, touch, boardRef, remeasure,
+    touchPos, pressAnim, pathFollowed, pathAnim,
+  } = useGameInput({
+    game,
+    tileSize,
+    onMove: (direction) => dispatch({ type: "move", direction }),
+    onJump: (path) => dispatch({ type: "jump", path }),
+  });
 
-  const onGestureStart = useRef((_evt: GestureResponderEvent, _gestureState: PanResponderGestureState) => { });
-  useEffect(() => {
-    onGestureStart.current = (_evt: GestureResponderEvent, gestureState: PanResponderGestureState) => {
-
-      setTouchMove({ y: 0, x: 0 });
-
-      const pressX = pressToIndex(gestureState.x0, tileSize, -boardPosition.current.x);
-      const pressY = pressToIndex(gestureState.y0, tileSize, -boardPosition.current.y);
-
-      if (
-        Date.now() - prevTouchTime.current < doubleTapDelay &&
-        prevTouchPos.current &&
-        prevTouchPos.current.x === pressX &&
-        prevTouchPos.current.y === pressY &&
-        // If we are currently jumping to a position, wait until that is complete before allowing another.
-        pathFollowed.length === 0
-      ) {
-        setTouchPos({ x: pressX, y: pressY });
-        prevTouchPos.current = undefined;
-
-        Animated.timing(pressAnim, {
-          toValue: 1,
-          duration: 250,
-          useNativeDriver: true,
-        }).start(() => {
-          const path = canMoveTo(game, pressX, pressY);
-          if (path) {
-            const visitedSquares = [];
-            let current = game;
-
-            for (let i = 0; i < path.length; i++) {
-              [current] = doGameMove(current, path[i]);
-              visitedSquares.push(current.player);
-            }
-
-            const pathAnimDuration = 200 + (visitedSquares.length * 25);
-            setPathFollowed(visitedSquares);
-            Animated.timing(pathAnim, {
-              toValue: 1,
-              duration: pathAnimDuration,
-              useNativeDriver: true,
-            }).start(() => {
-              Animated.timing(pathAnim, {
-                toValue: 0,
-                duration: 200,
-                useNativeDriver: true,
-              }).start(() => {
-                setPathFollowed([]);
-                updateGameState(current);
-                playSoundEvent(current.soundEvent);
-              });
-            });
-          }
-
-          Animated.timing(pressAnim, {
-            toValue: 0,
-            duration: 250,
-            useNativeDriver: true,
-          }).start();
-        });
-      } else {
-        prevTouchPos.current = {
-          x: pressX,
-          y: pressY,
-        };
-        const touchTime = Date.now();
-        prevTouchTime.current = touchTime;
-      }
-    };
-  }, [game]);
-
-  const panResponder = useMemo(() => {
-    const sensitivity = dragSensitivity / 100; // dragSens is given as a number representing a percent e.g. 60
-    function onGestureMove(_evt: GestureResponderEvent, gestureState: PanResponderGestureState) {
-      let dragY = Math.abs(gestureState.dy) * sensitivity;
-      let dragX = Math.abs(gestureState.dx) * sensitivity;
-
-      if (dragX > dragY) {
-        dragY /= Math.max(2, dragX - dragY);
-      } else {
-        dragX /= Math.max(2, dragY - dragX);
-      }
-
-      setTouchMove({ y: Math.sign(gestureState.dy) * dragY, x: Math.sign(gestureState.dx) * dragX });
-    }
-
-    function onGestureEnd(_evt: GestureResponderEvent, gestureState: PanResponderGestureState) {
-      const distance = win.width / 10;
-      const vertDist = gestureState.dy; const horizDist = gestureState.dx;
-
-      let up = (vertDist < -distance);
-      let down = (vertDist > distance);
-      let left = (horizDist < -distance);
-      let right = (horizDist > distance);
-
-      // If they swiped perfectly vertically or horizontally, we can just
-      // go ahead and skip this and call handleGesture.
-      if (bti(up) + bti(down) + bti(left) + bti(right) !== 1) {
-        const diff = Math.abs(vertDist) - Math.abs(horizDist);
-        // Otherwise, we want to calculate if it was more of a vertical
-        // swipe or a horizontal swipe and send that data to handleGesture.
-        if (diff > 0) {
-          left = false; right = false;
-        } else {
-          up = false; down = false;
-        }
-      }
-
-      // We don't want fast succesive swipe gestures to trigger the
-      // double tap jump to position input.
-      if (up || down || left || right) {
-        prevTouchPos.current = undefined;
-      }
-
-      handleGesture.current([up, down, left, right]);
-      setTouchMove({ y: 0, x: 0 });
-    }
-
-    return PanResponder.create({
-      // Ask to be the responder:
-      onStartShouldSetPanResponder: () => panResponderEnabled.current,
-      onStartShouldSetPanResponderCapture: () => panResponderEnabled.current,
-      onMoveShouldSetPanResponder: () => panResponderEnabled.current,
-      onMoveShouldSetPanResponderCapture: () => panResponderEnabled.current,
-      onPanResponderTerminationRequest: () => panResponderEnabled.current,
-      onShouldBlockNativeResponder: () => panResponderEnabled.current,
-
-      onPanResponderGrant: (...args) => onGestureStart.current(...args),
-      onPanResponderMove: onGestureMove, // These don't need the weird useRef function pattern because they only rely on useState setters, which never change.
-      onPanResponderRelease: onGestureEnd,
-      onPanResponderTerminate: onGestureEnd,
-    })
-  }, []);
-
-  const [modalOpen, setModalOpen] = useState(false);
-  const anim = useRef(new Animated.Value(0)).current;
-  const setAnimTo = (animState: number, callback?: () => void) => {
-    // MAKE SURE 0 <= animState <= 1
-    Animated.timing(anim, {
-      toValue: animState,
-      duration: 350,
-      useNativeDriver: true
-    }).start(callback);
-  }
+  const { modalOpen, anim, toggleModal } = useFadeModal(350);
+  const animatedStyles = useMemo(() => ({
+    buttonsRow: dynamicStyles.buttonsRow(anim),
+    modal: dynamicStyles.modal(anim, darkMode),
+    indicator: dynamicStyles.indicator(pressAnim, darkMode),
+  }), [darkMode]);
 
   function restartLevel() {
-    gameStateCallback(initializeGameObj(level));
-    gameHistoryCallback([]);
+    dispatch({ type: "restart" });
     toggleModal();
   }
 
-  function undoMove() {
-    const newHistory = [...history];
-    const prevState = newHistory.pop() as Game;
-
-    gameStateCallback(prevState);
-    gameHistoryCallback(newHistory);
-    playSoundEvent(prevState.soundEvent);
-  }
-
-  function toggleModal() {
-    if (modalOpen) {
-      setAnimTo(0, () => { setModalOpen(false) });
-    } else {
-      setModalOpen(true);
-      setAnimTo(1);
-    }
-  }
-
   const introducesMechanics = Object.hasOwn(level, "introduces");
-  const [showTutorial, setShowTutorial] = useState(introducesMechanics); // TODO: State value won't update when level changes.
-  const goNextLevel = () => nextLevelCallback(level.uuid);
+  // Auto-show the tutorial only until the level has been beaten; Help still opens it.
+  const autoShowTutorial = introducesMechanics && !level.completed;
+  const [showTutorial, setShowTutorial] = useState(autoShowTutorial);
+  // PlayLevel stays mounted on "Next Level", so reset the tutorial for the new level.
+  useEffect(() => setShowTutorial(autoShowTutorial), [level.uuid]);
+  const goNextLevel = nextLevelCallback;
 
   const toEditor = () => viewCallback(PageView.EDITOR);
   const toLevelSelect = () => viewCallback(PageView.LEVELS);
@@ -334,21 +139,26 @@ export default function PlayLevel({
         extraMargin={[7.5, 0]}
       />;
       break;
-    case PlayMode.PLAYTEST:
+    case PlayMode.PLAYTEST: {
+      // Shared levels can't be edited (make them private first), so go back to Manage.
+      const editable = !(level as UserLevel).shared;
+      const label = editable ? "Keep Editing" : "Manage";
+      const onPress = editable ? toEditor : modeToBackPage[PlayMode.PLAYTEST];
       returnMenuButton = <MenuButton
-        label={"Keep Editing"}
+        label={label}
         icon={graphics.HAMMER_ICON}
-        onPress={toEditor}
+        onPress={onPress}
         fillWidth
       />;
       postWinActionBtn = <SimpleButton
-        onPress={toEditor}
-        text="Keep Editing"
+        onPress={onPress}
+        text={label}
         icon={graphics.HAMMER_ICON_WHITE}
         main
         extraMargin={[7.5, 0]}
       />;
       break;
+    }
     case PlayMode.SHARED:
       returnMenuButton = <MenuButton
         label={"Level Search"}
@@ -358,7 +168,7 @@ export default function PlayLevel({
       />;
       postWinActionBtn = <SimpleButton
         onPress={async () => {
-          const success = await likeUserLevel(level.uuid, userCredential!.user.email!);
+          const success = await likeUserLevel(level.uuid, userCredential!.user.uid);
           if (!success) {
             Toast.show({
               type: "error",
@@ -380,42 +190,35 @@ export default function PlayLevel({
 
   return (
     <>
-      <SafeAreaView style={staticStyles.container}>
+      {/* The page panel already insets for the safe area. */}
+      <View style={staticStyles.container}>
         {/* GAMEPLAY COMPONENTS */}
-        <View {...panResponder.panHandlers}>
-          <MoveCounter moveCount={game.moveHistory.length} bestMoves={level.bestSolution?.length} />
+        <View {...panHandlers}>
+          <MoveCounter moveCount={game.moveHistory.length} bestMoves={level.bestSolution?.length} title={level.name} />
 
-          <View style={staticStyles.centerContents} onLayout={(event) => {
-            event.persist();
-            setTimeout(() => {
-              // For some reason right after the layout event is fired, the measure
-              // function doesn't return the correct values. So we need to wait a bit
-              // before calling it. Since this is only used for double tap detection,
-              // it's not a big deal if we need to wait a second.
-              event.target.measure(
-                (_x, _y, _width, _height, pageX, pageY) => {
-                  boardPosition.current = { x: pageX, y: pageY };
-                },
-              );
-            }, 1000);
-          }}>
-            <GameBoard board={game.board} overrideTileSize={tileSize} playerPosition={game.player}>
-              <Player game={game} touch={touchMove} darkMode={darkMode} tileSize={tileSize} />
+          <View ref={boardRef} style={staticStyles.centerContents} onLayout={remeasure}>
+            <View>
+              {/* The board is memoized; everything that moves is drawn on this overlay. */}
+              <GameBoard board={game.board} overrideTileSize={tileSize} hidePushables animated />
+              <View style={[staticStyles.overlay, { borderRadius: tileSize / 5 }]} pointerEvents="none">
+                <Player game={game} touch={touch} darkMode={darkMode} tileSize={tileSize} />
 
-              {pathFollowed.map((square, index) => (
-                <Animated.View key={index} style={[
-                  staticStyles.pathSquare,
-                  dynamicStyles.pathSquare(square.x, square.y, tileSize, pathAnim, darkMode, index / pathFollowed.length),
-                ]}>
-                  <Text style={dynamicStyles.pathSquareText(darkMode)}>{index + 1}</Text>
-                </Animated.View>
-              ))}
+                {pathFollowed.map((square, index) => (
+                  <Animated.View key={index} style={[
+                    staticStyles.pathSquare,
+                    dynamicStyles.pathSquare(square.x, square.y, tileSize, pathAnim, darkMode, index / pathFollowed.length),
+                  ]}>
+                    <Text style={dynamicStyles.pathSquareText(darkMode)}>{index + 1}</Text>
+                  </Animated.View>
+                ))}
 
-              {touchPos && <Animated.View style={[
-                staticStyles.indicator,
-                dynamicStyles.indicator(touchPos.x, touchPos.y, tileSize, pressAnim, darkMode),
-              ]} />}
-            </GameBoard>
+                <Animated.View style={[
+                  staticStyles.indicator,
+                  { left: touchPos.x * tileSize, top: touchPos.y * tileSize, width: tileSize, height: tileSize },
+                  animatedStyles.indicator,
+                ]} />
+              </View>
+            </View>
           </View>
 
           <Inventory coins={game.coins} maxCoins={game.maxCoins} keys={game.keys} />
@@ -425,8 +228,11 @@ export default function PlayLevel({
         {/* PAUSE MENU COMPONENTS */}
         {modalOpen && <Animated.View style={[
           staticStyles.modal,
-          dynamicStyles.modal(anim, darkMode),
+          { paddingHorizontal: win.width * 0.225 },
+          animatedStyles.modal,
         ]}>
+          {/* Tapping anywhere outside the buttons closes the menu. */}
+          <Pressable style={StyleSheet.absoluteFill} onPress={toggleModal} accessibilityLabel="Close menu" />
           <Text style={dynamicStyles.subtitle(darkMode)}>Menu</Text>
           <MenuButton
             label="Restart Level"
@@ -439,8 +245,8 @@ export default function PlayLevel({
             label="Undo Move"
             icon={graphics.ONE_WAY_ONE_DIR}
             theme={colors.BLUE_THEME}
-            onPress={undoMove}
-            disabled={history.length === 0}
+            onPress={() => dispatch({ type: "undo" })}
+            disabled={!canUndo}
             fillWidth
           />
           {returnMenuButton}
@@ -451,18 +257,9 @@ export default function PlayLevel({
             onPress={toggleModal}
             fillWidth
           />
-          {/* <MenuButton
-          label="Get Hint"
-          icon={graphics.SUPPORT_ICON}
-          theme={colors.GREEN_THEME}
-          onPress={() => {
-            aStarSearch(game, compoundHeuristic);
-            aStarSearch(game, basicHeuristic);
-          }}
-        /> */}
         </Animated.View>}
 
-        <Animated.View style={dynamicStyles.buttonsRow(anim)}>
+        <Animated.View style={animatedStyles.buttonsRow}>
           <SimpleButton text={mode === PlayMode.PLAYTEST ? "Exit" : "Back"} onPress={modeToBackPage[mode]} Svg={BackButton} square extraMargin={[7.5, 0]} />
 
           {introducesMechanics && !game.won &&
@@ -472,45 +269,30 @@ export default function PlayLevel({
           {game.won && postWinActionBtn}
         </Animated.View>
 
-      </SafeAreaView>
+      </View>
       {introducesMechanics && showTutorial && <TutorialHint introduces={(level as OfficialLevel).introduces!} hideTutorial={() => setShowTutorial(false)} />}
     </>
   );
 }
 
-// Boolean to integer, returns 0 or 1 for false or true respectively.
-function bti(bool: boolean) {
-  return bool === true ? 1 : 0;
-}
-
-function pressToIndex(touchPos: number, tileSize: number, correction: number) {
-  return Math.floor((touchPos + correction) / tileSize);
-}
-
-const dynamicStyles = StyleSheet.create<any>({
-  subtitle: (darkMode: boolean) => ({
+const dynamicStyles = {
+  subtitle: (darkMode: boolean): TextStyle => ({
     ...TextStyles.subtitle(darkMode),
     marginBottom: -normalize(5),
   }),
   buttonsRow: (anim: Animated.Value) => ({
-    flexDirection: "row",
+    flexDirection: "row" as const,
     marginTop: normalize(10),
-    // height: normalize(50),
     opacity: anim.interpolate({
       inputRange: [0, 1],
       outputRange: [1, 0],
     }),
   }),
-  // TODO: factor this out maybe? also found in EditLevel and WinScreen
   modal: (anim: Animated.Value, darkMode: boolean) => ({
-    backgroundColor: darkMode ? "rgba(0, 0, 0, 0.85)" : "rgba(255, 255, 255, 0.85)",
+    backgroundColor: modalBackground(darkMode),
     opacity: anim,
   }),
-  indicator: (xPos: number, yPos: number, size: number, anim: Animated.Value, darkMode: boolean) => ({
-    left: xPos * size,
-    top: yPos * size,
-    width: size,
-    height: size,
+  indicator: (anim: Animated.Value, darkMode: boolean) => ({
     backgroundColor: (darkMode) ? colors.OFF_WHITE_TRANSPARENT(0.2) : colors.NEAR_BLACK_TRANSPARENT(0.1),
     borderColor: (darkMode) ? colors.OFF_WHITE : colors.DIM_GRAY,
     opacity: anim,
@@ -538,13 +320,13 @@ const dynamicStyles = StyleSheet.create<any>({
       }),
     }],
   }),
-  pathSquareText: (darkMode: boolean) => ({
+  pathSquareText: (darkMode: boolean): TextStyle => ({
     color: (darkMode) ? colors.OFF_WHITE_TRANSPARENT(0.9) : colors.NEAR_BLACK_TRANSPARENT(0.4),
     fontFamily: "Montserrat-Medium",
     fontWeight: "bold",
     fontSize: normalize(24),
   }),
-});
+};
 
 const staticStyles = StyleSheet.create({
   container: {
@@ -558,15 +340,17 @@ const staticStyles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "center",
   },
-  buttonGap: {
-    width: normalize(15),
+  overlay: {
+    // Inside the board's 1px border, clipped to its rounded corners like the board.
+    position: "absolute",
+    top: 1, left: 1, right: 1, bottom: 1,
+    overflow: "hidden",
   },
   modal: {
     ...StyleSheet.absoluteFillObject,
     flexDirection: "column",
     alignItems: "center",
     justifyContent: "center",
-    paddingHorizontal: win.width * 0.225,
   },
   indicator: {
     position: "absolute",

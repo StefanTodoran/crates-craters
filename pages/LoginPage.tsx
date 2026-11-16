@@ -1,7 +1,10 @@
-import { UserCredential, createUserWithEmailAndPassword, sendEmailVerification, signInWithEmailAndPassword } from "firebase/auth";
+import { AuthCredential, EmailAuthProvider, GoogleAuthProvider, UserCredential, createUserWithEmailAndPassword, deleteUser, linkWithCredential, sendEmailVerification, signInWithEmailAndPassword } from "firebase/auth";
+import AppleLogo from "../assets/AppleLogo";
+import GoogleLogo from "../assets/GoogleLogo";
+import { signInWithGoogle } from "../util/googleAuth";
 import { Timestamp } from "firebase/firestore";
 import { useContext, useState } from "react";
-import { Dimensions, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import Toast from "react-native-toast-message";
 import InputLine from "../components/InputLine";
 import SimpleButton from "../components/SimpleButton";
@@ -9,11 +12,10 @@ import SubpageContainer from "../components/SubpageContainer";
 import GlobalContext from "../GlobalContext";
 import TextStyles, { normalize } from "../TextStyles";
 import { colors, graphics } from "../Theme";
-import { UserAccountDocument, createDocument, doesEntryExist } from "../util/database";
+import { UserAccountDocument, createUserAccount, isUsernameTaken } from "../util/database";
 import { auth } from "../util/firebase";
-import { getData, getLocalUserData, metadataKeys, setData } from "../util/loader";
+import { getData, getLocalUserData, metadataKeys, storage } from "../util/loader";
 
-const win = Dimensions.get("window");
 const emailRegex = /^(\S+@\S+\.\S+)?$/;
 
 interface Props {
@@ -28,12 +30,55 @@ enum PageMode {
 
 export default function LoginPage({ setUserCredential }: Props) {
     const { darkMode } = useContext(GlobalContext);
+    const win = useWindowDimensions();
     const [pageMode, setPageMode] = useState<PageMode>(PageMode.UNSET);
 
     const [email, setEmail] = useState("");
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
     const [loading, setLoading] = useState(false);
+    // Set when Google sign-in hit an existing password account for the same email:
+    // after the password sign-in succeeds, Google is linked to that account.
+    // Only linked to an account with that same email.
+    const [pendingGoogle, setPendingGoogle] = useState<{ credential: AuthCredential, email: string } | null>(null);
+
+    const continueWithGoogle = async () => {
+        setLoading(true);
+        try {
+            const userCredential = await signInWithGoogle();
+            if (!userCredential) return; // Cancelled.
+            setUserCredential(userCredential);
+            storage.delete(metadataKeys.userCredentials); // Legacy saved password, if any.
+            Toast.show({
+                type: "success",
+                text1: "Signed in with Google!",
+                text2: `You are now logged in as ${userCredential.user.email}.`,
+            });
+        } catch (error: any) {
+            if (error.code === "auth/account-exists-with-different-credential") {
+                const credential = GoogleAuthProvider.credentialFromError(error);
+                const googleEmail: string | undefined = error.customData?.email;
+                if (credential && googleEmail) {
+                    setPendingGoogle({ credential, email: googleEmail.toLowerCase() });
+                    setEmail(googleEmail);
+                }
+                setPageMode(PageMode.LOGIN);
+                Toast.show({
+                    type: "info",
+                    text1: "You already have an account.",
+                    text2: "Sign in with your password once to connect Google.",
+                });
+            } else if (error.code !== "SIGN_IN_CANCELLED" && error.code !== "-5") {
+                Toast.show({
+                    type: "error",
+                    text1: "Google sign-in failed.",
+                    text2: `Error code: ${error.code ?? error.message}. Please try again.`,
+                });
+            }
+        } finally {
+            setLoading(false);
+        }
+    };
 
     let hint;
     if (!password) hint = "Please input a password.";
@@ -51,12 +96,39 @@ export default function LoginPage({ setUserCredential }: Props) {
         <SubpageContainer center>
             {
                 pageMode === PageMode.UNSET && <>
-                    <View style={styles.pageModeRow}>
+                    <View style={[styles.pageModeRow, { marginHorizontal: win.width * 0.18 }]}>
                         <SimpleButton
                             text="Sign In"
                             icon={graphics.SIGNUP_ICON}
                             theme={colors.YELLOW_THEME}
                             onPress={() => setPageMode(PageMode.LOGIN)}
+                            fillWidth
+                            square
+                            extraMargin={[0, 8]}
+                            main
+                        />
+                        <SimpleButton
+                            text="Continue w/ Google"
+                            Svg={GoogleLogo}
+                            theme={colors.YELLOW_THEME}
+                            onPress={continueWithGoogle}
+                            disabled={loading}
+                            fillWidth
+                            square
+                            extraMargin={[0, 8]}
+                            main
+                        />
+                        {/* Placeholder until Sign in with Apple is implemented. */}
+                        <SimpleButton
+                            text="Continue w/ Apple"
+                            Svg={AppleLogo}
+                            theme={colors.YELLOW_THEME}
+                            onPress={() => Toast.show({
+                                type: "info",
+                                text1: "Sign in with Apple is coming soon.",
+                                text2: "For now, use Google or an email account.",
+                            })}
+                            disabled={loading}
                             fillWidth
                             square
                             extraMargin={[0, 8]}
@@ -83,7 +155,11 @@ export default function LoginPage({ setUserCredential }: Props) {
                     <InputLine
                         label={"Email"}
                         value={email}
-                        onChange={setEmail}
+                        onChange={(newEmail: string) => {
+                            setEmail(newEmail);
+                            // A different email means a different account: drop the pending link.
+                            if (pendingGoogle && newEmail.toLowerCase() !== pendingGoogle.email) setPendingGoogle(null);
+                        }}
                         darkMode={darkMode}
                         doFilter={false}
                         fullBorder
@@ -117,7 +193,7 @@ export default function LoginPage({ setUserCredential }: Props) {
                     <SimpleButton
                         icon={graphics.YELLOW_BACK_ICON}
                         theme={colors.YELLOW_THEME}
-                        onPress={() => setPageMode(PageMode.UNSET)}
+                        onPress={() => { setPageMode(PageMode.UNSET); setPendingGoogle(null); }}
                         extraMargin={6}
                         square
                     />
@@ -130,9 +206,19 @@ export default function LoginPage({ setUserCredential }: Props) {
                         onPress={() => {
                             setLoading(true);
                             signInWithEmailAndPassword(auth, email, password)
-                                .then((userCredential) => {
+                                .then(async (userCredential) => {
+                                    if (pendingGoogle && userCredential.user.email?.toLowerCase() === pendingGoogle.email) {
+                                        await linkWithCredential(userCredential.user, pendingGoogle.credential)
+                                            .then(() => Toast.show({
+                                                type: "success",
+                                                text1: "Google connected!",
+                                                text2: "You can now sign in with Google too.",
+                                            }))
+                                            .catch(error => console.warn("Failed to link Google:", error.code));
+                                    }
+                                    setPendingGoogle(null);
                                     setUserCredential(userCredential);
-                                    setData(metadataKeys.userCredentials, { email: email, password: password });
+                                    storage.delete(metadataKeys.userCredentials); // Legacy saved password, if any.
                                     Toast.show({
                                         type: "success",
                                         text1: "Account login succeeded!",
@@ -164,8 +250,7 @@ export default function LoginPage({ setUserCredential }: Props) {
 
                             setLoading(true);
 
-                            const usernameExists = await doesEntryExist("userAccounts", "__name__", username);
-                            if (usernameExists) {
+                            if (await isUsernameTaken(username).catch(() => false)) {
                                 Toast.show({
                                     type: "error",
                                     text1: "Username already taken.",
@@ -175,8 +260,15 @@ export default function LoginPage({ setUserCredential }: Props) {
                                 return;
                             }
 
-                            createUserWithEmailAndPassword(auth, email, password)
-                                .then((userCredential) => {
+                            // Upgrading the anonymous session keeps its uid, so solutions
+                            // posted before signing up stay attributed to this player.
+                            const current = auth.currentUser;
+                            const createAuthUser = current?.isAnonymous
+                                ? linkWithCredential(current, EmailAuthProvider.credential(email, password))
+                                : createUserWithEmailAndPassword(auth, email, password);
+
+                            createAuthUser
+                                .then(async (userCredential) => {
                                     const accountDoc: UserAccountDocument = {
                                         user_email: email,
                                         user_name: username,
@@ -188,38 +280,42 @@ export default function LoginPage({ setUserCredential }: Props) {
                                         local_uuid: userData.uuid,
                                         local_joined: Timestamp.fromDate(new Date(userData.joined)),
                                     };
-                                    createDocument("userAccounts", email, accountDoc)
+
+                                    try {
+                                        await createUserAccount(userCredential.user.uid, accountDoc);
+                                    } catch (error: any) {
+                                        // Most likely the username was claimed in the meantime. Don't
+                                        // leave an auth user behind without an account.
+                                        await deleteUser(userCredential.user).catch(() => { });
+                                        Toast.show({
+                                            type: "error",
+                                            text1: "Account creation failed.",
+                                            text2: `Error code: ${error.code}. Try a different username.`,
+                                        });
+                                        return;
+                                    }
+
+                                    setUserCredential(userCredential);
+                                    Toast.show({
+                                        type: "success",
+                                        text1: "Account creation succeeded!",
+                                        text2: `You are now logged in as ${userCredential.user.email}.`,
+                                    });
+
+                                    const user = userCredential.user;
+                                    sendEmailVerification(user)
                                         .then(() => {
-                                            setData(metadataKeys.userCredentials, { email: email, password: password });
-                                            setUserCredential(userCredential);
                                             Toast.show({
                                                 type: "success",
-                                                text1: "Account creation succeeded!",
-                                                text2: `You are now logged in as ${userCredential.user.email}.`,
+                                                text1: "Email verification sent!",
+                                                text2: `Please verify your email at ${user.email}.`,
                                             });
-
-                                            const user = userCredential.user;
-                                            sendEmailVerification(user)
-                                                .then(() => {
-                                                    Toast.show({
-                                                        type: "success",
-                                                        text1: "Email verification sent!",
-                                                        text2: `Please verify your email at ${user.email}.`,
-                                                    });
-                                                })
-                                                .catch((error) => {
-                                                    Toast.show({
-                                                        type: "error",
-                                                        text1: "Send verification failed.",
-                                                        text2: `Unable to send verification email. Error code: ${error.code}.`,
-                                                    });
-                                                });
                                         })
                                         .catch((error) => {
                                             Toast.show({
                                                 type: "error",
-                                                text1: "Account creation failed.",
-                                                text2: `Error code: ${error.code}. Please contact support.`,
+                                                text1: "Send verification failed.",
+                                                text2: `Unable to send verification email. Error code: ${error.code}.`,
                                             });
                                         });
                                 })
@@ -227,7 +323,9 @@ export default function LoginPage({ setUserCredential }: Props) {
                                     Toast.show({
                                         type: "error",
                                         text1: "Account creation failed.",
-                                        text2: `Error code: ${error.code}. Please try again.`,
+                                        text2: error.code === "auth/email-already-in-use"
+                                            ? "That email already has an account. Sign in, or use Continue with Google."
+                                            : `Error code: ${error.code}. Please try again.`,
                                     });
                                 })
                                 .finally(() => setLoading(false));
@@ -248,8 +346,6 @@ const styles = StyleSheet.create({
     pageModeRow: {
         alignItems: "center",
         justifyContent: "center",
-        // width: win.width * 0.45,
-        marginHorizontal: win.width * 0.225,
     },
     buttonsRow: {
         flexDirection: "row",

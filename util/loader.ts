@@ -1,8 +1,8 @@
 import { MMKV } from "react-native-mmkv";
 import { FlatBoard } from "./board";
-import { doNotificationsUpdate, doStateStorageSync } from "./events";
+import { setAppState, updateNotificationCount } from "./store";
 import { countInstancesInBoard } from "./logic";
-import { BombTile, Direction, Level, LevelObjectType, LocalUserData, OfficialLevel, OneWayTile, TileType, UserLevel, isLevelWellFormed } from "./types";
+import { BombTile, Direction, FlatTile, Level, LevelObjectType, LocalUserData, OfficialLevel, OneWayTile, TileType, UserLevel, isLevelWellFormed } from "./types";
 
 export const storage = new MMKV();
 
@@ -44,8 +44,12 @@ export function getData(key: string) {
   return rawValue ? JSON.parse(rawValue) : undefined;
 }
 
-export function getLevelData(key: string) {
+export function getLevelData(key: string): Level | undefined {
   const level = getData(key);
+  if (!level?.board) {
+    console.warn("No stored level for key:", key);
+    return undefined;
+  }
   const board = new FlatBoard(level.board.board);
   level.board = board;
   return level as Level;
@@ -101,9 +105,9 @@ export function getStoredLevels() {
     const expectedType = olKeys.includes(key) ? LevelObjectType.OFFICIAL : LevelObjectType.USER;
 
     if (isLevelWellFormed(level, expectedType)) {
-      // @ts-expect-error The next two lines turn level.board from an object to a class instance.
-      const board = new FlatBoard(level.board.board);
-      level.board = board;
+      // Storage holds the board as plain data; turn it back into a class instance.
+      const stored = level.board as unknown as { board: FlatTile[][] };
+      level.board = new FlatBoard(stored.board);
 
       levels.push(level);
     } else {
@@ -114,9 +118,13 @@ export function getStoredLevels() {
     }
   });
 
+  // Official levels by their order, then custom levels in the order they were created.
+  // (Comparing only when both had an order wasn't transitive, so the result depended on
+  // the sort algorithm.)
+  const orderOf = (level: Level) => Object.hasOwn(level, "order") ? (level as OfficialLevel).order : Infinity;
   levels.sort((a, b) => {
-    if (!Object.hasOwn(a, "order") || !Object.hasOwn(b, "order")) return 0;
-    else return (a as OfficialLevel).order - (b as OfficialLevel).order;
+    const orderA = orderOf(a), orderB = orderOf(b);
+    return orderA === orderB ? 0 : orderA < orderB ? -1 : 1;
   });
 
   return levels;
@@ -131,18 +139,18 @@ export function createLevel(level: UserLevel) {
 
   // TODO: All state storage sync functions could maybe be replaced with
   // a number of event listeners on MMKV.
-  doStateStorageSync(level.uuid);
+  syncLevelsWithStorage(level.uuid);
 }
 
-export function updateLevel(updatedLevel: UserLevel, boardChange: boolean = true) {
-  const existingLevel: Level = getData(updatedLevel.uuid);
+export function updateLevel(updatedLevel: Pick<UserLevel, "uuid"> & Partial<UserLevel>, boardChange: boolean = true) {
+  const existingLevel: UserLevel | undefined = getData(updatedLevel.uuid);
 
   if (!existingLevel) {
     console.error("Attempted to update non-existent level: " + updatedLevel.uuid);
     return;
   }
 
-  const level: Level = {
+  const level: UserLevel = {
     ...existingLevel,
     ...updatedLevel,
   };
@@ -153,7 +161,7 @@ export function updateLevel(updatedLevel: UserLevel, boardChange: boolean = true
   }
 
   setData(level.uuid, level);
-  doStateStorageSync(level.uuid);
+  syncLevelsWithStorage(level.uuid);
 }
 
 export function deleteLevel(level: Level, keySet: metadataKeys = metadataKeys.customLevelKeys) {
@@ -168,7 +176,7 @@ export function deleteLevel(level: Level, keySet: metadataKeys = metadataKeys.cu
     console.error(`Attempted delete of level with uuid ${level.uuid} but no corresponding key was found in "${keySet}"!`)
   }
 
-  doStateStorageSync();
+  syncLevelsWithStorage();
 }
 
 export function multiStoreLevels(levels: Level[]) {
@@ -196,6 +204,7 @@ export function multiStoreLevels(levels: Level[]) {
 
 export function markLevelCompleted(uuid: string, moveHistory: Direction[]) {
   const level = getLevelData(uuid);
+  if (!level) return;
   const wasCompleted = level.completed;
 
   const prevBest = level.bestSolution ? level.bestSolution.length : Infinity;
@@ -203,13 +212,13 @@ export function markLevelCompleted(uuid: string, moveHistory: Direction[]) {
   level.completed = true;
 
   setData(uuid, level);
-  doStateStorageSync(uuid);
+  syncLevelsWithStorage(uuid);
 
   if (level.official && !wasCompleted) {
     // We only want to give coins for the first time an official level is completed.
     const gain = countInstancesInBoard(level.board, TileType.COIN);
     modifyCoinBalance(gain);
-    doNotificationsUpdate(2, 1);
+    updateNotificationCount(2, 1);
   }
 }
 
@@ -229,16 +238,33 @@ const split = {
   tile: ".",
 }
 
+/**
+ * Throws on malformed data. Shared levels come from other players, so a bad board
+ * must fail here rather than crash rendering later.
+ */
 export function parseCompressedBoardData(raw: string): FlatBoard {
+  if (typeof raw !== "string") throw new Error("Board data is not a string.");
   const rawBoard = raw.split(split.row);
   const board = new FlatBoard(FlatBoard.createEmptyBoard());
+  if (rawBoard.length > board.height) throw new Error(`Board has ${rawBoard.length} rows (max ${board.height}).`);
+
+  const isInt = (value: number, min: number, max: number) => Number.isInteger(value) && value >= min && value <= max;
+  const checkTileId = (id: number) => {
+    if (!isInt(id, 0, TileType.OUTSIDE - 1)) throw new Error(`Invalid tile id "${id}".`);
+  };
 
   rawBoard.forEach((strRow, yPos) => {
     const rawRow = strRow.split(split.column);
+    if (rawRow.length > board.width) throw new Error(`Row ${yPos} has ${rawRow.length} tiles (max ${board.width}).`);
 
     rawRow.forEach((strTile, xPos) => {
       if (strTile.includes(split.tile)) {
-        const tileData = strTile.split(split.tile).map(substr => parseInt(substr));
+        const tileData = strTile.split(split.tile).map(substr => Number(substr));
+        checkTileId(tileData[0]);
+        if (tileData[0] === TileType.ONEWAY && !tileData.slice(1).every(dir => isInt(dir, Direction.UP, Direction.LEFT))) {
+          throw new Error(`Invalid one-way directions at ${yPos},${xPos}.`);
+        }
+        if (tileData[0] === TileType.BOMB && !isInt(tileData[1], 0, 999)) throw new Error(`Invalid bomb fuse at ${yPos},${xPos}.`);
         const tile = { id: tileData[0] };
 
         // TODO: As the list of tiles with data beyond id expands,
@@ -254,7 +280,9 @@ export function parseCompressedBoardData(raw: string): FlatBoard {
 
         board.setTile(yPos, xPos, tile);
       } else {
-        board.setTile(yPos, xPos, { id: parseInt(strTile) });
+        const id = Number(strTile);
+        checkTileId(id);
+        board.setTile(yPos, xPos, { id });
       }
     });
   });
@@ -277,20 +305,11 @@ export function compressBoardData(board: FlatBoard): string {
 
     for (let x = 0; x < board.width; x++) {
       const tile = board.getTile(y, x);
-      const keys = Object.keys(tile);
-
       let encoding = "";
-      keys.forEach(key => {
-        // TODO: These seem to always be in the right order, but need to
-        // make sure that this is a guarantee and not environment dependent.
-
-        // @ts-expect-error This is a valid key.
-        const value = tile[key];
-
-        let serializedValue = value.toString();
-        if (value.constructor === Array) {
-          serializedValue = value.join(".");
-        }
+      // Property order is insertion order (guaranteed for string keys since ES2015),
+      // and tiles are always built id first.
+      Object.values(tile).forEach((value: number | Direction[]) => {
+        const serializedValue = Array.isArray(value) ? value.join(".") : value.toString();
         encoding += serializedValue + split.tile;
       });
       encoding = encoding.slice(0, -1);
@@ -317,3 +336,29 @@ export function generateUUID() {
 // Potholes (lots of craters)
 // Demolition Man (no craters only bombs)
 // Payday (tons of coins)
+
+/**
+ * Reloads levels from storage after it changes: one level by uuid, or all of them.
+ * Keeps the editor's level in step, and clears it if it was deleted.
+ */
+export function syncLevelsWithStorage(uuid?: string) {
+  if (!uuid) {
+    const levels = getStoredLevels();
+    setAppState(({ editorLevel }) => ({
+      levels,
+      editorLevel: editorLevel && levels.some(level => level.uuid === editorLevel.uuid) ? editorLevel : undefined,
+    }));
+    return;
+  }
+
+  const updated = getLevelData(uuid);
+  if (!updated) return;
+  setAppState(({ levels, editorLevel }) => ({
+    // A level just created (e.g. a copied shared level) isn't in the list yet: add it.
+    levels: levels.some(level => level.uuid === uuid) ?
+      levels.map(level => level.uuid === uuid ? updated : level) :
+      [...levels, updated],
+    editorLevel: editorLevel?.uuid === uuid ? updated as UserLevel : editorLevel,
+  }));
+}
+

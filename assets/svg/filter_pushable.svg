@@ -1,0 +1,15 @@
+<svg width="100" height="100" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g opacity="0.2">
+<path d="M10 55H20V80H45V90H10V55ZM90 90H55V80H80V55H90V90ZM45 10V20H20V45H10V10H45ZM90 45H80V20H55V10H90V45Z" fill="#F9A784" fill-opacity="0.5"/>
+<use xlink:href="#stroke0_3096_218" fill="#F7B69B"/>
+<use xlink:href="#stroke0_3096_218" fill="#15101A" fill-opacity="0.1"/>
+<path d="M31.4645 65.0876L65.052 31.5L68.5876 35.0355L35 68.6231L31.4645 65.0876Z" fill="#F7B69B"/>
+<path d="M35 31.5L68.5876 65.0876L65.052 68.6231L31.4645 35.0355L35 31.5Z" fill="#F7B69B"/>
+<path d="M70 70V30H30V70H70ZM65 65H35V35H65V65Z" fill-rule="evenodd" clip-rule="evenodd" fill="#F7B69B"/>
+<path opacity="0.1" d="M30 60.1935L70 46V70H30V60.1935Z" fill="#0E0A09"/>
+<path d="M22 70H26V74H30V78H22V70ZM78 78H70V74H74V70H78V78ZM30 22V26H26V30H22V22H30ZM78 30H74V26H70V22H78V30Z" fill="#F9A784" fill-opacity="0.5"/>
+</g>
+<defs>
+<path id="stroke0_3096_218" d="M70 70V30H30V70H70Z" fill-rule="evenodd" clip-rule="evenodd"/>
+</defs>
+</svg>

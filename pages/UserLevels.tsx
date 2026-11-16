@@ -1,22 +1,23 @@
-import { useCallback, useContext, useEffect, useRef, useState } from "react";
-import { Animated, Dimensions, FlatList, StyleSheet, Text, View } from "react-native";
+import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { FlatList, Pressable, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import Toast from "react-native-toast-message";
 import FilterChip from "../components/FilterChip";
-import InputLine from "../components/InputLine";
-import { IndicatorIcon } from "../components/LevelCard";
+import InputLine, { INPUT_LABEL_ROOM } from "../components/InputLine";
+import { Difficulty, IndicatorIcon, StatChip, difficultyThemes } from "../components/LevelCard";
+import BottomSheet from "../components/BottomSheet";
 import SimpleButton from "../components/SimpleButton";
 import SliderBar from "../components/SliderBar";
 import GlobalContext from "../GlobalContext";
 import TextStyles, { normalize } from "../TextStyles";
-import { graphics, purpleTheme } from "../Theme";
-import { ExplicitOrder, QueryFilter, attemptUserLevel, createFirebaseQuery, getEntriesFromQuery, getEntryCountFromQuery, likeUserLevel } from "../util/database";
+import { colors, graphics, purpleTheme } from "../Theme";
+import { ExplicitOrder, QueryFilter, attemptUserLevel, likeUserLevel, queryUserLevels } from "../util/database";
+import { hapticLike } from "../util/haptics";
 import { useDebounce } from "../util/hooks";
-import { getData, metadataKeys, parseCompressedBoardData } from "../util/loader";
+import { getAppState, setEditorLevel } from "../util/store";
+import { createLevel, generateUUID, getData, metadataKeys, parseCompressedBoardData } from "../util/loader";
 import { areSetsEqual } from "../util/Set";
-import { PageView, SharedLevel } from "../util/types";
-import LevelSelect from "./LevelSelect";
-
-const win = Dimensions.get("window");
+import { Level, PageView, SharedLevel, UserLevel } from "../util/types";
+import LevelSelect, { CardActions } from "./LevelSelect";
 
 enum Filter {
     POPULAR = "Popular",
@@ -27,6 +28,7 @@ enum Filter {
     COMPLETED = "Completed",
     PLAYED = "Played Before",
     UNATTEMPTED = "No Attempts",
+    YOURS = "Yours", // Your own shared levels. Excludes every other filter.
 }
 
 const mutualExclusions = [
@@ -41,17 +43,13 @@ const difficultyRanges = {
     "Hard": [0, 0.5],
 } as Record<string, [number, number]>;
 
-const lengthRanges = {
-    "Short": [0, 50],
-    "Normal": [50, 100],
-    "Long": [100, Infinity],
-} as Record<string, [number, number]>;
-
-function getRange(value: number, ranges: Record<Filter, [number, number]>): string {
+function getRange(value: number, ranges: Record<string, [number, number]>): string {
     for (const [rank, range] of Object.entries(ranges)) {
         if (value > range[0] && value <= range[1]) return rank;
     }
-    throw new Error(`Invalid value ${value} for ranges ${ranges}`);
+    // Called during render, so never throw: bad server data shouldn't crash the list.
+    console.warn(`Value ${value} is outside of ranges`, ranges);
+    return "Unknown";
 }
 
 interface SearchParams {
@@ -62,6 +60,101 @@ interface SearchParams {
     winrateFilterEnabled: boolean,
     minWinrate: number,
     maxWinrate: number,
+}
+
+interface LocalLevelLists {
+    likedLevels: string[],
+    attemptedLevels: string[],
+    completedLevels: string[],
+    uid?: string, // The signed-in user, for Yours.
+}
+
+// The solve rate says little until a few people have tried a level.
+const MIN_ATTEMPTS_FOR_DIFFICULTY = 5;
+
+/** A colored pill: New (too few attempts), Unbeaten, or Easy, Medium or Hard by solve rate. */
+function difficultyChip(level: SharedLevel): StatChip {
+    if (level.attempts < MIN_ATTEMPTS_FOR_DIFFICULTY) return { label: "New", theme: colors.BLUE_THEME, accessibilityLabel: "New: few attempts so far" };
+    if (level.wins === 0) return { label: "Unsolved", theme: colors.ORANGE_THEME };
+    const difficulty = getRange(Math.min(1, level.wins / level.attempts), difficultyRanges);
+    return { label: difficulty, theme: difficultyThemes[difficulty as Difficulty] };
+}
+
+/** The solve rate, colored like the difficulty pill; only once the difficulty is known. */
+function solveRateChip(level: SharedLevel): StatChip | undefined {
+    if (level.attempts < MIN_ATTEMPTS_FOR_DIFFICULTY || level.wins === 0) return;
+    const rate = Math.round(100 * Math.min(1, level.wins / level.attempts));
+    return { label: `${rate}% solved`, theme: difficultyChip(level).theme, accessibilityLabel: `${rate}% solve rate` };
+}
+
+const bestLength = (level: SharedLevel) => level.bestSolution?.length ?? level.best;
+const plural = (count: number, word: string) => `${count} ${word}${count === 1 ? "" : "s"}`;
+const bestChip = (level: SharedLevel): StatChip =>
+    ({ label: `Best: ${bestLength(level)}`, icon: graphics.FLAG_ICON, accessibilityLabel: `Best solution: ${bestLength(level)} moves` });
+const likesChip = (level: SharedLevel): StatChip =>
+    ({ label: plural(level.likes, "like"), icon: graphics.LIKE_ICON });
+
+/** When a level was shared: a date string, or a Firestore Timestamp on fetched levels. */
+function sharedDate(level: SharedLevel): Date | undefined {
+    const shared = level.shared as unknown;
+    if (typeof shared === "string") return new Date(shared);
+    if (shared && typeof (shared as { toDate?: unknown }).toDate === "function") return (shared as { toDate: () => Date }).toDate();
+    return undefined;
+}
+
+function didParamsChange(a: SearchParams, b: SearchParams) {
+    return !areSetsEqual(a.filters, b.filters) ||
+        a.lengthFilterEnabled !== b.lengthFilterEnabled ||
+        a.winrateFilterEnabled !== b.winrateFilterEnabled ||
+        a.minSolutionLength !== b.minSolutionLength ||
+        a.maxSolutionLength !== b.maxSolutionLength ||
+        a.minWinrate !== b.minWinrate ||
+        a.maxWinrate !== b.maxWinrate;
+}
+
+/** Turns the search filters into a shared levels query (see queryUserLevels). */
+export function buildUserLevelQuery(params: SearchParams, lists: LocalLevelLists) {
+    const { filters } = params;
+
+    const orderFields: ExplicitOrder[] = [];
+    if (filters.has(Filter.POPULAR)) orderFields.push({ field: "likes", order: "desc" });
+    orderFields.push({ field: "shared", order: filters.has(Filter.NEWEST) ? "desc" : "asc" });
+
+    const filterFields: QueryFilter[] = [{ field: "public", operator: "==", value: true }];
+    if (filters.has(Filter.YOURS)) {
+        // Equality filters only, so no composite index is needed; sorted newest first after fetching.
+        filterFields.push({ field: "user_uid", operator: "==", value: lists.uid ?? "" });
+        return { orderFields: [], filterFields, includeIds: undefined, excludeIds: [] };
+    }
+    if (filters.has(Filter.UNATTEMPTED)) {
+        filterFields.push({ field: "attempts", operator: "==", value: 0 });
+    }
+    if (filters.has(Filter.UNBEATEN)) {
+        // Nobody has solved it yet, whether or not anyone has tried. Also ordered by
+        // attempts (after the share date, so in effect only a tiebreak), which matches
+        // the indexes built for the earlier "attempts != 0" version of this query.
+        filterFields.push({ field: "wins", operator: "==", value: 0 });
+        orderFields.push({ field: "attempts", order: orderFields[orderFields.length - 1].order });
+    }
+    if (params.lengthFilterEnabled) {
+        filterFields.push({ field: "best", operator: ">", value: params.minSolutionLength });
+        filterFields.push({ field: "best", operator: "<=", value: params.maxSolutionLength });
+    }
+    if (params.winrateFilterEnabled) {
+        filterFields.push({ field: "winrate", operator: ">=", value: params.minWinrate / 100 });
+        filterFields.push({ field: "winrate", operator: "<=", value: params.maxWinrate / 100 });
+    }
+
+    // Liked/Played/Completed restrict results to a known list of level ids, and
+    // Unplayed excludes one. Ids are document names (documents have no "uuid"
+    // field; parseQuerySnapshot adds it client-side), so match on "__name__".
+    let includeIds: string[] | undefined;
+    if (filters.has(Filter.LIKED)) includeIds = lists.likedLevels;
+    if (filters.has(Filter.PLAYED)) includeIds = lists.attemptedLevels;
+    if (filters.has(Filter.COMPLETED)) includeIds = lists.completedLevels;
+    const excludeIds = filters.has(Filter.UNPLAYED) ? lists.attemptedLevels : [];
+
+    return { orderFields, filterFields, includeIds, excludeIds };
 }
 
 interface Props {
@@ -83,40 +176,82 @@ export default function UserLevels({
     setUserLevels,
     storeElementHeightCallback,
 }: Props) {
-    const { darkMode, userCredential } = useContext(GlobalContext);
+    const { darkMode, userCredential, userData } = useContext(GlobalContext);
 
+    const uid = userCredential?.user.uid;
+    const isOwnLevel = (uuid: string) =>
+        !!uid && filteredLevels.find(lvl => lvl.uuid === uuid)?.user_uid === uid;
+    // Sharing creates a new doc id, kept on the local level as db_id (missing if shared from another device).
+    const findLocalLevel = (uuid: string) =>
+        getAppState().levels.find(level => !level.official && (level as UserLevel).db_id === uuid) as UserLevel | undefined;
+
+    const win = useWindowDimensions();
+    // The full filters panel is a native sheet (swipe down to dismiss on iOS).
     const [modalOpen, setModalOpen] = useState(false);
-    const fadeModalAnim = useRef(new Animated.Value(0)).current;
-    const toggleModal = useCallback(() => {
-        const start = (modalOpen) ? 1 : 0;
-        const end = (modalOpen) ? 0 : 1;
-        const modalWasOpen = modalOpen;
+    const toggleModal = () => {
+        setModalOpen(!modalOpen);
+    };
 
-        if (!modalWasOpen) { // If modal was not open
-            setModalOpen(true); // Set modal to open
-        }
+    // Read from storage only when the shown levels change (e.g. after a like), not on
+    // every render: these parse JSON, and renders happen on each search keystroke.
+    const localLists = useMemo((): LocalLevelLists => ({
+        likedLevels: getData(metadataKeys.likedLevels) || [],
+        attemptedLevels: getData(metadataKeys.attemptedLevels) || [],
+        completedLevels: getData(metadataKeys.completedLevels) || [],
+        uid,
+    }), [userLevels, uid]);
+    const { likedLevels } = localLists;
 
-        fadeModalAnim.setValue(start);
-        Animated.timing(fadeModalAnim, {
-            toValue: end,
-            duration: 200,
-            useNativeDriver: true
-        }).start(() => {
-            if (modalWasOpen) {
-                setModalOpen(false);
-            }
+    // Likes show at once, before the server answers (and roll back if it fails).
+    const [optimisticLikes, setOptimisticLikes] = useState(new Set<string>());
+    const isLiked = (uuid: string) => likedLevels.includes(uuid) || optimisticLikes.has(uuid);
+    const canLike = (uuid: string) => !!uid && !isOwnLevel(uuid);
+    const latestLevels = useRef(userLevels);
+    latestLevels.current = userLevels;
+    const changeLikes = (uuid: string, delta: number) => setUserLevels(latestLevels.current.map(lvl =>
+        lvl.uuid === uuid ? { ...lvl, likes: lvl.likes + delta } : lvl
+    ));
+    const likeLevel = async (uuid: string) => {
+        if (!uid || isLiked(uuid) || isOwnLevel(uuid)) return;
+        hapticLike();
+        setOptimisticLikes(likes => new Set(likes).add(uuid));
+        changeLikes(uuid, 1);
+
+        const success = await likeUserLevel(uuid, uid);
+        if (success) return;
+        setOptimisticLikes(likes => { const next = new Set(likes); next.delete(uuid); return next; });
+        changeLikes(uuid, -1);
+        Toast.show({
+            type: "error",
+            text1: "Couldn't like level.",
+            text2: "Please check your connection and try again.",
         });
-    }, [modalOpen]);
+    };
 
-    const likedLevels = getData(metadataKeys.likedLevels) || [];
-    const attemptedLevels = getData(metadataKeys.attemptedLevels) || [];
-    const completedLevels = getData(metadataKeys.completedLevels) || [];
+    const manageLevel = (uuid: string) => {
+        const localLevel = findLocalLevel(uuid);
+        if (!localLevel) return;
+        setEditorLevel(localLevel);
+        viewCallback(PageView.MANAGE, 1);
+    };
+
+    const playLevel = (uuid: string) => {
+        const level = filteredLevels.find(level => level.uuid === uuid);
+        if (!level) return;
+        playLevelCallback(level);
+        // TODO: Add attempt tracking for official levels too.
+        attemptUserLevel(uuid, uid);
+    };
+
     const scrollRef = useRef<FlatList<Filter>>(null);
 
     const [filters, setFilters] = useState(new Set<Filter>());
     const toggleFilter = (filter: Filter) => {
+        const alreadyEnabled = filters.has(filter);
+        if (filter === Filter.YOURS) return setFilters(new Set(alreadyEnabled ? [] : [Filter.YOURS]));
+
         const newFilters = new Set(filters);
-        const alreadyEnabled = newFilters.has(filter);
+        newFilters.delete(Filter.YOURS);
 
         mutualExclusions.forEach(exclusionSet => {
             if (exclusionSet.has(filter)) {
@@ -145,8 +280,11 @@ export default function UserLevels({
     const [searchQuery, setSearchQuery] = useState("");
 
     const [loading, setLoading] = useState(false);
+    const [loadFailed, setLoadFailed] = useState(false);
 
-    const inactiveFilters = new Set(Object.values(Filter).filter(item => !filters.has(item)));
+    // Yours needs an account, and while it's on, the other filters are hidden.
+    const allFilters = Object.values(Filter).filter(filter => filter !== Filter.YOURS || !!uid);
+    const inactiveFilters = new Set(filters.has(Filter.YOURS) ? [] : allFilters.filter(item => !filters.has(item)));
     mutualExclusions.forEach(exclusionSet => {
         filters.forEach(activeFilter => {
             if (exclusionSet.has(activeFilter)) {
@@ -159,129 +297,164 @@ export default function UserLevels({
     });
     const validFilters = [...filters, ...inactiveFilters];
 
-    const prevParams = useRef<SearchParams>({
-        filters: new Set<Filter>(),
-        lengthFilterEnabled: false,
-        minSolutionLength: 50,
-        maxSolutionLength: 150,
-        winrateFilterEnabled: false,
-        minWinrate: 25,
-        maxWinrate: 95,
-    });
-    const fetchLevels = async (
-        filters: Set<Filter>,
-        numLoaded: number,
-        likedLevels: string[],
-        attemptedLevels: string[],
-        completedLevels: string[],
-    ) => {
+    const params: SearchParams = {
+        filters,
+        lengthFilterEnabled,
+        minSolutionLength,
+        maxSolutionLength,
+        winrateFilterEnabled,
+        minWinrate,
+        maxWinrate,
+    };
+    const prevParams = useRef<SearchParams>(params);
+
+    // Incremented per fetch, so a slow older response can't overwrite a newer one.
+    const latestRequest = useRef(0);
+    const fetchLevels = async () => {
+        const requestId = ++latestRequest.current;
         setLoading(true);
         try {
-            const orderFields: ExplicitOrder[] = [];
-            if (filters.has(Filter.POPULAR)) orderFields.push({ field: "likes", order: "desc" });
-            orderFields.push({ field: "shared", order: filters.has(Filter.NEWEST) ? "desc" : "asc" });
-
-            const filterFields: QueryFilter[] = [];
-            filterFields.push({ field: "public", operator: "==", value: true });
-            if (filters.has(Filter.UNATTEMPTED)) {
-                filterFields.push({ field: "attempts", operator: "==", value: 0 });
-            }
-            if (filters.has(Filter.UNBEATEN)) {
-                filterFields.push({ field: "wins", operator: "==", value: 0 });
-                filterFields.push({ field: "attempts", operator: "!=", value: 0 });
-            }
-
-            const filterInList = (operator: "in" | "not-in" | "array-contains-any", list: string[], field: string = "uuid") => {
-                if (list.length === 0) return;
-                // TODO: The following needs chunking, since we can have at most 30 disjunctions.
-                filterFields.push({ field: field, operator: operator, value: list });
-            };
-
-            if (filters.has(Filter.LIKED)) filterInList("in", likedLevels);
-            if (filters.has(Filter.PLAYED)) filterInList("in", attemptedLevels);
-            if (filters.has(Filter.UNPLAYED)) filterInList("not-in", attemptedLevels);
-            if (filters.has(Filter.COMPLETED)) filterInList("in", completedLevels);
-
-            // if (searchQuery) {
-            //     const keywords = [...searchQuery.toLowerCase().split(/\s+/)];
-            //     filterInList("array_contains_any", keywords, "keywords");
-            // }
-
-            if (lengthFilterEnabled) {
-                filterFields.push({ field: "best", operator: ">", value: minSolutionLength });
-                filterFields.push({ field: "best", operator: "<=", value: maxSolutionLength });
-            }
-            if (winrateFilterEnabled) {
-                filterFields.push({ field: "winrate", operator: ">=", value: minWinrate / 100 });
-                filterFields.push({ field: "winrate", operator: "<=", value: maxWinrate / 100 });
-            }
-
-            // console.log(filterFields);
-            const query = createFirebaseQuery("userLevels", numLoaded, orderFields, filterFields);
-            const data = await getEntriesFromQuery(query);
-            const count = await getEntryCountFromQuery(query);
+            const { orderFields, filterFields, includeIds, excludeIds } = buildUserLevelQuery(params, localLists);
+            const { data, count } = await queryUserLevels(orderFields, filterFields, numLoaded, includeIds, excludeIds);
+            if (requestId !== latestRequest.current) return true; // A newer fetch superseded this one.
+            if (filters.has(Filter.YOURS)) data.sort((a, b) =>
+                (sharedDate(b as unknown as SharedLevel)?.getTime() ?? 0) - (sharedDate(a as unknown as SharedLevel)?.getTime() ?? 0));
 
             setMatchingCount(count);
-            setUserLevels(data.filter(doc => doc.public).map(doc => {
-                return {
-                    ...doc,
-                    board: parseCompressedBoardData(doc.board),
-                    completed: completedLevels.includes(doc.uuid),
-                };
+            setLoadFailed(false);
+            setUserLevels(data.filter(doc => doc.public).flatMap(doc => {
+                try {
+                    // A level document is close to, but not exactly, a SharedLevel: it has
+                    // no created/downloads/official fields and `shared` is a Timestamp.
+                    // Nothing reads those on fetched levels.
+                    const level = {
+                        ...doc,
+                        board: parseCompressedBoardData(doc.board),
+                        completed: localLists.completedLevels.includes(doc.uuid),
+                    } as unknown as SharedLevel;
+                    return [level];
+                } catch (error) {
+                    // Skip malformed levels instead of breaking the whole list.
+                    console.warn("Skipping malformed shared level:", doc.uuid, error);
+                    return [];
+                }
             }));
 
             setLoading(false);
             return true;
-        } catch {
+        } catch (error) {
+            console.warn("Failed to fetch shared levels:", error);
+            if (requestId !== latestRequest.current) return false;
+            // Don't leave the previous results up under filters they don't match.
+            setUserLevels([]);
+            setMatchingCount(0);
+            setLoadFailed(true);
             setLoading(false);
             return false;
         }
     };
-    const parametrizedFetchLevels = () => fetchLevels(filters, numLoaded, likedLevels, attemptedLevels, completedLevels);
-    const didParamsChange = () => {
-        if (!areSetsEqual(filters, prevParams.current.filters)) return true;
-        if (lengthFilterEnabled !== prevParams.current.lengthFilterEnabled) return true;
-        if (winrateFilterEnabled !== prevParams.current.winrateFilterEnabled) return true;
-        if (minSolutionLength !== prevParams.current.minSolutionLength) return true;
-        if (maxSolutionLength !== prevParams.current.maxSolutionLength) return true;
-        if (minWinrate !== prevParams.current.minWinrate) return true;
-        if (maxWinrate !== prevParams.current.maxWinrate) return true;
-        return false;
-    };
 
-    const debouncedFetchLevels = useDebounce(parametrizedFetchLevels, 1000);
-    useEffect(() => { 
-        if (userLevels.length === 0) parametrizedFetchLevels();
+    const debouncedFetchLevels = useDebounce(fetchLevels, 1000);
+    useEffect(() => {
+        if (userLevels.length === 0) fetchLevels();
     }, []); // Fetch levels on mount.
+
+    // Refetch when the filters change (debounced, as chips are often tapped in a row),
+    // or when the filter modal closes with changed sliders. Not while the modal is open.
     useEffect(() => {
         if (modalOpen) return;
-        if (didParamsChange()) debouncedFetchLevels();
-        prevParams.current = {
-            filters,
-            lengthFilterEnabled,
-            minSolutionLength,
-            maxSolutionLength,
-            winrateFilterEnabled,
-            minWinrate,
-            maxWinrate,
-        };
-    }, [filters, numLoaded]); // }, [filters, numLoaded, searchQuery]);
+        if (didParamsChange(params, prevParams.current)) debouncedFetchLevels();
+        prevParams.current = params;
+    }, [filters, numLoaded]);
     useEffect(() => {
         if (modalOpen) return;
-        if (didParamsChange()) parametrizedFetchLevels();
-        prevParams.current = {
-            filters,
-            lengthFilterEnabled,
-            minSolutionLength,
-            maxSolutionLength,
-            winrateFilterEnabled,
-            minWinrate,
-            maxWinrate,
-        };
+        if (didParamsChange(params, prevParams.current)) fetchLevels();
+        prevParams.current = params;
     }, [modalOpen]);
 
-    let filteredLevels = userLevels;
-    if (searchQuery) filteredLevels = userLevels.filter(level => level.name.toLowerCase().includes(searchQuery.toLowerCase()) || level.user_name.toLowerCase().includes(searchQuery.toLowerCase()));
+    const filteredLevels = useMemo(() => {
+        if (!searchQuery) return userLevels;
+        const query = searchQuery.toLowerCase();
+        return userLevels.filter(level => level.name.toLowerCase().includes(query) || level.user_name.toLowerCase().includes(query));
+    }, [userLevels, searchQuery]);
+
+    // Card chips. The best solution only shows once a player has beaten the level: until
+    // then it would be the creator's own solution, which gives too much away.
+    const getStats = useCallback((level: Level): StatChip[] => {
+        const shared = level as SharedLevel;
+        return [difficultyChip(shared), solveRateChip(shared), shared.wins > 0 ? bestChip(shared) : undefined, likesChip(shared)]
+            .filter(chip => chip !== undefined);
+    }, []);
+
+    const getSubtitle = useCallback((level: Level) => {
+        const shared = level as SharedLevel;
+        return uid && shared.user_uid === uid ? "by you" : undefined;
+    }, [uid]);
+
+    // When it was shared, then plays and wins, in small print under the pills.
+    const getFootnote = useCallback((level: Level) => {
+        const shared = level as SharedLevel;
+        const date = sharedDate(shared);
+        const when = date ? `Shared ${date.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })} · ` : "";
+        return `${when}${plural(shared.attempts, "play")} · ${plural(shared.wins, "win")}`;
+    }, []);
+
+    // Copy a shared level into your own (local, private) levels and open it in Manage.
+    // Needs an account, like creating a level does.
+    const copyLevel = (uuid: string) => {
+        const shared = userLevels.find(level => level.uuid === uuid);
+        if (!shared || !userData) return;
+
+        // Level names are unique per user (case-insensitive), so number a repeat name.
+        const taken = new Set(getAppState().levels.filter(level => !level.official).map(level => level.name.toLowerCase()));
+        let name = shared.name;
+        for (let n = 2; taken.has(name.toLowerCase()); n++) name = `${shared.name} ${n}`;
+
+        const copy: UserLevel = {
+            name,
+            uuid: generateUUID(),
+            board: shared.board.clone(),
+            completed: false,
+            official: false,
+            created: new Date().toISOString(),
+            user_name: userData.user_name,
+        };
+        createLevel(copy);
+        setEditorLevel(copy);
+        viewCallback(PageView.MANAGE, 1);
+        Toast.show({ type: "success", text1: "Level copied", text2: `"${name}" is now in your levels.` });
+    };
+
+    // Copy someone else's level; your own levels go to their Manage page instead
+    // (unavailable if shared from another device, with no local copy).
+    const secondButtonProps = {
+        text: (uuid: string) => isOwnLevel(uuid) ? "Manage" : userData ? "Copy" : undefined, // No Copy when signed out.
+        icon: (uuid: string) => isOwnLevel(uuid) ? graphics.HAMMER_ICON : graphics.COPY_ICON_PURPLE,
+        disabled: (uuid: string) => isOwnLevel(uuid) && !findLocalLevel(uuid),
+        callback: (uuid: string) => isOwnLevel(uuid) ? manageLevel(uuid) : copyLevel(uuid),
+    };
+
+    const cardActions: CardActions = {
+        isLiked,
+        canLike,
+        onLike: likeLevel,
+    };
+
+    // What the list shows: the active filters, and how many levels match.
+    const activeLabels = [...filters].map(String);
+    if (!filters.has(Filter.YOURS)) {
+        if (lengthFilterEnabled) activeLabels.push(`${minSolutionLength}–${maxSolutionLength} moves`);
+        if (winrateFilterEnabled) activeLabels.push(`${minWinrate}–${maxWinrate}% solved`);
+    }
+    if (searchQuery) activeLabels.push(`"${searchQuery}"`);
+    const shownCount = searchQuery ? filteredLevels.length : Math.max(matchingCount, filteredLevels.length);
+    const summary = [...activeLabels, plural(shownCount, "level")].join(" · ");
+    const clearFilters = () => {
+        setFilters(new Set());
+        setLengthFilterEnabled(false);
+        setWinrateFilterEnabled(false);
+        setSearchQuery("");
+    };
 
     return (
         <>
@@ -296,13 +469,17 @@ export default function UserLevels({
                             fullBorder
                             doFlex
                         />
-                        <SimpleButton
-                            icon={graphics.FILTER_ICON}
-                            onPress={toggleModal}
-                            extraMargin={[10, 0, 0, 0]}
-                            square
-                            main
-                        />
+                        {/* The field reserves room above its outline for the raised
+                            label; match it so the button centers on the outline. */}
+                        <View style={{ marginTop: INPUT_LABEL_ROOM }}>
+                            <SimpleButton
+                                icon={graphics.FILTER_ICON}
+                                onPress={toggleModal}
+                                extraMargin={[10, 0, 0, 0]}
+                                square
+                                main
+                            />
+                        </View>
                     </View>
                     <FlatList
                         horizontal
@@ -320,70 +497,32 @@ export default function UserLevels({
                             disabled={loading}
                         />}
                     />
+                    <View style={styles.summaryRow}>
+                        <Text allowFontScaling={false} numberOfLines={1} style={[styles.summary, { color: darkMode ? purpleTheme.MAIN_COLOR : purpleTheme.TINT_COLOR }]}>
+                            {summary}
+                        </Text>
+                        {activeLabels.length > 0 && <Pressable onPress={clearFilters} hitSlop={10} accessibilityRole="button">
+                            <Text allowFontScaling={false} style={[styles.clear, { color: purpleTheme.DARK_COLOR }]}>Clear</Text>
+                        </Pressable>}
+                    </View>
                 </View>}
                 footerText={`Showing ${filteredLevels.length} of ${Math.max(matchingCount, filteredLevels.length)} levels`}
 
                 viewCallback={(newView: PageView) => viewCallback(newView, 1)}
                 resumeLevelCallback={playLevelCallback}
-                playLevelCallback={(uuid: string) => {
-                    const level = filteredLevels.find(level => level.uuid === uuid)!;
-                    playLevelCallback(level);
-                    // TODO: Add attempt tracking for official levels too.
-                    attemptUserLevel(uuid, userCredential?.user.email);
-                }}
-                secondButtonProps={{
-                    text: (uuid: string) => {
-                        const likeCount = filteredLevels.find(lvl => lvl.uuid === uuid)!.likes;
-                        return (likedLevels.includes(uuid) ? "Liked" : "Like") + ` (${likeCount})`;
-                    },
-                    disabled: (uuid: string) => {
-                        return !userCredential ||
-                            likedLevels.includes(uuid) ||
-                            filteredLevels.find(lvl => lvl.uuid === uuid)!.user_email === userCredential.user.email
-                    },
-                    icon: graphics.LIKE_ICON,
-                    callback: async (uuid: string) => {
-                        const success = await likeUserLevel(uuid, userCredential!.user.email!);
-                        if (!success) {
-                            Toast.show({
-                                type: "error",
-                                text1: "Couldn't like level.",
-                                text2: "Please check your connection and try again.",
-                            });
-                        }
-                        const newUserLevels = [...userLevels];
-                        const index = newUserLevels.findIndex(lvl => lvl.uuid === uuid);
-                        newUserLevels[index].likes += 1;
-                        setUserLevels(newUserLevels);
-                    },
-                }
-                }
-                // @ts-expect-error
-                getStats={(targetLevel: SharedLevel) => {
-                    const stats = [];
-
-                    let winrate = Math.round(100 * targetLevel.wins / targetLevel.attempts);
-                    if (isNaN(winrate)) stats.push("No attempts yet!");
-                    else if (targetLevel.wins === 0) stats.push("Never beaten!");
-                    else stats.push(`${winrate}% solve rate (${getRange(winrate / 100, difficultyRanges)})`);
-
-                    const solnLen = targetLevel.bestSolution!.length;
-                    stats.push(`${getRange(solnLen, lengthRanges)} solution`);
-                    stats.push(`(Best: ${solnLen} moves)`);
-
-                    if (userCredential && targetLevel.user_email === userCredential.user.email) {
-                        stats.push("Made by you!");
-                    }
-
-                    return stats;
-                }}
+                playLevelCallback={playLevel}
+                cardActions={cardActions}
+                secondButtonProps={secondButtonProps}
+                getStats={getStats}
+                getSubtitle={getSubtitle}
+                getFootnote={getFootnote}
                 levels={filteredLevels}
                 scrollTo={scrollTo}
                 allowResume
                 elementHeight={elementHeight}
                 storeElementHeightCallback={storeElementHeightCallback}
                 indicatorIcon={IndicatorIcon.COMPLETION}
-                onRefresh={parametrizedFetchLevels}
+                onRefresh={fetchLevels}
                 overrideRefreshing={loading}
                 onEndReached={() => {
                     // If this triggers, there are no more levels to load!
@@ -391,26 +530,34 @@ export default function UserLevels({
                     setNumLoaded(numLoaded + 10);
                 }}
                 emptyListProps={{
-                    textLines: ["Could not find any good matches for your search.", "Try widening your search to use less filters."],
+                    textLines: loadFailed ? ["Couldn't load levels.", "Check your connection, then pull to refresh."] :
+                        filters.has(Filter.YOURS) ?
+                        ["You haven't shared any levels yet.", "Share one from its page in the editor."] :
+                        ["Could not find any good matches for your search.", "Try widening your search to use less filters."],
                 }}
                 theme={purpleTheme}
                 noNumber
             />
 
-            {modalOpen && <Animated.View style={[
-                styles.modal,
-                {
-                    opacity: fadeModalAnim,
-                    backgroundColor: darkMode ? "rgba(0, 0, 0, 0.95)" : "rgba(255, 255, 255, 0.95)",
-                },
-            ]}>
-                <View style={styles.section}>
-                    <Text style={TextStyles.subtitle(darkMode)}>
-                        All Filters
+            <BottomSheet visible={modalOpen} onClose={() => setModalOpen(false)} contentStyle={styles.modal}>
+                {/* Apply sits at the top: the sheet resizes while it's dragged between
+                    heights, and a button pinned to the bottom jumped around with it. */}
+                <View style={styles.sheetHeader}>
+                    <Text allowFontScaling={false} style={[TextStyles.subtitle(darkMode), styles.sheetTitle]}>
+                        Filters
                     </Text>
+                    <SimpleButton
+                        icon={graphics.FILTER_ICON}
+                        text={"Apply"}
+                        onPress={toggleModal}
+                        main
+                    />
+                </View>
+
+                <View style={styles.section}>
 
                     <View style={styles.wrappedList}>
-                        {Object.values(Filter).map((filter, index) => <FilterChip
+                        {allFilters.map((filter, index) => <FilterChip
                             key={index}
                             text={filter}
                             active={filters.has(filter)}
@@ -420,11 +567,14 @@ export default function UserLevels({
                         />)}
                     </View>
 
-                    <Text style={[TextStyles.paragraph(darkMode), { marginBottom: 0 }]}>Desired Solution Length</Text>
-                    <SimpleButton
-                        text={lengthFilterEnabled ? "Disable Length Filter" : "Enable Length Filter"}
-                        onPress={() => setLengthFilterEnabled(!lengthFilterEnabled)}
-                    />
+                    <View style={styles.rangeRow}>
+                        <Text allowFontScaling={false} style={[TextStyles.paragraph(darkMode), styles.rangeLabel]}>Solution Length</Text>
+                        <FilterChip
+                            text={lengthFilterEnabled ? "Limited" : "Any"}
+                            active={lengthFilterEnabled}
+                            onPress={() => setLengthFilterEnabled(!lengthFilterEnabled)}
+                        />
+                    </View>
                     {lengthFilterEnabled && <>
                         <SliderBar
                             label="Minimum" value={minSolutionLength} units={" moves"}
@@ -438,12 +588,14 @@ export default function UserLevels({
                         />
                     </>}
 
-                    <View style={{ marginTop: normalize(25) }} />
-                    <Text style={[TextStyles.paragraph(darkMode), { marginBottom: 0 }]}>Desired Winrate</Text>
-                    <SimpleButton
-                        text={winrateFilterEnabled ? "Disable Winrate Filter" : "Enable Winrate Filter"}
-                        onPress={() => setWinrateFilterEnabled(!winrateFilterEnabled)}
-                    />
+                    <View style={[styles.rangeRow, { marginTop: normalize(20) }]}>
+                        <Text allowFontScaling={false} style={[TextStyles.paragraph(darkMode), styles.rangeLabel]}>Solve Rate</Text>
+                        <FilterChip
+                            text={winrateFilterEnabled ? "Limited" : "Any"}
+                            active={winrateFilterEnabled}
+                            onPress={() => setWinrateFilterEnabled(!winrateFilterEnabled)}
+                        />
+                    </View>
                     {winrateFilterEnabled && <>
                         <SliderBar
                             label="Minimum" value={minWinrate} units={"%"}
@@ -457,23 +609,29 @@ export default function UserLevels({
                         />
                     </>}
                 </View>
-
-                <View style={styles.section}>
-                    <SimpleButton
-                        icon={graphics.FILTER_ICON}
-                        text={"Apply Filters"}
-                        onPress={toggleModal}
-                        extraMargin={[0, 0, 30, 0]}
-                        square
-                        main
-                    />
-                </View>
-            </Animated.View>}
+            </BottomSheet>
         </>
     );
 }
 
 const styles = StyleSheet.create({
+    summaryRow: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
+        marginHorizontal: "5%",
+        marginTop: normalize(6),
+        gap: normalize(12),
+    },
+    summary: {
+        flex: 1,
+        fontFamily: "Montserrat-Regular",
+        fontSize: normalize(13),
+    },
+    clear: {
+        fontFamily: "Montserrat-Medium",
+        fontSize: normalize(14),
+    },
     filterChipsRow: {
         paddingHorizontal: "5%",
         marginTop: "1%",
@@ -488,13 +646,28 @@ const styles = StyleSheet.create({
         marginBottom: normalize(18),
     },
     modal: {
-        ...StyleSheet.absoluteFillObject,
-        paddingTop: normalize(12),
-        paddingBottom: normalize(12),
+        paddingTop: normalize(20),
+        paddingBottom: normalize(40),
         alignItems: "center",
+    },
+    sheetHeader: {
+        flexDirection: "row",
         justifyContent: "space-between",
-        height: "100%",
-        width: "100%",
+        alignItems: "center",
+        width: "90%",
+    },
+    sheetTitle: {
+        marginVertical: 0,
+    },
+    rangeRow: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
+        width: "90%",
+        marginBottom: normalize(4),
+    },
+    rangeLabel: {
+        marginVertical: 0,
     },
     wrappedList: {
         flexDirection: "row",
@@ -502,7 +675,7 @@ const styles = StyleSheet.create({
         justifyContent: "flex-start",
         alignItems: "center",
         width: "100%",
-        paddingHorizontal: "5%",
-        marginBottom: normalize(25),
+        paddingHorizontal: "4%",
+        marginBottom: normalize(20),
     },
 });

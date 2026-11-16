@@ -1,12 +1,12 @@
-import { useContext, useMemo } from "react";
+import { useCallback, useContext, useMemo } from "react";
 import { ImageURISource } from "react-native";
 import CreateIcon from "../assets/main_theme/create.png";
 import EditorIcon from "../assets/main_theme/editor.png";
-import { IndicatorIcon } from "../components/LevelCard";
-import Subpages from "../components/Subpages";
+import { IndicatorIcon, StatChip } from "../components/LevelCard";
+import Subpages, { SubpageTab } from "../components/Subpages";
 import GlobalContext from "../GlobalContext";
 import { colors, graphics } from "../Theme";
-import { doPageChange } from "../util/events";
+import { requestSubpage } from "../util/store";
 import { Level, PageView, UserLevel } from "../util/types";
 import CreateLevel from "./CreateLevel";
 import LevelSelect from "./LevelSelect";
@@ -47,6 +47,28 @@ export default function EditorPage({
     buttonIcon: graphics.SHARE_ICON_RED,
   };
 
+  // Your levels: whether you've beaten them (needed to share), and whether they're shared.
+  const editorStats = useCallback((level: Level): StatChip[] => {
+    const stats: StatChip[] = level.bestSolution ?
+      [{ label: `Best: ${level.bestSolution.length}`, icon: graphics.FLAG_ICON, accessibilityLabel: `Best solution: ${level.bestSolution.length} moves` }] :
+      [{ label: "Unsolved", theme: colors.ORANGE_THEME }];
+    stats.push((level as UserLevel).shared ?
+      { label: "Shared", theme: colors.GREEN_THEME } :
+      { label: "Private", theme: colors.BLUE_THEME });
+    return stats;
+  }, []);
+
+  // Small print: when it was made (and shared). No board size until custom sizes exist.
+  const editorFootnote = useCallback((level: Level) => {
+    const { created, shared } = level as UserLevel;
+    const date = (value?: string) => value ? new Date(value).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" }) : undefined;
+    const parts: string[] = [];
+    if (date(created)) parts.push(`created ${date(created)}`);
+    if (date(shared)) parts.push(`shared ${date(shared)}`);
+    const text = parts.join(" · ");
+    return text ? text[0].toUpperCase() + text.slice(1) : undefined;
+  }, []);
+
   const pageComponents = [
     <LevelSelect
       key={0}
@@ -57,13 +79,15 @@ export default function EditorPage({
         icon: graphics.HAMMER_ICON_RED,
         callback: (uuid: string) => {
           startEditingCallback(uuid);
-          doPageChange(1);
+          requestSubpage(1);
         },
       }}
       levels={!!userCredential ? levels : []}
       scrollTo={editorLevel?.uuid}
       elementHeight={elementHeight}
       indicatorIcon={IndicatorIcon.SHARED}
+      getStats={editorStats}
+      getFootnote={editorFootnote}
       storeElementHeightCallback={storeElementHeightCallback}
       headerComponent={!!userCredential ? <CreateLevel createLevelCallback={createNewLevelCallback} existingLevelNames={existingLevelNames} /> : undefined}
       emptyListProps={{
@@ -81,17 +105,19 @@ export default function EditorPage({
     />,
   ];
 
-  const pageTabs = useMemo(() => {
+  const pageTabs = useMemo((): SubpageTab[] => {
     return [
       {
         label: "Levels",
         color: colors.RED_THEME.MAIN_COLOR,
         icon: CreateIcon as ImageURISource,
+        sfSymbol: "plus.square.fill",
       },
       {
         label: "Manage",
         color: colors.RED_THEME.MAIN_COLOR,
         icon: EditorIcon as ImageURISource,
+        sfSymbol: "hammer.fill",
       },
     ];
   }, []);
@@ -100,7 +126,9 @@ export default function EditorPage({
     <Subpages
       pageComponents={pageComponents}
       pageTabs={pageTabs}
-      disabledPages={[false, !editorLevel]}
+      // Manage needs a level to manage, and an account: signed out, the level list is
+      // empty, but the last edited level would otherwise still be reachable here.
+      disabledPages={[false, !editorLevel || !userCredential]}
     />
   );
 }

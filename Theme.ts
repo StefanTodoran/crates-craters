@@ -2,9 +2,12 @@
 const mainGraphics = {
   DOOR: require("./assets/main_theme/door.png"),
   KEY: require("./assets/main_theme/key.png"),
+  KEY_PURPLE: require("./assets/main_theme/key_purple.png"),
+  COPY_ICON_PURPLE: require("./assets/main_theme/copy_icon_purple.png"),
   CRATE: require("./assets/main_theme/crate.png"),
   CRATER: require("./assets/main_theme/crater.png"),
   COIN: require("./assets/main_theme/coin.png"),
+  COIN_WHITE: require("./assets/main_theme/coin_white.png"),
   FLAG: require("./assets/main_theme/flag.png"),
   BOMB: require("./assets/main_theme/bomb.png"),
   ONE_WAY_ONE_DIR: require("./assets/main_theme/one_way_one_dir.png"),
@@ -17,6 +20,12 @@ const mainGraphics = {
   PLAYER_OUTLINED_DARK: require("./assets/main_theme/player_outlined_dark.png"),
   METAL_CRATE: require("./assets/main_theme/metal_crate.png"),
   ICE_BLOCK: require("./assets/main_theme/ice_block.png"),
+  ICE_SLIDE_PREVIEW: require("./assets/main_theme/ice_slide_preview_light.png"),
+  ICE_SLIDE_PREVIEW_DARK: require("./assets/main_theme/ice_slide_preview_dark.png"),
+  DIAMOND: require("./assets/main_theme/diamond.png"),
+  DIAMOND_GLINT: require("./assets/main_theme/diamond_glint.png"),
+  COIN_GLINT: require("./assets/main_theme/coin_glint.png"),
+  FUSE_SPARK: require("./assets/main_theme/fuse_spark.png"),
   FILTER_PUSHABLE: require("./assets/main_theme/filter_pushable.png"),
   FILTER_PLAYER: require("./assets/main_theme/filter_player.png"),
 
@@ -27,24 +36,41 @@ const mainGraphics = {
   HAMMER_ICON_WHITE: require("./assets/main_theme/hammer_icon_white.png"),
   WALL_ICON: require("./assets/main_theme/wall_icon.png"),
   SAVE_ICON: require("./assets/main_theme/save_icon.png"),
+  SAVE_ICON_PURPLE: require("./assets/main_theme/save_icon_purple.png"),
+  UNDO_ICON: require("./assets/main_theme/undo_icon.png"),
+  REDO_ICON: require("./assets/main_theme/redo_icon.png"),
+  ERASER_ICON: require("./assets/main_theme/eraser_icon.png"),
+  ROTATE_ICON_WHITE: require("./assets/main_theme/rotate_icon_white.png"),
+  CHECK_ICON_WHITE: require("./assets/main_theme/check_icon_white.png"),
   DELETE_ICON: require("./assets/main_theme/delete_icon.png"),
+  DELETE_ICON_WHITE: require("./assets/main_theme/delete_icon_white.png"),
   OPTIONS_ICON: require("./assets/main_theme/options_icon.png"),
   SHARE_ICON: require("./assets/main_theme/share_icon.png"),
   SHARE_ICON_RED: require("./assets/main_theme/share_icon_red.png"),
   SUPPORT_ICON: require("./assets/main_theme/support_icon.png"),
   AUDIO_ON_ICON: require("./assets/main_theme/audio_on_icon.png"),
   AUDIO_OFF_ICON: require("./assets/main_theme/audio_off_icon.png"),
+  HAPTICS_ICON: require("./assets/main_theme/haptics_icon.png"),
   PLAY_ICON: require("./assets/main_theme/play_icon.png"),
+  LOCK_ICON: require("./assets/main_theme/lock_icon.png"),
+  LOCK_ICON_WHITE: require("./assets/main_theme/lock_icon_white.png"),
+  LOCK_ICON_GLOW: require("./assets/main_theme/lock_icon_glow.png"),
   MENU_ICON: require("./assets/main_theme/menu_icon.png"),
   BACK_ICON: require("./assets/main_theme/back_icon.png"),
   YELLOW_BACK_ICON: require("./assets/main_theme/yellow_back_icon.png"),
   DOOR_ICON: require("./assets/main_theme/door_icon.png"),
+  DOOR_ICON_YELLOW: require("./assets/main_theme/door_icon_yellow.png"),
+  DOOR_ICON_PURPLE: require("./assets/main_theme/door_icon_purple.png"),
   KEY_ICON: require("./assets/main_theme/key_icon.png"),
   FLAG_ICON: require("./assets/main_theme/flag_icon.png"),
   LIKE_ICON: require("./assets/main_theme/like_icon.png"),
   LIKE_ICON_WHITE: require("./assets/main_theme/like_icon_white.png"),
+  LIKE_ICON_YELLOW: require("./assets/main_theme/like_icon_yellow.png"),
+  LIKE_ICON_OUTLINE: require("./assets/main_theme/like_icon_outline.png"),
+  LIKE_ICON_RED: require("./assets/main_theme/like_icon_red.png"),
   SIGNUP_ICON: require("./assets/main_theme/signup_icon.png"),
   MAIL_ICON: require("./assets/main_theme/mail_icon.png"),
+  MAIL_ICON_GREEN: require("./assets/main_theme/mail_icon_green.png"),
   GET_SUPPORT_ICON: require("./assets/main_theme/get_support_icon.png"),
   FILTER_ICON: require("./assets/main_theme/filter_icon.png"),
   MOVEMENT_HINT_ICON: require("./assets/main_theme/movement_hint_icon.png"),
@@ -61,6 +87,8 @@ export interface Theme {
   MAIN_COLOR: string,
   MIDDLE_COLOR: string,
   DARK_COLOR: string,
+  /** Saturated, darker shade for small UI on light backgrounds (e.g. the iOS tab bar). */
+  TINT_COLOR: string,
   NEAR_BLACK: string,
   MAIN_TRANSPARENT: (opacity: number) => string,
   NAME: string,
@@ -72,6 +100,7 @@ export const purpleTheme: Theme = {
   MAIN_COLOR: "#CCB7E5",
   MIDDLE_COLOR: "#BEA9DF",
   DARK_COLOR: "#B19CD8",
+  TINT_COLOR: "#8F6CC4",
   NEAR_BLACK: "#15101A",
   MAIN_TRANSPARENT: (opacity: number) => `rgba(204, 183, 229, ${opacity})`,
   NAME: "PURPLE",
@@ -83,6 +112,7 @@ const blueTheme: Theme = {
   MAIN_COLOR: "#97C2FE",
   MIDDLE_COLOR: "#81B5FE",
   DARK_COLOR: "#6AA7FD",
+  TINT_COLOR: "#4A88E0",
   NEAR_BLACK: "#101219",
   MAIN_TRANSPARENT: (opacity: number) => `rgba(129, 181, 254, ${opacity})`,
   NAME: "BLUE",
@@ -94,6 +124,7 @@ const greenTheme: Theme = {
   MAIN_COLOR: "#B8E5B9",
   MIDDLE_COLOR: "#9BD99D",
   DARK_COLOR: "#8AD092",
+  TINT_COLOR: "#4E9E53",
   NEAR_BLACK: "#0E160E",
   MAIN_TRANSPARENT: (opacity: number) => `rgba(184, 229, 185, ${opacity})`,
   NAME: "GREEN",
@@ -105,6 +136,7 @@ const yellowTheme: Theme = {
   MAIN_COLOR: "#F7DC9C",
   MIDDLE_COLOR: "#F9D385",
   DARK_COLOR: "#FBC86A",
+  TINT_COLOR: "#D19A2A",
   NEAR_BLACK: "#17150D",
   MAIN_TRANSPARENT: (opacity: number) => `rgba(247, 220, 156, ${opacity})`,
   NAME: "YELLOW",
@@ -116,6 +148,7 @@ const orangeTheme: Theme = {
   MAIN_COLOR: "#F7B69B",
   MIDDLE_COLOR: "#F9A784",
   DARK_COLOR: "#FB976C",
+  TINT_COLOR: "#D9733F",
   NEAR_BLACK: "#0E0A09",
   MAIN_TRANSPARENT: (opacity: number) => `rgba(247, 182, 155, ${opacity})`,
   NAME: "ORANGE",
@@ -127,9 +160,17 @@ const redTheme: Theme = {
   MAIN_COLOR: "#F79C9C",
   MIDDLE_COLOR: "#FA8484",
   DARK_COLOR: "#FA6B6B",
+  TINT_COLOR: "#D95454",
   NEAR_BLACK: "#170D0D",
   MAIN_TRANSPARENT: (opacity: number) => `rgba(247, 156, 156, ${opacity})`,
   NAME: "RED",
+}
+
+const allThemes = [purpleTheme, blueTheme, greenTheme, yellowTheme, orangeTheme, redTheme];
+
+/** The darker tint for a theme's MAIN_COLOR, or the color itself if it isn't a theme color. */
+export function tintFor(color: string): string {
+  return allThemes.find(theme => theme.MAIN_COLOR === color)?.TINT_COLOR ?? color;
 }
 
 const mainColors = {
@@ -158,3 +199,7 @@ const mainColors = {
 // EXPORTING
 export let colors = mainColors;
 export let graphics = mainGraphics;
+/** The translucent backdrop behind in-page modals (pause menu, tool picker, win screen). */
+export function modalBackground(darkMode: boolean) {
+  return darkMode ? "rgba(0, 0, 0, 0.85)" : "rgba(255, 255, 255, 0.85)";
+}

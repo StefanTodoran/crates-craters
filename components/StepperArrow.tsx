@@ -27,8 +27,6 @@ export default function StepperArrow({ color, onPress, flipped }: Props) {
                 height={size}
                 viewBox="-5 0 50 55"
                 fill="none"
-                // @ts-expect-error
-                xmlns="http://www.w3.org/2000/svg"
             >
                 {flipped ?
                     <Path // left

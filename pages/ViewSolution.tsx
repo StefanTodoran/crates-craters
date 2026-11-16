@@ -1,5 +1,5 @@
 import { useContext, useEffect, useMemo, useState } from "react";
-import { SafeAreaView, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 import BackButton from "../assets/BackButton";
 import GameBoard from "../components/GameBoard";
 import Inventory from "../components/Inventory";
@@ -11,16 +11,17 @@ import TextStyles, { normalize } from "../TextStyles";
 import { colors } from "../Theme";
 import { useSoundEventPlayers } from "../util/hooks";
 import { doGameMove, Game, initializeGameObj, Position, SoundEvent } from "../util/logic";
-import { PageView, TileType, UserLevel } from "../util/types";
+import { Level, PageView, TileType } from "../util/types";
 
 interface Props {
-  viewCallback: (newView: PageView, pageNum?: number) => void, // Sets the current view of the application. 
-  level: UserLevel, // The level currently being edited. The uuid must not change.
+  viewCallback: (newView: PageView, pageNum?: number) => void, // Sets the current view of the application.
+  level: Level, // The level whose best solution is shown.
+  onBack: () => void,
 }
 
 export default function ViewSolution({
-  viewCallback,
   level,
+  onBack,
 }: Props) {
   const { darkMode } = useContext(GlobalContext);
   const [currentMove, setCurrentMove] = useState(0);
@@ -64,14 +65,13 @@ export default function ViewSolution({
   const currentGameState = allGameStates[currentMove];
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <View>
         <MoveCounter moveCount={currentGameState.moveHistory.length} />
-        <GameBoard board={currentGameState.board} />
+        <GameBoard board={currentGameState.board} animated />
         <Inventory coins={currentGameState.coins} maxCoins={currentGameState.maxCoins} keys={currentGameState.keys} />
       </View>
 
-      <View style={{ height: normalize(15) }} />
       <SliderBar
         label="Move" value={currentMove} units={""}
         minValue={0} maxValue={level.bestSolution.length} changeCallback={setCurrentMove}
@@ -79,11 +79,9 @@ export default function ViewSolution({
       />
 
       <View style={styles.buttonsRow}>
-        <SimpleButton onPress={() => {
-          viewCallback(PageView.MANAGE, 1);
-        }} text="Back" Svg={BackButton} />
+        <SimpleButton onPress={onBack} text="Back" Svg={BackButton} />
       </View>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -105,7 +103,6 @@ const styles = StyleSheet.create({
   },
   buttonsRow: {
     flexDirection: "row",
-    height: normalize(50),
-    marginTop: normalize(15),
+    marginTop: -normalize(8), // The slider already has padding below it.
   },
 });

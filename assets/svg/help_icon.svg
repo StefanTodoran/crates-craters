@@ -1,0 +1,26 @@
+<svg width="100" height="100" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect x="20" y="20" width="60" height="60" fill="#B19CD8"/>
+<rect opacity="0.05" x="20" y="20" width="60" height="60" fill="#15101A"/>
+<mask id="stroke0_542_1951" fill="white">
+<path d="M20 15H80V30H20V15Z"/>
+</mask>
+<path opacity="0.4" d="M80 30V25H20V30V35H80V30Z" fill="#BEA9DF" mask="url(#stroke0_542_1951)"/>
+<mask id="stroke1_542_1951" fill="white">
+<path d="M20 30H80V45H20V30Z"/>
+</mask>
+<path opacity="0.4" d="M80 45V40H20V45V50H80V45Z" fill="#BEA9DF" mask="url(#stroke1_542_1951)"/>
+<mask id="stroke2_542_1951" fill="white">
+<path d="M20 45H80V60H20V45Z"/>
+</mask>
+<path opacity="0.4" d="M80 60V55H20V60V65H80V60Z" fill="#BEA9DF" mask="url(#stroke2_542_1951)"/>
+<mask id="stroke3_542_1951" fill="white">
+<path d="M20 60H80V75H20V60Z"/>
+</mask>
+<path opacity="0.4" d="M80 75V70H20V75V80H80V75Z" fill="#BEA9DF" mask="url(#stroke3_542_1951)"/>
+<rect x="12.929" y="80.1751" width="95" height="10" transform="rotate(-45 12.929 80.1751)" fill="#BEA9DF"/>
+<rect x="20" y="13" width="95" height="10" transform="rotate(45 20 13)" fill="#BEA9DF"/>
+<path d="M90 90V10H20H10V90H90ZM80 80H20V20H80V80Z" fill-rule="evenodd" clip-rule="evenodd" fill="#CCB7E5"/>
+<path d="M46.0959 78.6125C46.0959 79.3788 46.7157 80 47.4803 80H51.6334C52.398 80 53.0178 79.3788 53.0178 78.6125V74.4501C53.0178 73.6838 52.398 73.0626 51.6334 73.0626H47.4803C46.7157 73.0626 46.0959 73.6838 46.0959 74.4501V78.6125Z" fill="#F9F0FC"/>
+<path d="M47.4803 67.5127H51.6334C52.398 67.5127 53.0178 66.8915 53.0178 66.1252V57.8003C53.0178 51.5566 59.6161 55.686 64.5859 47.0589C69.5556 38.4318 66.6063 27.4004 57.9985 22.4195C49.3907 17.4387 38.3839 20.3946 33.4141 29.0216C30.7532 33.6409 30.3625 38.9495 31.8952 43.6494L38.5973 41.8496C37.5132 38.8712 37.7033 35.4507 39.4087 32.4903C42.467 27.1814 49.2404 25.3624 54.5375 28.4275C59.8347 31.4927 61.6496 38.2812 58.5913 43.5902C55.533 48.8992 46.0959 48.0879 46.0959 57.8003V66.1252C46.0959 66.8915 46.7157 67.5127 47.4803 67.5127Z" fill="#F9F0FC"/>
+<path opacity="0.1" d="M10 64L90 36.5V90H10V64Z" fill="#15101A"/>
+</svg>

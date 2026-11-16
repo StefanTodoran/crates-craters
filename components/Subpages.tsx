@@ -1,14 +1,22 @@
-import { useEffect, useRef, useState } from "react";
-import { Animated, ImageURISource, StyleSheet, View } from "react-native";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
+import GlobalContext from "../GlobalContext";
+import { Animated, ImageURISource, Platform, StyleSheet, View } from "react-native";
+import TabView from "react-native-bottom-tabs";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import type { SFSymbol } from "sf-symbols-typescript";
 import { normalize } from "../TextStyles";
-import { colors } from "../Theme";
-import { eventEmitter } from "../util/events";
+import { colors, tintFor } from "../Theme";
+import { subpageChanged, takeInitialSubpage, useAppStore } from "../util/store";
 import IconButton from "./IconButton";
 
-interface SubpageTab {
+/** Extra bottom padding scrolling pages need so their end clears the floating iOS tab bar. */
+export const TAB_BAR_CLEARANCE = Platform.OS === "ios" ? 80 : 0;
+
+export interface SubpageTab {
   label: string,
   color: string,
   icon?: ImageURISource,
+  sfSymbol?: SFSymbol, // iOS native tab bar icon; falls back to `icon`.
 }
 
 interface Props {
@@ -17,7 +25,100 @@ interface Props {
   disabledPages?: boolean[],
 }
 
-export default function Subpages({ pageTabs, pageComponents, disabledPages }: Props) {
+/** Counts taps on a tab that's already active; each subpage gets its own tab's count. */
+const ScrollToTopContext = createContext(0);
+
+/**
+ * Calls scrollToTop when the user taps the current page's tab again, the usual iOS
+ * gesture for jumping back to the top. For the scrollable view of a subpage.
+ */
+export function useScrollToTop(scrollToTop: () => void) {
+  const taps = useContext(ScrollToTopContext);
+  const seen = useRef(taps);
+  useEffect(() => {
+    if (taps === seen.current) return;
+    seen.current = taps;
+    scrollToTop();
+  }, [taps]);
+}
+
+/** Per-tab counts of taps on the already active tab. */
+function useReselectCounts(tabCount: number) {
+  const [counts, setCounts] = useState(() => Array<number>(tabCount).fill(0));
+  const reselect = (index: number) => setCounts(counts => counts.map((count, i) => i === index ? count + 1 : count));
+  return [counts, reselect] as const;
+}
+
+/** Runs onRequest for each requestSubpage() call made while mounted. */
+function useSubpageRequests(onRequest: (index: number) => void) {
+  const request = useAppStore(state => state.subpageRequest);
+  const seenId = useRef(request?.id); // Ignore a request left over from before mounting.
+  useEffect(() => {
+    if (!request || request.id === seenId.current) return;
+    seenId.current = request.id;
+    onRequest(request.index);
+  }, [request]);
+}
+
+export default function Subpages(props: Props) {
+  // iOS gets the native tab bar (Liquid Glass on iOS 26+); Android keeps the custom one.
+  return Platform.OS === "ios" ? <NativeSubpages {...props} /> : <CustomSubpages {...props} />;
+}
+
+function NativeSubpages({ pageTabs, pageComponents, disabledPages }: Props) {
+  // App pads the whole screen by the bottom inset; the native tab bar handles the home
+  // indicator itself, so extend it down into that padding.
+  const insets = useSafeAreaInsets();
+  const { darkMode } = useContext(GlobalContext);
+  const [index, setIndex] = useState(() => {
+    const initial = takeInitialSubpage() ?? 0;
+    return initial < pageComponents.length ? initial : 0;
+  });
+
+  useSubpageRequests((newIndex) => {
+    setIndex(newIndex);
+    subpageChanged();
+  });
+  const [reselectCounts, reselect] = useReselectCounts(pageComponents.length);
+
+  const routes = pageTabs.map((tab, tabIndex) => ({
+    key: String(tabIndex),
+    title: tab.label,
+    focusedIcon: tab.sfSymbol ? { sfSymbol: tab.sfSymbol } : tab.icon,
+    activeTintColor: darkMode ? tab.color : tintFor(tab.color),
+    preventsDefault: !!disabledPages?.[tabIndex],
+  }));
+
+  return (
+    <View style={{ flex: 1, width: "100%", marginBottom: -insets.bottom }}>
+    <TabView
+      navigationState={{ index, routes }}
+      onIndexChange={(newIndex) => {
+        // preventsDefault only stops the native bar from switching; JS is still told about the press.
+        if (disabledPages?.[newIndex]) return;
+        if (newIndex === index) return reselect(newIndex); // Tapped the current tab again.
+        setIndex(newIndex);
+        subpageChanged();
+      }}
+      renderScene={({ route }) => (
+        // Native tab scenes have no background of their own.
+        <View style={[styles.nativePage, { backgroundColor: darkMode ? "black" : "white" }]}>
+          <ScrollToTopContext.Provider value={reselectCounts[Number(route.key)]}>
+            {pageComponents[Number(route.key)]}
+          </ScrollToTopContext.Provider>
+        </View>
+      )}
+      tabBarActiveTintColor={pageTabs[index] && (darkMode ? pageTabs[index].color : tintFor(pageTabs[index].color))}
+      tabBarInactiveTintColor={colors.DIM_GRAY}
+      // iOS 26 Liquid Glass ignores the inactive tint unless the colors are baked into the tab images.
+      experimental_bakedTintColors
+      hapticFeedbackEnabled
+    />
+    </View>
+  );
+}
+
+function CustomSubpages({ pageTabs, pageComponents, disabledPages }: Props) {
   const anim = useRef(new Animated.Value(1)).current;
   const setAnimTo = (animState: number, callback?: () => void) => {
     Animated.timing(anim, {
@@ -27,25 +128,27 @@ export default function Subpages({ pageTabs, pageComponents, disabledPages }: Pr
     }).start(callback);
   }
 
-  const [currentPage, setPage] = useState(0);
+  const [currentPage, setPage] = useState(() => {
+    const initial = takeInitialSubpage() ?? 0;
+    return initial < pageComponents.length ? initial : 0;
+  });
+  const [reselectCounts, reselect] = useReselectCounts(pageComponents.length);
   const updatePageState = (newPageState: number) => {
     if (newPageState === currentPage) return;
     setAnimTo(0, () => {
       setPage(newPageState);
       setAnimTo(1);
-      eventEmitter.emit("pageWasChanged");
+      subpageChanged();
     });
   }
-
-  useEffect(() => {
-    const listener = eventEmitter.addListener("doPageChange", updatePageState);
-    return () => listener.remove();
-  }, [currentPage, setPage]);
+  useSubpageRequests(updatePageState);
 
   return (
     <>
-      <Animated.View style={styles.pageContainer(anim)}>
-        {pageComponents[currentPage]}
+      <Animated.View style={[styles.pageContainer, { opacity: anim }]}>
+        <ScrollToTopContext.Provider value={reselectCounts[currentPage]}>
+          {pageComponents[currentPage]}
+        </ScrollToTopContext.Provider>
       </Animated.View>
 
       <View style={styles.menu}>
@@ -56,7 +159,7 @@ export default function Subpages({ pageTabs, pageComponents, disabledPages }: Pr
             color={pageTab.color}
             label={pageTab.label}
             icon={pageTab.icon}
-            onPress={() => updatePageState(pageIndex)}
+            onPress={() => pageIndex === currentPage ? reselect(pageIndex) : updatePageState(pageIndex)}
             disabled={disabledPages && disabledPages[pageIndex]}
           />)}
       </View>
@@ -64,24 +167,30 @@ export default function Subpages({ pageTabs, pageComponents, disabledPages }: Pr
   );
 }
 
-const styles = StyleSheet.create<any>({
+const styles = StyleSheet.create({
   menu: {
     position: "relative",
     flexDirection: "row",
     gap: normalize(20),
-    marginBottom: normalize(30),
+    // On iOS the SafeAreaView already clears the home indicator.
+    marginBottom: Platform.OS === "ios" ? normalize(4) : normalize(30),
     width: "100%",
     justifyContent: "center",
     borderTopWidth: 1,
     borderColor: colors.DIM_GRAY_TRANSPARENT(0.2),
   },
-  pageContainer: (anim: Animated.Value) => ({
+  nativePage: {
+    flex: 1,
+    width: "100%",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  pageContainer: {
     flex: 1,
     width: "100%",
     height: "100%",
     flexDirection: "column",
     alignItems: "center",
     justifyContent: "center",
-    opacity: anim,
-  }),
+  },
 });

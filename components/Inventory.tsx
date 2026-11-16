@@ -1,8 +1,7 @@
 import { useEffect, useRef } from "react";
-import { Animated, Dimensions, StyleSheet, View } from "react-native";
+import { Animated, StyleSheet, View, useWindowDimensions } from "react-native";
 import { normalize } from "../TextStyles";
 import { colors, graphics } from "../Theme";
-const win = Dimensions.get("window");
 
 interface Props {
   coins: number,
@@ -11,6 +10,7 @@ interface Props {
 }
 
 export default function Inventory({ coins, maxCoins, keys }: Props) {
+  const win = useWindowDimensions();
   const coinsAnim = useRef(new Animated.Value(0)).current;
   useEffect(() => {
     coinsAnim.setValue(0);
@@ -46,40 +46,38 @@ export default function Inventory({ coins, maxCoins, keys }: Props) {
     // If it is the last key and # of keys changed, animate it. Otherwise set animated to
     // one meaning not animated, since it is terminal animation value.
     const animated = (i + 1 === displayKeys && prevKeys.current !== keys) ? keysAnim : 1;
-    inventory.push(<Animated.Image key={i} source={graphics.KEY} style={[styles.icon(animated), { marginRight: -5 }]} />)
+    inventory.push(<Animated.Image key={i} source={graphics.KEY} style={[styles.icon, { transform: [{ scale: animated }], marginRight: -5 }]} />)
   }
   // END KEY ANIMATION
   // =================
 
   return (
-    <View style={styles.inventory}>
+    <View style={[styles.inventory, { width: win.width * 0.9 }]}>
       <View style={styles.row}>
         {inventory}
       </View>
-      <View style={styles.row}>
-        <Animated.Text allowFontScaling={false} style={styles.coinsText(coinsAnim)}>{coins}</Animated.Text>
+      {/* Hidden, not removed, on levels without coins so the layout doesn't change. */}
+      <View style={[styles.row, maxCoins === 0 && { opacity: 0 }]}>
+        <Animated.Text allowFontScaling={false} style={[styles.coinsText, { opacity: coinsAnim }]}>{coins}</Animated.Text>
         <Animated.Text allowFontScaling={false} style={styles.maxCoinsText}>/{maxCoins}</Animated.Text>
-        <Animated.Image style={styles.icon(coinsAnim)} source={graphics.COIN} />
+        <Animated.Image style={[styles.icon, { transform: [{ scale: coinsAnim }] }]} source={graphics.COIN} />
       </View>
     </View>
   );
 }
 
-const styles = StyleSheet.create<any>({
+const styles = StyleSheet.create({
   inventory: {
     flexDirection: "row",
     justifyContent: "space-between",
-    width: win.width * 0.9,
     marginBottom: normalize(10),
   },
-  // @ts-expect-error
-  coinsText: (anim) => ({
+  coinsText: {
     color: colors.DIM_GRAY,
     fontSize: normalize(20),
-    opacity: anim,
     fontFamily: "Montserrat-Regular",
     fontWeight: "normal",
-  }),
+  },
   maxCoinsText: {
     color: "#A7A2A9",
     fontSize: normalize(12),
@@ -92,12 +90,8 @@ const styles = StyleSheet.create<any>({
     marginLeft: normalize(7),
     marginRight: normalize(6),
   },
-  // @ts-expect-error
-  icon: (anim) => ({
+  icon: {
     height: normalize(32),
     width: normalize(32),
-    transform: [{
-      scale: anim,
-    }],
-  }),
+  },
 });

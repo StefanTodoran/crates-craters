@@ -23,11 +23,33 @@ export const metalCrateTool: Tool = {
     theme: colors.RED_THEME,
 };
 
+export const diamondTool: Tool = {
+    label: "Diamond",
+    icon: graphics.DIAMOND,
+    tile: { id: TileType.DIAMOND },
+    theme: colors.RED_THEME,
+};
+
 export const spawnTool: Tool = {
     label: "Spawn",
     icon: graphics.PLAYER,
     tile: { id: TileType.SPAWN },
 };
+
+export const eraserTool: Tool = {
+    label: "Eraser",
+    icon: graphics.ERASER_ICON,
+    tile: { id: TileType.EMPTY },
+};
+
+export function getBombTool(fuse: number): Tool {
+    return {
+        label: "Bomb",
+        icon: graphics.BOMB,
+        tile: { id: TileType.BOMB, fuse },
+        theme: colors.RED_THEME,
+    };
+}
 
 export function getOneWayTool(directions: Direction[]): Tool {
     return {

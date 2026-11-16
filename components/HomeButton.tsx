@@ -1,7 +1,6 @@
-import { Dimensions } from "react-native";
+import { useWindowDimensions } from "react-native";
 import { Path, Svg } from "react-native-svg";
 import ResponsivePressable from "./ResponsivePressable";
-const win = Dimensions.get("window");
 
 interface Props {
   color: string,
@@ -9,6 +8,7 @@ interface Props {
 }
 
 export default function HomeButton({ color, onPress }: Props) {
+  const win = useWindowDimensions();
   return (
     <ResponsivePressable
       onPress={onPress}
@@ -20,8 +20,6 @@ export default function HomeButton({ color, onPress }: Props) {
         height={win.width * 0.05}
         viewBox="0 0 100 100"
         fill="none"
-        // @ts-expect-error Known issue with react-native-svg: https://github.com/software-mansion/react-native-svg/issues/1638
-        xmlns="http://www.w3.org/2000/svg"
       >
         <Path
           fill={color}

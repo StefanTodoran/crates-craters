@@ -1,7 +1,5 @@
-import { Dimensions, Image, ImageURISource, Pressable, StyleSheet, Text, View } from "react-native";
+import { Image, ImageURISource, Pressable, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { normalize } from "../TextStyles";
-
-const win = Dimensions.get("window");
 
 interface Props {
   icon: ImageURISource,
@@ -20,15 +18,16 @@ export default function MenuPage({
   // color,
   darkColor,
 }: Props) {
+  const win = useWindowDimensions();
   return (
-    <Pressable style={styles.body} onPress={callback}>
+    <Pressable style={[styles.body, { height: win.height, width: win.width }]} onPress={callback}>
       <Image
         resizeMode={"contain"}
-        style={styles.icon}
+        style={{ maxWidth: win.width * 0.65, maxHeight: win.width * 0.65 }}
         source={icon}
       />
 
-      <View style={styles.textContainer}>
+      <View style={[styles.textContainer, { marginBottom: win.height / 6 }]}>
         <Text style={[styles.text, { textShadowColor: darkColor }]}>
           {text}
         </Text>
@@ -49,18 +48,11 @@ const notificationBodySize = notificationFontSize * 1.6;
 
 const styles = StyleSheet.create({
   body: {
-    height: win.height,
-    width: win.width,
     justifyContent: "center",
     alignItems: "center",
   },
-  icon: {
-    maxWidth: win.width * 0.65,
-    maxHeight: win.width * 0.65,
-  },
   textContainer: {
     position: "relative",
-    marginBottom: win.height / 6,
   },
   text: {
     fontFamily: "Montserrat-Regular",

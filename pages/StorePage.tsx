@@ -3,13 +3,11 @@ import { useContext, useMemo } from "react";
 import { Text } from "react-native";
 import CartIcon from "../assets/main_theme/cart.png";
 import ProfileIcon from "../assets/main_theme/profile.png";
-import CoinsBalance from "../components/CoinsBalance";
 import SubpageContainer from "../components/SubpageContainer";
-import Subpages from "../components/Subpages";
+import Subpages, { SubpageTab } from "../components/Subpages";
 import GlobalContext from "../GlobalContext";
 import TextStyles from "../TextStyles";
 import { colors } from "../Theme";
-import { useCoinBalance } from "../util/loader";
 import ProfilePage from "./ProfilePage";
 
 interface Props {
@@ -19,7 +17,6 @@ interface Props {
 
 export default function StorePage({ attemptSignIn, setUserCredential }: Props) {
   const { darkMode } = useContext(GlobalContext);
-  const { balance } = useCoinBalance();
 
   const pageComponents = useMemo(() => {
     return [
@@ -32,23 +29,23 @@ export default function StorePage({ attemptSignIn, setUserCredential }: Props) {
         <Text style={TextStyles.paragraph(darkMode)}>
           A way to spend your accumulated coins is in the works and coming soon!
         </Text>
-
-        <CoinsBalance currentBalance={balance} />
       </SubpageContainer>,
     ];
   }, []);
 
-  const pageTabs = useMemo(() => {
+  const pageTabs = useMemo((): SubpageTab[] => {
     return [
       {
         label: "Profile",
         color: colors.YELLOW_THEME.MAIN_COLOR,
         icon: ProfileIcon,
+        sfSymbol: "person.crop.circle.fill",
       },
       {
         label: "Store",
         color: colors.YELLOW_THEME.MAIN_COLOR,
         icon: CartIcon,
+        sfSymbol: "cart.fill",
       },
     ];
   }, []);

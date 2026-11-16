@@ -1,5 +1,7 @@
-import { StyleSheet } from "react-native";
+import { Image, StyleSheet } from "react-native";
 import Svg, { Circle, Defs, G, LinearGradient, Mask, Path, Stop } from "react-native-svg";
+import { getIconSrc } from "../util/board";
+import { FUSE_PATH, FUSE_STROKE_WIDTH, FUSE_TOTAL_LENGTH, fuseLength } from "../util/fuse";
 import { FlatTile, TileType } from "../util/types";
 
 interface Props {
@@ -32,14 +34,8 @@ export function TileIcon({ bgColor, tileSize, tileData }: Props) {
       Icon = DoorIcon;
       break;
 
-    case TileType.ONEWAY:
-      Icon = OneWayUpIcon;
-      // TODO: FIX ME!
-      // if (tileData.orientation === Direction.UP) Icon = OneWayUpIcon;
-      // if (tileData.orientation === Direction.RIGHT) Icon = OneWayRightIcon;
-      // if (tileData.orientation === Direction.DOWN) Icon = OneWayDownIcon;
-      // if (tileData.orientation === Direction.LEFT) Icon = OneWayLeftIcon;
-      break;
+    // ONEWAY has no SVG per orientation (only "up"), so it uses the PNG path below,
+    // which handles every blocked-side combination and rotation.
 
     case TileType.BOMB:
       Icon = BombIcon;
@@ -56,13 +52,25 @@ export function TileIcon({ bgColor, tileSize, tileData }: Props) {
       break;
   }
 
-  if (!Icon) return <></>;
-  return <Icon tileSize={tileSize} styleProp={styles.tile(_bgColor, tileSize)}/>;
+  if (!Icon) {
+    // No SVG for this tile (e.g. one-way, metal crate, ice block, diamond): fall back
+    // to the same PNG the Android renderer uses, instead of rendering nothing.
+    const iconSrc = getIconSrc(tileData);
+    if (!iconSrc) return <></>;
+    return (
+      <Image
+        source={iconSrc.icon}
+        style={[styles.tile(_bgColor, tileSize), { transform: [{ rotate: `${iconSrc.rotation}deg` }] }]}
+      />
+    );
+  }
+  return <Icon tileSize={tileSize} styleProp={styles.tile(_bgColor, tileSize)} fuse={"fuse" in tileData ? tileData.fuse : undefined} />;
 }
 
 interface IconProps {
   tileSize: number,
   styleProp: any,
+  fuse?: number,
 }
 
 export function CrateIcon({ tileSize, styleProp }: IconProps) {
@@ -624,7 +632,12 @@ interface IconProps {
   styleProp: any,
 }
 
-export function BombIcon({ tileSize, styleProp }: IconProps) {
+// From assets/svg/bomb.svg. The fuse is drawn only up to its remaining length (see
+// util/fuse.ts), so it shortens as the countdown runs down. No fuse (tool icons, tutorial
+// art) draws it at full length.
+export function BombIcon({ tileSize, styleProp, fuse }: IconProps) {
+  const length = fuseLength(fuse);
+
   return (
     <Svg
       width={tileSize}
@@ -638,34 +651,37 @@ export function BombIcon({ tileSize, styleProp }: IconProps) {
       <Path
         fillRule="evenodd"
         clipRule="evenodd"
-        d="M74.2 26.116l.884.698.511.457.716.596c1.097.912 3.728 3.575 4.397 4.46.678.885 1.292 1.853 1.292 2.03 0 .093-4.852 5.764-6.526 7.617-.174.193-.167.205.244.904l.017.028c.66 1.117 1.924 3.761 2.389 5.028 1.366 3.688 2.017 7.338 2.017 11.37 0 2.328-.093 3.483-.428 5.522-.883 5.345-3.04 10.215-6.507 14.713-.985 1.276-3.913 4.255-5.15 5.224-3.235 2.56-6.553 4.367-10.225 5.578-8.274 2.738-17.253 2.067-24.96-1.863A32.633 32.633 0 0118.51 74.091c-5.42-10.68-4.508-23.606 2.362-33.42 4.88-6.956 12.326-11.79 20.618-13.363 5-.95 10.355-.69 15.291.736 1.153.335 3.31 1.126 3.942 1.452l.437.214 3.355-3.855L67.87 22l.437.186c1.05.447 3.681 2.207 5.894 3.93z"
+        d="M74.2008 27.1159L75.0839 27.8143L75.5952 28.2706L76.3109 28.8666C77.4079 29.7791 80.0386 32.4424 80.7079 33.327C81.3865 34.2117 82 35.1801 82 35.357C82 35.4502 77.1476 41.1212 75.4743 42.9743C75.3 43.1673 75.3068 43.1789 75.7183 43.8777L75.7346 43.9055C76.3946 45.0229 77.6588 47.6675 78.1236 48.934C79.4901 52.6215 80.1408 56.2718 80.1408 60.3039C80.1408 62.6319 80.0479 63.7866 79.7132 65.8259C78.8301 71.171 76.6735 76.0412 73.2061 80.5389C72.2208 81.8147 69.2926 84.7945 68.0562 85.763C64.8213 88.3238 61.5027 90.1303 57.8308 91.3408C49.5575 94.0786 40.5777 93.4081 32.8715 89.4784C26.6526 86.3124 21.67 81.3211 18.5094 75.0914C13.0899 64.4105 14.0009 51.4854 20.8706 41.6706C25.7509 34.7145 33.1968 29.8816 41.4887 28.3078C46.4899 27.358 51.8443 27.6188 56.7804 29.0435C57.9331 29.3787 60.0897 30.1703 60.7218 30.4962L61.1587 30.7104L64.5145 26.8552L67.8703 23L68.3072 23.1862C69.3577 23.6332 71.9884 25.3932 74.2008 27.1159Z"
         fill="url(#paint0_linear_542_2262)"
       />
       <Path
-        d="M66 6.5l-1-3 2 3L68 3v4l3-5-2 5.5L72.5 5l-3 3.5-1.5 1 1 .5c-1.772 8.028 30.058-1.578 8 20l-4-3c17.37-14.474-11.722-2.209-7.5-18h1L66 6.5z"
-        fill="#FB6C6C"
-        fillOpacity={0.5}
+        d={FUSE_PATH}
+        stroke="#FB6C6C"
+        strokeOpacity={0.5}
+        strokeWidth={FUSE_STROKE_WIDTH}
+        strokeLinecap="round"
+        strokeDasharray={[length, FUSE_TOTAL_LENGTH + 10]}
       />
       <Path
         fillRule="evenodd"
         clipRule="evenodd"
-        d="M75.084 26.814l-.883-.698c-2.213-1.723-4.843-3.483-5.894-3.93L67.87 22l-3.356 3.855-3.355 3.855c6.836 3.86 9.79 6.713 14.208 12.468-.005-.077.036-.125.107-.204C77.147 40.121 82 34.45 82 34.357c0-.177-.614-1.145-1.292-2.03-.67-.885-3.3-3.548-4.397-4.46l-.716-.596-.511-.457z"
+        d="M75.0839 27.8143L74.2008 27.1159C71.9883 25.3932 69.3576 23.6332 68.3072 23.1862L67.8703 23L64.5145 26.8552L61.1587 30.7104C67.9951 34.57 70.9493 37.4234 75.3665 43.1785C75.3623 43.1014 75.4033 43.0529 75.4743 42.9743C77.1475 41.1212 82 35.4502 82 35.357C82 35.1801 81.3864 34.2117 80.7078 33.327C80.0385 32.4424 77.4078 29.7791 76.3109 28.8666L75.5951 28.2706L75.0839 27.8143Z"
         fill="#F79B9B"
       />
       <Path
         opacity={0.075}
         fillRule="evenodd"
         clipRule="evenodd"
-        d="M76.047 43.464c.69 1.28 1.678 3.383 2.077 4.47 1.366 3.688 2.017 7.338 2.017 11.37 0 2.328-.093 3.483-.428 5.522-.883 5.345-3.04 10.215-6.507 14.713-.985 1.276-3.913 4.255-5.15 5.224-3.235 2.56-6.553 4.367-10.225 5.578-8.274 2.738-17.253 2.067-24.96-1.863a32.618 32.618 0 01-13.918-13.542c27.71 8.023 57.432-4.464 57.094-31.473z"
+        d="M76.0472 44.4635C76.7365 45.7439 77.7246 47.8467 78.1236 48.9339C79.4901 52.6215 80.1408 56.2718 80.1408 60.3039C80.1408 62.6319 80.0479 63.7866 79.7132 65.8259C78.8301 71.171 76.6735 76.0412 73.2061 80.5389C72.2208 81.8146 69.2926 84.7945 68.0562 85.7629C64.8213 88.3237 61.5027 90.1303 57.8308 91.3408C49.5575 94.0786 40.5777 93.4081 32.8715 89.4784C26.9362 86.4568 22.1271 81.7726 18.9532 75.936C46.6639 83.9588 76.3852 71.4724 76.0472 44.4635Z"
         fill="#0E0A09"
       />
       <Defs>
         <LinearGradient
           id="paint0_linear_542_2262"
           x1={82}
-          y1={92}
+          y1={93}
           x2={0.462505}
-          y2={50.7032}
+          y2={51.7032}
           gradientUnits="userSpaceOnUse"
         >
           <Stop offset={0.152248} stopColor="#FB6C6C" />
@@ -692,21 +708,21 @@ export function SpawnIcon({ tileSize, styleProp }: IconProps) {
       xmlns="http://www.w3.org/2000/svg"
       style={styleProp}
     >
+      {/* Same figure as assets/svg/player.svg (and player.png, which Android draws). */}
       <Path
-        d="M48.66 52.88l-10 17.32-8.66-5 10.313-17.237 7.382-11.48.965 16.397zM50.836 74.588l-5.177 19.319L36 91.319 41.5 72l4.16-13 5.176 15.588zM51.859 52.88l10 17.32 8.66-5-10.313-17.237-7.382-11.48-.965 16.397z"
+        d="M68.1494 63.2446C66.947 64.0084 65.5447 63.1172 65.0915 61.7668L59.4453 44.943L58.4093 51.4279L63.2003 88.3218C63.6315 91.6424 61.0571 95.5542 58.4041 93.5113C57.6802 92.9539 57.096 92.0812 56.8272 90.7442C55.9116 86.1736 51.4223 65.8335 51.4223 65.8335H49.0732C49.0732 65.8335 44.9011 84.2114 43.6322 90.2895C43.2736 92.0403 42.483 93.0665 41.5452 93.643C38.7823 95.3413 36.5059 91.5478 36.9569 88.3362L42.4356 49.3221L41.5683 44.7196L35.9665 62.4453C35.5722 63.6931 34.3601 64.5952 33.1856 64.0182C31.7911 63.3332 30.3778 61.7509 31.2886 58.0962C32.6588 52.5931 35.7259 40.0313 36.739 35.8784C36.9576 34.9827 37.4028 34.1566 38.1235 33.5816C44.5608 28.4454 56.5235 28.4484 62.896 33.5908C63.6024 34.1609 64.0401 34.9779 64.2574 35.8593C65.3435 40.265 68.7897 54.2468 69.8133 58.4472C70.4503 61.0613 69.3486 62.4829 68.1494 63.2446Z"
+        fillRule="evenodd"
+        clipRule="evenodd"
         fill="#CCB7E5"
       />
-      <Path
-        d="M49.55 74.838l5.177 19.319 9.659-2.588-5.5-19.32-4.16-13-5.176 15.59z"
-        fill="#CCB7E5"
-      />
-      <Path transform="rotate(90 55 30)" fill="#CCB7E5" d="M55 30H100V40H55z" />
-      <Circle cx={49.5} cy={21.5} r={17.5} fill="#CCB7E5" />
       <Path
         opacity={0.1}
-        d="M64.61 12.5c4.833 8.37 1.966 19.073-6.405 23.905C49.835 41.238 39.133 38.37 34.3 30l15.155-8.75 15.156-8.75z"
+        d="M61.9218 32.8729C59.218 36.181 55.1056 38.2927 50.5 38.2927C45.8976 38.2927 41.7877 36.1839 39.0839 32.8799C45.3528 28.6847 55.6958 28.6824 61.9218 32.8729Z"
+        fillRule="evenodd"
+        clipRule="evenodd"
         fill="#15101A"
       />
+      <Circle cx={50.5} cy={19.7439} r={14.7439} fill="#CCB7E5" />
     </Svg>
   );
 }

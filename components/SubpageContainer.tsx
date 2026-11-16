@@ -1,7 +1,6 @@
-import { useState } from "react";
-import { Dimensions, RefreshControl, ScrollView, StyleSheet } from "react-native";
-
-const win = Dimensions.get("window");
+import { useRef, useState } from "react";
+import { RefreshControl, ScrollView, StyleSheet, useWindowDimensions } from "react-native";
+import { TAB_BAR_CLEARANCE, useScrollToTop } from "./Subpages";
 
 interface Props {
   center?: boolean,
@@ -12,11 +11,15 @@ interface Props {
 }
 
 export default function SubpageContainer({ center, noWidthPad, onRefresh, lessTopPad, children }: Props) {
+  const win = useWindowDimensions();
   const [refreshing, setRefreshing] = useState(false);
   const finishRefresh = () => setRefreshing(false);
+  const scrollRef = useRef<ScrollView>(null);
+  useScrollToTop(() => scrollRef.current?.scrollTo({ y: 0, animated: true }));
 
   return (
     <ScrollView
+      ref={scrollRef}
       // overScrollMode="never"
       showsVerticalScrollIndicator={false}
       style={styles.scrollContainer}
@@ -26,7 +29,7 @@ export default function SubpageContainer({ center, noWidthPad, onRefresh, lessTo
       contentContainerStyle={[
         {
           paddingTop: lessTopPad ? win.height * 0.025 : win.height * 0.05,
-          paddingBottom: win.height * 0.05,
+          paddingBottom: win.height * 0.05 + TAB_BAR_CLEARANCE,
         },
         !noWidthPad && {
           paddingHorizontal: win.width * 0.05,

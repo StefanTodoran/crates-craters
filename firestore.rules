@@ -1,0 +1,179 @@
+rules_version = "2";
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /officialLevels/{document} {
+      allow read: if true;
+      allow write: if false;
+      // allow write: if isEmailUser() && isEmailVerified() && isUserAdmin();
+    }
+
+    match /metadata/{document} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    match /userPrivileges/{document} {
+      allow read: if false;
+      allow write: if false;
+    }
+
+    // One doc per player per level, at {level_id}_{uid}, holding that player's
+    // shortest solution. Signed-out players post under their anonymous uid.
+    // Analytics only: the app never reads these.
+    match /levelSolutions/{solutionId} {
+      allow read: if false;
+      allow create: if request.auth != null &&
+        solutionId == request.resource.data.level_id + "_" + request.auth.uid &&
+        isValidSolutionDoc();
+      allow update: if request.auth != null &&
+        resource.data.user_uid == request.auth.uid &&
+        isValidSolutionDoc() &&
+        request.resource.data.level_id == resource.data.level_id &&
+        request.resource.data.type == resource.data.type &&
+        request.resource.data.moves < resource.data.moves;
+    }
+
+    // usernames/{lowercased name} -> { uid }. Claimed once, together with the account doc.
+    match /usernames/{name} {
+      allow get: if true;
+      allow create: if isEmailUser() &&
+        name.matches("[a-z0-9_$!]{1,32}") &&
+        request.resource.data.keys().hasOnly(["uid"]) &&
+        request.resource.data.uid == request.auth.uid &&
+        !exists(/databases/$(database)/documents/userAccounts/$(request.auth.uid)) &&
+        getAfter(/databases/$(database)/documents/userAccounts/$(request.auth.uid)).data.user_name.lower() == name;
+      allow delete: if request.auth != null && resource.data.uid == request.auth.uid;
+    }
+
+    // Private account data, keyed by uid.
+    match /userAccounts/{uid} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow create: if isEmailUser() && request.auth.uid == uid &&
+        request.resource.data.user_email == request.auth.token.email &&
+        request.resource.data.user_name is string &&
+        getAfter(/databases/$(database)/documents/usernames/$(request.resource.data.user_name.lower())).data.uid == uid;
+      allow update: if isEmailUser() && request.auth.uid == uid &&
+        request.resource.data.user_name == resource.data.user_name;
+      allow delete: if request.auth != null && request.auth.uid == uid;
+    }
+
+    // Level docs are world-readable, so they identify the creator by uid and never
+    // hold an email address.
+    match /userLevels/{levelId} {
+      allow read: if true;
+      allow create: if isEmailUser() && isEmailVerified() && isValidLevelDoc() && hasFreshStats();
+      allow update: if isEmailUser() && (isOwnerEdit() || isOwnerAnonymize() || isStatsUpdate());
+
+      // Marker docs: userLevels/{level}/{likes|attempts|wins}/{uid}. Each counter may only
+      // go up by one in the write that creates the caller's marker.
+      match /{kind}/{uid} {
+        allow get: if request.auth != null && request.auth.uid == uid;
+        allow create: if isEmailUser() && request.auth.uid == uid &&
+          kind in ["likes", "attempts", "wins"] &&
+          request.resource.data.keys().size() == 0;
+      }
+
+      function ownsExisting() {
+        return resource.data.user_uid == request.auth.uid;
+      }
+
+      function isValidLevelDoc() {
+        let d = request.resource.data;
+        let fields = ["name", "board", "user_name", "user_uid", "shared", "attempts", "wins",
+          "winrate", "likes", "best", "bestSolution", "keywords", "public"];
+        return d.keys().hasOnly(fields) && d.keys().hasAll(fields) &&
+          d.user_uid == request.auth.uid &&
+          d.name is string && d.name.size() > 0 && d.name.size() <= 64 &&
+          d.board is string && d.board.size() <= 3000 &&
+          d.keywords is list && d.keywords.size() <= 40 &&
+          d.public is bool &&
+          d.shared is timestamp &&
+          isValidSolution(d.bestSolution) && d.best == d.bestSolution.size() &&
+          // The display name must be the caller's own registered username.
+          d.user_name is string && d.user_name.matches("[A-Za-z0-9_$!]{1,32}") &&
+          get(/databases/$(database)/documents/usernames/$(d.user_name.lower())).data.uid == request.auth.uid;
+      }
+
+      // New (or republished) levels start with zeroed stats and a current timestamp.
+      function hasFreshStats() {
+        let d = request.resource.data;
+        return d.attempts == 0 && d.wins == 0 && d.likes == 0 && d.winrate == 1 &&
+          d.shared > request.time - duration.value(15, "m") &&
+          d.shared < request.time + duration.value(15, "m");
+      }
+
+      // Republish (new timestamp, fresh stats) or other edits that leave the stats alone, e.g. unsharing.
+      function isOwnerEdit() {
+        let keys = request.resource.data.diff(resource.data).affectedKeys();
+        return ownsExisting() && isValidLevelDoc() &&
+          ((hasFreshStats() && keys.hasAny(["shared"])) ||
+            !keys.hasAny(["attempts", "wins", "likes", "winrate", "best", "bestSolution", "shared"]));
+      }
+
+      // Account deletion keeps the level but detaches it from the creator.
+      function isOwnerAnonymize() {
+        let d = request.resource.data;
+        let keys = d.diff(resource.data).affectedKeys();
+        return ownsExisting() && keys.hasOnly(["user_uid", "user_name", "keywords"]) &&
+          d.user_uid == "" && d.user_name == "Deleted user" &&
+          d.keywords is list && d.keywords.size() <= 40;
+      }
+
+      function markerCreated(kind) {
+        let path = /databases/$(database)/documents/userLevels/$(levelId)/$(kind)/$(request.auth.uid);
+        return !exists(path) && existsAfter(path);
+      }
+
+      function hasExpectedWinrate(d) {
+        let expected = d.wins >= d.attempts ? 1.0 : float(d.wins) / float(d.attempts);
+        return d.winrate is number && math.abs(d.winrate - expected) < 0.000001;
+      }
+
+      // Any signed-in player: +1 like/attempt/win (once each), and a shorter best solution.
+      function isStatsUpdate() {
+        let d = request.resource.data;
+        let o = resource.data;
+        let keys = d.diff(o).affectedKeys();
+        return keys.hasOnly(["likes", "attempts", "wins", "winrate", "best", "bestSolution"]) &&
+          (!keys.hasAny(["likes"]) || (d.likes == o.likes + 1 && markerCreated("likes"))) &&
+          (!keys.hasAny(["attempts"]) || (d.attempts == o.attempts + 1 && markerCreated("attempts"))) &&
+          (!keys.hasAny(["wins"]) || (d.wins == o.wins + 1 && markerCreated("wins"))) &&
+          (!keys.hasAny(["winrate"]) || (keys.hasAny(["wins"]) && hasExpectedWinrate(d))) &&
+          (!keys.hasAny(["best", "bestSolution"]) ||
+            (isValidSolution(d.bestSolution) && d.best == d.bestSolution.size() && d.best < o.best));
+      }
+    }
+
+    function isEmailUser() {
+      return request.auth != null &&
+        request.auth.token != null &&
+        request.auth.token.email != null &&
+        request.auth.token.email != "";
+    }
+
+    function isEmailVerified() {
+      return request.auth.token.email_verified == true;
+    }
+
+    // Moves are Direction enum values (0-3) joined into a string.
+    function isValidSolution(s) {
+      return s is string && s.size() > 0 && s.size() <= 5000 && s.matches("[0-3]+");
+    }
+
+    function isValidSolutionDoc() {
+      let d = request.resource.data;
+      let fields = ["level_id", "user_uid", "solution", "moves", "type"];
+      return d.keys().hasOnly(fields) && d.keys().hasAll(fields) &&
+        d.user_uid == request.auth.uid &&
+        d.level_id is string && d.level_id.size() > 0 && d.level_id.size() <= 64 &&
+        isValidSolution(d.solution) && d.moves == d.solution.size() &&
+        d.type in ["official_level", "user_level"];
+    }
+
+    function isUserAdmin() {
+      let userDoc = get(/databases/$(database)/documents/userPrivileges/$(request.auth.token.email));
+      return userDoc != null && userDoc.data != null && userDoc.data.admin == true;
+    }
+  }
+}

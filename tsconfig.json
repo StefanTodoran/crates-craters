@@ -4,7 +4,7 @@
     "esModuleInterop": true,
     "target": "ESNext",
     "module": "ESNext",
-    "moduleResolution": "Node",
+    "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
@@ -27,8 +27,6 @@
       "@firebase/auth": ["./node_modules/@firebase/auth/dist/index.rn.d.ts"],
     },
   },
-  // "exclude": [
-  //   "node_modules"
-  // ],
+  "exclude": ["node_modules", "dev", "android", "ios", "*.config.js"],
   "extends": "expo/tsconfig.base"
 }

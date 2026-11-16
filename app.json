@@ -3,7 +3,7 @@
     "name": "Crates & Craters",
     "slug": "crates-n-craters",
     "owner": "stefantodoran",
-    "version": "0.4.20",
+    "version": "0.5.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -23,9 +23,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.stefantodoran.cratesncraters",
-      "runtimeVersion": {
-        "policy": "appVersion"
-      }
+      "runtimeVersion": "1.0.0"
     },
     "android": {
       "adaptiveIcon": {
@@ -47,7 +45,18 @@
     },
     "plugins": [
       "expo-font",
-      "expo-audio"
+      [
+        "@react-native-google-signin/google-signin",
+        {
+          "iosUrlScheme": "com.googleusercontent.apps.967442204309-in2io4t6746h4ai3idl2qssh4oeej59b"
+        }
+      ],
+      [
+        "expo-audio",
+        {
+          "microphonePermission": false
+        }
+      ]
     ]
   }
 }

@@ -2,7 +2,7 @@ import { useContext, useEffect, useRef } from "react";
 import { Animated, Image, StyleSheet, Text } from "react-native";
 import GlobalContext from "../GlobalContext";
 import { normalize, sizeFromWidthPercent } from "../TextStyles";
-import { colors, graphics } from "../Theme";
+import { colors, graphics, modalBackground } from "../Theme";
 
 import { useAudioPlayer } from "expo-audio";
 import CoinsBalance from "../components/CoinsBalance";
@@ -98,7 +98,7 @@ export default function WinScreen({ coins, moves, bestMoves }: Props) {
     <Animated.View style={{
       ...styles.modal,
       opacity: fadeAnim,
-      backgroundColor: (darkMode) ? "rgba(0, 0, 0, 0.85)" : "rgba(255, 255, 255, 0.85)",
+      backgroundColor: modalBackground(darkMode),
     }}>
       <Image style={styles.banner} source={graphics.WIN_BANNER} />
       {confetti}

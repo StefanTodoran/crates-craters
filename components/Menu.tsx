@@ -1,5 +1,5 @@
-import { useRef } from "react";
-import { Animated, Dimensions, ScrollView, StyleSheet, View } from "react-native";
+import { memo, useEffect, useMemo, useRef } from "react";
+import { Animated, Dimensions, ScrollView, StyleSheet, View, useWindowDimensions } from "react-native";
 import BombGraphic from "../assets/bomb.png";
 import CoinGraphic from "../assets/coin_stack.png";
 import CrateGraphic from "../assets/crates.png";
@@ -8,11 +8,6 @@ import { normalize } from "../TextStyles";
 import { PageView } from "../util/types";
 import { PageTheme } from "./Header";
 import MenuPage from "./MenuPage";
-
-const win = Dimensions.get("window");
-const scrn = Dimensions.get("screen");
-
-const bottomNavHeight = scrn.height - win.height;
 
 export const menuPages = [
   {
@@ -59,93 +54,104 @@ function createPageOutputRange(activeIndex: number) {
 const activeColor = "#fff";
 const inactiveColor = "#ffffff00";
 function createNodeOutputRange(activeIndex: number) {
-  const outputRange = [];
-  // inputRange.map((_, idx) => outputRange.push(idx === activeIndex ? activeColor : inactiveColor));
-  for (let i = 0; i < inputRange.length; i++) {
-    outputRange.push(i === activeIndex ? activeColor : inactiveColor);
-  }
-  return outputRange;
+  return inputRange.map((_, idx) => idx === activeIndex ? activeColor : inactiveColor);
 }
 
 interface Props {
   notificationCounts: number[],
   openPage: (target: PageView) => void,
+  view: PageView, // The open page. The menu turns to its section, so going home lands there.
 }
 
-export default function Menu({ notificationCounts, openPage }: Props) {
-  const anim = useRef(new Animated.Value(0)).current;
+/**
+ * The home menu: one swipeable page per section. The background color and page dots
+ * follow the scroll position on the native thread. Memoized, since App re-renders on
+ * every game move while this stays mounted underneath.
+ */
+export default memo(function Menu({ notificationCounts, openPage, view }: Props) {
+  const win = useWindowDimensions();
+  const scrollX = useRef(new Animated.Value(0)).current;
+  const scrollRef = useRef<ScrollView>(null);
+
+  // A page can navigate to another section's page (e.g. copying a shared level opens it
+  // in the editor's Manage page), so turn to whichever section is open. Pages without a
+  // menu entry (play, editor, solution) leave the menu where it was. It's hidden under
+  // the page panel at this point, so the jump isn't animated.
+  useEffect(() => {
+    const index = menuPages.findIndex(page => page.target === view);
+    if (index !== -1) scrollRef.current?.scrollTo({ x: index * win.width, animated: false });
+  }, [view, win.width]);
+
+  const animated = useMemo(() => {
+    // Scroll position in pages, clamped: iOS bounce overscroll pushes it past either
+    // end, and the native driver ignores `extrapolate` for color outputs (it only
+    // clamps numbers), so the colors must be fed an already-clamped value.
+    const page = Animated.divide(scrollX, win.width).interpolate({
+      inputRange: [0, menuPages.length - 1],
+      outputRange: [0, menuPages.length - 1],
+      extrapolate: "clamp",
+    });
+    return {
+      onScroll: Animated.event([{ nativeEvent: { contentOffset: { x: scrollX } } }], { useNativeDriver: true }),
+      background: page.interpolate({ inputRange, outputRange: pageColors }),
+      pageOpacity: menuPages.map((_, idx) => page.interpolate({ inputRange, outputRange: createPageOutputRange(idx) })),
+      nodeColor: menuPages.map((_, idx) => page.interpolate({ inputRange, outputRange: createNodeOutputRange(idx) })),
+    };
+  }, [win.width]);
 
   return (
     <>
-      <ScrollView
+      {/* The background lives behind the ScrollView (not inside its content) so
+          iOS bounce overscroll past the first/last page reveals the page color
+          instead of an empty white gap. */}
+      <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: animated.background }]} />
+
+      <Animated.ScrollView
+        ref={scrollRef}
         horizontal
         pagingEnabled
         showsHorizontalScrollIndicator={false}
-        // overScrollMode="never"
-        onScroll={(evt) => {
-          anim.setValue(evt.nativeEvent.contentOffset.x / win.width);
-        }}
+        scrollEventThrottle={16}
+        onScroll={animated.onScroll}
       >
-        <Animated.View style={{
-          ...StyleSheet.absoluteFillObject,
-          backgroundColor: anim.interpolate({
-            inputRange: inputRange,
-            outputRange: pageColors,
-          }),
-        }} />
-
         {menuPages.map((page, idx) =>
-          <Animated.View key={idx} style={{
-            opacity: anim.interpolate({
-              inputRange: inputRange,
-              outputRange: createPageOutputRange(idx),
-            }),
-          }}>
+          <Animated.View key={idx} style={{ opacity: animated.pageOpacity[idx] }}>
             <MenuPage
               icon={page.source}
               text={page.text}
               callback={() => openPage(page.target)}
               updates={notificationCounts[idx]}
-              // color={menuPages[idx].color}
-              darkColor={menuPages[idx].darkColor}
+              darkColor={page.darkColor}
             />
           </Animated.View>
         )}
-      </ScrollView>
+      </Animated.ScrollView>
 
-      <View style={styles.navigation}>
-        <Animated.View style={styles.node(anim, createNodeOutputRange(0))} />
-        <Animated.View style={styles.node(anim, createNodeOutputRange(1))} />
-        <Animated.View style={styles.node(anim, createNodeOutputRange(2))} />
-        <Animated.View style={styles.node(anim, createNodeOutputRange(3))} />
+      {/* Clear Android's navigation bar, which the window doesn't include. */}
+      <View style={[styles.navigation, { bottom: Math.max(Dimensions.get("screen").height - win.height, normalize(45)) }]}>
+        {animated.nodeColor.map((color, idx) =>
+          <Animated.View key={idx} style={[styles.node, { backgroundColor: color }]} />
+        )}
       </View>
     </>
   );
-}
+});
 
-const styles = StyleSheet.create<any>({
+const styles = StyleSheet.create({
   navigation: {
     position: "absolute",
-    bottom: Math.max(bottomNavHeight, normalize(45)),
-    // bottom: 0,
-    // bottom: normalize(45),
     left: 0,
     right: 0,
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
-    // backgroundColor: "black"
   },
-  node: (anim: Animated.Value, outputRange: string[]) => ({
-    backgroundColor: anim.interpolate({
-      inputRange: inputRange,
-      outputRange: outputRange,
-    }),
+  node: {
     borderColor: "white",
     borderWidth: 1,
     borderRadius: normalize(10) / 2,
     marginHorizontal: normalize(5),
     height: normalize(10),
     width: normalize(10),
-  }),
+  },
 });

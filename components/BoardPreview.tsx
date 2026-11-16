@@ -1,11 +1,9 @@
 import { useMemo } from "react";
-import { Dimensions } from "react-native";
+import { useWindowDimensions } from "react-native";
 import { calcPreviewTileSize } from "../util/board";
 import { getSpawnPosition } from "../util/logic";
 import { Level } from "../util/types";
 import GameBoard from "./GameBoard";
-
-const win = Dimensions.get("window");
 
 interface Props {
   level: Level,
@@ -22,6 +20,7 @@ export default function BoardPreview({
   // rowCorrect,
   children,
 }: Props) {
+  const win = useWindowDimensions();
   const tileSize = calcPreviewTileSize(level.board.width, previewWidth, win);
   const previewCenter = useMemo(() => getSpawnPosition(level.board).y, [level]);
 
